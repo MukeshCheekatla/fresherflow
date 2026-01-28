@@ -110,42 +110,46 @@ export default function AdminWalkinsList() {
 
                 {/* Mobile View (Cards) */}
                 <div className="grid grid-cols-1 gap-4 md:hidden">
-                    {walkins.map((w) => {
-                        const isExpired = new Date(w.data.lastValidDay).getTime() < Date.now();
-                        return (
-                            <div key={w.id} className="bg-white p-4 rounded-2xl border border-neutral-200 shadow-sm space-y-3">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <span className={cn(
-                                            "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider mb-2 inline-block",
-                                            isExpired ? "bg-neutral-100 text-neutral-500" : "bg-green-100 text-green-700"
-                                        )}>
-                                            {isExpired ? 'Expired' : 'Live'}
-                                        </span>
-                                        <h3 className="font-bold text-neutral-900">{w.data.company}</h3>
-                                        <p className="text-sm text-neutral-500">{w.data.city}</p>
+                    {loading ? (
+                        Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)
+                    ) : (
+                        walkins.map((w) => {
+                            const isExpired = new Date(w.data.lastValidDay).getTime() < Date.now();
+                            return (
+                                <div key={w.id} className="bg-white p-4 rounded-2xl border border-neutral-200 shadow-sm space-y-3">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <span className={cn(
+                                                "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider mb-2 inline-block",
+                                                isExpired ? "bg-neutral-100 text-neutral-500" : "bg-green-100 text-green-700"
+                                            )}>
+                                                {isExpired ? 'Expired' : 'Live'}
+                                            </span>
+                                            <h3 className="font-bold text-neutral-900">{w.data.company}</h3>
+                                            <p className="text-sm text-neutral-500">{w.data.city}</p>
+                                        </div>
+                                        <p className="text-[10px] text-neutral-400">
+                                            {new Date(w.data.walkInDate).toLocaleDateString()}
+                                        </p>
                                     </div>
-                                    <p className="text-[10px] text-neutral-400">
-                                        {new Date(w.data.walkInDate).toLocaleDateString()}
-                                    </p>
+                                    <div className="flex gap-2 pt-2 border-t border-neutral-50">
+                                        <Link
+                                            href={`/admin/walkins/${w.id}/edit`}
+                                            className="flex-1 py-2 bg-neutral-50 text-neutral-900 text-center rounded-lg text-sm font-medium active:bg-neutral-100"
+                                        >
+                                            Edit
+                                        </Link>
+                                        <button
+                                            onClick={() => handleDelete(w.id)}
+                                            className="flex-1 py-2 bg-red-50 text-red-600 text-center rounded-lg text-sm font-medium active:bg-red-100"
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="flex gap-2 pt-2 border-t border-neutral-50">
-                                    <Link
-                                        href={`/admin/walkins/${w.id}/edit`}
-                                        className="flex-1 py-2 bg-neutral-50 text-neutral-900 text-center rounded-lg text-sm font-medium active:bg-neutral-100"
-                                    >
-                                        Edit
-                                    </Link>
-                                    <button
-                                        onClick={() => handleDelete(w.id)}
-                                        className="flex-1 py-2 bg-red-50 text-red-600 text-center rounded-lg text-sm font-medium active:bg-red-100"
-                                    >
-                                        Delete
-                                    </button>
-                                </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })
+                    )}
                 </div>
 
                 {walkins.length === 0 && (
