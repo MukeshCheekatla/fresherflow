@@ -48,7 +48,7 @@ export default function TopNav() {
                         {/* Mode Toggle (Center) - Hide on admin mobile */}
                         <div className={cn(
                             "items-center gap-1 bg-neutral-100 rounded-lg p-1",
-                            isAdminRoute ? "hidden md:flex" : "flex"
+                            isAdminRoute ? "hidden" : "flex"
                         )}>
                             <Link
                                 href="/"
@@ -73,6 +73,18 @@ export default function TopNav() {
                                 Walk-ins
                             </Link>
                         </div>
+
+                        {isAdminRoute && (
+                            <Link
+                                href="/"
+                                className="hidden md:flex items-center gap-2 text-xs font-bold text-neutral-500 hover:text-neutral-900 transition-colors uppercase tracking-wider"
+                            >
+                                <span>View Website</span>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                            </Link>
+                        )}
 
                         {/* Right: Alerts + Account */}
                         <div className="flex items-center gap-4 relative">
@@ -112,13 +124,18 @@ export default function TopNav() {
                             <div className="relative">
                                 <button
                                     onClick={handleAccountClick}
-                                    className="flex items-center gap-2 text-neutral-600 hover:text-neutral-900 transition-colors"
+                                    className={cn(
+                                        "flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-95 shadow-sm",
+                                        user
+                                            ? "bg-neutral-900 text-white border border-white/10"
+                                            : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                                    )}
                                     aria-label="Account"
                                 >
                                     {user ? (
-                                        <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-medium">
+                                        <span className="text-sm font-bold">
                                             {user.email?.[0].toUpperCase()}
-                                        </div>
+                                        </span>
                                     ) : (
                                         <svg
                                             className="w-5 h-5"

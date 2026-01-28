@@ -3,8 +3,7 @@
 import { useJobs } from '@/features/jobs/hooks/useJobs';
 import { useWalkins } from '@/features/walkins/hooks/useWalkins';
 import { cn } from '@/shared/utils/cn';
-import TopNav from '@/shared/components/navigation/TopNav';
-import Link from 'next/link';
+import LoadingScreen from '@/shared/components/ui/LoadingScreen';
 
 export default function AdminDashboardHome() {
     const { jobs, loading: jobsLoading } = useJobs();
@@ -21,7 +20,7 @@ export default function AdminDashboardHome() {
     ];
 
     if (jobsLoading || walkinsLoading) {
-        return <div className="min-h-screen pt-20 text-center">Loading Dashboard...</div>;
+        return <LoadingScreen message="Loading Dashboard Summary..." />;
     }
 
     return (

@@ -10,6 +10,8 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/shared/utils/cn';
+import LoadingScreen from '@/shared/components/ui/LoadingScreen';
+import { TableRowSkeleton, CardSkeleton } from '@/shared/components/ui/Skeleton';
 
 export default function AdminJobsList() {
     const { isAdmin, loading: authLoading } = useAuth();
@@ -37,7 +39,7 @@ export default function AdminJobsList() {
 
     const loading = authLoading || jobsLoading;
 
-    if (authLoading || loading) return <div className="min-h-screen pt-20 text-center">Loading...</div>;
+    if (authLoading) return <LoadingScreen message="Authorizing..." />;
     if (!isAdmin) return null;
 
     return (
@@ -66,40 +68,44 @@ export default function AdminJobsList() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-neutral-100">
-                            {jobs.map((job) => {
-                                const isExpired = new Date(job.data.postedAt).getTime() < Date.now() - 30 * 24 * 60 * 60 * 1000;
-                                return (
-                                    <tr key={job.id} className="hover:bg-neutral-50 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <span className={cn(
-                                                "px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                                                isExpired ? "bg-neutral-100 text-neutral-500" : "bg-green-100 text-green-700"
-                                            )}>
-                                                {isExpired ? 'Expired' : 'Active'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 font-medium text-neutral-900">{job.data.normalizedRole}</td>
-                                        <td className="px-6 py-4 text-neutral-600">{job.data.company}</td>
-                                        <td className="px-6 py-4 text-neutral-500 text-sm">
-                                            {new Date(job.data.postedAt).toLocaleDateString()}
-                                        </td>
-                                        <td className="px-6 py-4 text-right space-x-3">
-                                            <Link
-                                                href={`/admin/jobs/${job.id}/edit`}
-                                                className="text-primary hover:text-primary-dark font-medium text-sm"
-                                            >
-                                                Edit
-                                            </Link>
-                                            <button
-                                                onClick={() => handleDelete(job.id)}
-                                                className="text-red-600 hover:text-red-700 font-medium text-sm"
-                                            >
-                                                Delete
-                                            </button>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                            {loading ? (
+                                Array.from({ length: 5 }).map((_, i) => <TableRowSkeleton key={i} />)
+                            ) : (
+                                jobs.map((job) => {
+                                    const isExpired = new Date(job.data.postedAt).getTime() < Date.now() - 30 * 24 * 60 * 60 * 1000;
+                                    return (
+                                        <tr key={job.id} className="hover:bg-neutral-50 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <span className={cn(
+                                                    "px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                                                    isExpired ? "bg-neutral-100 text-neutral-500" : "bg-green-100 text-green-700"
+                                                )}>
+                                                    {isExpired ? 'Expired' : 'Active'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 font-medium text-neutral-900">{job.data.normalizedRole}</td>
+                                            <td className="px-6 py-4 text-neutral-600">{job.data.company}</td>
+                                            <td className="px-6 py-4 text-neutral-500 text-sm">
+                                                {new Date(job.data.postedAt).toLocaleDateString()}
+                                            </td>
+                                            <td className="px-6 py-4 text-right space-x-3">
+                                                <Link
+                                                    href={`/admin/jobs/${job.id}/edit`}
+                                                    className="text-primary hover:text-primary-dark font-medium text-sm"
+                                                >
+                                                    Edit
+                                                </Link>
+                                                <button
+                                                    onClick={() => handleDelete(job.id)}
+                                                    className="text-red-600 hover:text-red-700 font-medium text-sm"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
                         </tbody>
                     </table>
                 </div>

@@ -1,9 +1,6 @@
 'use client';
 
-import AdminBottomNav from "@/shared/components/navigation/AdminBottomNav";
-import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import LoadingScreen from "@/shared/components/ui/LoadingScreen";
 
 export default function AdminLayout({
     children,
@@ -19,7 +16,7 @@ export default function AdminLayout({
         }
     }, [isAdmin, loading, router]);
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    if (loading) return <LoadingScreen message="Checking Authorization..." />;
     if (!isAdmin) return null;
 
     return (
