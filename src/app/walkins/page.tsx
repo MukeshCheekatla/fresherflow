@@ -38,42 +38,25 @@ export default function WalkinsPage() {
         try {
             setLoading(true);
             const today = new Date().toISOString().split('T')[0];
-            let q;
 
-            if (selectedCity === 'All Cities') {
-                q = query(
-                    collection(db, 'walkins'),
-                    where('lastValidDay', '>=', today),
-                    orderBy('lastValidDay', 'asc')
-                );
-            } else {
-                q = query(
-                    collection(db, 'walkins'),
-                    where('city', '==', selectedCity),
-                    where('lastValidDay', '>=', today),
-                    orderBy('lastValidDay', 'asc')
-                );
-            }
-
+            // Simplified query to avoid index requirements for MVP
+            const q = query(collection(db, 'walkins'));
             const snapshot = await getDocs(q);
-            const walkinsData = snapshot.docs.map(doc => ({
+
+            let walkinsData = snapshot.docs.map(doc => ({
                 id: doc.id,
                 data: doc.data() as WalkinJob,
             }));
 
+            // Filter and sort client-side for zero-cost simplicity
+            walkinsData = walkinsData
+                .filter(w => w.data.lastValidDay >= today)
+                .filter(w => selectedCity === 'All Cities' || w.data.city === selectedCity)
+                .sort((a, b) => a.data.lastValidDay.localeCompare(b.data.lastValidDay));
+
             setWalkins(walkinsData);
         } catch (error) {
             console.error('Error fetching walk-ins:', error);
-            // Fallback for missing index: Fetch all and filter client-side if query fails
-            if (error instanceof Error && error.message.includes('index')) {
-                const fallbackQ = query(collection(db, 'walkins'));
-                const snapshot = await getDocs(fallbackQ);
-                const today = new Date().toISOString().split('T')[0];
-                const walkinsData = snapshot.docs
-                    .map(doc => ({ id: doc.id, data: doc.data() as WalkinJob }))
-                    .filter(w => w.data.lastValidDay >= today && (selectedCity === 'All Cities' || w.data.city === selectedCity));
-                setWalkins(walkinsData);
-            }
         } finally {
             setLoading(false);
         }

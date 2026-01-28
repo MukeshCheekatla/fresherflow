@@ -94,13 +94,23 @@ export default function JobCard({ job, jobId, onClick }: JobCardProps) {
             </div>
 
             {/* Match Reason */}
-            <div className="text-sm text-primary mb-3">
+            <div className="text-sm text-primary mb-4 font-medium">
                 {getMatchReason()}
             </div>
 
-            {/* Source */}
-            <div className="text-xs text-neutral-500">
-                {job.source}
+            <div className="flex items-center justify-between mt-auto">
+                <div className="text-xs text-neutral-500">
+                    {job.source}
+                </div>
+                <a
+                    href={job.applyLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary-dark transition-colors shadow-sm"
+                >
+                    Apply Now
+                </a>
             </div>
         </div>
     );
