@@ -9,6 +9,8 @@ import { cn } from '@/shared/utils/cn';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import LoadingScreen from '@/shared/components/ui/LoadingScreen';
+import { TableRowSkeleton, CardSkeleton } from '@/shared/components/ui/Skeleton';
 
 export default function AdminWalkinsList() {
     const { isAdmin, loading: authLoading } = useAuth();
@@ -35,7 +37,7 @@ export default function AdminWalkinsList() {
 
     const loading = authLoading || walkinsLoading;
 
-    if (authLoading || loading) return <div className="min-h-screen pt-20 text-center">Loading...</div>;
+    if (authLoading) return <LoadingScreen message="Authorizing..." />;
     if (!isAdmin) return null;
 
     return (
@@ -64,40 +66,44 @@ export default function AdminWalkinsList() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-neutral-100">
-                            {walkins.map((w) => {
-                                const isExpired = new Date(w.data.lastValidDay).getTime() < Date.now();
-                                return (
-                                    <tr key={w.id} className="hover:bg-neutral-50 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <span className={cn(
-                                                "px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                                                isExpired ? "bg-neutral-100 text-neutral-500" : "bg-green-100 text-green-700"
-                                            )}>
-                                                {isExpired ? 'Expired' : 'Live'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 font-medium text-neutral-900">{w.data.company}</td>
-                                        <td className="px-6 py-4 text-neutral-600">{w.data.city}</td>
-                                        <td className="px-6 py-4 text-neutral-500 text-sm">
-                                            {new Date(w.data.walkInDate).toLocaleDateString()}
-                                        </td>
-                                        <td className="px-6 py-4 text-right space-x-3">
-                                            <Link
-                                                href={`/admin/walkins/${w.id}/edit`}
-                                                className="text-primary hover:text-primary-dark font-medium text-sm"
-                                            >
-                                                Edit
-                                            </Link>
-                                            <button
-                                                onClick={() => handleDelete(w.id)}
-                                                className="text-red-600 hover:text-red-700 font-medium text-sm"
-                                            >
-                                                Delete
-                                            </button>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                            {loading ? (
+                                Array.from({ length: 5 }).map((_, i) => <TableRowSkeleton key={i} />)
+                            ) : (
+                                walkins.map((w) => {
+                                    const isExpired = new Date(w.data.lastValidDay).getTime() < Date.now();
+                                    return (
+                                        <tr key={w.id} className="hover:bg-neutral-50 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <span className={cn(
+                                                    "px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                                                    isExpired ? "bg-neutral-100 text-neutral-500" : "bg-green-100 text-green-700"
+                                                )}>
+                                                    {isExpired ? 'Expired' : 'Live'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 font-medium text-neutral-900">{w.data.company}</td>
+                                            <td className="px-6 py-4 text-neutral-600">{w.data.city}</td>
+                                            <td className="px-6 py-4 text-neutral-500 text-sm">
+                                                {new Date(w.data.walkInDate).toLocaleDateString()}
+                                            </td>
+                                            <td className="px-6 py-4 text-right space-x-3">
+                                                <Link
+                                                    href={`/admin/walkins/${w.id}/edit`}
+                                                    className="text-primary hover:text-primary-dark font-medium text-sm"
+                                                >
+                                                    Edit
+                                                </Link>
+                                                <button
+                                                    onClick={() => handleDelete(w.id)}
+                                                    className="text-red-600 hover:text-red-700 font-medium text-sm"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
                         </tbody>
                     </table>
                 </div>

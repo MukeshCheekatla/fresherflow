@@ -4,6 +4,8 @@ import { useJobs } from '@/features/jobs/hooks/useJobs';
 import { useWalkins } from '@/features/walkins/hooks/useWalkins';
 import { cn } from '@/shared/utils/cn';
 import LoadingScreen from '@/shared/components/ui/LoadingScreen';
+import TopNav from '@/shared/components/navigation/TopNav';
+import Link from 'next/link';
 
 export default function AdminDashboardHome() {
     const { jobs, loading: jobsLoading } = useJobs();
