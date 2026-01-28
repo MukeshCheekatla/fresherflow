@@ -147,7 +147,7 @@ export default function TopNav() {
 
                                         {isAdmin && (
                                             <Link
-                                                href="/admin/jobs"
+                                                href="/admin"
                                                 onClick={() => setIsDropdownOpen(false)}
                                                 className="block px-4 py-2 text-sm font-bold text-neutral-900 border-t border-neutral-100 mt-1 pt-2 hover:bg-neutral-50"
                                             >
