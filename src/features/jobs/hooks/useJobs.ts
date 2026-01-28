@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useCallback } from 'react';
 import { JobsService } from '../services/jobs.service';
 import { OnlineJob } from '@/types/job';

@@ -15,6 +15,7 @@ export default function TopNav() {
 
     const isJobsMode = pathname === '/' || pathname.startsWith('/jobs');
     const isWalkinsMode = pathname.startsWith('/walkins');
+    const isAdminRoute = pathname.startsWith('/admin');
 
     const handleAccountClick = (e: React.MouseEvent) => {
         if (!user) {
@@ -44,8 +45,11 @@ export default function TopNav() {
                             </span>
                         </Link>
 
-                        {/* Mode Toggle (Center) */}
-                        <div className="flex items-center gap-1 bg-neutral-100 rounded-lg p-1">
+                        {/* Mode Toggle (Center) - Hide on admin mobile */}
+                        <div className={cn(
+                            "items-center gap-1 bg-neutral-100 rounded-lg p-1",
+                            isAdminRoute ? "hidden md:flex" : "flex"
+                        )}>
                             <Link
                                 href="/"
                                 className={cn(
