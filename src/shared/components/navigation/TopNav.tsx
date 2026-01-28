@@ -1,0 +1,176 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useState } from 'react';
+import { cn } from '@/shared/utils/cn';
+import { useAuth } from '@/context/AuthContext';
+import AuthDialog from '@/features/auth/components/AuthDialog';
+
+export default function TopNav() {
+    const pathname = usePathname();
+    const { user, logout, isAdmin } = useAuth();
+    const [isAuthOpen, setIsAuthOpen] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+    const isJobsMode = pathname === '/' || pathname.startsWith('/jobs');
+    const isWalkinsMode = pathname.startsWith('/walkins');
+
+    const handleAccountClick = (e: React.MouseEvent) => {
+        if (!user) {
+            e.preventDefault();
+            setIsAuthOpen(true);
+        } else {
+            setIsDropdownOpen(!isDropdownOpen);
+        }
+    };
+
+    const handleAlertsClick = (e: React.MouseEvent) => {
+        if (!user) {
+            e.preventDefault();
+            setIsAuthOpen(true);
+        }
+    };
+
+    return (
+        <>
+            <nav className="border-b border-neutral-200 bg-white sticky top-0 z-40">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6">
+                    <div className="flex items-center justify-between h-16">
+                        {/* Logo */}
+                        <Link href="/" className="flex items-center space-x-2">
+                            <span className="text-xl font-semibold text-neutral-900">
+                                JobDiscover
+                            </span>
+                        </Link>
+
+                        {/* Mode Toggle (Center) */}
+                        <div className="flex items-center gap-1 bg-neutral-100 rounded-lg p-1">
+                            <Link
+                                href="/"
+                                className={cn(
+                                    "px-4 py-2 text-sm font-medium rounded-md transition-colors",
+                                    isJobsMode
+                                        ? "bg-white text-neutral-900 shadow-sm"
+                                        : "text-neutral-600 hover:text-neutral-900"
+                                )}
+                            >
+                                Jobs
+                            </Link>
+                            <Link
+                                href="/walkins"
+                                className={cn(
+                                    "px-4 py-2 text-sm font-medium rounded-md transition-colors",
+                                    isWalkinsMode
+                                        ? "bg-white text-neutral-900 shadow-sm"
+                                        : "text-neutral-600 hover:text-neutral-900"
+                                )}
+                            >
+                                Walk-ins
+                            </Link>
+                        </div>
+
+                        {/* Right: Alerts + Account */}
+                        <div className="flex items-center gap-4 relative">
+                            <Link
+                                href="/alerts"
+                                onClick={handleAlertsClick}
+                                className="text-neutral-600 hover:text-neutral-900 transition-colors"
+                                aria-label="Alerts"
+                            >
+                                <svg
+                                    className="w-5 h-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                                    />
+                                </svg>
+                            </Link>
+
+                            <div className="relative">
+                                <button
+                                    onClick={handleAccountClick}
+                                    className="flex items-center gap-2 text-neutral-600 hover:text-neutral-900 transition-colors"
+                                    aria-label="Account"
+                                >
+                                    {user ? (
+                                        <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-medium">
+                                            {user.email?.[0].toUpperCase()}
+                                        </div>
+                                    ) : (
+                                        <svg
+                                            className="w-5 h-5"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                            />
+                                        </svg>
+                                    )}
+                                </button>
+
+                                {/* Dropdown Menu */}
+                                {isDropdownOpen && user && (
+                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-neutral-200 py-1 z-50">
+                                        <div className="px-4 py-2 border-b border-neutral-100 mb-1">
+                                            <p className="text-xs text-neutral-500 truncate">{user.email}</p>
+                                        </div>
+                                        <Link
+                                            href="/account"
+                                            onClick={() => setIsDropdownOpen(false)}
+                                            className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                                        >
+                                            My Profile
+                                        </Link>
+                                        <Link
+                                            href="/account/saved"
+                                            onClick={() => setIsDropdownOpen(false)}
+                                            className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                                        >
+                                            Saved Jobs
+                                        </Link>
+
+                                        {isAdmin && (
+                                            <Link
+                                                href="/admin/jobs"
+                                                onClick={() => setIsDropdownOpen(false)}
+                                                className="block px-4 py-2 text-sm font-bold text-neutral-900 border-t border-neutral-100 mt-1 pt-2 hover:bg-neutral-50"
+                                            >
+                                                Admin Dashboard
+                                            </Link>
+                                        )}
+                                        <button
+                                            onClick={() => {
+                                                logout();
+                                                setIsDropdownOpen(false);
+                                            }}
+                                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                                        >
+                                            Log Out
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <AuthDialog
+                isOpen={isAuthOpen}
+                onClose={() => setIsAuthOpen(false)}
+            />
+        </>
+    );
+}

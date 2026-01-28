@@ -11,7 +11,7 @@ import {
     isSignInWithEmailLink,
     signInWithEmailLink
 } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase/client';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 interface UserProfile {
@@ -25,7 +25,7 @@ interface AuthContextType {
     profile: UserProfile | null;
     loading: boolean;
     isAdmin: boolean;
-    loginWithGoogle: () => Promise<void>;
+    loginWithGoogle: () => Promise<import('firebase/auth').UserCredential>;
     loginWithEmail: (email: string) => Promise<void>;
     logout: () => Promise<void>;
     toggleSaveJob: (jobId: string) => Promise<void>;
@@ -117,9 +117,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const loginWithGoogle = async () => {
-        if (!auth) return;
+        if (!auth) throw new Error('Auth not initialized');
         const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
+        return await signInWithPopup(auth, provider);
     };
 
     const loginWithEmail = async (email: string) => {
