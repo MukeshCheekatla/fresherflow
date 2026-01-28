@@ -29,7 +29,7 @@ export default function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
             const adminUids = process.env.NEXT_PUBLIC_ADMIN_UIDS?.split(',') || [];
 
             if (adminUids.includes(user.uid)) {
-                router.push('/admin/jobs');
+                router.push('/admin');
             } else {
                 router.push('/walkins');
             }
