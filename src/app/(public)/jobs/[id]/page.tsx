@@ -1,54 +1,39 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client';
-import { OnlineJob } from '@/types';
+import { useJob } from '@/features/jobs/hooks/useJob';
+import { useSavedJobs } from '@/features/jobs/hooks/useSavedJobs';
+import { JobsService } from '@/features/jobs/services/jobs.service';
+import { OnlineJob } from '@/types/job';
 import TopNav from '@/shared/components/navigation/TopNav';
 import { useParams, useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/shared/utils/cn';
-
 import { useAuth } from '@/context/AuthContext';
 
 export default function JobDetailPage() {
     const params = useParams();
     const router = useRouter();
-    const { profile, toggleSaveJob, user, isAdmin } = useAuth();
-    const [job, setJob] = useState<OnlineJob | null>(null);
-    const [loading, setLoading] = useState(true);
-
-    const isSaved = profile?.savedJobs.includes(params.id as string || '');
-
-    useEffect(() => {
-        if (params.id) {
-            fetchJob(params.id as string);
-        }
-    }, [params.id]);
-
-    const fetchJob = async (jobId: string) => {
-        if (!db) {
-            setLoading(false);
-            return;
-        }
-        try {
-            const jobDoc = await getDoc(doc(db, 'jobs', jobId));
-            if (jobDoc.exists()) {
-                setJob(jobDoc.data() as OnlineJob);
-            }
-        } catch (error) {
-            console.error('Error fetching job:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const jobId = params.id as string;
+    const { user, isAdmin } = useAuth();
+    const { job, loading, error, refetch } = useJob(jobId);
+    const { isSaved, toggleSave } = useSavedJobs();
 
     const handleSaveToggle = () => {
         if (!user) {
             alert('Please sign in to save jobs');
             return;
         }
-        if (params.id) toggleSaveJob(params.id as string);
+        toggleSave(jobId);
+    };
+
+    const handleVerifyJob = async () => {
+        if (!isAdmin) return;
+        try {
+            await JobsService.update(jobId, { lastVerified: new Date().toISOString() });
+            refetch();
+        } catch (error) {
+            console.error('Error verifying job:', error);
+        }
     };
 
     const formatSalary = (salary: OnlineJob['salary']) => {
@@ -114,10 +99,7 @@ export default function JobDetailPage() {
                     </button>
                     {isAdmin && (
                         <button
-                            onClick={() => {
-                                // Handle verification logic
-                                console.log('Verify job', params.id);
-                            }}
+                            onClick={handleVerifyJob}
                             className="flex items-center gap-2 px-4 py-2 rounded-lg border border-green-200 bg-green-50 text-green-700 hover:bg-green-100 transition-colors mr-2"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,15 +112,15 @@ export default function JobDetailPage() {
                         onClick={handleSaveToggle}
                         className={cn(
                             "flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors",
-                            isSaved
+                            isSaved(jobId)
                                 ? "bg-primary/5 border-primary/20 text-primary"
                                 : "bg-white border-neutral-200 text-neutral-600 hover:border-neutral-300"
                         )}
                     >
-                        <svg className="w-5 h-5" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5" fill={isSaved(jobId) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                         </svg>
-                        {isSaved ? "Saved" : "Save Job"}
+                        {isSaved(jobId) ? "Saved" : "Save Job"}
                     </button>
                 </div>
 

@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { db } from '@/lib/firebase/client';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { AlertsService } from '@/features/alerts/services/alerts.service';
+import { Alert } from '@/types/alert';
 import { cn } from '@/shared/utils/cn';
 
 interface AlertFormProps {
@@ -29,24 +29,24 @@ export default function AlertForm({ onSuccess, onCancel }: AlertFormProps) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user || !db) return;
+        if (!user) return;
 
         setLoading(true);
         try {
-            const alertData = {
+            const alertData: Omit<Alert, 'id'> = {
                 userId: user.uid,
                 conditions: {
                     roles: formData.roles.split(',').map(r => r.trim()).filter(Boolean),
                     locations: formData.locations.split(',').map(l => l.trim()).filter(Boolean),
-                    minSalary: formData.minSalary ? parseInt(formData.minSalary) : null,
-                    workType: formData.workType,
+                    minSalary: formData.minSalary ? parseInt(formData.minSalary) : undefined,
+                    workType: formData.workType as any[],
                 },
-                delivery: ['email'] as const,
+                delivery: ['email'],
                 isTemporary: false,
                 createdAt: new Date().toISOString(),
             };
 
-            await addDoc(collection(db, 'alerts'), alertData);
+            await AlertsService.create(alertData);
             onSuccess();
         } catch (error) {
             console.error('Error creating alert:', error);

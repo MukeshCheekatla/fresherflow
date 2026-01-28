@@ -7,12 +7,12 @@ interface JobCardProps {
     job: OnlineJob;
     jobId: string;
     onClick?: () => void;
+    isSaved?: boolean;
+    onToggleSave?: () => void;
 }
 
-export default function JobCard({ job, jobId, onClick }: JobCardProps) {
-    const { profile, toggleSaveJob, user, isAdmin } = useAuth();
-
-    const isSaved = profile?.savedJobs.includes(jobId);
+export default function JobCard({ job, jobId, onClick, isSaved = false, onToggleSave }: JobCardProps) {
+    const { user, isAdmin } = useAuth();
 
     const formatSalary = () => {
         if (!job.salary) return 'Not disclosed';
@@ -46,7 +46,7 @@ export default function JobCard({ job, jobId, onClick }: JobCardProps) {
             alert('Please sign in to save jobs');
             return;
         }
-        toggleSaveJob(jobId);
+        if (onToggleSave) onToggleSave();
     };
 
     return (

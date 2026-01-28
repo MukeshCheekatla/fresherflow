@@ -2,8 +2,8 @@
 
 // Reusing form logic but tailored for "New Job"
 import { useState } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client';
+import { JobsService } from '@/features/jobs/services/jobs.service';
+import { OnlineJob } from '@/types/job';
 import TopNav from '@/shared/components/navigation/TopNav';
 import { cn } from '@/shared/utils/cn';
 import { useAuth } from '@/context/AuthContext';
@@ -47,11 +47,9 @@ export default function NewJobPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!db) return;
-
         setLoading(true);
         try {
-            const jobData = {
+            const jobData: Omit<OnlineJob, 'id'> = {
                 normalizedRole: formData.normalizedRole,
                 company: formData.company,
                 experienceRange: { min: formData.experienceMin, max: formData.experienceMax },
@@ -69,7 +67,7 @@ export default function NewJobPage() {
                 lastVerified: new Date().toISOString(),
             };
 
-            await addDoc(collection(db, 'jobs'), jobData);
+            await JobsService.create(jobData);
             router.push('/admin/jobs');
         } catch (error) {
             console.error('Error posting job:', error);

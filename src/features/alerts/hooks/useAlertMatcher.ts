@@ -2,23 +2,23 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { db } from '@/lib/firebase/client';
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import { Alert, OnlineJob } from '@/types';
+import { AlertsService } from '@/features/alerts/services/alerts.service';
+import { JobsService } from '@/features/jobs/services/jobs.service';
+import { OnlineJob } from '@/types/job';
 
 export function useAlertMatcher() {
-    const { user, profile } = useAuth();
+    const { user } = useAuth();
     const [matches, setMatches] = useState<{ id: string; data: OnlineJob }[]>([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        if (user && db) {
+        if (user) {
             checkNewJobs();
         }
     }, [user]);
 
     const checkNewJobs = async () => {
-        if (!user || !db) return;
+        if (!user) return;
 
         try {
             setLoading(true);
@@ -28,9 +28,9 @@ export function useAlertMatcher() {
             const lastVisit = lastVisitStr ? new Date(lastVisitStr) : new Date(Date.now() - 24 * 60 * 60 * 1000);
 
             // Fetch user alerts
-            const alertsQ = query(collection(db, 'alerts'), where('userId', '==', user.uid));
-            const alertsSnap = await getDocs(alertsQ);
-            const alerts = alertsSnap.docs.map(doc => doc.data() as Alert);
+            // Alert service returns { id, data: Alert }[]
+            const alertsWithId = await AlertsService.getUserAlerts(user.uid);
+            const alerts = alertsWithId.map(a => a.data);
 
             if (alerts.length === 0) {
                 setLoading(false);
@@ -38,17 +38,11 @@ export function useAlertMatcher() {
             }
 
             // Fetch new jobs since last visit (limit to 20 for safety)
-            const jobsQ = query(
-                collection(db, 'jobs'),
-                where('postedAt', '>', lastVisit.toISOString()),
-                orderBy('postedAt', 'desc'),
-                limit(20)
-            );
-            const jobsSnap = await getDocs(jobsQ);
-            const newJobs = jobsSnap.docs.map(doc => ({
-                id: doc.id,
-                data: doc.data() as OnlineJob
-            }));
+            // Use JobsService
+            const newJobs = await JobsService.getAll({
+                postedSince: lastVisit.toISOString(),
+                limitCount: 20
+            });
 
             // Match jobs against alerts
             const matchedJobs = newJobs.filter(job => {

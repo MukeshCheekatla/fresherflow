@@ -1,22 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client';
-import { OnlineJob, UserIntent } from '@/types';
+import { useJobs } from '@/features/jobs/hooks/useJobs';
+import { useSavedJobs } from '@/features/jobs/hooks/useSavedJobs';
+import Link from 'next/link';
+import JobFilters, { FilterState } from '@/features/jobs/components/JobFilters';
+import { OnlineJob, UserIntent } from '@/types/job';
 import TopNav from '@/shared/components/navigation/TopNav';
 import IntentSelector from '@/features/jobs/components/IntentSelector';
 import JobCard from '@/features/jobs/components/JobCard';
 import { useRouter } from 'next/navigation';
-
 import { useAlertMatcher } from '@/features/alerts/hooks/useAlertMatcher';
-import Link from 'next/link';
-import JobFilters, { FilterState } from '@/features/jobs/components/JobFilters';
 
 export default function Home() {
-  const [allJobs, setAllJobs] = useState<{ id: string; data: OnlineJob }[]>([]);
+  const { jobs: allJobs, loading } = useJobs(50);
+  const { isSaved, toggleSave } = useSavedJobs();
   const [filteredJobs, setFilteredJobs] = useState<{ id: string; data: OnlineJob }[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedIntent, setSelectedIntent] = useState<UserIntent>();
   const [activeFilters, setActiveFilters] = useState<FilterState>({
     experience: 0,
@@ -28,40 +27,8 @@ export default function Home() {
   const { matches: alertMatches } = useAlertMatcher();
 
   useEffect(() => {
-    fetchJobs();
-  }, []);
-
-  useEffect(() => {
     applyFilters();
   }, [activeFilters, allJobs]);
-
-  const fetchJobs = async () => {
-    if (!db) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const q = query(
-        collection(db, 'jobs'),
-        orderBy('postedAt', 'desc'),
-        limit(50)
-      );
-      const snapshot = await getDocs(q);
-      const jobsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        data: doc.data() as OnlineJob,
-      }));
-
-      setAllJobs(jobsData);
-      setFilteredJobs(jobsData);
-    } catch (error) {
-      console.error('Error fetching jobs:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const applyFilters = () => {
     let results = [...allJobs];
@@ -183,6 +150,8 @@ export default function Home() {
                     job={job.data}
                     jobId={job.id}
                     onClick={() => handleJobClick(job.id)}
+                    isSaved={isSaved(job.id)}
+                    onToggleSave={() => toggleSave(job.id)}
                   />
                 ))}
               </div>

@@ -11,31 +11,22 @@ import {
     isSignInWithEmailLink,
     signInWithEmailLink
 } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase/client';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-
-interface UserProfile {
-    email: string;
-    savedJobs: string[];
-    createdAt: string;
-}
+import { auth } from '@/lib/firebase/client';
 
 interface AuthContextType {
     user: User | null;
-    profile: UserProfile | null;
     loading: boolean;
     isAdmin: boolean;
     loginWithGoogle: () => Promise<import('firebase/auth').UserCredential>;
     loginWithEmail: (email: string) => Promise<void>;
     logout: () => Promise<void>;
-    toggleSaveJob: (jobId: string) => Promise<void>;
+    isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
-    const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -46,11 +37,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             setUser(user);
-            if (user) {
-                await fetchOrCreateProfile(user);
-            } else {
-                setProfile(null);
-            }
             setLoading(false);
         });
 
@@ -61,44 +47,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         return () => unsubscribe();
     }, []);
-
-    const fetchOrCreateProfile = async (user: User) => {
-        if (!db) return;
-        const docRef = doc(db, 'users', user.uid);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-            setProfile(docSnap.data() as UserProfile);
-        } else {
-            const newProfile: UserProfile = {
-                email: user.email || '',
-                savedJobs: [],
-                createdAt: new Date().toISOString(),
-            };
-            await setDoc(docRef, newProfile);
-            setProfile(newProfile);
-        }
-    };
-
-    const toggleSaveJob = async (jobId: string) => {
-        if (!user || !profile || !db) return;
-
-        const isSaved = profile.savedJobs.includes(jobId);
-        const updatedSavedJobs = isSaved
-            ? profile.savedJobs.filter(id => id !== jobId)
-            : [...profile.savedJobs, jobId];
-
-        const updatedProfile = { ...profile, savedJobs: updatedSavedJobs };
-        setProfile(updatedProfile);
-
-        try {
-            await setDoc(doc(db, 'users', user.uid), updatedProfile, { merge: true });
-        } catch (error) {
-            console.error('Error updating saved jobs:', error);
-            // Revert local state on error
-            setProfile(profile);
-        }
-    };
 
     const handleEmailSignIn = async () => {
         if (!auth) return;
@@ -140,7 +88,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const isAdmin = !!(user && process.env.NEXT_PUBLIC_ADMIN_UIDS?.split(',').includes(user.uid));
 
     return (
-        <AuthContext.Provider value={{ user, profile, loading, isAdmin, loginWithGoogle, loginWithEmail, logout, toggleSaveJob }}>
+        <AuthContext.Provider value={{
+            user,
+            loading,
+            isAdmin,
+            isAuthenticated: !!user,
+            loginWithGoogle,
+            loginWithEmail,
+            logout
+        }}>
             {children}
         </AuthContext.Provider>
     );

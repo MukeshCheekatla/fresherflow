@@ -1,9 +1,8 @@
 'use client';
 
 import { use, useState, useEffect } from 'react';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client';
-import { OnlineJob } from '@/types';
+import { JobsService } from '@/features/jobs/services/jobs.service';
+import { OnlineJob } from '@/types/job';
 import TopNav from '@/shared/components/navigation/TopNav';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -38,12 +37,10 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
     }, [isAdmin, authLoading, jobId, router]);
 
     const fetchJob = async (id: string) => {
-        if (!db) return;
         try {
-            const docRef = doc(db, 'jobs', id);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                const data = docSnap.data() as OnlineJob;
+            const result = await JobsService.getById(id);
+            if (result) {
+                const { data } = result;
                 // Flatten constraints for form
                 setFormData({
                     normalizedRole: data.normalizedRole,
@@ -74,11 +71,9 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!db) return;
-
         setLoading(true);
         try {
-            const jobData = {
+            const jobData: Partial<OnlineJob> = {
                 normalizedRole: formData.normalizedRole,
                 company: formData.company,
                 experienceRange: { min: parseInt(formData.experienceMin), max: parseInt(formData.experienceMax) },
@@ -95,7 +90,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                 lastVerified: new Date().toISOString(),
             };
 
-            await updateDoc(doc(db, 'jobs', jobId), jobData);
+            await JobsService.update(jobId, jobData);
             router.push('/admin/jobs');
         } catch (error) {
             console.error('Error updating job:', error);

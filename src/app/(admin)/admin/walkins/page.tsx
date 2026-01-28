@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { collection, query, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client';
-import { WalkinJob } from '@/types';
+import { useEffect } from 'react';
+import { useWalkins } from '@/features/walkins/hooks/useWalkins';
+import { WalkinsService } from '@/features/walkins/services/walkins.service';
+import { WalkinJob } from '@/types/walkin';
 import TopNav from '@/shared/components/navigation/TopNav';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
@@ -12,40 +12,27 @@ import { useRouter } from 'next/navigation';
 export default function AdminWalkinsList() {
     const { isAdmin, loading: authLoading } = useAuth();
     const router = useRouter();
-    const [walkins, setWalkins] = useState<{ id: string; data: WalkinJob }[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { walkins: allWalkins, loading: walkinsLoading, refetch } = useWalkins();
+
+    const walkins = allWalkins.map(w => ({ id: w.id, data: w.data }));
 
     useEffect(() => {
         if (!authLoading && !isAdmin) {
             router.push('/');
-        } else if (isAdmin) {
-            fetchWalkins();
         }
     }, [isAdmin, authLoading, router]);
 
-    const fetchWalkins = async () => {
-        if (!db) return;
-        try {
-            const q = query(collection(db, 'walkins'), orderBy('walkInDate', 'desc'));
-            const snapshot = await getDocs(q);
-            setWalkins(snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() as WalkinJob })));
-        } catch (error) {
-            console.error('Error fetching walkins:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleDelete = async (id: string) => {
         if (!confirm('Delete this walk-in?')) return;
-        if (!db) return;
         try {
-            await deleteDoc(doc(db, 'walkins', id));
-            setWalkins(walkins.filter(w => w.id !== id));
+            await WalkinsService.delete(id);
+            refetch();
         } catch (error) {
             console.error('Error deleting walkin:', error);
         }
     };
+
+    const loading = authLoading || walkinsLoading;
 
     if (authLoading || loading) return <div className="min-h-screen pt-20 text-center">Loading...</div>;
     if (!isAdmin) return null;

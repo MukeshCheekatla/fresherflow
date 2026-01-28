@@ -1,9 +1,8 @@
-'use client';
+import { useEffect } from 'react';
 
-import { useEffect, useState } from 'react';
-import { collection, query, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client';
-import { OnlineJob } from '@/types';
+import { useJobs } from '@/features/jobs/hooks/useJobs';
+import { JobsService } from '@/features/jobs/services/jobs.service';
+import { OnlineJob } from '@/types/job';
 import TopNav from '@/shared/components/navigation/TopNav';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
@@ -13,41 +12,28 @@ import { cn } from '@/shared/utils/cn';
 export default function AdminJobsList() {
     const { isAdmin, loading: authLoading } = useAuth();
     const router = useRouter();
-    const [jobs, setJobs] = useState<{ id: string; data: OnlineJob }[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { jobs: allJobs, loading: jobsLoading, refetch } = useJobs(100);
+
+    const jobs = allJobs.map(j => ({ id: j.id, data: j.data }));
 
     useEffect(() => {
         if (!authLoading && !isAdmin) {
             router.push('/');
-        } else if (isAdmin) {
-            fetchJobs();
         }
     }, [isAdmin, authLoading, router]);
 
-    const fetchJobs = async () => {
-        if (!db) return;
-        try {
-            const q = query(collection(db, 'jobs'), orderBy('postedAt', 'desc'));
-            const snapshot = await getDocs(q);
-            setJobs(snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() as OnlineJob })));
-        } catch (error) {
-            console.error('Error fetching jobs:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this job?')) return;
-        if (!db) return;
         try {
-            await deleteDoc(doc(db, 'jobs', id));
-            setJobs(jobs.filter(job => job.id !== id));
+            await JobsService.delete(id);
+            refetch();
         } catch (error) {
             console.error('Error deleting job:', error);
             alert('Failed to delete job');
         }
     };
+
+    const loading = authLoading || jobsLoading;
 
     if (authLoading || loading) return <div className="min-h-screen pt-20 text-center">Loading...</div>;
     if (!isAdmin) return null;

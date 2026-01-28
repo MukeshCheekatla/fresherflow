@@ -1,9 +1,8 @@
 'use client';
 
 import { use, useState, useEffect } from 'react';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client';
-import { WalkinJob } from '@/types';
+import { WalkinsService } from '@/features/walkins/services/walkins.service';
+import { WalkinJob } from '@/types/walkin';
 import TopNav from '@/shared/components/navigation/TopNav';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -27,12 +26,10 @@ export default function EditWalkinPage({ params }: { params: Promise<{ id: strin
     }, [isAdmin, authLoading, walkinId, router]);
 
     const fetchWalkin = async (id: string) => {
-        if (!db) return;
         try {
-            const docRef = doc(db, 'walkins', id);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                const data = docSnap.data() as WalkinJob;
+            const result = await WalkinsService.getById(id);
+            if (result) {
+                const { data } = result;
                 setFormData({
                     company: data.company,
                     roles: data.roles.join(', '),
@@ -57,11 +54,9 @@ export default function EditWalkinPage({ params }: { params: Promise<{ id: strin
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!db) return;
-
         setLoading(true);
         try {
-            const walkinData = {
+            const walkinData: Partial<WalkinJob> = {
                 company: formData.company,
                 roles: formData.roles.split(',').map((s: string) => s.trim()).filter(Boolean),
                 experienceRange: { min: parseInt(formData.experienceMin), max: parseInt(formData.experienceMax) },
@@ -73,7 +68,7 @@ export default function EditWalkinPage({ params }: { params: Promise<{ id: strin
                 lastVerified: new Date().toISOString(),
             };
 
-            await updateDoc(doc(db, 'walkins', walkinId), walkinData);
+            await WalkinsService.update(walkinId, walkinData);
             router.push('/admin/walkins');
         } catch (error) {
             console.error('Error updating walkin:', error);

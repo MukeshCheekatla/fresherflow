@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client';
+import { WalkinsService } from '@/features/walkins/services/walkins.service';
+import { WalkinJob } from '@/types/walkin';
 import TopNav from '@/shared/components/navigation/TopNav';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -34,11 +34,9 @@ export default function NewWalkinPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!db) return;
-
         setLoading(true);
         try {
-            const walkinData = {
+            const walkinData: Omit<WalkinJob, 'id'> = {
                 company: formData.company,
                 roles: formData.roles.split(',').map(s => s.trim()).filter(Boolean),
                 experienceRange: { min: formData.experienceMin, max: formData.experienceMax },
@@ -51,7 +49,7 @@ export default function NewWalkinPage() {
                 lastVerified: new Date().toISOString(),
             };
 
-            await addDoc(collection(db, 'walkins'), walkinData);
+            await WalkinsService.create(walkinData);
             router.push('/admin/walkins');
         } catch (error) {
             console.error('Error posting walkin:', error);

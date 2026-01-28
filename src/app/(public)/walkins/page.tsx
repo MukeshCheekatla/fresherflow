@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client';
-import { WalkinJob } from '@/types';
+import { useWalkins } from '@/features/walkins/hooks/useWalkins';
+import { WalkinJob } from '@/types/walkin';
 import TopNav from '@/shared/components/navigation/TopNav';
 import WalkinCard from '@/features/walkins/components/WalkinCard';
 import { cn } from '@/shared/utils/cn';
@@ -21,46 +20,15 @@ const MAJOR_CITIES = [
 ];
 
 export default function WalkinsPage() {
-    const [walkins, setWalkins] = useState<{ id: string; data: WalkinJob }[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { walkins: allWalkins, loading } = useWalkins();
     const [selectedCity, setSelectedCity] = useState('All Cities');
 
-    useEffect(() => {
-        fetchWalkins();
-    }, [selectedCity]);
-
-    const fetchWalkins = async () => {
-        if (!db) {
-            setLoading(false);
-            return;
-        }
-
-        try {
-            setLoading(true);
-            const today = new Date().toISOString().split('T')[0];
-
-            // Simplified query to avoid index requirements for MVP
-            const q = query(collection(db, 'walkins'));
-            const snapshot = await getDocs(q);
-
-            let walkinsData = snapshot.docs.map(doc => ({
-                id: doc.id,
-                data: doc.data() as WalkinJob,
-            }));
-
-            // Filter and sort client-side for zero-cost simplicity
-            walkinsData = walkinsData
-                .filter(w => w.data.lastValidDay >= today)
-                .filter(w => selectedCity === 'All Cities' || w.data.city === selectedCity)
-                .sort((a, b) => a.data.lastValidDay.localeCompare(b.data.lastValidDay));
-
-            setWalkins(walkinsData);
-        } catch (error) {
-            console.error('Error fetching walk-ins:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Filter and sort client-side
+    const today = new Date().toISOString().split('T')[0];
+    const walkins = allWalkins.map(w => ({ id: w.id, data: w.data })) // ensure format
+        .filter(w => w.data.lastValidDay >= today)
+        .filter(w => selectedCity === 'All Cities' || w.data.city === selectedCity)
+        .sort((a, b) => a.data.lastValidDay.localeCompare(b.data.lastValidDay));
 
     return (
         <div className="min-h-screen bg-neutral-50">
@@ -113,26 +81,14 @@ export default function WalkinsPage() {
                     </div>
                 ) : walkins.length === 0 ? (
                     <div className="text-center py-12">
-                        {!db ? (
-                            <>
-                                <p className="text-neutral-600 mb-4">⚠️ Firebase Not Configured</p>
-                                <p className="text-sm text-neutral-500 mb-2">
-                                    Please set up your Firebase project and add credentials to <code className="bg-neutral-100 px-2 py-1 rounded">.env.local</code>
-                                </p>
-                                <p className="text-sm text-neutral-500">
-                                    See <a href="https://github.com" className="text-primary hover:underline">README.md</a> for setup instructions
-                                </p>
-                            </>
-                        ) : (
-                            <>
-                                <p className="text-neutral-600 mb-4">
-                                    No walk-ins found {selectedCity !== 'All Cities' && `in ${selectedCity}`}
-                                </p>
-                                <p className="text-sm text-neutral-500">
-                                    Admin can post walk-ins at <a href="/admin" className="text-primary hover:underline">/admin</a>
-                                </p>
-                            </>
-                        )}
+                        <>
+                            <p className="text-neutral-600 mb-4">
+                                No walk-ins found {selectedCity !== 'All Cities' && `in ${selectedCity}`}
+                            </p>
+                            <p className="text-sm text-neutral-500">
+                                Admin can post walk-ins at <a href="/admin/walkins" className="text-primary hover:underline">/admin/walkins</a>
+                            </p>
+                        </>
                     </div>
                 ) : (
                     <div className="space-y-4">

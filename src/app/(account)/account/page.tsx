@@ -5,8 +5,13 @@ import TopNav from '@/shared/components/navigation/TopNav';
 import { cn } from '@/shared/utils/cn';
 import Link from 'next/link';
 
+import { useProfile } from '@/features/auth/hooks/useProfile';
+
 export default function AccountPage() {
-    const { user, profile, loading, logout } = useAuth();
+    const { user, loading: authLoading, logout } = useAuth();
+    const { profile, loading: profileLoading } = useProfile();
+
+    const loading = authLoading || profileLoading;
 
     if (loading) {
         return (

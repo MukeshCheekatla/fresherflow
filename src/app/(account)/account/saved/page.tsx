@@ -1,47 +1,43 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, getDocs, query, where, documentId } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client';
 import { useAuth } from '@/context/AuthContext';
-import { OnlineJob } from '@/types';
+import { useSavedJobs } from '@/features/jobs/hooks/useSavedJobs';
+import { JobsService } from '@/features/jobs/services/jobs.service';
+import { OnlineJob } from '@/types/job';
 import TopNav from '@/shared/components/navigation/TopNav';
 import JobCard from '@/features/jobs/components/JobCard';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function SavedJobsPage() {
-    const { user, profile, loading } = useAuth();
+    const { user, loading: authLoading } = useAuth();
+    const { savedJobIds, isSaved, toggleSave } = useSavedJobs();
     const [savedJobs, setSavedJobs] = useState<{ id: string; data: OnlineJob }[]>([]);
     const [fetchingJobs, setFetchingJobs] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
-        if (profile?.savedJobs && profile.savedJobs.length > 0) {
-            fetchJobs(profile.savedJobs);
+        if (savedJobIds.length > 0) {
+            loadJobs(savedJobIds);
         } else {
             setSavedJobs([]);
         }
-    }, [profile?.savedJobs]);
+    }, [savedJobIds]);
 
-    const fetchJobs = async (jobIds: string[]) => {
-        if (!db) return;
+    const loadJobs = async (ids: string[]) => {
         try {
             setFetchingJobs(true);
-            const q = query(
-                collection(db, 'jobs'),
-                where(documentId(), 'in', jobIds.slice(0, 10))
-            );
-            const snapshot = await getDocs(q);
-            const jobs = snapshot.docs.map(doc => ({
-                id: doc.id,
-                data: doc.data() as OnlineJob
-            }));
+            const jobs = await JobsService.getByIds(ids);
             setSavedJobs(jobs);
         } catch (error) {
-            console.error('Error fetching saved jobs:', error);
+            console.error('Error loading saved jobs:', error);
         } finally {
             setFetchingJobs(false);
         }
     };
+
+    const loading = authLoading;
 
     if (loading) {
         return (
@@ -105,12 +101,14 @@ export default function SavedJobsPage() {
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {savedJobs.map((job) => (
+                        {savedJobs.map((job: { id: string, data: OnlineJob }) => (
                             <JobCard
                                 key={job.id}
                                 job={job.data}
                                 jobId={job.id}
-                                onClick={() => window.location.href = `/jobs/${job.id}`}
+                                isSaved={isSaved(job.id)}
+                                onToggleSave={() => toggleSave(job.id)}
+                                onClick={() => router.push(`/jobs/${job.id}`)}
                             />
                         ))}
                     </div>

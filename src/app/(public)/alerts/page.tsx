@@ -1,54 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
 import { useAuth } from '@/context/AuthContext';
-import { db } from '@/lib/firebase/client';
-import { collection, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
-import { Alert } from '@/types';
+import { useAlerts } from '@/features/alerts/hooks/useAlerts';
 import TopNav from '@/shared/components/navigation/TopNav';
 import AlertForm from '@/features/alerts/components/AlertForm';
-import { cn } from '@/shared/utils/cn';
+import { AlertsService } from '@/features/alerts/services/alerts.service';
 
 export default function AlertsPage() {
     const { user, loading: authLoading } = useAuth();
-    const [alerts, setAlerts] = useState<{ id: string; data: Alert }[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { alerts, loading, refetch, removeAlert } = useAlerts();
     const [showForm, setShowForm] = useState(false);
 
-    useEffect(() => {
-        if (user) {
-            fetchAlerts();
-        } else if (!authLoading) {
-            setLoading(false);
-        }
-    }, [user, authLoading]);
-
-    const fetchAlerts = async () => {
-        if (!user || !db) return;
+    const handleDelete = async (id: string) => {
         try {
-            setLoading(true);
-            const q = query(
-                collection(db, 'alerts'),
-                where('userId', '==', user.uid)
-            );
-            const snapshot = await getDocs(q);
-            const alertsData = snapshot.docs.map(doc => ({
-                id: doc.id,
-                data: doc.data() as Alert
-            })).sort((a, b) => new Date(b.data.createdAt).getTime() - new Date(a.data.createdAt).getTime());
-            setAlerts(alertsData);
-        } catch (error) {
-            console.error('Error fetching alerts:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const deleteAlert = async (id: string) => {
-        if (!db) return;
-        try {
-            await deleteDoc(doc(db, 'alerts', id));
-            setAlerts(alerts.filter(a => a.id !== id));
+            await AlertsService.delete(id);
+            removeAlert(id);
         } catch (error) {
             console.error('Error deleting alert:', error);
         }
@@ -79,9 +47,10 @@ export default function AlertsPage() {
                     <div className="bg-white rounded-2xl border border-neutral-200 p-8 mb-8">
                         <h2 className="text-xl font-bold text-neutral-900 mb-6">New Job Alert</h2>
                         <AlertForm
+
                             onSuccess={() => {
                                 setShowForm(false);
-                                fetchAlerts();
+                                refetch();
                             }}
                             onCancel={() => setShowForm(false)}
                         />
@@ -143,7 +112,7 @@ export default function AlertsPage() {
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => deleteAlert(alert.id)}
+                                    onClick={() => handleDelete(alert.id)}
                                     className="p-2 text-neutral-400 hover:text-red-600 transition-colors"
                                     aria-label="Delete alert"
                                 >
