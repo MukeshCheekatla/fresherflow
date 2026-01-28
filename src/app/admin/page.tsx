@@ -40,15 +40,6 @@ export default function AdminPage() {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-    useEffect(() => {
-        if (!authLoading && !isAdmin) {
-            router.push('/');
-        }
-    }, [isAdmin, authLoading, router]);
-
-    if (authLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-    if (!isAdmin) return null;
-
     const [formData, setFormData] = useState({
         normalizedRole: '',
         company: '',
@@ -70,6 +61,15 @@ export default function AdminPage() {
         walkInTimeWindow: '',
         lastValidDay: '',
     });
+
+    useEffect(() => {
+        if (!authLoading && !isAdmin) {
+            router.push('/');
+        }
+    }, [isAdmin, authLoading, router]);
+
+    if (authLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    if (!isAdmin) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
