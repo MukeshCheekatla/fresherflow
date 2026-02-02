@@ -5,7 +5,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import { LogIn, Loader2, Mail, Lock, ArrowRight, Sparkles } from 'lucide-react';
+import {
+    EnvelopeIcon,
+    LockClosedIcon,
+    ArrowRightIcon,
+    BriefcaseIcon,
+    ArrowPathIcon
+} from '@heroicons/react/24/outline';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -22,7 +28,7 @@ export default function LoginPage() {
 
         try {
             await login(email, password);
-            toast.success('✨ Welcome back to the Flow!', { id: loadingToast });
+            toast.success('Welcome back to the Flow!', { id: loadingToast });
             router.push('/dashboard');
         } catch (err: any) {
             toast.error(err.message || 'Login failed. Please check your credentials.', { id: loadingToast });
@@ -32,29 +38,29 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 animate-in fade-in duration-700">
-            <div className="max-w-[440px] w-full">
+        <div className="min-h-dvh flex items-center justify-center bg-background px-4 animate-in fade-in duration-700">
+            <div className="max-w-[380px] w-full py-8">
                 {/* Brand */}
-                <div className="text-center space-y-2 mb-10">
-                    <Link href="/" className="inline-flex items-center gap-2 group mb-6">
-                        <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center group-hover:rotate-6 transition-all duration-300 shadow-xl shadow-slate-200">
-                            <Sparkles className="w-6 h-6 text-white" />
+                <div className="text-center space-y-3 mb-8">
+                    <Link href="/" className="inline-flex items-center gap-2 group mb-4">
+                        <div className="w-10 h-10 bg-foreground rounded-xl flex items-center justify-center group-hover:rotate-6 transition-all duration-300 shadow-xl">
+                            <BriefcaseIcon className="w-5 h-5 text-background" />
                         </div>
-                        <span className="font-black text-3xl tracking-tighter text-slate-900">FresherFlow</span>
+                        <span className="font-black text-xl tracking-tighter text-foreground uppercase">FresherFlow</span>
                     </Link>
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Welcome Back.</h1>
-                    <p className="text-slate-500 font-medium tracking-tight">Access your optimized opportunity stream.</p>
+                    <h2 className="tracking-tighter !text-2xl">Welcome Back.</h2>
+                    <p className="text-muted-foreground font-medium tracking-tight text-sm">Access your optimized opportunity stream.</p>
                 </div>
 
                 {/* Card */}
-                <div className="glass-card rounded-[2.5rem] p-10 border border-white shadow-2xl shadow-slate-100">
+                <div className="glass-card rounded-[2rem] p-6 md:p-8 border border-border shadow-2xl">
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-2">
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">
+                            <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">
                                 Email Address
                             </label>
                             <div className="relative">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <EnvelopeIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                 <input
                                     type="email"
                                     required
@@ -67,11 +73,11 @@ export default function LoginPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">
+                            <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">
                                 Password
                             </label>
                             <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <LockClosedIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                 <input
                                     type="password"
                                     required
@@ -86,21 +92,21 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full premium-button py-4 flex items-center justify-center gap-2"
+                            className="w-full premium-button"
                         >
                             {isLoading ? (
-                                <Loader2 className="w-5 h-5 animate-spin" />
+                                <ArrowPathIcon className="w-4 h-4 animate-spin" />
                             ) : (
-                                <ArrowRight className="w-5 h-5" />
+                                <ArrowRightIcon className="w-4 h-4" />
                             )}
                             {isLoading ? 'Authenticating...' : 'Enter Dashboard'}
                         </button>
                     </form>
 
-                    <div className="mt-8 text-center pt-6 border-t border-slate-50">
-                        <p className="text-sm font-bold text-slate-400">
+                    <div className="mt-8 text-center pt-6 border-t border-border">
+                        <p className="text-sm font-bold text-muted-foreground">
                             New here?{' '}
-                            <Link href="/register" className="text-slate-900 hover:underline">
+                            <Link href="/register" className="text-foreground hover:underline">
                                 Create an account
                             </Link>
                         </p>
@@ -108,13 +114,13 @@ export default function LoginPage() {
                 </div>
 
                 {/* Footer Credits */}
-                <div className="text-center mt-10 space-y-4">
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">
+                <div className="text-center mt-8 space-y-3">
+                    <p className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-[0.2em]">
                         FresherFlow © 2026 Secure Authentication
                     </p>
-                    <div className="flex items-center justify-center gap-6">
-                        <Link href="/privacy" className="text-xs font-bold text-slate-400 hover:text-slate-900">Privacy</Link>
-                        <Link href="/terms" className="text-xs font-bold text-slate-400 hover:text-slate-900">Terms</Link>
+                    <div className="flex items-center justify-center gap-4">
+                        <Link href="/privacy" className="text-[10px] font-bold text-muted-foreground hover:text-foreground">Privacy</Link>
+                        <Link href="/terms" className="text-[10px] font-bold text-muted-foreground hover:text-foreground">Terms</Link>
                     </div>
                 </div>
             </div>

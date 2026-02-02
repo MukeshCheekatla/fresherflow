@@ -3,7 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import { Lock, ShieldCheck, ArrowLeft, Loader2 } from 'lucide-react';
+import {
+    LockClosedIcon,
+    ShieldCheckIcon,
+    ArrowLeftIcon,
+    ArrowPathIcon
+} from '@heroicons/react/24/outline';
 
 export default function AdminLoginPage() {
     const [email, setEmail] = useState('');
@@ -24,7 +29,7 @@ export default function AdminLoginPage() {
 
             const data = await response.json();
 
-            if (!response.ok) {
+            if (!response.status.toString().startsWith('2')) {
                 throw new Error(data.error?.message || 'Unauthorized access');
             }
 
@@ -46,17 +51,17 @@ export default function AdminLoginPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 animate-in fade-in duration-700">
-            <div className="max-w-md w-full">
+            <div className="max-w-[440px] w-full">
                 {/* Brand */}
-                <div className="text-center mb-10">
-                    <div className="w-16 h-16 bg-slate-900 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-slate-200 rotate-3 transform group-hover:rotate-0 transition-transform">
-                        <Lock className="w-8 h-8 text-white" />
+                <div className="text-center mb-10 space-y-4">
+                    <div className="w-16 h-16 bg-slate-900 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-slate-200 rotate-3 transform hover:rotate-0 transition-all duration-500">
+                        <LockClosedIcon className="w-8 h-8 text-white" />
                     </div>
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tighter">
+                    <h1 className="tracking-tighter">
                         Admin Portal
                     </h1>
-                    <p className="mt-2 text-slate-500 font-medium">
-                        YearHire Executive Management
+                    <p className="text-slate-500 font-medium tracking-tight">
+                        Executive Management Interface
                     </p>
                 </div>
 
@@ -72,8 +77,8 @@ export default function AdminLoginPage() {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="premium-input bg-white/50"
-                                placeholder="admin@yearhire.com"
+                                className="premium-input bg-white"
+                                placeholder="admin@fresherflow.com"
                             />
                         </div>
 
@@ -86,7 +91,7 @@ export default function AdminLoginPage() {
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="premium-input bg-white/50"
+                                className="premium-input bg-white"
                                 placeholder="••••••••"
                             />
                         </div>
@@ -94,20 +99,20 @@ export default function AdminLoginPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full premium-button py-4 flex items-center justify-center gap-2"
+                            className="w-full premium-button h-[56px]"
                         >
                             {isLoading ? (
-                                <Loader2 className="w-5 h-5 animate-spin" />
+                                <ArrowPathIcon className="w-5 h-5 animate-spin" />
                             ) : (
-                                <ShieldCheck className="w-5 h-5" />
+                                <ShieldCheckIcon className="w-5 h-5" />
                             )}
                             {isLoading ? 'Decrypting...' : 'Authorize Login'}
                         </button>
                     </form>
 
-                    <div className="mt-8 text-center">
+                    <div className="mt-8 text-center pt-6 border-t border-slate-50">
                         <Link href="/" className="text-sm font-bold text-slate-400 hover:text-slate-900 transition-colors flex items-center justify-center gap-2">
-                            <ArrowLeft className="w-4 h-4" />
+                            <ArrowLeftIcon className="w-4 h-4" />
                             Back to community site
                         </Link>
                     </div>

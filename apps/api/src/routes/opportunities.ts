@@ -26,9 +26,12 @@ router.get('/', requireAuth, profileGate, async (req: Request, res: Response, ne
         const dbFiltered = await prisma.opportunity.findMany({
             where: {
                 status: OpportunityStatus.ACTIVE,
-                ...(type && { type: type as any }),
-                type: { in: profile.interestedIn },
-                locations: { hasSome: profile.preferredCities },
+                ...(type ? { type: type as any } : { type: { in: profile.interestedIn } }),
+                ...(city ? {
+                    locations: { has: city as string }
+                } : {
+                    locations: { hasSome: profile.preferredCities }
+                }),
                 allowedPassoutYears: { has: profile.passoutYear }
             },
             include: {

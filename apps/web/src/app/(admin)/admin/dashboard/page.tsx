@@ -6,16 +6,17 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import {
-    Briefcase,
-    Clock,
-    Globe,
-    Trash2,
-    ChevronRight,
-    ArrowUpRight,
-    Plus,
-    BarChart3,
-    Calendar
-} from 'lucide-react';
+    BriefcaseIcon,
+    ClockIcon,
+    GlobeAltIcon,
+    TrashIcon,
+    ChevronRightIcon,
+    ArrowUpRightIcon,
+    PlusIcon,
+    ChartBarIcon,
+    CalendarIcon,
+    ChatBubbleBottomCenterTextIcon
+} from '@heroicons/react/24/outline';
 
 export default function AdminDashboardPage() {
     const { isAuthenticated, logout, token } = useAdmin();
@@ -79,10 +80,10 @@ export default function AdminDashboardPage() {
     if (!isAuthenticated) return null;
 
     const cards = [
-        { label: 'Total Listings', value: stats.total, icon: BarChart3, color: 'text-blue-600', bg: 'bg-blue-50' },
-        { label: 'Active Jobs', value: stats.active, icon: Briefcase, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-        { label: 'Walk-ins', value: stats.walkins, icon: Calendar, color: 'text-orange-600', bg: 'bg-orange-50' },
-        { label: 'Expired', value: stats.expired, icon: Clock, color: 'text-slate-600', bg: 'bg-slate-100' },
+        { label: 'Total Listings', value: stats.total, icon: ChartBarIcon, color: 'text-blue-600', bg: 'bg-blue-50' },
+        { label: 'Active Jobs', value: stats.active, icon: BriefcaseIcon, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+        { label: 'Walk-ins', value: stats.walkins, icon: CalendarIcon, color: 'text-orange-600', bg: 'bg-orange-50' },
+        { label: 'Expired', value: stats.expired, icon: ClockIcon, color: 'text-slate-600', bg: 'bg-slate-100' },
     ];
 
     return (
@@ -98,10 +99,10 @@ export default function AdminDashboardPage() {
                         onClick={() => fetchStats()}
                         className="p-2.5 text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all active:scale-95"
                     >
-                        <Clock className="w-5 h-5" />
+                        <ClockIcon className="w-5 h-5" />
                     </button>
                     <Link href="/admin/opportunities/create" className="premium-button flex items-center gap-2">
-                        <Plus className="w-5 h-5" />
+                        <PlusIcon className="w-5 h-5" />
                         New Opportunity
                     </Link>
                 </div>
@@ -126,7 +127,7 @@ export default function AdminDashboardPage() {
                                     ) : card.value}
                                 </h2>
                                 <span className="text-xs font-semibold text-emerald-500 flex items-center gap-0.5">
-                                    <ArrowUpRight className="w-3 h-3" />
+                                    <ArrowUpRightIcon className="w-3 h-3" />
                                     Live
                                 </span>
                             </div>
@@ -145,10 +146,10 @@ export default function AdminDashboardPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {[
-                            { title: 'New Job Listing', desc: 'Create a permanent role', icon: Globe, href: '/admin/opportunities/create' },
-                            { title: 'New Internship', desc: 'Post a student opportunity', icon: BarChart3, href: '/admin/opportunities/create' },
-                            { title: 'Review Feedback', desc: 'Check user reports', icon: MessageSquare, href: '/admin/feedback' },
-                            { title: 'Manage Listings', desc: 'Update or remove jobs', icon: Briefcase, href: '/admin/opportunities' },
+                            { title: 'New Job Listing', desc: 'Create a permanent role', icon: GlobeAltIcon, href: '/admin/opportunities/create' },
+                            { title: 'New Internship', desc: 'Post a student opportunity', icon: ChartBarIcon, href: '/admin/opportunities/create' },
+                            { title: 'Review Feedback', desc: 'Check user reports', icon: ChatBubbleBottomCenterTextIcon, href: '/admin/feedback' },
+                            { title: 'Manage Listings', desc: 'Update or remove jobs', icon: BriefcaseIcon, href: '/admin/opportunities' },
                         ].map((action, i) => (
                             <Link
                                 key={i}
@@ -162,7 +163,7 @@ export default function AdminDashboardPage() {
                                     <h4 className="font-bold text-slate-900 group-hover:text-blue-600">{action.title}</h4>
                                     <p className="text-sm text-slate-500">{action.desc}</p>
                                 </div>
-                                <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-slate-900" />
+                                <ChevronRightIcon className="w-5 h-5 text-slate-300 group-hover:text-slate-900" />
                             </Link>
                         ))}
                     </div>
@@ -176,7 +177,7 @@ export default function AdminDashboardPage() {
                         </p>
                         <button className="bg-white text-slate-900 px-6 py-3 rounded-xl font-bold hover:bg-slate-100 transition-all flex items-center justify-center gap-2">
                             View Analytics
-                            <ArrowUpRight className="w-4 h-4" />
+                            <ArrowUpRightIcon className="w-4 h-4" />
                         </button>
                     </div>
                     {/* Decorative Background Elements */}
@@ -188,4 +189,3 @@ export default function AdminDashboardPage() {
     );
 }
 
-import { MessageSquare } from 'lucide-react';

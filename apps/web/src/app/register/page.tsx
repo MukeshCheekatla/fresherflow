@@ -5,7 +5,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import { UserPlus, Loader2, Mail, Lock, User, ArrowRight, Sparkles } from 'lucide-react';
+import {
+    UserPlusIcon,
+    ArrowPathIcon,
+    EnvelopeIcon,
+    LockClosedIcon,
+    UserIcon,
+    ArrowRightIcon,
+    BriefcaseIcon
+} from '@heroicons/react/24/outline';
 
 export default function RegisterPage() {
     const [email, setEmail] = useState('');
@@ -36,7 +44,7 @@ export default function RegisterPage() {
 
         try {
             await register(email, password, fullName);
-            toast.success('🚀 Welcome to the future of hiring!', { id: loadingToast });
+            toast.success('Welcome to the future of hiring!', { id: loadingToast });
             router.push('/profile/complete');
         } catch (err: any) {
             toast.error(err.message || 'Registration failed. Please try again.', { id: loadingToast });
@@ -46,86 +54,86 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12 animate-in fade-in duration-700">
-            <div className="max-w-[440px] w-full">
+        <div className="min-h-dvh flex items-center justify-center bg-background px-4 animate-in fade-in duration-700">
+            <div className="max-w-[400px] w-full py-6">
                 {/* Brand */}
-                <div className="text-center space-y-2 mb-10">
-                    <Link href="/" className="inline-flex items-center gap-2 group mb-6">
-                        <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center group-hover:rotate-6 transition-all duration-300 shadow-xl shadow-slate-200">
-                            <Sparkles className="w-6 h-6 text-white" />
+                <div className="text-center space-y-3 mb-6">
+                    <Link href="/" className="inline-flex items-center gap-2 group mb-3">
+                        <div className="w-10 h-10 bg-foreground rounded-xl flex items-center justify-center group-hover:rotate-6 transition-all duration-300 shadow-xl">
+                            <BriefcaseIcon className="w-5 h-5 text-background" />
                         </div>
-                        <span className="font-black text-3xl tracking-tighter text-slate-900">FresherFlow</span>
+                        <span className="font-black text-xl tracking-tighter text-foreground uppercase">FresherFlow</span>
                     </Link>
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Join the Flow.</h1>
-                    <p className="text-slate-500 font-medium tracking-tight">Engineering your path to a dream career.</p>
+                    <h2 className="tracking-tighter !text-2xl">Join the Stream.</h2>
+                    <p className="text-muted-foreground font-medium tracking-tight text-sm">Create your account and access verified opportunities.</p>
                 </div>
 
                 {/* Card */}
-                <div className="glass-card rounded-[2.5rem] p-10 border border-white shadow-2xl shadow-slate-100">
+                <div className="glass-card rounded-[2rem] p-6 md:p-7 border border-border shadow-2xl">
                     <form onSubmit={handleSubmit} className="space-y-5">
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                                Full Talent Name
+                        <div className="space-y-2">
+                            <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">
+                                Full Name
                             </label>
                             <div className="relative">
-                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                 <input
                                     type="text"
                                     required
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
-                                    className="premium-input pl-11 py-2.5 bg-slate-50/50 border-transparent focus:bg-white"
+                                    className="premium-input pl-11 py-2.5"
                                     placeholder="John Doe"
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                                Universal Identifier (Email)
+                        <div className="space-y-2">
+                            <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">
+                                Email Address
                             </label>
                             <div className="relative">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <EnvelopeIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                 <input
                                     type="email"
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="premium-input pl-11 py-2.5 bg-slate-50/50 border-transparent focus:bg-white"
+                                    className="premium-input pl-11 py-2.5"
                                     placeholder="alex@university.edu"
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                                Access Protocol (Password)
+                        <div className="space-y-2">
+                            <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">
+                                Password
                             </label>
                             <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <LockClosedIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                 <input
                                     type="password"
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="premium-input pl-11 py-2.5 bg-slate-50/50 border-transparent focus:bg-white"
+                                    className="premium-input pl-11 py-2.5"
                                     placeholder="••••••••"
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                                Confirm Protocol
+                        <div className="space-y-2">
+                            <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">
+                                Confirm Password
                             </label>
                             <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <LockClosedIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                 <input
                                     type="password"
                                     required
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="premium-input pl-11 py-2.5 bg-slate-50/50 border-transparent focus:bg-white"
+                                    className="premium-input pl-11 py-2.5"
                                     placeholder="••••••••"
                                 />
                             </div>
@@ -134,30 +142,30 @@ export default function RegisterPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full premium-button py-4 flex items-center justify-center gap-2 mt-4 shadow-xl shadow-slate-100"
+                            className="w-full premium-button mt-2"
                         >
                             {isLoading ? (
-                                <Loader2 className="w-5 h-5 animate-spin" />
+                                <ArrowPathIcon className="w-4 h-4 animate-spin" />
                             ) : (
-                                <ArrowRight className="w-5 h-5" />
+                                <ArrowRightIcon className="w-4 h-4" />
                             )}
                             {isLoading ? 'Synchronizing...' : 'Initialize Profile'}
                         </button>
                     </form>
 
-                    <div className="mt-8 text-center pt-6 border-t border-slate-50">
-                        <p className="text-sm font-bold text-slate-500">
-                            Already in the stream?{' '}
-                            <Link href="/login" className="text-slate-900 border-b-2 border-slate-900 pb-0.5 hover:text-blue-600 hover:border-blue-600 transition-all">
-                                Sign In
+                    <div className="mt-7 text-center pt-5 border-t border-border">
+                        <p className="text-sm font-bold text-muted-foreground">
+                            Already have an account?{' '}
+                            <Link href="/login" className="text-foreground hover:underline">
+                                Sign in
                             </Link>
                         </p>
                     </div>
                 </div>
 
                 {/* Footer Credits */}
-                <div className="text-center mt-10 space-y-4 pb-10">
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">
+                <div className="text-center mt-6">
+                    <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em]">
                         FresherFlow © 2026 Engineering the Future
                     </p>
                 </div>

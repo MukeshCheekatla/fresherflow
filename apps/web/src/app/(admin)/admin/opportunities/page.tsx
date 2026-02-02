@@ -7,22 +7,21 @@ import Link from 'next/link';
 import { adminApi } from '@/lib/api/admin';
 import toast from 'react-hot-toast';
 import {
-    Plus,
-    Search,
-    MoreVertical,
-    ExternalLink,
-    MapPin,
-    Building2,
-    Calendar,
-    Filter,
-    Trash2,
-    Clock,
-    Edit,
-    Eye,
-    AlertCircle,
-    Briefcase,
-    X
-} from 'lucide-react';
+    PlusCircleIcon,
+    MagnifyingGlassIcon,
+    MapPinIcon,
+    BuildingOfficeIcon,
+    CalendarIcon,
+    AdjustmentsHorizontalIcon,
+    TrashIcon,
+    ClockIcon,
+    PencilSquareIcon,
+    EyeIcon,
+    CheckCircleIcon,
+    BriefcaseIcon,
+    XMarkIcon,
+    DocumentTextIcon
+} from '@heroicons/react/24/outline';
 
 export default function OpportunitiesListPage() {
     const { isAuthenticated, token } = useAdmin();
@@ -130,29 +129,29 @@ export default function OpportunitiesListPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Stream Management</h1>
-                    <p className="text-slate-500 font-medium">Monitor and curate the FresherFlow active stream.</p>
+                    <h1 className="tracking-tighter">Stream Management</h1>
+                    <p className="text-slate-500 font-medium tracking-tight">Monitor and curate the FresherFlow active stream.</p>
                 </div>
-                <Link href="/admin/opportunities/create" className="premium-button flex items-center gap-2">
-                    <Plus className="w-5 h-5" />
+                <Link href="/admin/opportunities/create" className="premium-button">
+                    <PlusCircleIcon className="w-5 h-5" />
                     New Listing
                 </Link>
             </div>
 
             {/* Filters Bar */}
-            <div className="glass-card rounded-2xl p-4 flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-400 focus-within:border-slate-400 transition-colors flex-1 min-w-[240px]">
-                    <Search className="w-4 h-4" />
+            <div className="glass-card rounded-[1.5rem] p-4 flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl text-slate-400 focus-within:border-slate-900 transition-colors flex-1 min-w-[240px]">
+                    <MagnifyingGlassIcon className="w-4 h-4" />
                     <input
                         placeholder="Search listings..."
-                        className="bg-transparent border-none outline-none text-sm text-slate-900 w-full placeholder:text-slate-400"
+                        className="bg-transparent border-none outline-none text-sm text-slate-900 w-full placeholder:text-slate-400 font-bold"
                     />
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-600">
-                        <Filter className="w-4 h-4" />
-                        Filters:
+                    <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">
+                        <AdjustmentsHorizontalIcon className="w-4 h-4" />
+                        Filters
                     </div>
 
                     <select
@@ -187,16 +186,16 @@ export default function OpportunitiesListPage() {
                     ))}
                 </div>
             ) : opportunities.length === 0 ? (
-                <div className="bg-white border-2 border-dashed border-slate-200 rounded-3xl p-16 text-center">
-                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Briefcase className="w-8 h-8 text-slate-300" />
+                <div className="bg-white border-2 border-dashed border-slate-200 rounded-[2.5rem] p-16 text-center space-y-4">
+                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-300">
+                        <DocumentTextIcon className="w-8 h-8" />
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-2">No listings found</h3>
-                    <p className="text-slate-500 mb-8 max-w-sm mx-auto">
+                    <h3 className="tracking-tighter">No listings found</h3>
+                    <p className="text-slate-500 font-medium max-w-sm mx-auto">
                         Start by creating a new job, internship or walk-in to start the flow for freshers.
                     </p>
-                    <Link href="/admin/opportunities/create" className="premium-button-outline inline-flex items-center gap-2">
-                        <Plus className="w-5 h-5" />
+                    <Link href="/admin/opportunities/create" className="premium-button bg-slate-100 !text-slate-900 hover:bg-slate-200 inline-flex">
+                        <PlusCircleIcon className="w-5 h-5" />
                         Quick Create
                     </Link>
                 </div>
@@ -224,9 +223,9 @@ export default function OpportunitiesListPage() {
                                                     {opp.type[0]}
                                                 </div>
                                                 <div>
-                                                    <div className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{opp.title}</div>
-                                                    <div className="flex items-center gap-1.5 text-sm text-slate-500 font-medium mt-0.5">
-                                                        <Building2 className="w-3.5 h-3.5" />
+                                                    <div className="font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight text-sm">{opp.title}</div>
+                                                    <div className="flex items-center gap-1.5 text-xs text-slate-400 font-black uppercase tracking-widest mt-1">
+                                                        <BuildingOfficeIcon className="w-3.5 h-3.5" />
                                                         {opp.company}
                                                     </div>
                                                 </div>
@@ -234,13 +233,13 @@ export default function OpportunitiesListPage() {
                                         </td>
                                         <td className="px-6 py-5">
                                             <div className="space-y-1.5">
-                                                <div className="flex items-center gap-2 text-sm text-slate-600">
-                                                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                                                <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                                                    <MapPinIcon className="w-3.5 h-3.5 text-slate-300" />
                                                     {opp.locations.join(', ')}
                                                 </div>
-                                                <div className="flex items-center gap-2 text-sm text-slate-600">
-                                                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                                                    {new Date(opp.postedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                                    <CalendarIcon className="w-3.5 h-3.5 text-slate-300" />
+                                                    {new Date(opp.postedAt).toLocaleDateString()}
                                                 </div>
                                             </div>
                                         </td>
@@ -263,23 +262,23 @@ export default function OpportunitiesListPage() {
                                                     className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
                                                     title="Edit"
                                                 >
-                                                    <Edit className="w-5 h-5" />
+                                                    <PencilSquareIcon className="w-5 h-5" />
                                                 </Link>
                                                 {opp.status === 'ACTIVE' && (
                                                     <button
                                                         onClick={() => handleExpire(opp.id, opp.title)}
-                                                        className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all"
+                                                        className="p-2.5 text-slate-300 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all"
                                                         title="Expire"
                                                     >
-                                                        <Clock className="w-5 h-5" />
+                                                        <ClockIcon className="w-5 h-5" />
                                                     </button>
                                                 )}
                                                 <button
                                                     onClick={() => handleDelete(opp.id, opp.title)}
-                                                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                                                    className="p-2.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
                                                     title="Remove"
                                                 >
-                                                    <Trash2 className="w-5 h-5" />
+                                                    <TrashIcon className="w-5 h-5" />
                                                 </button>
                                             </div>
                                         </td>
@@ -299,13 +298,13 @@ export default function OpportunitiesListPage() {
                         <div className="p-8">
                             <div className="flex items-center justify-between mb-6">
                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${confirmModal.type === 'danger' ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'}`}>
-                                    {confirmModal.type === 'danger' ? <Trash2 className="w-6 h-6" /> : <Clock className="w-6 h-6" />}
+                                    {confirmModal.type === 'danger' ? <TrashIcon className="w-6 h-6" /> : <ClockIcon className="w-6 h-6" />}
                                 </div>
                                 <button
                                     onClick={() => setConfirmModal(prev => ({ ...prev, show: false }))}
-                                    className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
+                                    className="p-2 text-slate-300 hover:text-slate-900 transition-colors"
                                 >
-                                    <X className="w-6 h-6" />
+                                    <XMarkIcon className="w-6 h-6" />
                                 </button>
                             </div>
 

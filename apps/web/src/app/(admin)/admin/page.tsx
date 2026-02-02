@@ -3,8 +3,14 @@
 import { useJobs } from '@/features/jobs/hooks/useJobs';
 import { useWalkins } from '@/features/walkins/hooks/useWalkins';
 import { cn } from '@/lib/utils';
-import LoadingScreen from '@/shared/components/ui/LoadingScreen';
-import TopNav from '@/shared/components/navigation/TopNav';
+import {
+    BriefcaseIcon,
+    MapPinIcon,
+    PlusCircleIcon,
+    ArrowRightIcon,
+    ChartBarIcon,
+    ClockIcon
+} from '@heroicons/react/24/outline';
 import Link from 'next/link';
 
 export default function AdminDashboardHome() {
@@ -15,109 +21,119 @@ export default function AdminDashboardHome() {
     const walkinsCount = walkins.length;
 
     const stats = [
-        { label: 'Live Online Jobs', value: liveJobsCount, color: 'text-blue-600', bg: 'bg-blue-50' },
-        { label: 'Walk-in Drives', value: walkinsCount, color: 'text-purple-600', bg: 'bg-purple-50' },
-        { label: 'Total Postings', value: liveJobsCount + walkinsCount, color: 'text-green-600', bg: 'bg-green-50' },
-        { label: 'Recent (24h)', value: 0, color: 'text-amber-600', bg: 'bg-amber-50' },
+        { label: 'Live Online Jobs', value: liveJobsCount, icon: BriefcaseIcon, color: 'text-blue-600', bg: 'bg-blue-50' },
+        { label: 'Walk-in Drives', value: walkinsCount, icon: MapPinIcon, color: 'text-purple-600', bg: 'bg-purple-50' },
+        { label: 'Total Postings', value: liveJobsCount + walkinsCount, icon: ChartBarIcon, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+        { label: 'Recent (24h)', value: 0, icon: ClockIcon, color: 'text-amber-600', bg: 'bg-amber-50' },
     ];
 
     if (jobsLoading || walkinsLoading) {
-        return <LoadingScreen message="Loading Dashboard Summary..." />;
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="w-10 h-10 border-4 border-slate-900 border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
     }
 
     return (
-        <div className="min-h-screen bg-neutral-50 px-safe">
-            <TopNav />
-            <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-                <header className="mb-8">
-                    <h1 className="text-2xl font-bold text-neutral-900">Admin Command Center</h1>
-                    <p className="text-neutral-600">Overview of your job board's activity</p>
-                </header>
+        <div className="space-y-10 animate-in fade-in duration-700">
+            <header className="space-y-1">
+                <h1 className="tracking-tighter">Command Center</h1>
+                <p className="text-slate-500 font-medium">Platform overview and management hub.</p>
+            </header>
 
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                    {stats.map((stat) => (
-                        <div key={stat.label} className={`${stat.bg} p-4 rounded-2xl border border-white shadow-sm transition-transform active:scale-95`}>
-                            <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">{stat.label}</p>
-                            <p className={`text-3xl font-bold ${stat.color}`}>{stat.value}</p>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {stats.map((stat) => (
+                    <div key={stat.label} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className={cn("p-2 rounded-xl", stat.bg, stat.color)}>
+                                <stat.icon className="w-6 h-6" />
+                            </div>
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                                {stat.label}
+                            </span>
                         </div>
-                    ))}
-                </div>
-
-                {/* Quick Actions */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                    <Link
-                        href="/admin/jobs/new"
-                        className="group flex items-center justify-between p-6 bg-white rounded-2xl border border-neutral-200 shadow-sm hover:border-primary transition-all active:scale-[0.98]"
-                    >
-                        <div>
-                            <h3 className="text-lg font-bold text-neutral-900 group-hover:text-primary transition-colors">Post Online Job</h3>
-                            <p className="text-sm text-neutral-500">Add a new remote or onsite listing</p>
-                        </div>
-                        <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                        </div>
-                    </Link>
-
-                    <Link
-                        href="/admin/walkins/new"
-                        className="group flex items-center justify-between p-6 bg-white rounded-2xl border border-neutral-200 shadow-sm hover:border-primary transition-all active:scale-[0.98]"
-                    >
-                        <div>
-                            <h3 className="text-lg font-bold text-neutral-900 group-hover:text-primary transition-colors">Post Walk-in</h3>
-                            <p className="text-sm text-neutral-500">Schedule a new recruitment drive</p>
-                        </div>
-                        <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            </svg>
-                        </div>
-                    </Link>
-                </div>
-
-                {/* Recent Items Section could go here */}
-                <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
-                    <div className="p-4 border-b border-neutral-100 flex justify-between items-center">
-                        <h2 className="font-bold text-neutral-900">Recent Postings</h2>
-                        <Link href="/admin/jobs" className="text-xs font-semibold text-primary hover:underline">View All</Link>
+                        <p className="text-3xl font-black text-slate-900 tracking-tighter">{stat.value}</p>
                     </div>
-                    <div className="divide-y divide-neutral-50">
-                        {[...jobs, ...walkins]
-                            .sort((a, b) => new Date(b.data.postedAt).getTime() - new Date(a.data.postedAt).getTime())
-                            .slice(0, 5)
-                            .map((item) => {
-                                const isWalkin = 'walkInDate' in item.data;
-                                return (
-                                    <div key={item.id} className="p-4 flex items-center justify-between hover:bg-neutral-50 transition-colors">
-                                        <div className="min-w-0 flex-1">
-                                            <p className="font-semibold text-neutral-900 text-sm truncate">
-                                                {item.data.company}
-                                            </p>
-                                            <p className="text-xs text-neutral-500 truncate">
-                                                {isWalkin
-                                                    ? (item.data as any).roles.join(', ')
-                                                    : (item.data as any).title || (item.data as any).normalizedRole}
-                                            </p>
-                                        </div>
-                                        <div className="ml-4 flex-shrink-0 text-right">
-                                            <span className="text-[10px] text-neutral-400 block">
-                                                {new Date(item.data.postedAt).toLocaleDateString()}
-                                            </span>
-                                            <span className={cn(
-                                                "text-[8px] uppercase font-bold tracking-tighter px-1 rounded",
-                                                isWalkin ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"
-                                            )}>
-                                                {isWalkin ? 'Walkin' : 'Job'}
-                                            </span>
-                                        </div>
+                ))}
+            </div>
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Link
+                    href="/admin/opportunities/create"
+                    className="group bg-slate-900 p-8 rounded-[2rem] text-white flex items-center justify-between transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-slate-200"
+                >
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-blue-400">
+                            <PlusCircleIcon className="w-5 h-5 font-bold" />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Global Stream</span>
+                        </div>
+                        <h3 className="text-2xl font-black tracking-tight">Post New Listing</h3>
+                        <p className="text-slate-400 text-sm font-medium">Add jobs, internships or walk-ins.</p>
+                    </div>
+                    <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                        <ArrowRightIcon className="w-6 h-6" />
+                    </div>
+                </Link>
+
+                <Link
+                    href="/admin/feedback"
+                    className="group bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between transition-all hover:border-slate-300 hover:shadow-xl active:scale-95"
+                >
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-emerald-600">
+                            <ChartBarIcon className="w-5 h-5" />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Platform Pulse</span>
+                        </div>
+                        <h3 className="text-2xl font-black tracking-tight text-slate-900">Review Feedback</h3>
+                        <p className="text-slate-500 text-sm font-medium">Analyze user reports and logs.</p>
+                    </div>
+                    <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center group-hover:bg-slate-100 transition-colors">
+                        <ArrowRightIcon className="w-6 h-6 text-slate-900" />
+                    </div>
+                </Link>
+            </div>
+
+            {/* Recent Postings Simple List */}
+            <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+                <div className="px-8 py-6 border-b border-slate-50 flex justify-between items-center">
+                    <h3 className="text-lg font-black tracking-tight">Recent Activity Stream</h3>
+                    <Link href="/admin/opportunities" className="text-xs font-black text-blue-600 uppercase tracking-widest hover:underline">Full Log</Link>
+                </div>
+                <div className="divide-y divide-slate-50">
+                    {[...jobs, ...walkins]
+                        .sort((a, b) => new Date(b.data.postedAt).getTime() - new Date(a.data.postedAt).getTime())
+                        .slice(0, 5)
+                        .map((item) => {
+                            const isWalkin = item.data.type === 'WALKIN';
+                            return (
+                                <div key={item.id} className="px-8 py-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+                                    <div className="min-w-0 flex-1">
+                                        <p className="font-extrabold text-slate-900 truncate">
+                                            {item.data.company}
+                                        </p>
+                                        <p className="text-xs font-bold text-slate-400 truncate">
+                                            {item.data.title || item.data.normalizedRole}
+                                        </p>
                                     </div>
-                                );
-                            })}
-                    </div>
+                                    <div className="ml-4 flex-shrink-0 text-right space-y-1">
+                                        <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest block">
+                                            {new Date(item.data.postedAt).toLocaleDateString()}
+                                        </span>
+                                        <span className={cn(
+                                            "text-[9px] uppercase font-black tracking-widest px-2 py-0.5 rounded-full",
+                                            isWalkin ? "bg-orange-100 text-orange-600" : "bg-blue-100 text-blue-600"
+                                        )}>
+                                            {item.data.type}
+                                        </span>
+                                    </div>
+                                </div>
+                            );
+                        })}
                 </div>
-            </main>
+            </div>
         </div>
     );
 }

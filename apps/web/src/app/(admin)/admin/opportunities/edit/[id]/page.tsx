@@ -6,19 +6,19 @@ import { useAdmin } from '@/contexts/AdminContext';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import {
-    ArrowLeft,
-    Briefcase,
-    MapPin,
-    IndianRupee,
-    GraduationCap,
-    Calendar,
-    Link as LinkIcon,
-    Save,
-    Trash2,
-    Info,
-    Clock,
-    Building2
-} from 'lucide-react';
+    ArrowLeftIcon,
+    BriefcaseIcon,
+    MapPinIcon,
+    CurrencyRupeeIcon,
+    AcademicCapIcon,
+    CalendarIcon,
+    LinkIcon,
+    CheckIcon,
+    TrashIcon,
+    InformationCircleIcon,
+    ClockIcon,
+    BuildingOfficeIcon
+} from '@heroicons/react/24/outline';
 import { adminApi } from '@/lib/api/admin';
 
 export default function EditOpportunityPage() {
@@ -162,29 +162,29 @@ export default function EditOpportunityPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <Link href="/admin/opportunities" className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors mb-4">
-                        <ArrowLeft className="w-4 h-4" />
-                        Back to List
+                    <Link href="/admin/opportunities" className="inline-flex items-center gap-2 text-xs font-black text-slate-400 hover:text-slate-900 transition-colors mb-4 uppercase tracking-widest leading-none">
+                        <ArrowLeftIcon className="w-4 h-4" />
+                        Back to Log
                     </Link>
-                    <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Edit Opportunity</h1>
+                    <h1 className="tracking-tighter">Edit Opportunity</h1>
                     <p className="text-slate-500 font-medium tracking-tight">Modify entry Details and requirements.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <span className={`px-4 py-1.5 rounded-full text-xs font-black tracking-widest uppercase ${type === 'WALKIN' ? 'bg-orange-100 text-orange-600' :
-                            type === 'INTERNSHIP' ? 'bg-purple-100 text-purple-600' :
-                                'bg-blue-100 text-blue-600'
+                    <span className={`px-4 py-2 rounded-2xl text-[10px] font-black tracking-widest uppercase ${type === 'WALKIN' ? 'bg-orange-100 text-orange-600' :
+                        type === 'INTERNSHIP' ? 'bg-purple-100 text-purple-600' :
+                            'bg-blue-100 text-blue-600'
                         }`}>
-                        {type} Listing
+                        {type} Protocol Active
                     </span>
                 </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Main Details */}
-                <div className="bg-white rounded-3xl border border-slate-200 p-8 space-y-6">
-                    <h3 className="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
-                        <Briefcase className="w-5 h-5 text-slate-400" />
-                        General Information
+                <div className="bg-white rounded-[2rem] border border-slate-100 p-8 space-y-8 shadow-sm">
+                    <h3 className="font-extrabold text-slate-900 mb-2 flex items-center gap-2 tracking-tight">
+                        <BriefcaseIcon className="w-5 h-5 text-slate-300" />
+                        Base Specifications
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -220,46 +220,46 @@ export default function EditOpportunityPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700 flex items-center gap-2 tracking-tight">
-                                <IndianRupee className="w-4 h-4" /> Min Salary
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                <CurrencyRupeeIcon className="w-4 h-4" /> Entry Point
                             </label>
                             <input
                                 type="number"
                                 value={salaryMin}
                                 onChange={(e) => setSalaryMin(e.target.value)}
-                                className="premium-input"
+                                className="premium-input bg-slate-50/50"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700 flex items-center gap-2 tracking-tight">
-                                <IndianRupee className="w-4 h-4" /> Max Salary
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                <CurrencyRupeeIcon className="w-4 h-4" /> Upper Bound
                             </label>
                             <input
                                 type="number"
                                 value={salaryMax}
                                 onChange={(e) => setSalaryMax(e.target.value)}
-                                className="premium-input"
+                                className="premium-input bg-slate-50/50"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700 flex items-center gap-2 tracking-tight">
-                                <Calendar className="w-4 h-4" /> Expiry Date
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                <CalendarIcon className="w-4 h-4" /> Deactivation Mark
                             </label>
                             <input
                                 type="datetime-local"
                                 value={expiresAt}
                                 onChange={(e) => setExpiresAt(e.target.value)}
-                                className="premium-input p-2.5"
+                                className="premium-input bg-slate-50/50 p-2.5"
                             />
                         </div>
                     </div>
                 </div>
 
                 {/* Requirements */}
-                <div className="bg-white rounded-3xl border border-slate-200 p-8 space-y-6">
-                    <h3 className="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
-                        <GraduationCap className="w-5 h-5 text-slate-400" />
-                        Candidate Requirements
+                <div className="bg-white rounded-[2rem] border border-slate-100 p-8 space-y-8 shadow-sm">
+                    <h3 className="font-extrabold text-slate-900 mb-2 flex items-center gap-2 tracking-tight">
+                        <AcademicCapIcon className="w-5 h-5 text-slate-300" />
+                        Credential Criteria
                     </h3>
 
                     <div className="space-y-3">
@@ -271,8 +271,8 @@ export default function EditOpportunityPage() {
                                     type="button"
                                     onClick={() => handleDegreeToggle(deg)}
                                     className={`px-6 py-2 rounded-xl font-bold border-2 transition-all ${allowedDegrees.includes(deg)
-                                            ? 'bg-blue-50 border-blue-600 text-blue-700'
-                                            : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'
+                                        ? 'bg-blue-50 border-blue-600 text-blue-700'
+                                        : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'
                                         }`}
                                 >
                                     {deg}
@@ -303,10 +303,10 @@ export default function EditOpportunityPage() {
                 </div>
 
                 {/* Logistics */}
-                <div className="bg-white rounded-3xl border border-slate-200 p-8 space-y-6">
-                    <h3 className="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
-                        <MapPin className="w-5 h-5 text-slate-400" />
-                        Logistics
+                <div className="bg-white rounded-[2rem] border border-slate-100 p-8 space-y-8 shadow-sm">
+                    <h3 className="font-extrabold text-slate-900 mb-2 flex items-center gap-2 tracking-tight">
+                        <MapPinIcon className="w-5 h-5 text-slate-300" />
+                        Logistics & Presence
                     </h3>
 
                     <div className="space-y-2">
@@ -329,8 +329,8 @@ export default function EditOpportunityPage() {
                                         type="button"
                                         onClick={() => setWorkMode(mode)}
                                         className={`py-3 rounded-xl font-bold border-2 transition-all ${workMode === mode
-                                                ? 'bg-indigo-50 border-indigo-600 text-indigo-700'
-                                                : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'
+                                            ? 'bg-indigo-50 border-indigo-600 text-indigo-700'
+                                            : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'
                                             }`}
                                     >
                                         {mode}
@@ -342,10 +342,10 @@ export default function EditOpportunityPage() {
                 </div>
 
                 {/* Apply Settings */}
-                <div className="bg-white rounded-3xl border border-slate-200 p-8 space-y-6">
-                    <h3 className="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
-                        <LinkIcon className="w-5 h-5 text-slate-400" />
-                        Application Bridge
+                <div className="bg-white rounded-[2rem] border border-slate-100 p-8 space-y-8 shadow-sm">
+                    <h3 className="font-extrabold text-slate-900 mb-2 flex items-center gap-2 tracking-tight">
+                        <LinkIcon className="w-5 h-5 text-slate-300" />
+                        Engagement Path
                     </h3>
 
                     {type === 'WALKIN' ? (
@@ -400,14 +400,14 @@ export default function EditOpportunityPage() {
                     <button
                         type="submit"
                         disabled={saving}
-                        className="flex-1 premium-button bg-slate-900 text-white flex items-center justify-center gap-2 py-5 text-lg"
+                        className="flex-1 premium-button h-[64px] shadow-2xl shadow-slate-200"
                     >
                         {saving ? (
                             <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
                         ) : (
-                            <Save className="w-6 h-6" />
+                            <CheckIcon className="w-6 h-6" />
                         )}
-                        {saving ? 'Saving...' : 'Commit Changes'}
+                        {saving ? 'Synchronizing...' : 'Update Listing'}
                     </button>
                     <Link
                         href="/admin/opportunities"

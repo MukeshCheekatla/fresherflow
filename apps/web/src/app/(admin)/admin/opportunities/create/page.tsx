@@ -7,21 +7,21 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { adminApi } from '@/lib/api/admin';
 import {
-    ArrowLeft,
-    Sparkles,
-    Briefcase,
-    MapPin,
-    IndianRupee,
-    GraduationCap,
-    Calendar,
-    Link as LinkIcon,
-    Plus,
-    X,
-    Send,
-    Wand2,
-    Trash2,
-    Info
-} from 'lucide-react';
+    ArrowLeftIcon,
+    PlusCircleIcon,
+    BriefcaseIcon,
+    MapPinIcon,
+    CurrencyRupeeIcon,
+    AcademicCapIcon,
+    CalendarIcon,
+    LinkIcon,
+    XMarkIcon,
+    PaperAirplaneIcon,
+    TrashIcon,
+    InformationCircleIcon,
+    BoltIcon,
+    CheckCircleIcon
+} from '@heroicons/react/24/outline';
 
 export default function CreateOpportunityPage() {
     const { isAuthenticated, token } = useAdmin();
@@ -115,7 +115,10 @@ export default function CreateOpportunityPage() {
             const year = new Date().getFullYear();
             setPassoutYears([year - 1, year, year + 1]);
 
-            toast.success('✅ Magic! Form auto-filled.', { id: loadingToast });
+            toast.success('Form auto-filled.', {
+                id: loadingToast,
+                icon: <CheckCircleIcon className="w-5 h-5 text-emerald-500" />
+            });
             setShowParser(false);
             setPastedText('');
         }, 1000);
@@ -173,36 +176,36 @@ export default function CreateOpportunityPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <Link href="/admin/opportunities" className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors mb-4">
-                        <ArrowLeft className="w-4 h-4" />
-                        Back to List
+                    <Link href="/admin/opportunities" className="inline-flex items-center gap-2 text-xs font-black text-slate-400 hover:text-slate-900 transition-colors mb-4 uppercase tracking-widest leading-none">
+                        <ArrowLeftIcon className="w-4 h-4" />
+                        Back to Log
                     </Link>
-                    <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Post Opportunity</h1>
-                    <p className="text-slate-500 font-medium">Create and publish a new listing for matched candidates.</p>
+                    <h1 className="tracking-tighter">Post Opportunity</h1>
+                    <p className="text-slate-500 font-medium tracking-tight">Create and publish a new listing for matched candidates.</p>
                 </div>
                 <button
                     onClick={() => setShowParser(!showParser)}
-                    className="premium-button flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                    className="premium-button bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-100"
                 >
-                    <Wand2 className="w-5 h-5" />
-                    Auto-Fill (AI Content Parser)
+                    <PlusCircleIcon className="w-5 h-5" />
+                    Auto-Fill (AI Parser)
                 </button>
             </div>
 
             {/* AI Parser Overlay */}
             {showParser && (
-                <div className="bg-blue-50 border-2 border-blue-200 rounded-3xl p-8 relative overflow-hidden group">
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-[2.5rem] p-10 relative overflow-hidden group">
                     <div className="relative z-10">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-xl font-bold text-blue-900 flex items-center gap-2">
-                                <Sparkles className="w-5 h-5" />
+                            <h3 className="text-xl font-bold text-blue-900 flex items-center gap-2 tracking-tight">
+                                <BoltIcon className="w-6 h-6" />
                                 Paste Content
                             </h3>
-                            <button onClick={() => setShowParser(false)} className="text-blue-400 hover:text-blue-600">
-                                <X className="w-6 h-6" />
+                            <button onClick={() => setShowParser(false)} className="text-blue-400 hover:text-blue-600 transition-colors">
+                                <XMarkIcon className="w-6 h-6" />
                             </button>
                         </div>
-                        <p className="text-blue-700 text-sm mb-6">Paste the raw job description, and we'll extract the details for you.</p>
+                        <p className="text-blue-700 font-medium text-sm mb-6">Paste the raw job description, and our engine will extract the core keys.</p>
                         <textarea
                             value={pastedText}
                             onChange={(e) => setPastedText(e.target.value)}
@@ -213,21 +216,23 @@ export default function CreateOpportunityPage() {
                         <button
                             onClick={parseJobPosting}
                             disabled={!pastedText.trim()}
-                            className="premium-button w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center gap-2"
+                            className="premium-button w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center gap-2 h-[56px]"
                         >
-                            <Wand2 className="w-5 h-5" />
-                            Run Magic Parser
+                            <BoltIcon className="w-5 h-5" />
+                            Execute Magic Parser
                         </button>
                     </div>
+                    {/* Decor */}
+                    <div className="absolute -right-12 -bottom-12 w-48 h-48 bg-blue-400/20 rounded-full blur-3xl" />
                 </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Type Selection */}
-                <div className="bg-white rounded-3xl border border-slate-200 p-8">
-                    <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-                        <Info className="w-5 h-5 text-slate-400" />
-                        What are you posting?
+                <div className="bg-white rounded-[2rem] border border-slate-100 p-8 shadow-sm">
+                    <h3 className="font-extrabold text-slate-900 mb-6 flex items-center gap-2 tracking-tight">
+                        <InformationCircleIcon className="w-5 h-5 text-slate-300" />
+                        Listing Type Selection
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         {(['JOB', 'INTERNSHIP', 'WALKIN'] as const).map((t) => (
@@ -250,10 +255,10 @@ export default function CreateOpportunityPage() {
                 </div>
 
                 {/* Main Details */}
-                <div className="bg-white rounded-3xl border border-slate-200 p-8 space-y-6">
-                    <h3 className="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
-                        <Briefcase className="w-5 h-5 text-slate-400" />
-                        General Information
+                <div className="bg-white rounded-[2rem] border border-slate-100 p-8 space-y-8 shadow-sm">
+                    <h3 className="font-extrabold text-slate-900 mb-2 flex items-center gap-2 tracking-tight">
+                        <BriefcaseIcon className="w-5 h-5 text-slate-300" />
+                        Core Identity
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -292,32 +297,32 @@ export default function CreateOpportunityPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                <IndianRupee className="w-4 h-4" /> Min Salary
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                <CurrencyRupeeIcon className="w-4 h-4" /> Floor Comp
                             </label>
                             <input
                                 type="number"
                                 value={salaryMin}
                                 onChange={(e) => setSalaryMin(e.target.value)}
-                                className="premium-input"
+                                className="premium-input bg-slate-50/50"
                                 placeholder="3,00,000"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                <IndianRupee className="w-4 h-4" /> Max Salary
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                <CurrencyRupeeIcon className="w-4 h-4" /> Ceiling Comp
                             </label>
                             <input
                                 type="number"
                                 value={salaryMax}
                                 onChange={(e) => setSalaryMax(e.target.value)}
-                                className="premium-input"
+                                className="premium-input bg-slate-50/50"
                                 placeholder="12,00,000"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                <Calendar className="w-4 h-4" /> Final Date
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                <CalendarIcon className="w-4 h-4" /> Expiry Protocol
                             </label>
                             <input
                                 type="datetime-local"
@@ -330,10 +335,10 @@ export default function CreateOpportunityPage() {
                 </div>
 
                 {/* Requirements */}
-                <div className="bg-white rounded-3xl border border-slate-200 p-8 space-y-6">
-                    <h3 className="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
-                        <GraduationCap className="w-5 h-5 text-slate-400" />
-                        Candidate Requirements
+                <div className="bg-white rounded-[2rem] border border-slate-100 p-8 space-y-8 shadow-sm">
+                    <h3 className="font-extrabold text-slate-900 mb-2 flex items-center gap-2 tracking-tight">
+                        <AcademicCapIcon className="w-5 h-5 text-slate-300" />
+                        Target Parameters
                     </h3>
 
                     <div className="space-y-3">
@@ -379,10 +384,10 @@ export default function CreateOpportunityPage() {
                 </div>
 
                 {/* Logistics */}
-                <div className="bg-white rounded-3xl border border-slate-200 p-8 space-y-6">
-                    <h3 className="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
-                        <MapPin className="w-5 h-5 text-slate-400" />
-                        Logistics
+                <div className="bg-white rounded-[2rem] border border-slate-100 p-8 space-y-8 shadow-sm">
+                    <h3 className="font-extrabold text-slate-900 mb-2 flex items-center gap-2 tracking-tight">
+                        <MapPinIcon className="w-5 h-5 text-slate-300" />
+                        Deployment Centers
                     </h3>
 
                     <div className="space-y-2">
@@ -419,10 +424,10 @@ export default function CreateOpportunityPage() {
                 </div>
 
                 {/* Apply Settings */}
-                <div className="bg-white rounded-3xl border border-slate-200 p-8 space-y-6">
-                    <h3 className="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
-                        <LinkIcon className="w-5 h-5 text-slate-400" />
-                        Application Bridge
+                <div className="bg-white rounded-[2rem] border border-slate-100 p-8 space-y-8 shadow-sm">
+                    <h3 className="font-extrabold text-slate-900 mb-2 flex items-center gap-2 tracking-tight">
+                        <LinkIcon className="w-5 h-5 text-slate-300" />
+                        Application Channel
                     </h3>
 
                     {type === 'WALKIN' ? (
@@ -481,14 +486,14 @@ export default function CreateOpportunityPage() {
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="flex-1 premium-button bg-slate-900 text-white flex items-center justify-center gap-2 py-5 text-lg"
+                        className="flex-1 premium-button h-[64px] shadow-2xl shadow-slate-200"
                     >
                         {isLoading ? (
                             <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
                         ) : (
-                            <Plus className="w-6 h-6" />
+                            <PaperAirplaneIcon className="w-6 h-6" />
                         )}
-                        {isLoading ? 'Publishing...' : 'Publish Listing Now'}
+                        {isLoading ? 'Decrypting & Publishing...' : 'Finalize & Launch Stream'}
                     </button>
                     <Link
                         href="/admin/opportunities"

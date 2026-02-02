@@ -1,7 +1,15 @@
-import { OnlineJob } from '@/types';
-import { formatDistanceToNow } from 'date-fns';
+import { OnlineJob } from '@/types/job';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import {
+    BookmarkIcon,
+    MapPinIcon,
+    CurrencyRupeeIcon,
+    BriefcaseIcon,
+    ClockIcon,
+    ChevronRightIcon
+} from '@heroicons/react/24/outline';
+import { BookmarkIcon as BookmarkSolidIcon } from '@heroicons/react/24/solid';
 
 interface JobCardProps {
     job: OnlineJob;
@@ -12,11 +20,11 @@ interface JobCardProps {
 }
 
 export default function JobCard({ job, jobId, onClick, isSaved = false, onToggleSave }: JobCardProps) {
-    const { user, isAdmin } = useAuth();
+    const { user } = useAuth();
 
     const formatSalary = () => {
         if (!job.salary) return 'Not disclosed';
-        const { min, max, currency } = job.salary;
+        const { min, max } = job.salary;
         if (min && max) {
             return `₹${(min / 100000).toFixed(1)}L - ${(max / 100000).toFixed(1)}L`;
         }
@@ -27,22 +35,12 @@ export default function JobCard({ job, jobId, onClick, isSaved = false, onToggle
         const { min, max } = job.experienceRange;
         if (min === 0 && max === 0) return 'Fresher';
         if (min === max) return `${min} year${min !== 1 ? 's' : ''}`;
-        return `${min}-${max} years`;
-    };
-
-    const getMatchReason = () => {
-        if (job.mustHaveSkills.length > 0) {
-            return `Matches your ${job.mustHaveSkills[0]} skills`;
-        }
-        return 'Recommended for you';
+        return `${min}-${max} yrs`;
     };
 
     const handleSaveClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!user) {
-            // Trigger auth dialog from parent or via context if possible
-            // For now, assume TopNav handles auth triggers, but we can call toggle
-            // which will just do nothing if no user.
             alert('Please sign in to save jobs');
             return;
         }
@@ -53,93 +51,90 @@ export default function JobCard({ job, jobId, onClick, isSaved = false, onToggle
         <div
             onClick={onClick}
             className={cn(
-                "p-6 bg-white rounded-lg border border-neutral-200 relative group",
-                "transition-all hover:border-neutral-300 hover:shadow-sm",
-                onClick && "cursor-pointer"
+                "job-card group relative animate-in fade-in slide-in-from-bottom-2 duration-500",
+                onClick && "cursor-pointer active:scale-[0.98]"
             )}
         >
-            {/* Save Button */}
-            <button
-                onClick={handleSaveClick}
-                className={cn(
-                    "absolute top-4 right-4 p-2 rounded-full transition-colors",
-                    isSaved
-                        ? "text-primary bg-primary/5"
-                        : "text-neutral-400 hover:text-neutral-600 hover:bg-neutral-50"
-                )}
-                aria-label={isSaved ? "Unsave job" : "Save job"}
-            >
-                <svg className="w-5 h-5" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
-            </button>
-
-            {/* Role and Company */}
-            <div className="mb-3 pr-8">
-                <h3 className="text-lg font-semibold text-neutral-900 mb-1">
-                    {job.normalizedRole}
-                </h3>
-                <div className="flex items-center gap-2 text-neutral-600">
-                    <span className="font-medium">{job.company}</span>
-                    <span>•</span>
-                    <span className="truncate">{job.locations.join(', ')}</span>
+            {/* Top Row: Role & Save */}
+            <div className="flex justify-between items-start gap-4">
+                <div className="space-y-1 flex-1">
+                    <h2 className="text-foreground group-hover:text-primary transition-colors leading-tight">
+                        {job.normalizedRole}
+                    </h2>
+                    <p className="font-black text-[10px] text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                        <span className="text-foreground">{job.company}</span>
+                        {job.employmentType && (
+                            <>
+                                <span>•</span>
+                                <span className="text-primary bg-primary/10 px-2 py-0.5 rounded-full">{job.employmentType}</span>
+                            </>
+                        )}
+                    </p>
                 </div>
-            </div>
 
-            {/* Experience and Salary */}
-            <div className="flex items-center gap-4 text-sm text-neutral-600 mb-3">
-                <span>{formatExperience()}</span>
-                <span>•</span>
-                <span className="font-medium">{formatSalary()}</span>
-            </div>
-
-            {/* Match Reason */}
-            <div className="text-sm text-primary mb-4 font-medium">
-                {getMatchReason()}
-            </div>
-
-            <div className="flex items-center justify-between mt-auto pt-4 border-t border-neutral-100">
-                <div className="flex items-center gap-3">
-                    <div className="text-xs text-neutral-500">
-                        {job.source}
-                    </div>
-                    {/* Admin Controls */}
-                    {isAdmin && (
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    // Handle edit
-                                    console.log('Edit job', jobId);
-                                }}
-                                className="text-xs font-semibold text-neutral-600 hover:text-primary transition-colors"
-                            >
-                                Edit
-                            </button>
-                            <span className="text-neutral-300">|</span>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    // Handle delete
-                                    console.log('Delete job', jobId);
-                                }}
-                                className="text-xs font-semibold text-red-500 hover:text-red-700 transition-colors"
-                            >
-                                Delete
-                            </button>
-                        </div>
+                <button
+                    onClick={handleSaveClick}
+                    className={cn(
+                        "p-2.5 rounded-xl transition-all duration-300 border",
+                        isSaved
+                            ? "bg-foreground border-foreground text-background shadow-lg"
+                            : "bg-card border-border text-muted-foreground hover:text-foreground hover:border-primary"
                     )}
+                    aria-label={isSaved ? "Remove from wishlist" : "Save for later"}
+                >
+                    {isSaved ? (
+                        <BookmarkSolidIcon className="w-5 h-5" />
+                    ) : (
+                        <BookmarkIcon className="w-5 h-5" />
+                    )}
+                </button>
+            </div>
+
+            {/* Middle Row: Meta Info */}
+            <div className="grid grid-cols-2 gap-x-3 gap-y-2 py-1">
+                <div className="flex items-center gap-2 text-foreground">
+                    <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center">
+                        <MapPinIcon className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <span className="text-xs font-bold truncate tracking-tight">{job.locations[0] || 'Remote'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-foreground">
+                    <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center">
+                        <CurrencyRupeeIcon className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <span className="text-xs font-bold tracking-tight">{formatSalary()}</span>
+                </div>
+                <div className="flex items-center gap-2 text-foreground">
+                    <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center">
+                        <BriefcaseIcon className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <span className="text-xs font-bold tracking-tight">{formatExperience()}</span>
+                </div>
+                <div className="flex items-center gap-2 text-foreground">
+                    <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center">
+                        <ClockIcon className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <span className="text-xs font-bold tracking-tight">Active Stream</span>
+                </div>
+            </div>
+
+            {/* Bottom Row: Action */}
+            <div className="mt-2 flex items-center justify-between pt-4 border-t border-border">
+                <div className="flex -space-x-2">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="w-6 h-6 rounded-full border-2 border-card bg-muted flex items-center justify-center overflow-hidden">
+                            <div className="w-full h-full bg-muted-foreground/20" />
+                        </div>
+                    ))}
+                    <div className="pl-4 text-[9px] font-black text-muted-foreground uppercase tracking-widest flex items-center">
+                        Verified Stream
+                    </div>
                 </div>
 
-                <a
-                    href={job.applyLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary-dark transition-colors shadow-sm border border-neutral-800"
-                >
-                    Apply Now
-                </a>
+                <div className="flex items-center gap-1 text-primary font-black text-[10px] uppercase tracking-widest group-hover:translate-x-1 transition-transform">
+                    View Specs
+                    <ChevronRightIcon className="w-3 h-3 stroke-[3]" />
+                </div>
             </div>
         </div>
     );

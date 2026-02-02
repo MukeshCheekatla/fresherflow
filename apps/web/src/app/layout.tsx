@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { ConditionalAuthProvider } from "@/components/providers/ConditionalAuthProvider";
 import { Toaster } from "react-hot-toast";
 
-const jakarta = Plus_Jakarta_Sans({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-jakarta",
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -15,6 +15,9 @@ export const metadata: Metadata = {
   description: "The live stream of verified jobs, internships, and walk-ins for freshers. Engineering your success.",
 };
 
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import { NavigationWrapper } from "@/components/providers/NavigationWrapper";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -22,10 +25,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={jakarta.variable} suppressHydrationWarning>
-        <ConditionalAuthProvider>
-          {children}
-        </ConditionalAuthProvider>
+      <body className={inter.variable} suppressHydrationWarning>
+        <ThemeProvider>
+          <ConditionalAuthProvider>
+            <NavigationWrapper>
+              {children}
+            </NavigationWrapper>
+          </ConditionalAuthProvider>
+        </ThemeProvider>
         <Toaster
           position="top-right"
           toastOptions={{

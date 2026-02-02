@@ -168,9 +168,19 @@ export const profileApi = {
 
     updateEducation: (data: {
         educationLevel: string;
+        institutionName: string;
+        institutionLocation: string;
         courseName: string;
         specialization: string;
         passoutYear: number;
+        cgpa: number;
+        // Optional PG fields
+        pg_institutionName?: string;
+        pg_institutionLocation?: string;
+        pg_courseName?: string;
+        pg_specialization?: string;
+        pg_passoutYear?: number;
+        pg_cgpa?: number;
     }) =>
         apiClient('/api/profile/education', {
             method: 'PUT',

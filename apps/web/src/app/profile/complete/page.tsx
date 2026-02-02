@@ -7,22 +7,77 @@ import { useRouter } from 'next/navigation';
 import { AuthGate } from '@/components/gates/ProfileGate';
 import toast from 'react-hot-toast';
 import {
-    GraduationCap,
-    Target,
-    Zap,
-    ChevronRight,
-    MapPin,
-    Briefcase,
-    Clock,
-    Plus,
-    X,
-    Loader2,
-    CheckCircle2
-} from 'lucide-react';
+    AcademicCapIcon,
+    ViewfinderCircleIcon,
+    BoltIcon,
+    ChevronRightIcon,
+    MapPinIcon,
+    BriefcaseIcon,
+    ClockIcon,
+    PlusIcon,
+    XMarkIcon,
+    ArrowPathIcon,
+    CheckCircleIcon
+} from '@heroicons/react/24/outline';
 
 type Step = 'education' | 'preferences' | 'readiness';
 
 const EDUCATION_LEVELS = ['DIPLOMA', 'DEGREE', 'PG'];
+
+// Exact degree names for job matching
+const DIPLOMA_DEGREES = [
+    'Diploma in Engineering',
+    'Diploma in Computer Science',
+    'Diploma in Information Technology',
+    'Diploma in Electronics',
+    'Diploma in Mechanical',
+    'Diploma in Civil',
+    'Diploma in Electrical',
+    'Other Diploma'
+];
+
+const UG_DEGREES = [
+    'B.Tech (Bachelor of Technology)',
+    'B.E. (Bachelor of Engineering)',
+    'B.Sc. (Bachelor of Science)',
+    'BCA (Bachelor of Computer Applications)',
+    'BBA (Bachelor of Business Administration)',
+    'B.Com (Bachelor of Commerce)',
+    'B.A. (Bachelor of Arts)',
+    'Other UG Degree'
+];
+
+const PG_DEGREES = [
+    'M.Tech (Master of Technology)',
+    'M.E. (Master of Engineering)',
+    'M.Sc. (Master of Science)',
+    'MCA (Master of Computer Applications)',
+    'MBA (Master of Business Administration)',
+    'M.Com (Master of Commerce)',
+    'M.A. (Master of Arts)',
+    'Other PG Degree'
+];
+
+// Common Engineering/CS Specializations
+const SPECIALIZATIONS = [
+    'Computer Science & Engineering',
+    'Information Technology',
+    'Electronics & Communication',
+    'Electrical & Electronics',
+    'Mechanical Engineering',
+    'Civil Engineering',
+    'Artificial Intelligence & Machine Learning',
+    'Data Science',
+    'Cyber Security',
+    'Software Engineering',
+    'Computer Applications',
+    'Business Administration',
+    'Finance & Accounting',
+    'Marketing',
+    'Human Resources',
+    'Other'
+];
+
 const OPPORTUNITY_TYPES = ['JOB', 'INTERNSHIP', 'WALKIN'];
 const WORK_MODES = ['ONSITE', 'HYBRID', 'REMOTE'];
 const AVAILABILITY_OPTIONS = ['IMMEDIATE', 'DAYS_15', 'MONTH_1'];
@@ -34,11 +89,23 @@ export default function ProfileCompletePage() {
     const [currentStep, setCurrentStep] = useState<Step>('education');
     const [isLoading, setIsLoading] = useState(false);
 
-    // Education state
+    // Education state - Main Graduation
     const [educationLevel, setEducationLevel] = useState('');
+    const [institutionName, setInstitutionName] = useState('');
+    const [institutionLocation, setInstitutionLocation] = useState('');
     const [courseName, setCourseName] = useState('');
     const [specialization, setSpecialization] = useState('');
     const [passoutYear, setPassoutYear] = useState('');
+    const [cgpa, setCgpa] = useState('');
+
+    // Optional PG (Postgraduate)
+    const [hasPG, setHasPG] = useState(false);
+    const [pg_institutionName, setPg_institutionName] = useState('');
+    const [pg_institutionLocation, setPg_institutionLocation] = useState('');
+    const [pg_courseName, setPg_courseName] = useState('');
+    const [pg_specialization, setPg_specialization] = useState('');
+    const [pg_passoutYear, setPg_passoutYear] = useState('');
+    const [pg_cgpa, setPg_cgpa] = useState('');
 
     // Preferences state
     const [interestedIn, setInterestedIn] = useState<string[]>([]);
@@ -62,8 +129,15 @@ export default function ProfileCompletePage() {
     }, [profile, router]);
 
     const handleEducationSubmit = async () => {
-        if (!educationLevel || !courseName || !specialization || !passoutYear) {
-            toast.error('❌ Please fill all education fields');
+        // Validate required graduation fields
+        if (!educationLevel || !institutionName || !institutionLocation || !courseName || !specialization || !passoutYear || !cgpa) {
+            toast.error('❌ Please fill all graduation fields');
+            return;
+        }
+
+        // Validate PG if applicable
+        if (hasPG && (!pg_institutionName || !pg_courseName || !pg_passoutYear)) {
+            toast.error('❌ Please complete PG details or uncheck the option');
             return;
         }
 
@@ -73,9 +147,20 @@ export default function ProfileCompletePage() {
         try {
             await profileApi.updateEducation({
                 educationLevel,
+                institutionName,
+                institutionLocation,
                 courseName,
                 specialization,
-                passoutYear: parseInt(passoutYear)
+                passoutYear: parseInt(passoutYear),
+                cgpa: parseFloat(cgpa),
+                ...(hasPG && {
+                    pg_institutionName,
+                    pg_institutionLocation,
+                    pg_courseName,
+                    pg_specialization,
+                    pg_passoutYear: parseInt(pg_passoutYear),
+                    pg_cgpa: pg_cgpa ? parseFloat(pg_cgpa) : undefined
+                })
             });
             await refreshUser();
             toast.success('Step 1 complete!', { id: loadingToast });
@@ -158,265 +243,442 @@ export default function ProfileCompletePage() {
 
     return (
         <AuthGate>
-            <div className="min-h-screen bg-slate-50 py-12 px-4 animate-in fade-in duration-1000">
-                <div className="max-w-3xl mx-auto space-y-8">
+            <div className="bg-background px-4 pb-10 md:pb-4">
+                <div className="max-w-6xl mx-auto">
 
-                    {/* Header Progress */}
-                    <div className="glass-card rounded-[2.5rem] p-10 border-white shadow-2xl shadow-slate-200">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-                            <div>
-                                <h1 className="text-3xl font-black text-slate-900 tracking-tighter">
-                                    Finalizing Your Flow
-                                </h1>
-                                <p className="text-slate-500 font-medium tracking-tight">
-                                    Connecting your skills to the engineering stream.
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-4 bg-slate-50 px-6 py-4 rounded-3xl border border-slate-100">
-                                <div className="relative w-12 h-12 flex items-center justify-center">
-                                    <svg className="w-full h-full -rotate-90">
-                                        <circle cx="24" cy="24" r="20" className="stroke-slate-200 fill-none" strokeWidth="4" />
-                                        <circle cx="24" cy="24" r="20" className="stroke-slate-900 fill-none" strokeWidth="4" strokeDasharray={125.6} strokeDashoffset={125.6 - (125.6 * completion) / 100} strokeLinecap="round" />
-                                    </svg>
-                                    <span className="absolute text-[10px] font-black">{completion}%</span>
-                                </div>
-                                <div className="text-sm font-bold text-slate-900">Completion</div>
-                            </div>
-                        </div>
+                    {/* 2-Column Layout */}
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
 
-                        {/* Step Navigation */}
-                        <div className="grid grid-cols-3 gap-2">
-                            {[
-                                { id: 'education', label: 'College', icon: GraduationCap },
-                                { id: 'preferences', label: 'Interests', icon: Target },
-                                { id: 'readiness', label: 'Skills', icon: Zap }
-                            ].map((s, i) => {
-                                const isActive = currentStep === s.id;
-                                const isDone = completion >= (i === 0 ? 40 : i === 1 ? 80 : 100);
-                                return (
-                                    <div key={s.id} className="relative group">
-                                        <div className={`flex flex-col items-center gap-2 p-3 rounded-2xl transition-all duration-500 ${isActive ? 'bg-slate-900 shadow-xl' : 'opacity-40'}`}>
-                                            <s.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
-                                            <span className={`text-[10px] font-black uppercase tracking-widest ${isActive ? 'text-white' : 'text-slate-500'}`}>{s.label}</span>
+                        {/* LEFT SIDEBAR - Progress & Navigation */}
+                        <div className="md:col-span-4 space-y-4">
+                            {/* Header Card - Sticky */}
+                            <div className="premium-card p-4 border border-border md:sticky md:top-24">
+                                <div className="space-y-4">
+                                    <div>
+                                        <h2 className="text-xl font-bold tracking-tight mb-1">
+                                            Complete Your Profile
+                                        </h2>
+                                        <p className="text-xs text-muted-foreground">Quick setup to get started</p>
+                                    </div>
+
+                                    {/* Progress Circle */}
+                                    <div className="flex items-center gap-4">
+                                        <div className="relative w-16 h-16">
+                                            <svg className="w-16 h-16 transform -rotate-90">
+                                                <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="4" fill="none" className="text-muted" />
+                                                <circle
+                                                    cx="32"
+                                                    cy="32"
+                                                    r="28"
+                                                    stroke="currentColor"
+                                                    strokeWidth="4"
+                                                    fill="none"
+                                                    strokeDasharray={`${2 * Math.PI * 28}`}
+                                                    strokeDashoffset={`${2 * Math.PI * 28 * (1 - completion / 100)}`}
+                                                    className="text-primary transition-all duration-500"
+                                                />
+                                            </svg>
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <span className="text-sm font-black">{completion}%</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-muted-foreground uppercase">Completion</p>
+                                            <p className="text-lg font-black text-foreground">{completion}% Done</p>
                                         </div>
                                     </div>
-                                );
-                            })}
-                        </div>
-                    </div>
 
-                    {/* Step Content */}
-                    <div className="glass-card rounded-[2.5rem] p-10 border-white shadow-2xl shadow-slate-100 min-h-[500px] flex flex-col">
-
-                        {currentStep === 'education' && (
-                            <div className="space-y-8 flex-1 animate-in slide-in-from-right-4 duration-500">
-                                <div className="space-y-1">
-                                    <h2 className="text-2xl font-black text-slate-900">Education</h2>
-                                    <p className="text-slate-400 font-medium">Verify your degree status.</p>
-                                </div>
-
-                                <div className="space-y-6">
+                                    {/* Step Navigation */}
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Degree Level</label>
-                                        <div className="grid grid-cols-3 gap-3">
-                                            {EDUCATION_LEVELS.map(level => (
-                                                <button
-                                                    key={level}
-                                                    onClick={() => setEducationLevel(level)}
-                                                    className={`py-3 rounded-2xl font-bold border-2 transition-all ${educationLevel === level ? 'bg-slate-900 border-slate-900 text-white' : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'}`}
+                                        {[
+                                            { id: 'education', label: 'College & Degree', icon: AcademicCapIcon },
+                                            { id: 'preferences', label: 'Job Interests', icon: ViewfinderCircleIcon },
+                                            { id: 'readiness', label: 'Skills & Availability', icon: BoltIcon }
+                                        ].map((s, i) => {
+                                            const isActive = currentStep === s.id;
+                                            const isDone = completion >= (i === 0 ? 40 : i === 1 ? 80 : 100);
+                                            return (
+                                                <div
+                                                    key={s.id}
+                                                    className={`flex items-center gap-3 p-3 rounded-lg transition-all ${isActive ? 'bg-primary text-primary-foreground shadow-md' :
+                                                        isDone ? 'bg-primary/10 text-primary' :
+                                                            'bg-muted/50 text-muted-foreground'
+                                                        }`}
                                                 >
-                                                    {level}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Course Identity</label>
-                                            <input
-                                                value={courseName}
-                                                onChange={(e) => setCourseName(e.target.value)}
-                                                className="premium-input"
-                                                placeholder="e.g. B.Tech Engineering"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Branch/Specialization</label>
-                                            <input
-                                                value={specialization}
-                                                onChange={(e) => setSpecialization(e.target.value)}
-                                                className="premium-input"
-                                                placeholder="e.g. Computer Science"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Passout Year</label>
-                                        <input
-                                            type="number"
-                                            value={passoutYear}
-                                            onChange={(e) => setPassoutYear(e.target.value)}
-                                            className="premium-input"
-                                            placeholder="2024"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="pt-6">
-                                    <button
-                                        onClick={handleEducationSubmit}
-                                        disabled={isLoading}
-                                        className="w-full premium-button py-5 flex items-center justify-center gap-2"
-                                    >
-                                        {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <ChevronRight className="w-6 h-6" />}
-                                        <span>{isLoading ? 'Storing Data...' : 'Submit & Continue'}</span>
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
-                        {currentStep === 'preferences' && (
-                            <div className="space-y-8 flex-1 animate-in slide-in-from-right-4 duration-500">
-                                <div className="space-y-1">
-                                    <h2 className="text-2xl font-black text-slate-900">Preferences</h2>
-                                    <p className="text-slate-400 font-medium">What are you looking for?</p>
-                                </div>
-
-                                <div className="space-y-10">
-                                    <div className="space-y-4">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Types of Opportunities</label>
-                                        <div className="flex flex-wrap gap-3">
-                                            {OPPORTUNITY_TYPES.map(t => (
-                                                <button
-                                                    key={t}
-                                                    onClick={() => toggleArrayItem(interestedIn, setInterestedIn, t)}
-                                                    className={`px-6 py-2.5 rounded-2xl font-bold border-2 transition-all ${interestedIn.includes(t) ? 'bg-blue-900 border-blue-900 text-white' : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'}`}
-                                                >
-                                                    {t}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Work Ecosystem</label>
-                                        <div className="flex flex-wrap gap-3">
-                                            {WORK_MODES.map(t => (
-                                                <button
-                                                    key={t}
-                                                    onClick={() => toggleArrayItem(workModes, setWorkModes, t)}
-                                                    className={`px-6 py-2.5 rounded-2xl font-bold border-2 transition-all ${workModes.includes(t) ? 'bg-indigo-900 border-indigo-900 text-white' : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'}`}
-                                                >
-                                                    {t}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Target Locations</label>
-                                        <div className="flex gap-2">
-                                            <input
-                                                placeholder="Type city and hit Enter"
-                                                onKeyPress={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        const val = (e.target as HTMLInputElement).value;
-                                                        if (val) {
-                                                            toggleArrayItem(preferredCities, setPreferredCities, val);
-                                                            (e.target as HTMLInputElement).value = '';
-                                                        }
-                                                    }
-                                                }}
-                                                className="premium-input bg-slate-50"
-                                            />
-                                        </div>
-                                        <div className="flex flex-wrap gap-2">
-                                            {preferredCities.map(c => (
-                                                <span key={c} className="bg-slate-900 text-white px-4 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2">
-                                                    {c}
-                                                    <X onClick={() => toggleArrayItem(preferredCities, setPreferredCities, c)} className="w-3 h-3 cursor-pointer opacity-60 hover:opacity-100" />
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="pt-6">
-                                    <button
-                                        onClick={handlePreferencesSubmit}
-                                        disabled={isLoading}
-                                        className="w-full premium-button py-5 flex items-center justify-center gap-2"
-                                    >
-                                        {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <ChevronRight className="w-6 h-6" />}
-                                        <span>Proceed to Skills</span>
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
-                        {currentStep === 'readiness' && (
-                            <div className="space-y-8 flex-1 animate-in slide-in-from-right-4 duration-500">
-                                <div className="space-y-1">
-                                    <h2 className="text-2xl font-black text-slate-900">Readiness</h2>
-                                    <p className="text-slate-400 font-medium">Verify your skills and availability.</p>
-                                </div>
-
-                                <div className="space-y-10">
-                                    <div className="space-y-4">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Availability Window</label>
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                            {AVAILABILITY_OPTIONS.map(val => (
-                                                <button
-                                                    key={val}
-                                                    onClick={() => setAvailability(val)}
-                                                    className={`py-5 rounded-3xl flex flex-col items-center justify-center border-2 transition-all ${availability === val ? 'bg-emerald-900 border-emerald-900 text-white' : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'}`}
-                                                >
-                                                    <span className="font-black text-sm">{val.replace('_', ' ')}</span>
-                                                    <span className="text-[8px] opacity-60 uppercase font-black tracking-widest">Horizon</span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Skill Catalog</label>
-                                        <div className="flex gap-2">
-                                            <input
-                                                value={skillInput}
-                                                onChange={(e) => setSkillInput(e.target.value)}
-                                                onKeyPress={(e) => e.key === 'Enter' && addSkill()}
-                                                className="premium-input bg-slate-50"
-                                                placeholder="e.g. React.js, Python"
-                                            />
-                                            <button onClick={addSkill} className="premium-button px-8"><Plus className="w-6 h-6" /></button>
-                                        </div>
-                                        <div className="flex flex-wrap gap-2">
-                                            {skills.map(s => (
-                                                <div key={s} className="bg-emerald-100 text-emerald-800 px-4 py-2 rounded-2xl text-xs font-black flex items-center gap-2">
-                                                    {s}
-                                                    <X onClick={() => removeSkill(s)} className="w-3 h-3 cursor-pointer opacity-40 hover:opacity-100" />
+                                                    <s.icon className="w-5 h-5 shrink-0" />
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs font-bold uppercase tracking-wide truncate">{s.label}</p>
+                                                        {isDone && !isActive && (
+                                                            <p className="text-[10px] opacity-70">✓ Complete</p>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            ))}
-                                        </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
-
-                                <div className="pt-10">
-                                    <button
-                                        onClick={handleReadinessSubmit}
-                                        disabled={isLoading}
-                                        className="w-full premium-button py-6 bg-emerald-950 hover:bg-black text-white flex items-center justify-center gap-3 text-lg"
-                                    >
-                                        {isLoading ? <Loader2 className="w-7 h-7 animate-spin" /> : <CheckCircle2 className="w-7 h-7" />}
-                                        <span>Finish Entire Setup</span>
-                                    </button>
-                                </div>
                             </div>
-                        )}
+                        </div>
 
+                        {/* RIGHT CONTENT - Form Fields */}
+                        <div className="md:col-span-8">
+                            <div className="premium-card p-6 border border-border min-h-[450px]">
+
+                                {currentStep === 'education' && (
+                                    <div className="space-y-4 flex-1 animate-in slide-in-from-right-4 duration-500">
+                                        <div className="space-y-1">
+                                            <h3 className="text-base font-bold">Education</h3>
+                                            <p className="text-xs text-muted-foreground">Your degree details.</p>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Degree Level</label>
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    {EDUCATION_LEVELS.map(level => (
+                                                        <button
+                                                            key={level}
+                                                            onClick={() => setEducationLevel(level)}
+                                                            className={`h-[40px] rounded-lg font-semibold border transition-all text-sm ${educationLevel === level ? 'bg-primary border-primary text-primary-foreground' : 'bg-background border-border text-muted-foreground hover:border-primary/50'}`}
+                                                        >
+                                                            {level}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Institution Details */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Institution Name *</label>
+                                                    <input
+                                                        value={institutionName}
+                                                        onChange={(e) => setInstitutionName(e.target.value)}
+                                                        className="premium-input"
+                                                        placeholder="e.g. IIT Delhi, VIT, BITS"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Location (City) *</label>
+                                                    <input
+                                                        value={institutionLocation}
+                                                        onChange={(e) => setInstitutionLocation(e.target.value)}
+                                                        className="premium-input"
+                                                        placeholder="e.g. Mumbai, Bangalore"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Degree & Specialization */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                <div className="space-y-2"
+                                                >
+                                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Exact Degree *</label>
+                                                    <select
+                                                        value={courseName}
+                                                        onChange={(e) => setCourseName(e.target.value)}
+                                                        className="premium-input"
+                                                    >
+                                                        <option value="">Select Degree</option>
+                                                        {(educationLevel === 'DIPLOMA' ? DIPLOMA_DEGREES :
+                                                            educationLevel === 'DEGREE' ? UG_DEGREES :
+                                                                educationLevel === 'PG' ? PG_DEGREES : []).map(deg => (
+                                                                    <option key={deg} value={deg}>{deg}</option>
+                                                                ))}
+                                                    </select>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Specialization *</label>
+                                                    <select
+                                                        value={specialization}
+                                                        onChange={(e) => setSpecialization(e.target.value)}
+                                                        className="premium-input"
+                                                    >
+                                                        <option value="">Select Specialization</option>
+                                                        {SPECIALIZATIONS.map(spec => (
+                                                            <option key={spec} value={spec}>{spec}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            {/* Year & CGPA */}
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Passout Year *</label>
+                                                    <input
+                                                        type="number"
+                                                        value={passoutYear}
+                                                        onChange={(e) => setPassoutYear(e.target.value)}
+                                                        className="premium-input"
+                                                        placeholder="2024"
+                                                        min="2000"
+                                                        max="2030"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">CGPA/Percentage *</label>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={cgpa}
+                                                        onChange={(e) => setCgpa(e.target.value)}
+                                                        className="premium-input"
+                                                        placeholder="8.5 or 85%"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Optional PG Section */}
+                                            <div className="pt-3 border-t border-border">
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={hasPG}
+                                                        onChange={(e) => setHasPG(e.target.checked)}
+                                                        className="w-4 h-4 rounded border-border"
+                                                    />
+                                                    <span className="text-sm font-semibold">I have a Postgraduate (PG) Degree</span>
+                                                </label>
+                                            </div>
+
+                                            {hasPG && (
+                                                <div className="space-y-3 pl-6 border-l-2 border-primary/20">
+                                                    <p className="text-xs font-bold text-primary uppercase">PG Details</p>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">PG Institution</label>
+                                                            <input
+                                                                value={pg_institutionName}
+                                                                onChange={(e) => setPg_institutionName(e.target.value)}
+                                                                className="premium-input"
+                                                                placeholder="e.g. IIM, NIT"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">PG Location</label>
+                                                            <input
+                                                                value={pg_institutionLocation}
+                                                                onChange={(e) => setPg_institutionLocation(e.target.value)}
+                                                                className="premium-input"
+                                                                placeholder="City"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">PG Degree</label>
+                                                            <select
+                                                                value={pg_courseName}
+                                                                onChange={(e) => setPg_courseName(e.target.value)}
+                                                                className="premium-input"
+                                                            >
+                                                                <option value="">Select PG Degree</option>
+                                                                {PG_DEGREES.map(deg => (
+                                                                    <option key={deg} value={deg}>{deg}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">PG Specialization</label>
+                                                            <select
+                                                                value={pg_specialization}
+                                                                onChange={(e) => setPg_specialization(e.target.value)}
+                                                                className="premium-input"
+                                                            >
+                                                                <option value="">Select</option>
+                                                                {SPECIALIZATIONS.map(spec => (
+                                                                    <option key={spec} value={spec}>{spec}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">PG Passout Year</label>
+                                                            <input
+                                                                type="number"
+                                                                value={pg_passoutYear}
+                                                                onChange={(e) => setPg_passoutYear(e.target.value)}
+                                                                className="premium-input"
+                                                                placeholder="2026"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">PG CGPA (Optional)</label>
+                                                            <input
+                                                                type="number"
+                                                                step="0.01"
+                                                                value={pg_cgpa}
+                                                                onChange={(e) => setPg_cgpa(e.target.value)}
+                                                                className="premium-input"
+                                                                placeholder="8.5"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="pt-4">
+                                            <button
+                                                onClick={handleEducationSubmit}
+                                                disabled={isLoading}
+                                                className="w-full premium-button h-[44px]"
+                                            >
+                                                {isLoading ? <ArrowPathIcon className="w-5 h-5 animate-spin" /> : <ChevronRightIcon className="w-5 h-5" />}
+                                                <span>{isLoading ? 'Storing Data...' : 'Submit & Continue'}</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {currentStep === 'preferences' && (
+                                    <div className="space-y-8 flex-1 animate-in slide-in-from-right-4 duration-500">
+                                        <div className="space-y-2">
+                                            <h2 className="tracking-tighter">Preferences</h2>
+                                            <p className="text-slate-400 font-medium">What are you looking for?</p>
+                                        </div>
+
+                                        <div className="space-y-10">
+                                            <div className="space-y-4">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Types of Opportunities</label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {OPPORTUNITY_TYPES.map(t => (
+                                                        <button
+                                                            key={t}
+                                                            onClick={() => toggleArrayItem(interestedIn, setInterestedIn, t)}
+                                                            className={`px-6 h-[44px] rounded-xl font-bold border-2 transition-all text-sm ${interestedIn.includes(t) ? 'bg-slate-900 border-slate-900 text-white' : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'}`}
+                                                        >
+                                                            {t}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Work Ecosystem</label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {WORK_MODES.map(t => (
+                                                        <button
+                                                            key={t}
+                                                            onClick={() => toggleArrayItem(workModes, setWorkModes, t)}
+                                                            className={`px-6 h-[44px] rounded-xl font-bold border-2 transition-all text-sm ${workModes.includes(t) ? 'bg-slate-900 border-slate-900 text-white' : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'}`}
+                                                        >
+                                                            {t}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Target Locations</label>
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        placeholder="Type city and hit Enter"
+                                                        onKeyPress={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                const val = (e.target as HTMLInputElement).value;
+                                                                if (val) {
+                                                                    toggleArrayItem(preferredCities, setPreferredCities, val);
+                                                                    (e.target as HTMLInputElement).value = '';
+                                                                }
+                                                            }
+                                                        }}
+                                                        className="premium-input"
+                                                    />
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {preferredCities.map(c => (
+                                                        <span key={c} className="bg-slate-900 text-white px-4 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2">
+                                                            {c}
+                                                            <XMarkIcon onClick={() => toggleArrayItem(preferredCities, setPreferredCities, c)} className="w-3 h-3 cursor-pointer opacity-60 hover:opacity-100" />
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-6">
+                                            <button
+                                                onClick={handlePreferencesSubmit}
+                                                disabled={isLoading}
+                                                className="w-full premium-button h-[56px]"
+                                            >
+                                                {isLoading ? <ArrowPathIcon className="w-5 h-5 animate-spin" /> : <ChevronRightIcon className="w-5 h-5" />}
+                                                <span>Proceed to Skills</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {currentStep === 'readiness' && (
+                                    <div className="space-y-8 flex-1 animate-in slide-in-from-right-4 duration-500">
+                                        <div className="space-y-2">
+                                            <h2 className="tracking-tighter">Readiness</h2>
+                                            <p className="text-slate-400 font-medium">Verify your skills and availability.</p>
+                                        </div>
+
+                                        <div className="space-y-10">
+                                            <div className="space-y-4">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Availability Window</label>
+                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                                    {AVAILABILITY_OPTIONS.map(val => (
+                                                        <button
+                                                            key={val}
+                                                            onClick={() => setAvailability(val)}
+                                                            className={`h-[72px] rounded-xl flex flex-col items-center justify-center border-2 transition-all ${availability === val ? 'bg-slate-900 border-slate-900 text-white' : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'}`}
+                                                        >
+                                                            <span className="font-bold text-sm">{val.replace('_', ' ')}</span>
+                                                            <span className="text-[10px] opacity-60 uppercase font-black tracking-widest">Horizon</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Skill Catalog</label>
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        value={skillInput}
+                                                        onChange={(e) => setSkillInput(e.target.value)}
+                                                        onKeyPress={(e) => e.key === 'Enter' && addSkill()}
+                                                        className="premium-input"
+                                                        placeholder="e.g. React.js, Python"
+                                                    />
+                                                    <button onClick={addSkill} className="premium-button shrink-0 px-6"><PlusIcon className="w-5 h-5" /></button>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {skills.map(s => (
+                                                        <div key={s} className="bg-emerald-100 text-emerald-800 px-4 py-2 rounded-2xl text-xs font-black flex items-center gap-2">
+                                                            {s}
+                                                            <XMarkIcon onClick={() => removeSkill(s)} className="w-3 h-3 cursor-pointer opacity-40 hover:opacity-100" />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-10">
+                                            <button
+                                                onClick={handleReadinessSubmit}
+                                                disabled={isLoading}
+                                                className="w-full premium-button h-[64px] text-lg bg-emerald-900 hover:bg-emerald-800"
+                                            >
+                                                {isLoading ? <ArrowPathIcon className="w-6 h-6 animate-spin" /> : <CheckCircleIcon className="w-6 h-6" />}
+                                                <span>Finish Entire Setup</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                            </div>
+                        </div>
                     </div>
+
                 </div>
             </div>
         </AuthGate>
