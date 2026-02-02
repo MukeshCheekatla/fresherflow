@@ -13,9 +13,6 @@
         "forceConsistentCasingInFileNames": true,
         "resolveJsonModule": true,
         "moduleResolution": "node",
-        "types": [
-            "node"
-        ],
         "noEmit": false
     },
     "ts-node": {
