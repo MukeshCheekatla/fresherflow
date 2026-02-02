@@ -50,10 +50,10 @@ export const skillsRule: EligibilityRule = {
             return true; // No skills required
         }
 
-        const userSkills = profile.skills?.map(s => s.toLowerCase()) || [];
-        const requiredSkills = opp.requiredSkills.map(s => s.toLowerCase());
+        const userSkills = profile.skills?.map((s: string) => s.toLowerCase()) || [];
+        const requiredSkills = opp.requiredSkills.map((s: string) => s.toLowerCase());
 
-        return requiredSkills.some(req => userSkills.includes(req));
+        return requiredSkills.some((req: string) => userSkills.includes(req));
     },
     getReason: (opp, profile) => {
         return `You need at least one of these skills: ${opp.requiredSkills.join(', ')}. Your skills: ${profile.skills?.join(', ') || 'None'}`;
@@ -71,10 +71,10 @@ export const locationRule: EligibilityRule = {
             return true; // No preference set
         }
 
-        const userCities = profile.preferredCities.map(c => c.toLowerCase());
-        const oppLocations = opp.locations.map(l => l.toLowerCase());
+        const userCities = profile.preferredCities.map((c: string) => c.toLowerCase());
+        const oppLocations = opp.locations.map((l: string) => l.toLowerCase());
 
-        return oppLocations.some(loc => userCities.includes(loc));
+        return oppLocations.some((loc: string) => userCities.includes(loc));
     },
     getReason: (opp, profile) => {
         return `Opportunity locations (${opp.locations.join(', ')}) don't match your preferred cities: ${profile.preferredCities?.join(', ') || 'None'}`;

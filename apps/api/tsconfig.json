@@ -17,6 +17,11 @@
             "./node_modules/@types",
             "../../node_modules/@types"
         ],
+        "paths": {
+            "@job-platform/types": [
+                "../../packages/types/src"
+            ]
+        },
         "noEmit": false
     },
     "ts-node": {
