@@ -1,6 +1,6 @@
 import { AuthResponse, ApiError, Profile } from '@/types/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL ;
 
 // Token management
 let accessToken: string | null = null;
@@ -54,7 +54,11 @@ async function refreshAccessToken(): Promise<string | null> {
         });
 
         if (!response.ok) {
-            clearTokens();
+            // Only clear tokens if the refresh token is definitely invalid (400, 401, 403)
+            // If it's a 500 or network error, we don't clear tokens, just return null so the request fails
+            if (response.status === 400 || response.status === 401 || response.status === 403) {
+                clearTokens();
+            }
             return null;
         }
 
@@ -109,7 +113,9 @@ export async function apiClient<T = any>(
             } else {
                 // Refresh failed, redirect to login
                 clearTokens();
-                if (typeof window !== 'undefined') {
+                if (typeof window !== 'undefined' &&
+                    !window.location.pathname.startsWith('/login') &&
+                    !window.location.pathname.startsWith('/register')) {
                     window.location.href = '/login';
                 }
                 throw new Error('Session expired. Please login again.');
@@ -117,8 +123,15 @@ export async function apiClient<T = any>(
         }
 
         if (!response.ok) {
-            const error: ApiError = await response.json();
-            throw new Error(error.error?.message || 'Request failed');
+            let errorMessage = 'Request failed';
+            try {
+                const errorData: ApiError = await response.json();
+                errorMessage = errorData.error?.message || errorMessage;
+            } catch (jsonError) {
+                // Fallback if response is not JSON
+                errorMessage = `System Error (${response.status})`;
+            }
+            throw new Error(errorMessage);
         }
 
         return await response.json();
@@ -168,19 +181,15 @@ export const profileApi = {
 
     updateEducation: (data: {
         educationLevel: string;
-        institutionName: string;
-        institutionLocation: string;
-        courseName: string;
-        specialization: string;
-        passoutYear: number;
-        cgpa: number;
+        tenthYear: number;
+        twelfthYear: number;
+        gradCourse: string;
+        gradSpecialization: string;
+        gradYear: number;
         // Optional PG fields
-        pg_institutionName?: string;
-        pg_institutionLocation?: string;
-        pg_courseName?: string;
-        pg_specialization?: string;
-        pg_passoutYear?: number;
-        pg_cgpa?: number;
+        pgCourse?: string;
+        pgSpecialization?: string;
+        pgYear?: number;
     }) =>
         apiClient('/api/profile/education', {
             method: 'PUT',

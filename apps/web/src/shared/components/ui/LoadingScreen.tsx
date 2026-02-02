@@ -30,7 +30,7 @@ export default function LoadingScreen({
             {message && (
                 <div className="mt-6 text-center animate-pulse">
                     <p className="text-lg font-bold text-neutral-900">{message}</p>
-                    <p className="text-xs text-neutral-500 mt-1 uppercase tracking-widest font-semibold">YearHire</p>
+                    <p className="text-xs text-neutral-500 mt-1 uppercase tracking-widest font-semibold">FresherFlow</p>
                 </div>
             )}
         </div>

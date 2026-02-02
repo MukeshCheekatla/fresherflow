@@ -29,14 +29,6 @@ export class WalkinService {
                 locations: {
                     has: city, // Array contains city
                 },
-                walkInDetails: {
-                    dates: {
-                        some: {
-                            gte: now,
-                            lte: futureDate,
-                        },
-                    },
-                },
             },
             include: {
                 walkInDetails: true,
@@ -46,10 +38,18 @@ export class WalkinService {
             },
         });
 
+        // Filter by date match in code
+        const filtered = walkins.filter(w =>
+            w.walkInDetails?.dates.some((d: Date) => {
+                const date = new Date(d);
+                return date >= now && date <= futureDate;
+            })
+        );
+
         // Sort by nearest date
-        return walkins.sort((a, b) => {
-            const aNextDate = a.walkInDetails?.dates.find((d) => d >= now) || now;
-            const bNextDate = b.walkInDetails?.dates.find((d) => d >= now) || now;
+        return filtered.sort((a, b) => {
+            const aNextDate = a.walkInDetails?.dates.map((d: Date) => new Date(d)).find((d: Date) => d >= now) || now;
+            const bNextDate = b.walkInDetails?.dates.map((d: Date) => new Date(d)).find((d: Date) => d >= now) || now;
             return aNextDate.getTime() - bNextDate.getTime();
         });
     }
@@ -64,7 +64,7 @@ export class WalkinService {
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
 
-        return await prisma.opportunity.findMany({
+        const walkins = await prisma.opportunity.findMany({
             where: {
                 type: OpportunityType.WALKIN,
                 status: OpportunityStatus.ACTIVE,
@@ -72,19 +72,18 @@ export class WalkinService {
                 locations: {
                     has: city,
                 },
-                walkInDetails: {
-                    dates: {
-                        some: {
-                            gte: today,
-                            lt: tomorrow,
-                        },
-                    },
-                },
             },
             include: {
                 walkInDetails: true,
             },
         });
+
+        return walkins.filter(w =>
+            w.walkInDetails?.dates.some((d: Date) => {
+                const date = new Date(d);
+                return date >= today && date < tomorrow;
+            })
+        );
     }
 
     /**

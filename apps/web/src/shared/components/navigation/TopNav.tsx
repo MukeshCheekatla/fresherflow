@@ -45,7 +45,7 @@ export default function TopNav() {
                         {/* Logo */}
                         <Link href="/" className="flex items-center space-x-2">
                             <span className="text-xl font-semibold text-neutral-900">
-                                YearHire
+                                FresherFlow
                             </span>
                         </Link>
 

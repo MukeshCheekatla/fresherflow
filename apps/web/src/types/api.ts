@@ -10,9 +10,23 @@ export interface User {
 export interface Profile {
     completionPercentage: number;
     educationLevel?: string;
-    courseName?: string;
-    specialization?: string;
-    passoutYear?: number;
+
+    // 10th
+    tenthYear?: number;
+
+    // 12th
+    twelfthYear?: number;
+
+    // Graduation
+    gradCourse?: string;
+    gradSpecialization?: string;
+    gradYear?: number;
+
+    // PG
+    pgCourse?: string;
+    pgSpecialization?: string;
+    pgYear?: number;
+
     interestedIn?: string[];
     preferredCities?: string[];
     workModes?: string[];

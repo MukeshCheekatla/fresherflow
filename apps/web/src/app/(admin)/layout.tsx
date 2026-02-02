@@ -39,7 +39,7 @@ export default function AdminLayout({
 
     return (
         <AdminProvider>
-            <div className="min-h-screen pb-16 md:pb-0">
+            <div className="min-h-screen">
                 {children}
                 <AdminBottomNav />
             </div>

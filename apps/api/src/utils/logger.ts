@@ -12,8 +12,8 @@ const colors = {
 
 // Custom format for clean, minimal output (like Next.js)
 const cleanFormat = winston.format.printf(({ level, message, timestamp, requestId, ...meta }) => {
-    const time = new Date(timestamp).toLocaleTimeString();
-    const reqId = requestId ? `${colors.gray}[${requestId.substring(0, 8)}]${colors.reset}` : '';
+    const time = new Date(timestamp as string).toLocaleTimeString();
+    const reqId = (requestId && typeof requestId === 'string') ? `${colors.gray}[${requestId.substring(0, 8)}]${colors.reset}` : '';
 
     // Color-code by level
     let prefix = '';

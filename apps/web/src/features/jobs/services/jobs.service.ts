@@ -1,6 +1,6 @@
 // Jobs Service - Uses Backend API
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
 function getToken() {
     if (typeof window === 'undefined') return null;

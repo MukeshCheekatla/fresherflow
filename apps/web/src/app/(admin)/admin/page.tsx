@@ -38,23 +38,23 @@ export default function AdminDashboardHome() {
     return (
         <div className="space-y-10 animate-in fade-in duration-700">
             <header className="space-y-1">
-                <h1 className="tracking-tighter">Command Center</h1>
-                <p className="text-slate-500 font-medium">Platform overview and management hub.</p>
+                <h1 className="tracking-tighter text-slate-100">Command Center</h1>
+                <p className="text-slate-400 font-medium">Platform overview and management hub.</p>
             </header>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {stats.map((stat) => (
-                    <div key={stat.label} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all">
+                    <div key={stat.label} className="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-sm hover:shadow-md transition-all">
                         <div className="flex items-center justify-between mb-4">
-                            <div className={cn("p-2 rounded-xl", stat.bg, stat.color)}>
+                            <div className={cn("p-2 rounded-xl bg-opacity-10", stat.bg.replace('bg-', 'bg-opacity-10 bg-'), stat.color)}>
                                 <stat.icon className="w-6 h-6" />
                             </div>
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">
                                 {stat.label}
                             </span>
                         </div>
-                        <p className="text-3xl font-black text-slate-900 tracking-tighter">{stat.value}</p>
+                        <p className="text-3xl font-black text-slate-100 tracking-tighter">{stat.value}</p>
                     </div>
                 ))}
             </div>
@@ -63,15 +63,15 @@ export default function AdminDashboardHome() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Link
                     href="/admin/opportunities/create"
-                    className="group bg-slate-900 p-8 rounded-[2rem] text-white flex items-center justify-between transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-slate-200"
+                    className="group bg-blue-600 p-8 rounded-[2rem] text-white flex items-center justify-between transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-blue-900/20"
                 >
                     <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-blue-400">
+                        <div className="flex items-center gap-2 text-blue-200">
                             <PlusCircleIcon className="w-5 h-5 font-bold" />
                             <span className="text-[10px] font-black uppercase tracking-widest">Global Stream</span>
                         </div>
                         <h3 className="text-2xl font-black tracking-tight">Post New Listing</h3>
-                        <p className="text-slate-400 text-sm font-medium">Add jobs, internships or walk-ins.</p>
+                        <p className="text-blue-100 text-sm font-medium">Add jobs, internships or walk-ins.</p>
                     </div>
                     <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center group-hover:bg-white/20 transition-colors">
                         <ArrowRightIcon className="w-6 h-6" />
@@ -80,41 +80,41 @@ export default function AdminDashboardHome() {
 
                 <Link
                     href="/admin/feedback"
-                    className="group bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between transition-all hover:border-slate-300 hover:shadow-xl active:scale-95"
+                    className="group bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-sm flex items-center justify-between transition-all hover:border-slate-700 hover:shadow-xl active:scale-95"
                 >
                     <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-emerald-600">
+                        <div className="flex items-center gap-2 text-emerald-500">
                             <ChartBarIcon className="w-5 h-5" />
                             <span className="text-[10px] font-black uppercase tracking-widest">Platform Pulse</span>
                         </div>
-                        <h3 className="text-2xl font-black tracking-tight text-slate-900">Review Feedback</h3>
-                        <p className="text-slate-500 text-sm font-medium">Analyze user reports and logs.</p>
+                        <h3 className="text-2xl font-black tracking-tight text-slate-100">Review Feedback</h3>
+                        <p className="text-slate-400 text-sm font-medium">Analyze user reports and logs.</p>
                     </div>
-                    <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center group-hover:bg-slate-100 transition-colors">
-                        <ArrowRightIcon className="w-6 h-6 text-slate-900" />
+                    <div className="w-14 h-14 bg-slate-800 rounded-2xl flex items-center justify-center group-hover:bg-slate-700 transition-colors">
+                        <ArrowRightIcon className="w-6 h-6 text-slate-100" />
                     </div>
                 </Link>
             </div>
 
             {/* Recent Postings Simple List */}
-            <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
-                <div className="px-8 py-6 border-b border-slate-50 flex justify-between items-center">
-                    <h3 className="text-lg font-black tracking-tight">Recent Activity Stream</h3>
-                    <Link href="/admin/opportunities" className="text-xs font-black text-blue-600 uppercase tracking-widest hover:underline">Full Log</Link>
+            <div className="bg-slate-900 rounded-[2rem] border border-slate-800 shadow-sm overflow-hidden">
+                <div className="px-8 py-6 border-b border-slate-800 flex justify-between items-center">
+                    <h3 className="text-lg font-black tracking-tight text-slate-100">Recent Activity Stream</h3>
+                    <Link href="/admin/opportunities" className="text-xs font-black text-blue-400 uppercase tracking-widest hover:underline">Full Log</Link>
                 </div>
-                <div className="divide-y divide-slate-50">
+                <div className="divide-y divide-slate-800">
                     {[...jobs, ...walkins]
                         .sort((a, b) => new Date(b.data.postedAt).getTime() - new Date(a.data.postedAt).getTime())
                         .slice(0, 5)
                         .map((item) => {
                             const isWalkin = item.data.type === 'WALKIN';
                             return (
-                                <div key={item.id} className="px-8 py-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+                                <div key={item.id} className="px-8 py-5 flex items-center justify-between hover:bg-slate-800/50 transition-colors">
                                     <div className="min-w-0 flex-1">
-                                        <p className="font-extrabold text-slate-900 truncate">
+                                        <p className="font-extrabold text-slate-200 truncate">
                                             {item.data.company}
                                         </p>
-                                        <p className="text-xs font-bold text-slate-400 truncate">
+                                        <p className="text-xs font-bold text-slate-500 truncate">
                                             {item.data.title || item.data.normalizedRole}
                                         </p>
                                     </div>

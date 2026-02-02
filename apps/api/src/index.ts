@@ -53,9 +53,7 @@ app.use(helmet());
 
 // CORS - Hardened for production
 app.use(cors({
-    origin: process.env.NODE_ENV === 'production'
-        ? process.env.FRONTEND_URL // Must be set in production
-        : 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL,
     credentials: true
 }));
 
@@ -76,8 +74,10 @@ const defaultLimiter = rateLimit({
             requestId: req.requestId
         });
         res.status(429).json({
-            error: 'Too many requests, please try again later',
-            requestId: req.requestId
+            error: {
+                message: 'Too many requests, please try again later',
+                requestId: req.requestId
+            }
         });
     }
 });
@@ -127,9 +127,11 @@ app.use('/api/admin/feedback', adminFeedbackRoutes);
 // 404 handler
 app.use((req, res) => {
     res.status(404).json({
-        error: 'Route not found',
-        path: req.path,
-        requestId: req.requestId
+        error: {
+            message: 'Route not found',
+            path: req.path,
+            requestId: req.requestId
+        }
     });
 });
 
@@ -148,7 +150,7 @@ app.use(errorHandler);
 app.listen(PORT, () => {
     logger.info(`🚀 Server running on port ${PORT}`);
     logger.info(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-    logger.info(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+    logger.info(`🌐 Frontend URL: ${process.env.FRONTEND_URL}`);
     logger.info(`🔍 Sentry: ${process.env.SENTRY_DSN ? 'Enabled' : 'Disabled'}`);
 
     // Start cron jobs

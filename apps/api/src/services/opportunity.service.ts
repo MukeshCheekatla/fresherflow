@@ -192,7 +192,7 @@ export class OpportunityService {
                 const eligibility = EligibilityService.checkEligibility(
                     {
                         educationLevel: profile.educationLevel,
-                        passoutYear: profile.passoutYear,
+                        passoutYear: profile.gradYear || 0,
                         interestedIn: profile.interestedIn,
                         preferredCities: profile.preferredCities,
                         workModes: profile.workModes,
@@ -217,7 +217,7 @@ export class OpportunityService {
                         ? EligibilityService.getMatchScore(
                             {
                                 educationLevel: profile.educationLevel,
-                                passoutYear: profile.passoutYear,
+                                passoutYear: profile.gradYear || 0,
                                 interestedIn: profile.interestedIn,
                                 preferredCities: profile.preferredCities,
                                 workModes: profile.workModes,

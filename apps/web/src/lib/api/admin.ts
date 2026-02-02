@@ -1,7 +1,7 @@
 import { AdminProvider } from '@/contexts/AdminContext';
 
 // Extend API client with admin methods
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const adminApi = {
     // Create new opportunity

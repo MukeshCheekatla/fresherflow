@@ -59,7 +59,7 @@ export default function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
                 <div className="p-8">
                     <div className="text-center mb-8">
                         <h2 className="text-2xl font-bold text-neutral-900 mb-2">
-                            Welcome to YearHire
+                            Welcome to FresherFlow
                         </h2>
                         <p className="text-neutral-600">
                             {mode === 'login' ? 'Sign in to your account' : 'Create a new account'}

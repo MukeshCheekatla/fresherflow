@@ -32,7 +32,11 @@ export async function profileGate(req: Request, res: Response, next: NextFunctio
         }
 
         next();
-    } catch (error) {
+    } catch (error: any) {
+        // Explicitly mask database connection errors early
+        if (error.message?.toLowerCase().includes('prisma') || error.message?.toLowerCase().includes('neon')) {
+            return next(new AppError('Database connection issue. Please try again later.', 503));
+        }
         next(error);
     }
 }

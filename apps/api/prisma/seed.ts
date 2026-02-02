@@ -61,6 +61,7 @@ async function main() {
 
         await prisma.opportunity.create({
             data: {
+                status: 'ACTIVE',
                 type: OpportunityType.JOB,
                 title: jobTitles[i],
                 company: companies[i % companies.length],
@@ -103,6 +104,7 @@ async function main() {
     for (let i = 0; i < 20; i++) {
         await prisma.opportunity.create({
             data: {
+                status: 'ACTIVE',
                 type: OpportunityType.INTERNSHIP,
                 title: internTitles[i],
                 company: companies[(i + 5) % companies.length],
@@ -139,6 +141,7 @@ async function main() {
 
         const opp = await prisma.opportunity.create({
             data: {
+                status: 'ACTIVE',
                 type: OpportunityType.WALKIN,
                 title: `Walk-in Interview - ${i % 2 === 0 ? 'Multiple Positions' : 'Software Roles'}`,
                 company: walkInCompanies[i],

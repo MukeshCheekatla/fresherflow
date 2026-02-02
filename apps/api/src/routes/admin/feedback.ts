@@ -67,7 +67,7 @@ router.get('/', requireAdmin, async (req: Request, res: Response, next: NextFunc
 // GET /api/admin/opportunities/:id/feedback
 router.get('/opportunities/:id', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { id } = req.params;
+        const { id } = req.params as { id: string };
 
         const feedback = await prisma.listingFeedback.findMany({
             where: { opportunityId: id },

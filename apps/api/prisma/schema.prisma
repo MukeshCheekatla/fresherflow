@@ -96,11 +96,24 @@ model Profile {
   id     String @id @default(uuid())
   userId String @unique
 
-  // Education Details (40% weight)
+  // Education Details (40% weight total)
   educationLevel EducationLevel?
-  courseName     String?
-  specialization String?
-  passoutYear    Int?
+  
+  // 10th Details
+  tenthYear        Int?
+
+  // 12th / Diploma Details
+  twelfthYear        Int?
+
+  // Graduation Details
+  gradCourse         String?
+  gradSpecialization String?
+  gradYear           Int?
+
+  // Post Graduation (Optional)
+  pgCourse          String?
+  pgSpecialization  String?
+  pgYear            Int?
 
   // Opportunity Preferences (40% weight)
   interestedIn    OpportunityType[]

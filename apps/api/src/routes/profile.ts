@@ -36,9 +36,14 @@ router.put('/', requireAuth, async (req: Request, res: Response, next: NextFunct
             where: { userId: req.userId },
             data: {
                 educationLevel: data.educationLevel,
-                courseName: data.courseName,
-                specialization: data.specialization,
-                passoutYear: data.passoutYear,
+                tenthYear: data.tenthYear,
+                twelfthYear: data.twelfthYear,
+                gradCourse: data.gradCourse,
+                gradSpecialization: data.gradSpecialization,
+                gradYear: data.gradYear,
+                pgCourse: data.pgCourse,
+                pgSpecialization: data.pgSpecialization,
+                pgYear: data.pgYear,
                 interestedIn: data.interestedIn,
                 preferredCities: data.preferredCities,
                 workModes: data.workModes,
@@ -66,16 +71,27 @@ router.put('/', requireAuth, async (req: Request, res: Response, next: NextFunct
 // PUT /api/profile/education (40% weight)
 router.put('/education', requireAuth, validate(educationSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { educationLevel, courseName, specialization, passoutYear } = req.body;
+        const {
+            educationLevel,
+            tenthYear,
+            twelfthYear,
+            gradCourse, gradSpecialization, gradYear,
+            pgCourse, pgSpecialization, pgYear
+        } = req.body;
 
         // Update profile
         let profile = await prisma.profile.update({
             where: { userId: req.userId },
             data: {
                 educationLevel,
-                courseName,
-                specialization,
-                passoutYear
+                tenthYear,
+                twelfthYear,
+                gradCourse,
+                gradSpecialization,
+                gradYear,
+                pgCourse,
+                pgSpecialization,
+                pgYear
             }
         });
 

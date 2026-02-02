@@ -1,12 +1,12 @@
 'use client';
 
-// Reusing form logic but tailored for "New Job"
 import { useState } from 'react';
 import { OnlineJob } from '@/types/job';
-import TopNav from '@/shared/components/navigation/TopNav';
-import { cn } from '@/lib/utils';
+import { JobsService } from '@/features/jobs/services/jobs.service';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useRouter } from 'next/navigation';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import Link from 'next/link';
 
 const COMMON_ROLES = [
     'Frontend Engineer', 'Backend Engineer', 'Full Stack Engineer',
@@ -38,7 +38,11 @@ export default function NewJobPage() {
         source: 'Official career page',
     });
 
-    if (isLoading) return null;
+    if (isLoading) return (
+        <div className="min-h-screen pt-20 flex justify-center bg-slate-950">
+            <div className="w-8 h-8 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin" />
+        </div>
+    );
     if (!isAuthenticated) {
         router.push('/admin/login');
         return null;
@@ -48,7 +52,7 @@ export default function NewJobPage() {
         e.preventDefault();
         setLoading(true);
         try {
-            const jobData: Omit<OnlineJob, 'id'> = {
+            const jobData: any = {
                 normalizedRole: formData.normalizedRole,
                 company: formData.company,
                 experienceRange: { min: formData.experienceMin, max: formData.experienceMax },
@@ -66,15 +70,7 @@ export default function NewJobPage() {
                 lastVerified: new Date().toISOString(),
             };
 
-
-            // TODO: Call backend API to create job
-            // await fetch('http://localhost:5000/api/admin/jobs', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify(jobData)
-            // });
-            console.log('Job data to be posted:', jobData);
-            alert('Job creation - Backend API integration pending');
+            await JobsService.create(jobData);
             router.push('/admin/jobs');
         } catch (error) {
             console.error('Error posting job:', error);
@@ -85,21 +81,24 @@ export default function NewJobPage() {
     };
 
     return (
-        <div className="min-h-screen bg-neutral-50">
-            <TopNav />
-            <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+        <div className="min-h-screen bg-slate-950 p-6 md:p-8">
+            <main className="max-w-3xl mx-auto">
                 <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-neutral-900">Post New Online Job</h1>
+                    <Link href="/admin/jobs" className="inline-flex items-center gap-2 text-xs font-black text-slate-500 hover:text-slate-200 transition-colors uppercase tracking-widest mb-4">
+                        <ArrowLeftIcon className="w-4 h-4" />
+                        Back to List
+                    </Link>
+                    <h1 className="text-2xl font-bold text-slate-200">Post New Online Job</h1>
                 </div>
 
-                <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-neutral-200 p-6 space-y-6">
+                <form onSubmit={handleSubmit} className="bg-slate-900 rounded-[2rem] border border-slate-800 p-8 space-y-6 shadow-sm">
                     {/* Role */}
                     <div>
-                        <label className="block text-sm font-medium text-neutral-900 mb-2">Role</label>
+                        <label className="block text-sm font-bold text-slate-400 mb-2">Role</label>
                         <select
                             value={formData.normalizedRole}
                             onChange={(e) => setFormData({ ...formData, normalizedRole: e.target.value })}
-                            className="w-full px-4 py-2 border border-neutral-300 rounded-lg"
+                            className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 focus:border-blue-600 outline-none transition-all"
                             required
                         >
                             <option value="">Select role</option>
@@ -109,12 +108,12 @@ export default function NewJobPage() {
 
                     {/* Company */}
                     <div>
-                        <label className="block text-sm font-medium text-neutral-900 mb-2">Company</label>
+                        <label className="block text-sm font-bold text-slate-400 mb-2">Company</label>
                         <input
                             type="text"
                             value={formData.company}
                             onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                            className="w-full px-4 py-2 border border-neutral-300 rounded-lg"
+                            className="premium-input bg-slate-950 border-slate-800 text-slate-200 focus:border-blue-600"
                             required
                         />
                     </div>
@@ -122,22 +121,22 @@ export default function NewJobPage() {
                     {/* Experience */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-neutral-900 mb-2">Min Exp (Yrs)</label>
+                            <label className="block text-sm font-bold text-slate-400 mb-2">Min Exp (Yrs)</label>
                             <input
                                 type="number"
                                 value={formData.experienceMin}
                                 onChange={(e) => setFormData({ ...formData, experienceMin: parseInt(e.target.value) })}
-                                className="w-full px-4 py-2 border border-neutral-300 rounded-lg"
+                                className="premium-input bg-slate-950 border-slate-800 text-slate-200 focus:border-blue-600"
                                 required
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-neutral-900 mb-2">Max Exp (Yrs)</label>
+                            <label className="block text-sm font-bold text-slate-400 mb-2">Max Exp (Yrs)</label>
                             <input
                                 type="number"
                                 value={formData.experienceMax}
                                 onChange={(e) => setFormData({ ...formData, experienceMax: parseInt(e.target.value) })}
-                                className="w-full px-4 py-2 border border-neutral-300 rounded-lg"
+                                className="premium-input bg-slate-950 border-slate-800 text-slate-200 focus:border-blue-600"
                                 required
                             />
                         </div>
@@ -145,23 +144,23 @@ export default function NewJobPage() {
 
                     {/* Skills */}
                     <div>
-                        <label className="block text-sm font-medium text-neutral-900 mb-2">Must-Have Skills</label>
+                        <label className="block text-sm font-bold text-slate-400 mb-2">Must-Have Skills</label>
                         <input
                             type="text"
                             value={formData.mustHaveSkills}
                             onChange={(e) => setFormData({ ...formData, mustHaveSkills: e.target.value })}
                             placeholder="React, Node.js, AWS"
-                            className="w-full px-4 py-2 border border-neutral-300 rounded-lg"
+                            className="premium-input bg-slate-950 border-slate-800 text-slate-200 focus:border-blue-600"
                         />
                     </div>
 
                     {/* Work Type */}
                     <div>
-                        <label className="block text-sm font-medium text-neutral-900 mb-2">Work Type</label>
+                        <label className="block text-sm font-bold text-slate-400 mb-2">Work Type</label>
                         <select
                             value={formData.workType}
                             onChange={(e) => setFormData({ ...formData, workType: e.target.value as any })}
-                            className="w-full px-4 py-2 border border-neutral-300 rounded-lg"
+                            className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 focus:border-blue-600 outline-none transition-all"
                         >
                             <option value="remote">Remote</option>
                             <option value="hybrid">Hybrid</option>
@@ -171,7 +170,7 @@ export default function NewJobPage() {
 
                     {/* Locations */}
                     <div>
-                        <label className="block text-sm font-medium text-neutral-900 mb-2">Locations</label>
+                        <label className="block text-sm font-bold text-slate-400 mb-2">Locations</label>
                         <select
                             multiple
                             value={formData.locations}
@@ -179,23 +178,23 @@ export default function NewJobPage() {
                                 const selected = Array.from(e.target.selectedOptions, option => option.value);
                                 setFormData({ ...formData, locations: selected });
                             }}
-                            className="w-full px-4 py-2 border border-neutral-300 rounded-lg h-32"
+                            className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 focus:border-blue-600 outline-none transition-all h-32"
                             required
                         >
                             {MAJOR_CITIES.map(city => <option key={city} value={city}>{city}</option>)}
                         </select>
-                        <p className="text-xs text-neutral-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+                        <p className="text-xs text-slate-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
                     </div>
 
                     {/* Apply Link */}
                     <div>
-                        <label className="block text-sm font-medium text-neutral-900 mb-2">Apply Link</label>
+                        <label className="block text-sm font-bold text-slate-400 mb-2">Apply Link</label>
                         <input
                             type="url"
                             value={formData.applyLink}
                             onChange={(e) => setFormData({ ...formData, applyLink: e.target.value })}
                             placeholder="https://company.com/careers"
-                            className="w-full px-4 py-2 border border-neutral-300 rounded-lg"
+                            className="premium-input bg-slate-950 border-slate-800 text-slate-200 focus:border-blue-600"
                             required
                         />
                     </div>
@@ -203,7 +202,7 @@ export default function NewJobPage() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50"
+                        className="w-full py-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-500 transition-colors shadow-lg shadow-blue-900/20 disabled:opacity-50"
                     >
                         {loading ? 'Posting...' : 'Post Job'}
                     </button>

@@ -176,12 +176,12 @@ export default function CreateOpportunityPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <Link href="/admin/opportunities" className="inline-flex items-center gap-2 text-xs font-black text-slate-400 hover:text-slate-900 transition-colors mb-4 uppercase tracking-widest leading-none">
+                    <Link href="/admin/opportunities" className="inline-flex items-center gap-2 text-xs font-black text-slate-500 hover:text-slate-200 transition-colors mb-4 uppercase tracking-widest leading-none">
                         <ArrowLeftIcon className="w-4 h-4" />
                         Back to Log
                     </Link>
-                    <h1 className="tracking-tighter">Post Opportunity</h1>
-                    <p className="text-slate-500 font-medium tracking-tight">Create and publish a new listing for matched candidates.</p>
+                    <h1 className="tracking-tighter text-slate-200">Post Opportunity</h1>
+                    <p className="text-slate-400 font-medium tracking-tight">Create and publish a new listing for matched candidates.</p>
                 </div>
                 <button
                     onClick={() => setShowParser(!showParser)}
@@ -194,23 +194,23 @@ export default function CreateOpportunityPage() {
 
             {/* AI Parser Overlay */}
             {showParser && (
-                <div className="bg-blue-50 border-2 border-blue-200 rounded-[2.5rem] p-10 relative overflow-hidden group">
+                <div className="bg-blue-950/60 border-2 border-blue-900 backdrop-blur-xl rounded-[2.5rem] p-10 relative overflow-hidden group">
                     <div className="relative z-10">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-xl font-bold text-blue-900 flex items-center gap-2 tracking-tight">
+                            <h3 className="text-xl font-bold text-blue-200 flex items-center gap-2 tracking-tight">
                                 <BoltIcon className="w-6 h-6" />
                                 Paste Content
                             </h3>
-                            <button onClick={() => setShowParser(false)} className="text-blue-400 hover:text-blue-600 transition-colors">
+                            <button onClick={() => setShowParser(false)} className="text-blue-400 hover:text-blue-300 transition-colors">
                                 <XMarkIcon className="w-6 h-6" />
                             </button>
                         </div>
-                        <p className="text-blue-700 font-medium text-sm mb-6">Paste the raw job description, and our engine will extract the core keys.</p>
+                        <p className="text-blue-300 font-medium text-sm mb-6">Paste the raw job description, and our engine will extract the core keys.</p>
                         <textarea
                             value={pastedText}
                             onChange={(e) => setPastedText(e.target.value)}
                             rows={8}
-                            className="premium-input bg-white/80 border-blue-100 placeholder:text-blue-200 text-blue-900 focus:border-blue-400 mb-6"
+                            className="premium-input bg-slate-950/50 border-blue-900 placeholder:text-blue-500/50 text-blue-100 focus:border-blue-500 mb-6"
                             placeholder="Example: Software Engineer at Google, Mumbai. Req: React, Node.js..."
                         />
                         <button
@@ -229,9 +229,9 @@ export default function CreateOpportunityPage() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Type Selection */}
-                <div className="bg-white rounded-[2rem] border border-slate-100 p-8 shadow-sm">
-                    <h3 className="font-extrabold text-slate-900 mb-6 flex items-center gap-2 tracking-tight">
-                        <InformationCircleIcon className="w-5 h-5 text-slate-300" />
+                <div className="bg-slate-900 rounded-[2rem] border border-slate-800 p-8 shadow-sm">
+                    <h3 className="font-extrabold text-slate-200 mb-6 flex items-center gap-2 tracking-tight">
+                        <InformationCircleIcon className="w-5 h-5 text-slate-500" />
                         Listing Type Selection
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -241,8 +241,8 @@ export default function CreateOpportunityPage() {
                                 type="button"
                                 onClick={() => setType(t)}
                                 className={`flex flex-col items-center justify-center py-6 px-4 rounded-2xl border-2 transition-all duration-300 ${type === t
-                                    ? 'bg-slate-900 border-slate-900 text-white shadow-xl shadow-slate-200'
-                                    : 'bg-white border-slate-100 text-slate-500 hover:border-slate-300'
+                                    ? 'bg-blue-600 border-blue-500 text-white shadow-xl shadow-blue-900/20'
+                                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700 hover:bg-slate-900'
                                     }`}
                             >
                                 <span className="font-black text-xl tracking-tighter mb-1">{t}</span>
@@ -255,68 +255,68 @@ export default function CreateOpportunityPage() {
                 </div>
 
                 {/* Main Details */}
-                <div className="bg-white rounded-[2rem] border border-slate-100 p-8 space-y-8 shadow-sm">
-                    <h3 className="font-extrabold text-slate-900 mb-2 flex items-center gap-2 tracking-tight">
-                        <BriefcaseIcon className="w-5 h-5 text-slate-300" />
+                <div className="bg-slate-900 rounded-[2rem] border border-slate-800 p-8 space-y-8 shadow-sm">
+                    <h3 className="font-extrabold text-slate-200 mb-2 flex items-center gap-2 tracking-tight">
+                        <BriefcaseIcon className="w-5 h-5 text-slate-500" />
                         Core Identity
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700">Job Title *</label>
+                            <label className="text-sm font-bold text-slate-400">Job Title *</label>
                             <input
                                 required
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                className="premium-input"
+                                className="premium-input bg-slate-950 border-slate-800 text-slate-200 focus:border-blue-600"
                                 placeholder="e.g. Senior Frontend Engineer"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700">Company Name *</label>
+                            <label className="text-sm font-bold text-slate-400">Company Name *</label>
                             <input
                                 required
                                 value={company}
                                 onChange={(e) => setCompany(e.target.value)}
-                                className="premium-input"
+                                className="premium-input bg-slate-950 border-slate-800 text-slate-200 focus:border-blue-600"
                                 placeholder="e.g. Google India"
                             />
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-slate-700">Full Description</label>
+                        <label className="text-sm font-bold text-slate-400">Full Description</label>
                         <textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             rows={6}
-                            className="premium-input resize-none"
+                            className="premium-input resize-none bg-slate-950 border-slate-800 text-slate-300 focus:border-blue-600"
                             placeholder="Roles and responsibilities..."
                         />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
                                 <CurrencyRupeeIcon className="w-4 h-4" /> Floor Comp
                             </label>
                             <input
                                 type="number"
                                 value={salaryMin}
                                 onChange={(e) => setSalaryMin(e.target.value)}
-                                className="premium-input bg-slate-50/50"
+                                className="premium-input bg-slate-950/50 border-slate-800 text-slate-200"
                                 placeholder="3,00,000"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
                                 <CurrencyRupeeIcon className="w-4 h-4" /> Ceiling Comp
                             </label>
                             <input
                                 type="number"
                                 value={salaryMax}
                                 onChange={(e) => setSalaryMax(e.target.value)}
-                                className="premium-input bg-slate-50/50"
+                                className="premium-input bg-slate-950/50 border-slate-800 text-slate-200"
                                 placeholder="12,00,000"
                             />
                         </div>
@@ -328,21 +328,21 @@ export default function CreateOpportunityPage() {
                                 type="datetime-local"
                                 value={expiresAt}
                                 onChange={(e) => setExpiresAt(e.target.value)}
-                                className="premium-input p-2.5"
+                                className="premium-input p-2.5 bg-slate-950 border-slate-800 text-slate-200"
                             />
                         </div>
                     </div>
                 </div>
 
                 {/* Requirements */}
-                <div className="bg-white rounded-[2rem] border border-slate-100 p-8 space-y-8 shadow-sm">
-                    <h3 className="font-extrabold text-slate-900 mb-2 flex items-center gap-2 tracking-tight">
-                        <AcademicCapIcon className="w-5 h-5 text-slate-300" />
+                <div className="bg-slate-900 rounded-[2rem] border border-slate-800 p-8 space-y-8 shadow-sm">
+                    <h3 className="font-extrabold text-slate-200 mb-2 flex items-center gap-2 tracking-tight">
+                        <AcademicCapIcon className="w-5 h-5 text-slate-500" />
                         Target Parameters
                     </h3>
 
                     <div className="space-y-3">
-                        <label className="text-sm font-bold text-slate-700">Allowed Education Levels</label>
+                        <label className="text-sm font-bold text-slate-400">Allowed Education Levels</label>
                         <div className="flex flex-wrap gap-3">
                             {['DIPLOMA', 'DEGREE', 'PG'].map((deg) => (
                                 <button
@@ -350,8 +350,8 @@ export default function CreateOpportunityPage() {
                                     type="button"
                                     onClick={() => handleDegreeToggle(deg)}
                                     className={`px-6 py-2 rounded-xl font-bold border-2 transition-all ${allowedDegrees.includes(deg)
-                                        ? 'bg-blue-50 border-blue-600 text-blue-700'
-                                        : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'
+                                        ? 'bg-blue-900/30 border-blue-500 text-blue-400'
+                                        : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'
                                         }`}
                                 >
                                     {deg}
@@ -362,21 +362,21 @@ export default function CreateOpportunityPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700">Passout Years (comma separated)</label>
+                            <label className="text-sm font-bold text-slate-400">Passout Years (comma separated)</label>
                             <input
                                 required
                                 value={passoutYears.join(', ')}
                                 onChange={(e) => setPassoutYears(e.target.value.split(',').map(y => parseInt(y.trim())).filter(Boolean))}
-                                className="premium-input"
+                                className="premium-input bg-slate-950 border-slate-800 text-slate-200"
                                 placeholder="2024, 2025"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700">Key Skills Required</label>
+                            <label className="text-sm font-bold text-slate-400">Key Skills Required</label>
                             <input
                                 value={requiredSkills}
                                 onChange={(e) => setRequiredSkills(e.target.value)}
-                                className="premium-input"
+                                className="premium-input bg-slate-950 border-slate-800 text-slate-200"
                                 placeholder="React, Node.js, AWS..."
                             />
                         </div>
@@ -384,26 +384,26 @@ export default function CreateOpportunityPage() {
                 </div>
 
                 {/* Logistics */}
-                <div className="bg-white rounded-[2rem] border border-slate-100 p-8 space-y-8 shadow-sm">
-                    <h3 className="font-extrabold text-slate-900 mb-2 flex items-center gap-2 tracking-tight">
-                        <MapPinIcon className="w-5 h-5 text-slate-300" />
+                <div className="bg-slate-900 rounded-[2rem] border border-slate-800 p-8 space-y-8 shadow-sm">
+                    <h3 className="font-extrabold text-slate-200 mb-2 flex items-center gap-2 tracking-tight">
+                        <MapPinIcon className="w-5 h-5 text-slate-500" />
                         Deployment Centers
                     </h3>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-slate-700">Locations (comma separated)</label>
+                        <label className="text-sm font-bold text-slate-400">Locations (comma separated)</label>
                         <input
                             required
                             value={locations}
                             onChange={(e) => setLocations(e.target.value)}
-                            className="premium-input"
+                            className="premium-input bg-slate-950 border-slate-800 text-slate-200"
                             placeholder="Mumbai, Bangalore, Remote"
                         />
                     </div>
 
                     {type !== 'WALKIN' && (
                         <div className="space-y-3 pt-2">
-                            <label className="text-sm font-bold text-slate-700">Primary Work Mode</label>
+                            <label className="text-sm font-bold text-slate-400">Primary Work Mode</label>
                             <div className="grid grid-cols-3 gap-3">
                                 {(['ONSITE', 'HYBRID', 'REMOTE'] as const).map((mode) => (
                                     <button
@@ -411,8 +411,8 @@ export default function CreateOpportunityPage() {
                                         type="button"
                                         onClick={() => setWorkMode(mode)}
                                         className={`py-3 rounded-xl font-bold border-2 transition-all ${workMode === mode
-                                            ? 'bg-indigo-50 border-indigo-600 text-indigo-700'
-                                            : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'
+                                            ? 'bg-indigo-900/30 border-indigo-500 text-indigo-400'
+                                            : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'
                                             }`}
                                     >
                                         {mode}
@@ -424,57 +424,57 @@ export default function CreateOpportunityPage() {
                 </div>
 
                 {/* Apply Settings */}
-                <div className="bg-white rounded-[2rem] border border-slate-100 p-8 space-y-8 shadow-sm">
-                    <h3 className="font-extrabold text-slate-900 mb-2 flex items-center gap-2 tracking-tight">
-                        <LinkIcon className="w-5 h-5 text-slate-300" />
+                <div className="bg-slate-900 rounded-[2rem] border border-slate-800 p-8 space-y-8 shadow-sm">
+                    <h3 className="font-extrabold text-slate-200 mb-2 flex items-center gap-2 tracking-tight">
+                        <LinkIcon className="w-5 h-5 text-slate-500" />
                         Application Channel
                     </h3>
 
                     {type === 'WALKIN' ? (
-                        <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6 space-y-6">
+                        <div className="bg-orange-950/20 border border-orange-900/50 rounded-2xl p-6 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-orange-800 tracking-tight">Walk-in Dates *</label>
+                                    <label className="text-sm font-bold text-orange-400 tracking-tight">Walk-in Dates *</label>
                                     <input
                                         required
                                         value={walkInDates}
                                         onChange={(e) => setWalkInDates(e.target.value)}
-                                        className="premium-input bg-white border-orange-100"
+                                        className="premium-input bg-slate-950 border-orange-900/50 text-orange-100 placeholder:text-orange-500/50"
                                         placeholder="2024-05-10, 2024-05-11"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-orange-800 tracking-tight">Reporting Time *</label>
+                                    <label className="text-sm font-bold text-orange-400 tracking-tight">Reporting Time *</label>
                                     <input
                                         required
                                         value={reportingTime}
                                         onChange={(e) => setReportingTime(e.target.value)}
-                                        className="premium-input bg-white border-orange-100"
+                                        className="premium-input bg-slate-950 border-orange-900/50 text-orange-100 placeholder:text-orange-500/50"
                                         placeholder="09:00 AM - 12:00 PM"
                                     />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-bold text-orange-800 tracking-tight">Venue Address *</label>
+                                <label className="text-sm font-bold text-orange-400 tracking-tight">Venue Address *</label>
                                 <textarea
                                     required
                                     value={venueAddress}
                                     onChange={(e) => setVenueAddress(e.target.value)}
                                     rows={3}
-                                    className="premium-input bg-white border-orange-100 resize-none"
+                                    className="premium-input bg-slate-950 border-orange-900/50 text-orange-100 placeholder:text-orange-500/50 resize-none"
                                     placeholder="Complete street address..."
                                 />
                             </div>
                         </div>
                     ) : (
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700">Official Apply URL *</label>
+                            <label className="text-sm font-bold text-slate-400">Official Apply URL *</label>
                             <input
                                 type="url"
                                 required
                                 value={applyLink}
                                 onChange={(e) => setApplyLink(e.target.value)}
-                                className="premium-input"
+                                className="premium-input bg-slate-950 border-slate-800 text-slate-200"
                                 placeholder="https://careers.google.com/jobs/..."
                             />
                         </div>
@@ -486,7 +486,7 @@ export default function CreateOpportunityPage() {
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="flex-1 premium-button h-[64px] shadow-2xl shadow-slate-200"
+                        className="flex-1 premium-button bg-blue-600 hover:bg-blue-500 h-[64px] shadow-2xl shadow-blue-900/20"
                     >
                         {isLoading ? (
                             <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
@@ -497,7 +497,7 @@ export default function CreateOpportunityPage() {
                     </button>
                     <Link
                         href="/admin/opportunities"
-                        className="premium-button-outline py-5 px-10 text-center"
+                        className="premium-button-outline py-5 px-10 text-center border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200 hover:bg-slate-900"
                     >
                         Discard
                     </Link>

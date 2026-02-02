@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
 // POST /api/opportunities/:id/feedback
 router.post('/:id/feedback', requireAuth, validate(feedbackSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { id: opportunityId } = req.params;
+        const { id: opportunityId } = req.params as { id: string };
         const { reason } = req.body;
 
         // Verify opportunity exists

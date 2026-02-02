@@ -201,9 +201,9 @@ router.get('/me', requireAuth, async (req: Request, res: Response, next: NextFun
             profile: user.profile ? {
                 completionPercentage: user.profile.completionPercentage,
                 educationLevel: user.profile.educationLevel,
-                courseName: user.profile.courseName,
-                specialization: user.profile.specialization,
-                passoutYear: user.profile.passoutYear,
+                courseName: user.profile.gradCourse,
+                specialization: user.profile.gradSpecialization,
+                passoutYear: user.profile.gradYear,
                 interestedIn: user.profile.interestedIn,
                 preferredCities: user.profile.preferredCities,
                 workModes: user.profile.workModes,

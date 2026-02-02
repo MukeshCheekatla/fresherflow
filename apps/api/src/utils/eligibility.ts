@@ -9,15 +9,22 @@ export function filterOpportunitiesForUser(
     profile: Profile
 ): Opportunity[] {
     return dbFilteredOpportunities.filter(opp => {
-        // Fine Filter 1: Degree match (exact)
-        const degreeMatch = profile.educationLevel &&
-            opp.allowedDegrees.includes(profile.educationLevel);
+        // Fine Filter 1: Degree match
+        // If allowedDegrees is empty, everyone matches. 
+        // If profile.educationLevel is missing, we only filter out if the job HAS specific requirements.
+        const hasSpecificDegrees = opp.allowedDegrees.length > 0;
+        const degreeMatch = !hasSpecificDegrees ||
+            (profile.educationLevel && opp.allowedDegrees.includes(profile.educationLevel));
 
         if (!degreeMatch) return false;
 
-        // Fine Filter 2: Skills overlap (soft match - at least 1 skill matches)
-        // This is optional - if required skills is empty, pass through
-        if (opp.requiredSkills.length > 0) {
+        // Fine Filter 2: Skills overlap (soft match)
+        // Only filter if BOTH the job has requirements AND the profile has skills defined.
+        // If user has NO skills listed, we show them everything to help them discover.
+        const hasSpecificSkills = opp.requiredSkills.length > 0;
+        const hasProfileSkills = profile.skills && profile.skills.length > 0;
+
+        if (hasSpecificSkills && hasProfileSkills) {
             const hasAnySkill = opp.requiredSkills.some(skill =>
                 profile.skills.includes(skill)
             );

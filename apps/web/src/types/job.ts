@@ -16,7 +16,7 @@ export interface OnlineJob {
         max: number;
         currency: string;
     } | null;
-    employmentType: 'full-time' | 'contract' | 'internship';
+    employmentType: 'JOB' | 'INTERNSHIP' | 'WALKIN' | 'CONTRACT';
     locations: string[];
     applyLink: string;
     source: string;

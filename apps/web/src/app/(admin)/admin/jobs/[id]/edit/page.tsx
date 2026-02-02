@@ -3,9 +3,10 @@
 import { use, useState, useEffect } from 'react';
 import { JobsService } from '@/features/jobs/services/jobs.service';
 import { OnlineJob } from '@/types/job';
-import TopNav from '@/shared/components/navigation/TopNav';
-import { useAuth } from '@/context/AuthContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { useRouter } from 'next/navigation';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import Link from 'next/link';
 
 const COMMON_ROLES = [
     'Frontend Engineer', 'Backend Engineer', 'Full Stack Engineer',
@@ -18,7 +19,7 @@ const MAJOR_CITIES = ['Bangalore', 'Mumbai', 'Delhi', 'Hyderabad', 'Pune', 'Chen
 export default function EditJobPage({ params }: { params: Promise<{ id: string }> }) {
     // Unwrapping params using React.use()
     const { id: jobId } = use(params);
-    const { isAdmin, loading: authLoading } = useAuth();
+    const { isAuthenticated: isAdmin, isLoading: authLoading } = useAdmin();
     const router = useRouter();
     const [loading, setLoading] = useState(true);
 
@@ -100,23 +101,32 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
         }
     };
 
-    if (loading) return <div className="min-h-screen pt-20 text-center">Loading...</div>;
+    if (loading) return (
+        <div className="min-h-screen pt-20 flex justify-center bg-slate-950">
+            <div className="w-8 h-8 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin" />
+        </div>
+    );
     if (!isAdmin) return null;
 
     return (
-        <div className="min-h-screen bg-neutral-50">
-            <TopNav />
-            <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
-                <h1 className="text-2xl font-bold text-neutral-900 mb-6">Edit Job</h1>
+        <div className="min-h-screen bg-slate-950 p-6 md:p-8">
+            <main className="max-w-3xl mx-auto">
+                <div className="mb-6">
+                    <Link href="/admin/jobs" className="inline-flex items-center gap-2 text-xs font-black text-slate-500 hover:text-slate-200 transition-colors uppercase tracking-widest mb-4">
+                        <ArrowLeftIcon className="w-4 h-4" />
+                        Back to List
+                    </Link>
+                    <h1 className="text-2xl font-bold text-slate-200">Edit Job</h1>
+                </div>
 
-                <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-neutral-200 p-6 space-y-6">
+                <form onSubmit={handleSubmit} className="bg-slate-900 rounded-[2rem] border border-slate-800 p-8 space-y-6 shadow-sm">
                     {/* Role */}
                     <div>
-                        <label className="block text-sm font-medium text-neutral-900 mb-2">Role</label>
+                        <label className="block text-sm font-bold text-slate-400 mb-2">Role</label>
                         <select
                             value={formData.normalizedRole}
                             onChange={(e) => setFormData({ ...formData, normalizedRole: e.target.value })}
-                            className="w-full px-4 py-2 border border-neutral-300 rounded-lg"
+                            className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 focus:border-blue-600 outline-none transition-all"
                             required
                         >
                             <option value="">Select role</option>
@@ -126,12 +136,12 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
 
                     {/* Company */}
                     <div>
-                        <label className="block text-sm font-medium text-neutral-900 mb-2">Company</label>
+                        <label className="block text-sm font-bold text-slate-400 mb-2">Company</label>
                         <input
                             type="text"
                             value={formData.company}
                             onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                            className="w-full px-4 py-2 border border-neutral-300 rounded-lg"
+                            className="premium-input bg-slate-950 border-slate-800 text-slate-200 focus:border-blue-600"
                             required
                         />
                     </div>
@@ -139,22 +149,22 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                     {/* Experience */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-neutral-900 mb-2">Min Exp (Yrs)</label>
+                            <label className="block text-sm font-bold text-slate-400 mb-2">Min Exp (Yrs)</label>
                             <input
                                 type="number"
                                 value={formData.experienceMin}
                                 onChange={(e) => setFormData({ ...formData, experienceMin: e.target.value })}
-                                className="w-full px-4 py-2 border border-neutral-300 rounded-lg"
+                                className="premium-input bg-slate-950 border-slate-800 text-slate-200 focus:border-blue-600"
                                 required
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-neutral-900 mb-2">Max Exp (Yrs)</label>
+                            <label className="block text-sm font-bold text-slate-400 mb-2">Max Exp (Yrs)</label>
                             <input
                                 type="number"
                                 value={formData.experienceMax}
                                 onChange={(e) => setFormData({ ...formData, experienceMax: e.target.value })}
-                                className="w-full px-4 py-2 border border-neutral-300 rounded-lg"
+                                className="premium-input bg-slate-950 border-slate-800 text-slate-200 focus:border-blue-600"
                                 required
                             />
                         </div>
@@ -163,21 +173,21 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                     {/* Salary */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-neutral-900 mb-2">Min Salary</label>
+                            <label className="block text-sm font-bold text-slate-400 mb-2">Min Salary</label>
                             <input
                                 type="number"
                                 value={formData.salaryMin}
                                 onChange={(e) => setFormData({ ...formData, salaryMin: e.target.value })}
-                                className="w-full px-4 py-2 border border-neutral-300 rounded-lg"
+                                className="premium-input bg-slate-950 border-slate-800 text-slate-200 focus:border-blue-600"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-neutral-900 mb-2">Max Salary</label>
+                            <label className="block text-sm font-bold text-slate-400 mb-2">Max Salary</label>
                             <input
                                 type="number"
                                 value={formData.salaryMax}
                                 onChange={(e) => setFormData({ ...formData, salaryMax: e.target.value })}
-                                className="w-full px-4 py-2 border border-neutral-300 rounded-lg"
+                                className="premium-input bg-slate-950 border-slate-800 text-slate-200 focus:border-blue-600"
                             />
                         </div>
                     </div>
@@ -185,7 +195,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary-dark transition-colors"
+                        className="w-full py-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-500 transition-colors shadow-lg shadow-blue-900/20"
                     >
                         Save Changes
                     </button>

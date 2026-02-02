@@ -6,8 +6,8 @@ import {
     MapPinIcon,
     CurrencyRupeeIcon,
     BriefcaseIcon,
-    ClockIcon,
-    ChevronRightIcon
+    ChevronRightIcon,
+    BuildingOfficeIcon
 } from '@heroicons/react/24/outline';
 import { BookmarkIcon as BookmarkSolidIcon } from '@heroicons/react/24/solid';
 
@@ -23,27 +23,23 @@ export default function JobCard({ job, jobId, onClick, isSaved = false, onToggle
     const { user } = useAuth();
 
     const formatSalary = () => {
-        if (!job.salary) return 'Not disclosed';
+        if (!job.salary) return 'LPA';
         const { min, max } = job.salary;
         if (min && max) {
-            return `₹${(min / 100000).toFixed(1)}L - ${(max / 100000).toFixed(1)}L`;
+            return `₹${(min / 100000).toFixed(0)}-${(max / 100000).toFixed(0)}L`;
         }
-        return 'Not disclosed';
+        return 'LPA';
     };
 
     const formatExperience = () => {
-        const { min, max } = job.experienceRange;
+        const { min, max } = job.experienceRange || { min: 0, max: 0 };
         if (min === 0 && max === 0) return 'Fresher';
-        if (min === max) return `${min} year${min !== 1 ? 's' : ''}`;
-        return `${min}-${max} yrs`;
+        return `${min}-${max}yr`;
     };
 
     const handleSaveClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!user) {
-            alert('Please sign in to save jobs');
-            return;
-        }
+        if (!user) return;
         if (onToggleSave) onToggleSave();
     };
 
@@ -51,88 +47,92 @@ export default function JobCard({ job, jobId, onClick, isSaved = false, onToggle
         <div
             onClick={onClick}
             className={cn(
-                "job-card group relative animate-in fade-in slide-in-from-bottom-2 duration-500",
-                onClick && "cursor-pointer active:scale-[0.98]"
+                "group relative bg-card border border-border rounded-lg p-4 transition-all hover:border-primary/40 hover:shadow-sm flex flex-col gap-3",
+                onClick && "cursor-pointer"
             )}
         >
-            {/* Top Row: Role & Save */}
-            <div className="flex justify-between items-start gap-4">
-                <div className="space-y-1 flex-1">
-                    <h2 className="text-foreground group-hover:text-primary transition-colors leading-tight">
-                        {job.normalizedRole}
-                    </h2>
-                    <p className="font-black text-[10px] text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-                        <span className="text-foreground">{job.company}</span>
-                        {job.employmentType && (
-                            <>
-                                <span>•</span>
-                                <span className="text-primary bg-primary/10 px-2 py-0.5 rounded-full">{job.employmentType}</span>
-                            </>
-                        )}
-                    </p>
+            <div className="flex justify-between items-start">
+                <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 bg-muted border border-border rounded flex items-center justify-center shrink-0">
+                        <BuildingOfficeIcon className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                        <h4 className="text-[9px] font-black text-muted-foreground uppercase tracking-wider truncate mb-0.5">
+                            {job.company}
+                        </h4>
+                        <h3 className="text-sm font-black text-foreground group-hover:text-primary transition-colors leading-tight italic truncate">
+                            {job.normalizedRole}
+                        </h3>
+                    </div>
                 </div>
 
                 <button
                     onClick={handleSaveClick}
                     className={cn(
-                        "p-2.5 rounded-xl transition-all duration-300 border",
+                        "p-1.5 rounded transition-all border shrink-0",
                         isSaved
-                            ? "bg-foreground border-foreground text-background shadow-lg"
-                            : "bg-card border-border text-muted-foreground hover:text-foreground hover:border-primary"
+                            ? "bg-primary/5 border-primary/20 text-primary"
+                            : "bg-background border-border text-muted-foreground hover:border-primary/40"
                     )}
-                    aria-label={isSaved ? "Remove from wishlist" : "Save for later"}
                 >
-                    {isSaved ? (
-                        <BookmarkSolidIcon className="w-5 h-5" />
-                    ) : (
-                        <BookmarkIcon className="w-5 h-5" />
-                    )}
+                    {isSaved ? <BookmarkSolidIcon className="w-3.5 h-3.5" /> : <BookmarkIcon className="w-3.5 h-3.5" />}
                 </button>
             </div>
 
-            {/* Middle Row: Meta Info */}
-            <div className="grid grid-cols-2 gap-x-3 gap-y-2 py-1">
-                <div className="flex items-center gap-2 text-foreground">
-                    <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center">
-                        <MapPinIcon className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                    <span className="text-xs font-bold truncate tracking-tight">{job.locations[0] || 'Remote'}</span>
+            <div className="flex flex-wrap items-center justify-between gap-1.5">
+                <div className="flex flex-wrap gap-1.5">
+                    {(job.employmentType as string) === 'WALKIN' ? (
+                        <span className="px-1.5 py-0.5 bg-orange-500/10 border border-orange-500/20 text-orange-600 text-[8px] font-black uppercase tracking-widest rounded flex items-center gap-1">
+                            <div className="w-1 h-1 rounded-full bg-orange-600" />
+                            Walk-in Drive
+                        </span>
+                    ) : (job.employmentType as string) === 'INTERNSHIP' ? (
+                        <span className="px-1.5 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-600 text-[8px] font-black uppercase tracking-widest rounded">
+                            Internship
+                        </span>
+                    ) : (
+                        <span className="px-1.5 py-0.5 bg-primary/5 border border-primary/10 text-primary text-[8px] font-black uppercase tracking-widest rounded">
+                            Full-time Job
+                        </span>
+                    )}
                 </div>
-                <div className="flex items-center gap-2 text-foreground">
-                    <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center">
-                        <CurrencyRupeeIcon className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                    <span className="text-xs font-bold tracking-tight">{formatSalary()}</span>
-                </div>
-                <div className="flex items-center gap-2 text-foreground">
-                    <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center">
-                        <BriefcaseIcon className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                    <span className="text-xs font-bold tracking-tight">{formatExperience()}</span>
-                </div>
-                <div className="flex items-center gap-2 text-foreground">
-                    <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center">
-                        <ClockIcon className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                    <span className="text-xs font-bold tracking-tight">Active Stream</span>
+                <div className="flex items-center gap-1 text-[9px] font-black text-muted-foreground/50 italic">
+                    <div className="w-1 h-1 rounded-full bg-primary/40" />
+                    <span>PROTOCOL MATCH</span>
                 </div>
             </div>
 
-            {/* Bottom Row: Action */}
-            <div className="mt-2 flex items-center justify-between pt-4 border-t border-border">
-                <div className="flex -space-x-2">
-                    {[1, 2, 3].map((i) => (
-                        <div key={i} className="w-6 h-6 rounded-full border-2 border-card bg-muted flex items-center justify-center overflow-hidden">
-                            <div className="w-full h-full bg-muted-foreground/20" />
-                        </div>
-                    ))}
-                    <div className="pl-4 text-[9px] font-black text-muted-foreground uppercase tracking-widest flex items-center">
-                        Verified Stream
+            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/50">
+                <div className="min-w-0">
+                    <p className="text-[8px] font-black text-muted-foreground uppercase tracking-tighter mb-0.5">Loc</p>
+                    <div className="flex items-center gap-1 truncate text-foreground text-[10px] font-bold">
+                        <MapPinIcon className="w-2.5 h-2.5 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{job.locations[0] || 'Remote'}</span>
                     </div>
                 </div>
+                <div className="min-w-0">
+                    <p className="text-[8px] font-black text-muted-foreground uppercase tracking-tighter mb-0.5">Exp</p>
+                    <div className="flex items-center gap-1 truncate text-foreground text-[10px] font-bold">
+                        <BriefcaseIcon className="w-2.5 h-2.5 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{formatExperience()}</span>
+                    </div>
+                </div>
+                <div className="min-w-0">
+                    <p className="text-[8px] font-black text-muted-foreground uppercase tracking-tighter mb-0.5">LPA</p>
+                    <div className="flex items-center gap-1 truncate text-foreground text-[10px] font-bold">
+                        <CurrencyRupeeIcon className="w-2.5 h-2.5 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{formatSalary()}</span>
+                    </div>
+                </div>
+            </div>
 
-                <div className="flex items-center gap-1 text-primary font-black text-[10px] uppercase tracking-widest group-hover:translate-x-1 transition-transform">
-                    View Specs
+            <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest pt-1">
+                <div className="flex items-center gap-1 text-success">
+                    <div className="w-1 h-1 rounded-full bg-success" />
+                    <span>Verified</span>
+                </div>
+                <div className="flex items-center gap-1 text-primary group-hover:translate-x-0.5 transition-transform">
+                    <span>Execute</span>
                     <ChevronRightIcon className="w-3 h-3 stroke-[3]" />
                 </div>
             </div>

@@ -12,7 +12,7 @@ const prisma = new PrismaClient();
 // POST /api/opportunities/:id/action
 router.post('/:id/action', requireAuth, validate(userActionSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { id: opportunityId } = req.params;
+        const { id: opportunityId } = req.params as { id: string };
         const { actionType } = req.body;
 
         // Fetch opportunity with walk-in details
@@ -41,7 +41,20 @@ router.post('/:id/action', requireAuth, validate(userActionSchema), async (req: 
             return next(new AppError('Profile not found', 404));
         }
 
-        const eligibilityResult = checkEligibility(opportunity, profile, req.userId);
+        // Cast to any to bypass strict adminId check if internal types differ, 
+        // or ensure the type matches the expected domain entity.
+        // Assuming checkEligibility expects 'adminId', but Prisma result has 'postedByAdminId'.
+        const opportunityForCheck = {
+            ...opportunity,
+            adminId: opportunity.postedByAdminId
+        };
+
+        const profileForCheck = {
+            ...profile,
+            preferredWorkModes: profile.workModes,
+            passoutYear: profile.gradYear || 0 // Assuming gradYear is the passoutYear, defaulting to 0 if null
+        };
+        const eligibilityResult = checkEligibility(opportunityForCheck as any, profileForCheck as any, req.userId);
 
         if (!eligibilityResult.eligible) {
             return next(new AppError(
@@ -60,8 +73,8 @@ router.post('/:id/action', requireAuth, validate(userActionSchema), async (req: 
             }
 
             // Get EARLIEST date (event semantics)
-            const dates = opportunity.walkInDetails.dates.map(d => new Date(d));
-            const earliestDate = dates.sort((a, b) => a.getTime() - b.getTime())[0];
+            const dates = opportunity.walkInDetails.dates.map((d: Date) => new Date(d));
+            const earliestDate = dates.sort((a: Date, b: Date) => a.getTime() - b.getTime())[0];
 
             if (nowUTC < earliestDate) {
                 return next(new AppError(

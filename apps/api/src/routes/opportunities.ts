@@ -18,7 +18,7 @@ router.get('/', requireAuth, profileGate, async (req: Request, res: Response, ne
             where: { userId: req.userId }
         });
 
-        if (!profile || !profile.passoutYear) {
+        if (!profile || !profile.gradYear) {
             return next(new AppError('Profile incomplete', 400));
         }
 
@@ -32,7 +32,7 @@ router.get('/', requireAuth, profileGate, async (req: Request, res: Response, ne
                 } : {
                     locations: { hasSome: profile.preferredCities }
                 }),
-                allowedPassoutYears: { has: profile.passoutYear }
+                allowedPassoutYears: { has: profile.gradYear }
             },
             include: {
                 walkInDetails: true,
@@ -45,7 +45,7 @@ router.get('/', requireAuth, profileGate, async (req: Request, res: Response, ne
         });
 
         // Stage 2: Code-Level Filtering (Fine)
-        const codeFiltered = filterOpportunitiesForUser(dbFiltered, profile);
+        const codeFiltered = filterOpportunitiesForUser(dbFiltered, profile as any);
 
         // Sort with walk-ins first
         const sorted = sortOpportunitiesWithWalkinsFirst(codeFiltered);
@@ -62,7 +62,7 @@ router.get('/', requireAuth, profileGate, async (req: Request, res: Response, ne
 // GET /api/opportunities/:id
 router.get('/:id', requireAuth, profileGate, async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { id } = req.params;
+        const { id } = req.params as { id: string };
 
         const opportunity = await prisma.opportunity.findUnique({
             where: { id },

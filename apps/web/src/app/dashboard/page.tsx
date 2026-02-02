@@ -18,9 +18,14 @@ import {
     MagnifyingGlassIcon,
     AdjustmentsHorizontalIcon,
     ArrowRightIcon,
-    ChartBarIcon
+    ChartBarIcon,
+    ClockIcon,
+    IdentificationIcon,
+    InformationCircleIcon,
+    CheckBadgeIcon,
 } from '@heroicons/react/24/outline';
 import { SkeletonJobCard } from '@/components/ui/Skeleton';
+import JobCard from '@/features/jobs/components/JobCard';
 
 export default function DashboardPage() {
     const { user, profile, logout } = useAuth();
@@ -38,7 +43,12 @@ export default function DashboardPage() {
     const loadRecentOpportunities = async () => {
         try {
             const data = await opportunitiesApi.list();
-            setRecentOpps(data.opportunities.slice(0, 3));
+            const sanitized = (data.opportunities || []).slice(0, 3).map((o: any) => ({
+                ...o,
+                locations: o.locations || [],
+                requiredSkills: o.requiredSkills || []
+            }));
+            setRecentOpps(sanitized);
         } catch (error) {
             console.error('Failed to load recs');
         } finally {
@@ -57,164 +67,147 @@ export default function DashboardPage() {
         }
     };
 
-    const handleLogout = async () => {
-        const loadingToast = toast.loading('🔒 Securely logging out...');
-        try {
-            await logout();
-            toast.success('👋 Session ended. See you soon!', { id: loadingToast });
-            router.push('/login');
-        } catch (err) {
-            toast.error('Logout failed', { id: loadingToast });
-        }
-    };
-
     return (
         <AuthGate>
             <ProfileGate>
-                <div className="space-y-8">
-                    {/* Welcome Hero - Compact */}
-                    <div className="relative overflow-hidden bg-primary rounded-3xl p-6 md:p-8 text-primary-foreground shadow-xl">
-                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                            <div className="space-y-2">
-                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-background/10 rounded-full backdrop-blur-md text-[10px] font-black tracking-widest uppercase border border-white/5">
-                                    <ChartBarIcon className="w-3 h-3 text-emerald-400" />
-                                    Active Pulse
-                                </div>
-                                <h2 className="text-2xl md:text-3xl font-black tracking-tighter text-inherit">
-                                    Welcome home, {user?.fullName?.split(' ')[0]}.
-                                </h2>
-                                <p className="opacity-70 text-sm font-medium">
-                                    Your career hub for matches and readiness.
-                                </p>
-                            </div>
-                            <div className="flex gap-3">
-                                <Link href="/opportunities" className="premium-button bg-background !text-foreground hover:opacity-90 shadow-none border border-border/10">
-                                    Explore Matches
-                                </Link>
-                                <Link href="/profile/edit" className="premium-button-outline border-white/20 text-white bg-transparent hover:bg-white/5 shadow-none">
-                                    Edit Profile
-                                </Link>
-                            </div>
+                <div className="max-w-7xl mx-auto space-y-4 md:space-y-10 pb-12 md:pb-20 px-4 pt-2 md:pt-0">
+
+                    {/* Header Section */}
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-6 pb-4 md:pb-6 border-b border-border">
+                        <div className="space-y-0.5">
+                            <h1 className="text-2xl md:text-4xl font-black tracking-tight italic">
+                                HUB // {user?.fullName?.split(' ')[0]}
+                            </h1>
+                            <p className="text-xs md:text-sm text-muted-foreground font-medium uppercase tracking-widest opacity-70">
+                                Monitoring career protocol.
+                            </p>
                         </div>
-                        {/* Subtle Abstract Decor */}
-                        <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-white/5 to-transparent pointer-events-none" />
+                        <div className="hidden md:flex items-center gap-2">
+                            <Link href="/opportunities" className="premium-button !h-10 !px-5 text-xs">
+                                <MagnifyingGlassIcon className="w-4 h-4" />
+                                Search Jobs
+                            </Link>
+                        </div>
                     </div>
 
-                    {/* Status Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {/* Profile Strength - Enhanced */}
-                        <div className="job-card col-span-1 md:col-span-2 lg:col-span-1 relative overflow-hidden group border-primary/20 shadow-xl">
-                            <div className="relative z-10 flex flex-col justify-between h-full">
-                                <div className="flex items-center justify-between mb-6">
-                                    <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-primary-foreground">
-                                        <UserIcon className="w-6 h-6" />
-                                    </div>
-                                    <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Strength</div>
+                    {/* Stats Overview */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+                        {/* Profile Completion */}
+                        <div className="premium-card !p-4 md:!p-6 bg-muted/20 border-border">
+                            <div className="flex items-center justify-between mb-2 md:mb-4">
+                                <div className="p-1.5 bg-background border border-border rounded text-primary">
+                                    <UserIcon className="w-4 h-4" />
                                 </div>
+                                <span className="text-[8px] md:text-[10px] font-black text-muted-foreground uppercase tracking-widest hidden sm:block">Status</span>
+                            </div>
+                            <div className="flex items-end justify-between">
                                 <div>
-                                    <div className="relative w-20 h-20 mx-auto mb-4">
-                                        <svg className="w-full h-full transform -rotate-90">
-                                            <circle cx="40" cy="40" r="34" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-muted/10" />
-                                            <circle cx="40" cy="40" r="34" stroke="currentColor" strokeWidth="6" fill="transparent" strokeDasharray={213.6} strokeDashoffset={213.6 - (213.6 * (profile?.completionPercentage || 0)) / 100} className="text-primary transition-all duration-1000" />
-                                        </svg>
-                                        <div className="absolute inset-0 flex items-center justify-center text-lg font-black text-foreground">
-                                            {profile?.completionPercentage}%
-                                        </div>
-                                    </div>
-                                    <p className="text-center text-xs font-bold text-muted-foreground uppercase tracking-widest">Profile Engineering</p>
+                                    <h4 className="text-xl md:text-3xl font-black text-foreground">
+                                        {profile?.completionPercentage}%
+                                    </h4>
+                                    <p className="text-[8px] md:text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Ready</p>
+                                </div>
+                                <div className="w-8 h-8 md:w-12 md:h-12 relative text-primary">
+                                    <svg className="w-full h-full transform -rotate-90">
+                                        <circle cx="50%" cy="50%" r="40%" stroke="currentColor" strokeWidth="3" fill="transparent" className="text-muted/20" />
+                                        <circle cx="50%" cy="50%" r="40%" stroke="currentColor" strokeWidth="3" fill="transparent" strokeDasharray="100" strokeDashoffset={100 - (profile?.completionPercentage || 0)} className="transition-all duration-1000" />
+                                    </svg>
                                 </div>
                             </div>
                         </div>
 
                         {[
-                            { label: 'Applied', value: actionsSummary?.APPLIED || 0, icon: DocumentTextIcon, color: 'text-primary', bg: 'bg-primary/10' },
-                            { label: 'Planning', value: actionsSummary?.PLANNING || 0, icon: Squares2X2Icon, color: 'text-accent', bg: 'bg-accent/10' },
-                            { label: 'Attended', value: actionsSummary?.ATTENDED || 0, icon: CalendarDaysIcon, color: 'text-primary', bg: 'bg-primary/10' }
+                            { label: 'Applied', value: actionsSummary?.APPLIED || 0, icon: DocumentTextIcon },
+                            { label: 'Planned', value: actionsSummary?.PLANNING || 0, icon: ClockIcon },
+                            { label: 'Interview', value: actionsSummary?.ATTENDED || 0, icon: BriefcaseIcon }
                         ].map((stat, i) => (
-                            <div key={i} className="job-card">
-                                <div className="flex justify-between items-start">
-                                    <div className={`p-3 rounded-xl ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform`}>
-                                        <stat.icon className="w-5 h-5" />
+                            <div key={i} className="premium-card !p-4 md:!p-6 border-border">
+                                <div className="flex items-center justify-between mb-2 md:mb-4">
+                                    <div className={`p-1.5 rounded bg-background border border-border text-foreground`}>
+                                        <stat.icon className="w-4 h-4" />
                                     </div>
-                                    <div className="text-[10px] font-black text-muted-foreground/50 uppercase tracking-widest pt-1">Live Sync</div>
                                 </div>
-                                <div>
-                                    <h4 className="text-2xl font-black text-foreground mb-1">{isLoading ? '...' : stat.value}</h4>
-                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{stat.label}</p>
-                                </div>
+                                <h4 className="text-xl md:text-3xl font-black text-foreground">{isLoading ? '..' : stat.value}</h4>
+                                <p className="text-[8px] md:text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">{stat.label}</p>
                             </div>
                         ))}
                     </div>
 
-                    {/* Recommendations Snippet */}
-                    <section className="space-y-6">
-                        <div className="flex items-center justify-between">
-                            <h2 className="tracking-tighter">Matches for You</h2>
-                            <Link href="/opportunities" className="text-sm font-bold text-primary flex items-center gap-1 hover:gap-2 transition-all">
-                                View Full Stream <ArrowRightIcon className="w-5 h-5" />
-                            </Link>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {isLoadingOpps ? (
-                                [1, 2, 3].map(i => <SkeletonJobCard key={i} />)
-                            ) : recentOpps.length === 0 ? (
-                                <div className="col-span-full job-card text-center text-muted-foreground font-bold p-12">
-                                    No matches found yet. Keep your profile updated for the best results.
+                    {/* Main Content Layout */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
+
+                        {/* Recent Opportunities */}
+                        <div className="lg:col-span-2 space-y-4 md:space-y-6">
+                            <div className="flex items-center justify-between border-b border-border pb-3">
+                                <div className="flex items-center gap-2">
+                                    <h2 className="text-sm md:text-xl font-black tracking-tight italic uppercase">Active Feed</h2>
+                                    <span className="px-1.5 py-0.5 bg-muted text-muted-foreground rounded text-[8px] font-black uppercase tracking-widest border border-border">Live</span>
                                 </div>
-                            ) : (
-                                recentOpps.map((opp) => (
-                                    <Link key={opp.id} href={`/opportunities/${opp.id}`}>
-                                        <div className="job-card h-full">
-                                            <div>
-                                                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-1">{opp.company}</span>
-                                                <h3 className="leading-tight group-hover:text-primary transition-colors">{opp.title}</h3>
-                                            </div>
-                                            <div className="flex items-center justify-between pt-4 border-t border-border">
-                                                <div className="flex items-center gap-1 text-[11px] font-bold text-muted-foreground">
-                                                    <MapPinIcon className="w-4 h-4" />
-                                                    {opp.locations[0]}
-                                                </div>
-                                                <span className="px-2 py-0.5 bg-muted text-muted-foreground rounded-full text-[10px] font-black uppercase tracking-widest">{opp.type}</span>
-                                            </div>
+                                <Link href="/opportunities" className="text-[9px] md:text-[10px] font-black text-primary uppercase hover:underline tracking-widest">More →</Link>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                                {isLoadingOpps ? (
+                                    [1, 2].map(i => <SkeletonJobCard key={i} />)
+                                ) : recentOpps.length === 0 ? (
+                                    <div className="col-span-full premium-card text-center p-8 md:p-12 border-dashed border-2">
+                                        <h3 className="font-black text-foreground uppercase italic text-sm">No feed data available</h3>
+                                        <p className="text-[10px] text-muted-foreground mt-1 max-w-xs mx-auto font-medium">Update parameters to initialize matches.</p>
+                                        <Link href="/profile/edit" className="premium-button mt-4 inline-flex uppercase text-[9px] tracking-widest !px-4 !h-8">Initialize</Link>
+                                    </div>
+                                ) : (
+                                    recentOpps.map((opp) => (
+                                        <JobCard
+                                            key={opp.id}
+                                            job={{
+                                                company: opp.company,
+                                                normalizedRole: opp.title,
+                                                locations: opp.locations,
+                                                experienceRange: { min: 0, max: 0 },
+                                                salary: (opp.salaryMin && opp.salaryMax) ? { min: opp.salaryMin, max: opp.salaryMax } : undefined,
+                                                employmentType: opp.type,
+                                                workType: opp.workMode,
+                                                postedDate: opp.postedAt,
+                                                description: opp.description,
+                                                skills: opp.requiredSkills
+                                            } as any}
+                                            jobId={opp.id}
+                                            onClick={() => router.push(`/opportunities/${opp.id}`)}
+                                        />
+                                    ))
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Intelligence / Action Center */}
+                        <div className="space-y-4 md:space-y-6">
+                            <h2 className="text-sm md:text-xl font-black tracking-tight italic uppercase">Intelligence Feed</h2>
+                            <div className="space-y-3 md:space-y-4">
+                                <div className="p-3.5 md:p-5 rounded-xl md:rounded-2xl border border-border bg-card space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <div className="p-1.5 rounded bg-muted border border-border">
+                                            <ChartBarIcon className="w-3.5 h-3.5" />
                                         </div>
-                                    </Link>
-                                ))
-                            )}
-                        </div>
-                    </section>
-
-                    {/* Secondary Actions */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6">
-                        <div className="bg-card border border-border rounded-[3rem] overflow-hidden group hover:shadow-2xl transition-all h-[320px] flex flex-col">
-                            <div className="p-10 flex-1 space-y-4">
-                                <div className="w-14 h-14 bg-primary/10 text-primary rounded-2xl flex items-center justify-center">
-                                    <BriefcaseIcon className="w-8 h-8" />
+                                        <h4 className="text-xs font-black text-foreground italic uppercase tracking-tight">Application Activity</h4>
+                                    </div>
+                                    <p className="text-[10px] md:text-xs text-muted-foreground leading-relaxed font-medium italic opacity-80">
+                                        You have tracked {actionsSummary?.APPLIED || 0} applications so far. Keep monitoring the feed for new verified listings matching your profile.
+                                    </p>
                                 </div>
-                                <h3 className="text-2xl font-black text-foreground tracking-tighter">One Stream Vault</h3>
-                                <p className="text-muted-foreground font-medium text-sm leading-relaxed">
-                                    Hand-picked career paths verified by our engine and aligned with your profile skills.
-                                </p>
-                            </div>
-                            <Link href="/opportunities" className="bg-secondary/50 p-6 flex items-center justify-between group-hover:bg-secondary transition-colors">
-                                <span className="font-bold text-foreground">Access Vault</span>
-                                <ArrowRightIcon className="w-6 h-6 transform group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                        </div>
 
-                        <div className="bg-card border border-border rounded-[3rem] overflow-hidden group hover:shadow-2xl transition-all h-[320px] flex flex-col">
-                            <div className="p-10 flex-1 space-y-4">
-                                <div className="w-14 h-14 bg-accent/10 text-accent rounded-2xl flex items-center justify-center">
-                                    <AdjustmentsHorizontalIcon className="w-8 h-8" />
+                                <div className="p-4 md:p-6 rounded-xl md:rounded-2xl border border-border bg-card space-y-3 md:space-y-4 shadow-sm group hover:border-primary/30 transition-all">
+                                    <div className="flex items-center gap-2">
+                                        <div className="p-1.5 rounded bg-success/10 border border-success/20 text-success">
+                                            <CheckBadgeIcon className="w-4 h-4" />
+                                        </div>
+                                        <h3 className="font-black text-sm md:text-base tracking-tight leading-none italic uppercase">Profile Verification</h3>
+                                    </div>
+                                    <p className="text-[10px] md:text-xs text-muted-foreground leading-relaxed font-medium italic opacity-80 uppercase tracking-widest">
+                                        Keep your career metadata updated for maximum match accuracy.
+                                    </p>
+                                    <Link href="/profile/edit" className="w-full premium-button !h-10 text-[10px] uppercase font-black tracking-widest">Update Profile</Link>
                                 </div>
-                                <h3 className="text-2xl font-black text-foreground tracking-tighter">Profile Engineering</h3>
-                                <p className="text-muted-foreground font-medium text-sm leading-relaxed">
-                                    Retune your preferences, location targets, and skill catalog to improve match accuracy.
-                                </p>
                             </div>
-                            <Link href="/profile/edit" className="bg-secondary/50 p-6 flex items-center justify-between group-hover:bg-secondary transition-colors">
-                                <span className="font-bold text-foreground">Optimization Hub</span>
-                                <ArrowRightIcon className="w-6 h-6 transform group-hover:translate-x-1 transition-transform" />
-                            </Link>
                         </div>
                     </div>
                 </div>

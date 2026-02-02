@@ -3,7 +3,9 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthGate, ProfileGate } from '@/components/gates/ProfileGate';
 import { opportunitiesApi } from '@/lib/api/client';
-import { useEffect, useState, useMemo } from 'react';
+import { cn } from '@/lib/utils';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState, useMemo, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { Opportunity } from '@/types/api';
 import toast from 'react-hot-toast';
@@ -18,266 +20,295 @@ import {
     CurrencyRupeeIcon,
     AdjustmentsHorizontalIcon,
     ChevronRightIcon,
-    ArrowLeftIcon,
-    CalendarIcon,
-    BuildingOfficeIcon,
-    XCircleIcon,
-    XMarkIcon
+    FunnelIcon,
+    XMarkIcon,
+    ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 
-export default function OpportunitiesPage() {
-    const { user, logout } = useAuth();
+const FILTERS = {
+    type: [
+        { label: 'Full-time', value: 'JOB' },
+        { label: 'Internship', value: 'INTERNSHIP' },
+        { label: 'Walk-ins', value: 'WALKIN' },
+    ],
+    location: ['Bangalore', 'Mumbai', 'Delhi', 'Hyderabad', 'Pune', 'Remote'],
+};
+
+function OpportunitiesContent() {
+    const { user } = useAuth();
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+
     const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [citySearch, setCitySearch] = useState('');
-    const [filters, setFilters] = useState({
-        type: '',
-        closingSoon: false
-    });
+    const [search, setSearch] = useState('');
+    const [selectedType, setSelectedType] = useState<string | null>(null);
+    const [selectedLoc, setSelectedLoc] = useState<string | null>(null);
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-    const debouncedCity = useDebounce(citySearch, 500);
-    const debouncedSearch = useDebounce(searchTerm, 300);
+    const debouncedSearch = useDebounce(search, 300);
 
+    // Sync state with URL params
     useEffect(() => {
-        loadOpportunities();
-    }, [filters, debouncedCity, debouncedSearch]);
+        const typeParam = searchParams.get('type');
+        if (typeParam) {
+            const t = typeParam.toUpperCase();
+            if (t === 'FULL-TIME' || t === 'JOB') setSelectedType('JOB');
+            else if (t === 'INTERNSHIP') setSelectedType('INTERNSHIP');
+            else if (t === 'WALKIN' || t === 'WALK-IN' || t === 'WALK-INS') setSelectedType('WALKIN');
+            else setSelectedType(t);
+        } else {
+            setSelectedType(null);
+        }
+    }, [searchParams]);
 
-    const loadOpportunities = async () => {
+    const loadOpportunities = useCallback(async () => {
         setIsLoading(true);
         try {
-            const apiFilters = {
-                ...filters,
-                city: debouncedCity,
-                search: debouncedSearch
-            };
-            const response = await opportunitiesApi.list(
-                apiFilters.type || apiFilters.city || apiFilters.closingSoon || apiFilters.search ? apiFilters : undefined
-            );
-            setOpportunities(response.opportunities || []);
+            const data = await opportunitiesApi.list({
+                type: selectedType || undefined,
+                city: selectedLoc || undefined
+            });
+            setOpportunities(data.opportunities || []);
         } catch (error: any) {
-            toast.error(`❌ Load failed: ${error.message}`);
+            toast.error(error.message || 'Failed to load feed');
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [selectedType, selectedLoc]);
 
-    const handleClearFilters = () => {
-        setSearchTerm('');
-        setCitySearch('');
-        setFilters({ type: '', closingSoon: false });
+    useEffect(() => {
+        loadOpportunities();
+    }, [loadOpportunities]);
+
+    const filteredOpps = useMemo(() => {
+        return opportunities.filter(opp => {
+            // Search filter
+            const matchesSearch = !debouncedSearch ||
+                opp.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+                opp.company.toLowerCase().includes(debouncedSearch.toLowerCase());
+
+            // Type filter - strict matching with enums
+            const matchesType = !selectedType || opp.type === selectedType;
+
+            // Location filter
+            const matchesLoc = !selectedLoc || opp.locations.includes(selectedLoc);
+
+            return matchesSearch && matchesType && matchesLoc;
+        });
+    }, [opportunities, debouncedSearch, selectedType, selectedLoc]);
+
+    const updateType = (type: string | null) => {
+        setSelectedType(type);
+        // Update URL to match state
+        const params = new URLSearchParams(searchParams.toString());
+        if (type) {
+            // Map JOB back to Full-time for cleaner URLs if desired, or just use JOB
+            const label = FILTERS.type.find(t => t.value === type)?.label || type;
+            params.set('type', label);
+        } else {
+            params.delete('type');
+        }
+        router.push(`${pathname}?${params.toString()}`);
     };
 
     return (
         <AuthGate>
             <ProfileGate>
-                <div className="space-y-10">
-                    {/* Search Bar Top */}
-                    <div className="relative group">
-                        <label htmlFor="main-search" className="sr-only">Search roles or companies</label>
-                        <MagnifyingGlassIcon className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-300 group-focus-within:text-slate-900 transition-colors" />
-                        <input
-                            id="main-search"
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Search by role, company name, or keywords..."
-                            className="w-full h-[56px] bg-card border border-border rounded-2xl pl-16 pr-20 text-base font-bold shadow-xl shadow-slate-200/50 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none text-foreground"
-                        />
-                        {searchTerm && (
+                <div className="max-w-7xl mx-auto px-4 pb-12 md:pb-20 space-y-4 md:space-y-8">
+                    {/* Page Header - Ultra Compact */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="px-3 py-1.5 bg-muted rounded-full border border-border flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-success" />
+                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                                    {filteredOpps.length} {selectedType ? selectedType.replace('JOB', 'Jobs').replace('WALKIN', 'Walk-ins').replace('INTERNSHIP', 'Internships') : 'Opportunities'} Found
+                                </p>
+                            </div>
+                            {selectedType && (
+                                <button
+                                    onClick={() => updateType(null)}
+                                    className="text-[10px] font-black text-primary uppercase hover:underline"
+                                >
+                                    Clear Category
+                                </button>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="relative w-full md:w-64">
+                                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                                <input
+                                    type="text"
+                                    placeholder="Search feed..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="premium-input !pl-9 !h-9 !text-xs italic"
+                                />
+                            </div>
                             <button
-                                onClick={() => setSearchTerm('')}
-                                className="absolute right-6 top-1/2 -translate-y-1/2 p-2 bg-slate-50 text-slate-400 hover:text-slate-900 rounded-full transition-colors"
-                                aria-label="Clear search"
+                                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                                className={cn(
+                                    "premium-button-outline !h-9 px-4 text-[10px] uppercase tracking-widest",
+                                    isFilterOpen && "bg-muted border-primary text-primary"
+                                )}
                             >
-                                <XMarkIcon className="w-5 h-5" />
+                                <FunnelIcon className="w-3.5 h-3.5" />
+                                {isFilterOpen ? 'Close' : 'Filters'}
                             </button>
-                        )}
+                        </div>
                     </div>
 
-                    <div className="flex flex-col md:flex-row gap-8 lg:gap-12">
-                        {/* Desktop Sidebar Filters */}
-                        <aside className="hidden md:block w-72 shrink-0 space-y-8 h-fit sticky top-[104px]">
-                            <div className="space-y-6">
-                                <div className="space-y-4">
-                                    <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Stream Filters</h3>
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8 items-start">
+                        {/* Control Panel (Sticky) */}
+                        <aside className={cn(
+                            "lg:col-span-3 space-y-6 lg:sticky lg:top-24 transition-all duration-300",
+                            isFilterOpen ? "block" : "hidden"
+                        )}>
+                            <div className="p-6 rounded-2xl border border-border bg-card space-y-8 shadow-sm">
+                                <div>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Job Type</h3>
+                                    </div>
                                     <div className="space-y-2">
-                                        {['', 'JOB', 'INTERNSHIP', 'WALKIN'].map((type) => (
+                                        {FILTERS.type.map(type => (
                                             <button
-                                                key={type}
-                                                onClick={() => setFilters({ ...filters, type })}
-                                                className={`w-full text-left px-5 h-[44px] rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${filters.type === type ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-card hover:text-foreground border border-transparent hover:border-border'}`}
+                                                key={type.value}
+                                                onClick={() => updateType(selectedType === type.value ? null : type.value)}
+                                                className={cn(
+                                                    "w-full flex items-center justify-between p-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all",
+                                                    selectedType === type.value
+                                                        ? "bg-primary/5 border-primary text-primary"
+                                                        : "bg-background border-border text-muted-foreground hover:border-primary/30"
+                                                )}
                                             >
-                                                {type === '' ? 'Omni Stream' : type === 'JOB' ? 'Direct Jobs' : type === 'INTERNSHIP' ? 'Internships' : 'Walk-In Drives'}
+                                                {type.label}
+                                                {selectedType === type.value && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
                                             </button>
                                         ))}
                                     </div>
                                 </div>
 
-                                <div className="space-y-4">
-                                    <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Location Sync</h3>
-                                    <div className="relative">
-                                        <label htmlFor="city-search" className="sr-only">City or Remote</label>
-                                        <MapPinIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                                        <input
-                                            id="city-search"
-                                            type="text"
-                                            value={citySearch}
-                                            onChange={(e) => setCitySearch(e.target.value)}
-                                            className="premium-input pl-11 shadow-sm"
-                                            placeholder="City or Remote"
-                                        />
+                                <div>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Location</h3>
+                                        {selectedLoc && (
+                                            <button onClick={() => setSelectedLoc(null)} className="text-[9px] font-black text-primary uppercase">Reset</button>
+                                        )}
+                                    </div>
+                                    <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
+                                        {FILTERS.location.map(loc => (
+                                            <button
+                                                key={loc}
+                                                onClick={() => setSelectedLoc(selectedLoc === loc ? null : loc)}
+                                                className={cn(
+                                                    "flex items-center gap-3 p-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all",
+                                                    selectedLoc === loc
+                                                        ? "bg-primary/5 border-primary text-primary shadow-sm"
+                                                        : "bg-background border-border text-muted-foreground hover:border-primary/30"
+                                                )}
+                                            >
+                                                <MapPinIcon className="w-3.5 h-3.5" />
+                                                {loc}
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
 
-                                <div className="pt-2">
-                                    <label className="flex items-center gap-3 px-5 h-[44px] bg-card border border-border rounded-xl cursor-pointer hover:border-primary/20 transition-all shadow-sm">
-                                        <input
-                                            type="checkbox"
-                                            checked={filters.closingSoon}
-                                            onChange={(e) => setFilters({ ...filters, closingSoon: e.target.checked })}
-                                            className="w-4 h-4 rounded-md border-border bg-background text-primary focus:ring-primary transition-all"
-                                        />
-                                        <span className="text-[10px] font-black text-foreground uppercase tracking-widest leading-none">Ending Soon</span>
-                                    </label>
+                                <div className="pt-4 border-t border-border/50">
+                                    <div className="p-4 bg-muted/30 rounded-xl border border-border">
+                                        <p className="text-[10px] font-bold text-muted-foreground italic leading-relaxed">
+                                            Platform ensures 100% verification for all listed opportunities.
+                                        </p>
+                                    </div>
                                 </div>
-
-                                <button
-                                    onClick={handleClearFilters}
-                                    className="w-full text-[10px] font-black text-muted-foreground hover:text-rose-500 transition-colors uppercase tracking-widest pt-2"
-                                >
-                                    Drop All Filters
-                                </button>
                             </div>
                         </aside>
 
-                        {/* Main Content */}
-                        <div className="flex-1 space-y-8">
-                            {/* Header / Stats */}
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-1">
-                                    <h1 className="tracking-tighter">Live Stream</h1>
-                                    <p className="text-muted-foreground font-medium text-sm md:text-base tracking-tight">Curated opportunities matched for your profile.</p>
-                                </div>
-                                <div className="text-right hidden sm:block">
-                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Results</p>
-                                    <p className="text-xl font-black text-foreground tracking-tighter">{opportunities.length} Matches</p>
-                                </div>
-                            </div>
-
-                            {/* Mobile Filter Summary */}
-                            <div className="md:hidden flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                                <button
-                                    onClick={() => document.getElementById('mobile-filter-sheet')?.classList.remove('translate-y-full')}
-                                    className="h-10 px-4 bg-card border border-border rounded-full flex items-center gap-2 text-xs font-black uppercase tracking-widest whitespace-nowrap shadow-sm text-foreground"
-                                >
-                                    <AdjustmentsHorizontalIcon className="w-4 h-4 text-muted-foreground" />
-                                    Refine Stream
-                                </button>
-                                {(filters.type || debouncedCity) && (
-                                    <button
-                                        onClick={handleClearFilters}
-                                        className="h-10 px-4 bg-blue-50 text-blue-600 rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap"
-                                    >
-                                        Reset
-                                    </button>
-                                )}
-                            </div>
-
-                            {/* List Rendering */}
+                        {/* Opportunity Feed */}
+                        <div className={cn(
+                            "transition-all duration-300",
+                            isFilterOpen ? "lg:col-span-9" : "lg:col-span-12"
+                        )}>
                             {isLoading ? (
-                                <div className="grid grid-cols-1 gap-6">
-                                    {[1, 2, 3, 4].map(i => <SkeletonJobCard key={i} />)}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {[1, 2, 3, 4, 5, 6].map(i => <SkeletonJobCard key={i} />)}
                                 </div>
-                            ) : opportunities.length === 0 ? (
-                                <div className="bg-card rounded-[3rem] border-2 border-dashed border-border p-20 text-center space-y-4 shadow-sm animate-in zoom-in-95 duration-500">
-                                    <div className="w-24 h-24 bg-background rounded-full flex items-center justify-center mx-auto text-muted-foreground/20">
-                                        <MagnifyingGlassIcon className="w-12 h-12" />
+                            ) : filteredOpps.length === 0 ? (
+                                <div className="p-20 text-center rounded-3xl border-2 border-dashed border-border bg-muted/10">
+                                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-6 text-muted-foreground">
+                                        <MagnifyingGlassIcon className="w-8 h-8" />
                                     </div>
-                                    <h3 className="text-2xl font-black text-foreground tracking-tighter">Negative Results</h3>
-                                    <p className="text-muted-foreground font-medium max-w-xs mx-auto text-sm leading-relaxed">No signals detected for these parameters. Try loosening your sync filters or expanding location targets.</p>
+                                    <h3 className="text-xl font-black text-foreground uppercase italic tracking-tight">Null ResultSet</h3>
+                                    <p className="text-sm text-muted-foreground mt-2 font-medium max-w-sm mx-auto">
+                                        No opportunities current match your defined parameters in the {selectedType || 'global'} feed.
+                                    </p>
                                     <button
-                                        onClick={handleClearFilters}
-                                        className="premium-button bg-secondary !text-secondary-foreground !h-12 px-8 mx-auto"
+                                        onClick={() => {
+                                            setSearch('');
+                                            updateType(null);
+                                            setSelectedLoc(null);
+                                        }}
+                                        className="premium-button mt-8 mx-auto"
                                     >
-                                        Reset Filter Protocol
+                                        Flush All Filters
                                     </button>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 gap-6 pb-24">
-                                    {opportunities.map((opp) => (
-                                        <Link key={opp.id} href={`/opportunities/${opp.id}`}>
-                                            <JobCard
-                                                job={{
-                                                    ...opp,
-                                                    normalizedRole: opp.title,
-                                                    experienceRange: { min: 0, max: 2 }, // Default for freshers if not provided
-                                                    mustHaveSkills: opp.requiredSkills,
-                                                    niceToHaveSkills: [],
-                                                    workType: (opp.workMode?.toLowerCase() as any) || 'onsite',
-                                                    salary: opp.salaryMin ? { min: opp.salaryMin, max: opp.salaryMax || opp.salaryMin, currency: 'INR' } : null,
-                                                    employmentType: opp.type === 'INTERNSHIP' ? 'internship' : 'full-time',
-                                                    source: 'FresherFlow Verified',
-                                                    lastVerified: opp.postedAt
-                                                } as any}
-                                                jobId={opp.id}
-                                            />
-                                        </Link>
+                                <div className={cn(
+                                    "grid grid-cols-1 md:grid-cols-2 gap-6",
+                                    isFilterOpen ? "lg:grid-cols-2 xl:grid-cols-3" : "lg:grid-cols-3 xl:grid-cols-4"
+                                )}>
+                                    {filteredOpps.map((opp) => (
+                                        <JobCard
+                                            key={opp.id}
+                                            job={{
+                                                company: opp.company,
+                                                normalizedRole: opp.title,
+                                                locations: opp.locations,
+                                                experienceRange: { min: 0, max: 0 },
+                                                salary: (opp.salaryMin && opp.salaryMax) ? { min: opp.salaryMin, max: opp.salaryMax } : undefined,
+                                                employmentType: opp.type,
+                                                workType: opp.workMode,
+                                                postedDate: opp.postedAt,
+                                                description: opp.description,
+                                                skills: opp.requiredSkills
+                                            } as any}
+                                            jobId={opp.id}
+                                            onClick={() => router.push(`/opportunities/${opp.id}`)}
+                                        />
                                     ))}
+                                </div>
+                            )}
+
+                            {/* Feed Metadata Footer */}
+                            {!isLoading && (
+                                <div className="mt-12 text-center pb-8 border-t border-border pt-8">
+                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.4em]">
+                                        Total opportunities synchronized.
+                                    </p>
                                 </div>
                             )}
                         </div>
                     </div>
                 </div>
-                {/* Mobile Filter Sheet */}
-                <div id="mobile-filter-sheet" className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[60] transition-transform translate-y-full md:hidden" onClick={(e) => {
-                    if (e.target === e.currentTarget) e.currentTarget.classList.add('translate-y-full');
-                }}>
-                    <div className="absolute bottom-0 left-0 right-0 bg-card rounded-t-[3rem] p-10 space-y-8 animate-in slide-in-from-bottom-20 duration-500">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-2xl font-black text-foreground tracking-tighter">Filter Protocol</h3>
-                            <button onClick={() => document.getElementById('mobile-filter-sheet')?.classList.add('translate-y-full')} className="p-2 bg-background text-muted-foreground rounded-full">
-                                <XMarkIcon className="w-6 h-6" />
-                            </button>
-                        </div>
-
-                        <div className="space-y-8">
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Stream Type</label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {['', 'JOB', 'INTERNSHIP', 'WALKIN'].map((type) => (
-                                        <button
-                                            key={type}
-                                            onClick={() => setFilters({ ...filters, type })}
-                                            className={`px-4 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${filters.type === type ? 'bg-primary border-primary text-primary-foreground shadow-xl' : 'bg-card border-border text-muted-foreground'}`}
-                                        >
-                                            {type === '' ? 'All' : type}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Location Sync</label>
-                                <input
-                                    type="text"
-                                    value={citySearch}
-                                    onChange={(e) => setCitySearch(e.target.value)}
-                                    className="premium-input !h-14"
-                                    placeholder="Enter target city..."
-                                />
-                            </div>
-
-                            <button
-                                onClick={() => document.getElementById('mobile-filter-sheet')?.classList.add('translate-y-full')}
-                                className="w-full premium-button h-16 shadow-2xl shadow-slate-200"
-                            >
-                                Activate Filters
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </ProfileGate>
         </AuthGate>
+    );
+}
+
+export default function OpportunitiesPage() {
+    return (
+        <Suspense fallback={
+            <div className="max-w-7xl mx-auto px-4 py-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[1, 2, 3, 4, 5, 6].map(i => (
+                        <div key={i} className="h-64 bg-muted/20 animate-pulse rounded-2xl" />
+                    ))}
+                </div>
+            </div>
+        }>
+            <OpportunitiesContent />
+        </Suspense>
     );
 }

@@ -1,7 +1,9 @@
 'use client';
 
+import { Suspense } from 'react';
 import { usePathname } from 'next/navigation';
 import { Navbar, MobileNav } from '@/components/ui/Navigation';
+import { cn } from '@/lib/utils';
 
 export function NavigationWrapper({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -14,19 +16,29 @@ export function NavigationWrapper({ children }: { children: React.ReactNode }) {
 
     return (
         <>
-            {!hideNav && <Navbar />}
-            {!hideNav ? (
-                <main className={`pt-20 ${!isHomePage ? "container-app py-10" : ""} animate-in fade-in duration-700`}>
-                    <div className="pb-20 md:pb-0">
-                        {children}
-                    </div>
-                </main>
-            ) : (
-                <div className="animate-in fade-in duration-700">
+            {!hideNav && (
+                <Suspense fallback={null}>
+                    <Navbar />
+                </Suspense>
+            )}
+            <main className={cn(
+                "animate-in fade-in duration-300 relative",
+                !isAuthRoute && !isAdminRoute && "pt-20 md:pt-24",
+                !isAuthRoute && !isAdminRoute && !isHomePage && "container-app pb-4 md:pb-10",
+                (isAuthRoute || isAdminRoute) && "h-[100dvh] overflow-hidden flex flex-col"
+            )}>
+                <div className={cn(
+                    "flex-1 flex flex-col",
+                    !isHomePage && !isAuthRoute && "pb-16 md:pb-0"
+                )}>
                     {children}
                 </div>
+            </main>
+            {!hideNav && (
+                <Suspense fallback={null}>
+                    <MobileNav />
+                </Suspense>
             )}
-            {!hideNav && <MobileNav />}
         </>
     );
 }

@@ -3,15 +3,25 @@ import { Profile, EducationLevel, OpportunityType, WorkMode, Availability } from
 export function calculateCompletion(profile: Profile): number {
     let completion = 0;
 
-    // Education Details (40% weight)
-    const educationComplete =
+    // Education Details (40% weight total)
+    // Part 1: Graduation/Degree (25%)
+    const gradComplete =
         profile.educationLevel &&
-        profile.courseName &&
-        profile.specialization &&
-        profile.passoutYear;
+        profile.gradCourse &&
+        profile.gradSpecialization &&
+        profile.gradYear;
 
-    if (educationComplete) {
-        completion += 40;
+    if (gradComplete) {
+        completion += 25;
+    }
+
+    // Part 2: Secondary Education (15%)
+    const secondaryComplete =
+        profile.tenthYear &&
+        profile.twelfthYear;
+
+    if (secondaryComplete) {
+        completion += 15;
     }
 
     // Opportunity Preferences (40% weight)

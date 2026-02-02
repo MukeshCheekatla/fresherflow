@@ -162,17 +162,17 @@ export default function EditOpportunityPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <Link href="/admin/opportunities" className="inline-flex items-center gap-2 text-xs font-black text-slate-400 hover:text-slate-900 transition-colors mb-4 uppercase tracking-widest leading-none">
+                    <Link href="/admin/opportunities" className="inline-flex items-center gap-2 text-xs font-black text-slate-500 hover:text-slate-200 transition-colors mb-4 uppercase tracking-widest leading-none">
                         <ArrowLeftIcon className="w-4 h-4" />
                         Back to Log
                     </Link>
-                    <h1 className="tracking-tighter">Edit Opportunity</h1>
-                    <p className="text-slate-500 font-medium tracking-tight">Modify entry Details and requirements.</p>
+                    <h1 className="tracking-tighter text-slate-200">Edit Opportunity</h1>
+                    <p className="text-slate-400 font-medium tracking-tight">Modify entry Details and requirements.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <span className={`px-4 py-2 rounded-2xl text-[10px] font-black tracking-widest uppercase ${type === 'WALKIN' ? 'bg-orange-100 text-orange-600' :
-                        type === 'INTERNSHIP' ? 'bg-purple-100 text-purple-600' :
-                            'bg-blue-100 text-blue-600'
+                    <span className={`px-4 py-2 rounded-2xl text-[10px] font-black tracking-widest uppercase ${type === 'WALKIN' ? 'bg-orange-900/30 text-orange-400 border border-orange-900/50' :
+                        type === 'INTERNSHIP' ? 'bg-purple-900/30 text-purple-400 border border-purple-900/50' :
+                            'bg-blue-900/30 text-blue-400 border border-blue-900/50'
                         }`}>
                         {type} Protocol Active
                     </span>
@@ -181,89 +181,89 @@ export default function EditOpportunityPage() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Main Details */}
-                <div className="bg-white rounded-[2rem] border border-slate-100 p-8 space-y-8 shadow-sm">
-                    <h3 className="font-extrabold text-slate-900 mb-2 flex items-center gap-2 tracking-tight">
-                        <BriefcaseIcon className="w-5 h-5 text-slate-300" />
+                <div className="bg-slate-900 rounded-[2rem] border border-slate-800 p-8 space-y-8 shadow-sm">
+                    <h3 className="font-extrabold text-slate-200 mb-2 flex items-center gap-2 tracking-tight">
+                        <BriefcaseIcon className="w-5 h-5 text-slate-500" />
                         Base Specifications
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700 font-display">Job Title *</label>
+                            <label className="text-sm font-bold text-slate-400 font-display">Job Title *</label>
                             <input
                                 required
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                className="premium-input"
+                                className="premium-input bg-slate-950 border-slate-800 text-slate-200 focus:border-blue-600"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700">Company Name *</label>
+                            <label className="text-sm font-bold text-slate-400">Company Name *</label>
                             <input
                                 required
                                 value={company}
                                 onChange={(e) => setCompany(e.target.value)}
-                                className="premium-input"
+                                className="premium-input bg-slate-950 border-slate-800 text-slate-200 focus:border-blue-600"
                             />
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-slate-700 font-display">Full Description</label>
+                        <label className="text-sm font-bold text-slate-400 font-display">Full Description</label>
                         <textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             rows={6}
-                            className="premium-input resize-none"
+                            className="premium-input resize-none bg-slate-950 border-slate-800 text-slate-300 focus:border-blue-600"
                         />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
                                 <CurrencyRupeeIcon className="w-4 h-4" /> Entry Point
                             </label>
                             <input
                                 type="number"
                                 value={salaryMin}
                                 onChange={(e) => setSalaryMin(e.target.value)}
-                                className="premium-input bg-slate-50/50"
+                                className="premium-input bg-slate-950/50 border-slate-800 text-slate-200"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
                                 <CurrencyRupeeIcon className="w-4 h-4" /> Upper Bound
                             </label>
                             <input
                                 type="number"
                                 value={salaryMax}
                                 onChange={(e) => setSalaryMax(e.target.value)}
-                                className="premium-input bg-slate-50/50"
+                                className="premium-input bg-slate-950/50 border-slate-800 text-slate-200"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
                                 <CalendarIcon className="w-4 h-4" /> Deactivation Mark
                             </label>
                             <input
                                 type="datetime-local"
                                 value={expiresAt}
                                 onChange={(e) => setExpiresAt(e.target.value)}
-                                className="premium-input bg-slate-50/50 p-2.5"
+                                className="premium-input bg-slate-950/50 border-slate-800 text-slate-200 p-2.5"
                             />
                         </div>
                     </div>
                 </div>
 
                 {/* Requirements */}
-                <div className="bg-white rounded-[2rem] border border-slate-100 p-8 space-y-8 shadow-sm">
-                    <h3 className="font-extrabold text-slate-900 mb-2 flex items-center gap-2 tracking-tight">
-                        <AcademicCapIcon className="w-5 h-5 text-slate-300" />
+                <div className="bg-slate-900 rounded-[2rem] border border-slate-800 p-8 space-y-8 shadow-sm">
+                    <h3 className="font-extrabold text-slate-200 mb-2 flex items-center gap-2 tracking-tight">
+                        <AcademicCapIcon className="w-5 h-5 text-slate-500" />
                         Credential Criteria
                     </h3>
 
                     <div className="space-y-3">
-                        <label className="text-sm font-bold text-slate-700">Allowed Education Levels</label>
+                        <label className="text-sm font-bold text-slate-400">Allowed Education Levels</label>
                         <div className="flex flex-wrap gap-3">
                             {['DIPLOMA', 'DEGREE', 'PG'].map((deg) => (
                                 <button
@@ -271,8 +271,8 @@ export default function EditOpportunityPage() {
                                     type="button"
                                     onClick={() => handleDegreeToggle(deg)}
                                     className={`px-6 py-2 rounded-xl font-bold border-2 transition-all ${allowedDegrees.includes(deg)
-                                        ? 'bg-blue-50 border-blue-600 text-blue-700'
-                                        : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'
+                                        ? 'bg-blue-900/30 border-blue-500 text-blue-400'
+                                        : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'
                                         }`}
                                 >
                                     {deg}
@@ -283,45 +283,45 @@ export default function EditOpportunityPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700">Passout Years (comma separated)</label>
+                            <label className="text-sm font-bold text-slate-400">Passout Years (comma separated)</label>
                             <input
                                 required
                                 value={passoutYears.join(', ')}
                                 onChange={(e) => setPassoutYears(e.target.value.split(',').map(y => parseInt(y.trim())).filter(Boolean))}
-                                className="premium-input"
+                                className="premium-input bg-slate-950 border-slate-800 text-slate-200"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700">Key Skills Required</label>
+                            <label className="text-sm font-bold text-slate-400">Key Skills Required</label>
                             <input
                                 value={requiredSkills}
                                 onChange={(e) => setRequiredSkills(e.target.value)}
-                                className="premium-input"
+                                className="premium-input bg-slate-950 border-slate-800 text-slate-200"
                             />
                         </div>
                     </div>
                 </div>
 
                 {/* Logistics */}
-                <div className="bg-white rounded-[2rem] border border-slate-100 p-8 space-y-8 shadow-sm">
-                    <h3 className="font-extrabold text-slate-900 mb-2 flex items-center gap-2 tracking-tight">
-                        <MapPinIcon className="w-5 h-5 text-slate-300" />
+                <div className="bg-slate-900 rounded-[2rem] border border-slate-800 p-8 space-y-8 shadow-sm">
+                    <h3 className="font-extrabold text-slate-200 mb-2 flex items-center gap-2 tracking-tight">
+                        <MapPinIcon className="w-5 h-5 text-slate-500" />
                         Logistics & Presence
                     </h3>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-slate-700">Locations (comma separated)</label>
+                        <label className="text-sm font-bold text-slate-400">Locations (comma separated)</label>
                         <input
                             required
                             value={locations}
                             onChange={(e) => setLocations(e.target.value)}
-                            className="premium-input"
+                            className="premium-input bg-slate-950 border-slate-800 text-slate-200"
                         />
                     </div>
 
                     {type !== 'WALKIN' && (
                         <div className="space-y-3 pt-2">
-                            <label className="text-sm font-bold text-slate-700">Primary Work Mode</label>
+                            <label className="text-sm font-bold text-slate-400">Primary Work Mode</label>
                             <div className="grid grid-cols-3 gap-3">
                                 {(['ONSITE', 'HYBRID', 'REMOTE'] as const).map((mode) => (
                                     <button
@@ -329,8 +329,8 @@ export default function EditOpportunityPage() {
                                         type="button"
                                         onClick={() => setWorkMode(mode)}
                                         className={`py-3 rounded-xl font-bold border-2 transition-all ${workMode === mode
-                                            ? 'bg-indigo-50 border-indigo-600 text-indigo-700'
-                                            : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'
+                                            ? 'bg-indigo-900/30 border-indigo-500 text-indigo-400'
+                                            : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'
                                             }`}
                                     >
                                         {mode}
@@ -342,54 +342,54 @@ export default function EditOpportunityPage() {
                 </div>
 
                 {/* Apply Settings */}
-                <div className="bg-white rounded-[2rem] border border-slate-100 p-8 space-y-8 shadow-sm">
-                    <h3 className="font-extrabold text-slate-900 mb-2 flex items-center gap-2 tracking-tight">
-                        <LinkIcon className="w-5 h-5 text-slate-300" />
+                <div className="bg-slate-900 rounded-[2rem] border border-slate-800 p-8 space-y-8 shadow-sm">
+                    <h3 className="font-extrabold text-slate-200 mb-2 flex items-center gap-2 tracking-tight">
+                        <LinkIcon className="w-5 h-5 text-slate-500" />
                         Engagement Path
                     </h3>
 
                     {type === 'WALKIN' ? (
-                        <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6 space-y-6">
+                        <div className="bg-orange-950/20 border border-orange-900/50 rounded-2xl p-6 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-orange-800 tracking-tight">Walk-in Dates *</label>
+                                    <label className="text-sm font-bold text-orange-400 tracking-tight">Walk-in Dates *</label>
                                     <input
                                         required
                                         value={walkInDates}
                                         onChange={(e) => setWalkInDates(e.target.value)}
-                                        className="premium-input bg-white border-orange-100"
+                                        className="premium-input bg-slate-950 border-orange-900/50 text-orange-100 placeholder:text-orange-500/50"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-orange-800 tracking-tight">Reporting Time *</label>
+                                    <label className="text-sm font-bold text-orange-400 tracking-tight">Reporting Time *</label>
                                     <input
                                         required
                                         value={reportingTime}
                                         onChange={(e) => setReportingTime(e.target.value)}
-                                        className="premium-input bg-white border-orange-100"
+                                        className="premium-input bg-slate-950 border-orange-900/50 text-orange-100 placeholder:text-orange-500/50"
                                     />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-bold text-orange-800 tracking-tight">Venue Address *</label>
+                                <label className="text-sm font-bold text-orange-400 tracking-tight">Venue Address *</label>
                                 <textarea
                                     required
                                     value={venueAddress}
                                     onChange={(e) => setVenueAddress(e.target.value)}
                                     rows={3}
-                                    className="premium-input bg-white border-orange-100 resize-none"
+                                    className="premium-input bg-slate-950 border-orange-900/50 text-orange-100 placeholder:text-orange-500/50 resize-none"
                                 />
                             </div>
                         </div>
                     ) : (
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700">Official Apply URL *</label>
+                            <label className="text-sm font-bold text-slate-400">Official Apply URL *</label>
                             <input
                                 type="url"
                                 required
                                 value={applyLink}
                                 onChange={(e) => setApplyLink(e.target.value)}
-                                className="premium-input"
+                                className="premium-input bg-slate-950 border-slate-800 text-slate-200"
                             />
                         </div>
                     )}
@@ -400,7 +400,7 @@ export default function EditOpportunityPage() {
                     <button
                         type="submit"
                         disabled={saving}
-                        className="flex-1 premium-button h-[64px] shadow-2xl shadow-slate-200"
+                        className="flex-1 premium-button bg-emerald-600 hover:bg-emerald-500 h-[64px] shadow-2xl shadow-emerald-900/20"
                     >
                         {saving ? (
                             <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
@@ -411,7 +411,7 @@ export default function EditOpportunityPage() {
                     </button>
                     <Link
                         href="/admin/opportunities"
-                        className="premium-button-outline py-5 px-10 text-center"
+                        className="premium-button-outline py-5 px-10 text-center border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200 hover:bg-slate-900"
                     >
                         Discard
                     </Link>
