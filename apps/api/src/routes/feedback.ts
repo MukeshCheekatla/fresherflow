@@ -1,0 +1,48 @@
+import express, { Router, Request, Response, NextFunction } from 'express';
+import { PrismaClient } from '@prisma/client';
+import { requireAuth } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { feedbackSchema } from '../utils/validation';
+import { AppError } from '../middleware/errorHandler';
+
+const router: Router = express.Router();
+const prisma = new PrismaClient();
+
+// POST /api/opportunities/:id/feedback
+router.post('/:id/feedback', requireAuth, validate(feedbackSchema), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id: opportunityId } = req.params;
+        const { reason } = req.body;
+
+        // Verify opportunity exists
+        const opportunity = await prisma.opportunity.findUnique({
+            where: { id: opportunityId }
+        });
+
+        if (!opportunity) {
+            return next(new AppError('Opportunity not found', 404));
+        }
+
+        // Create feedback (unique constraint prevents spam)
+        const feedback = await prisma.listingFeedback.create({
+            data: {
+                userId: req.userId!,
+                opportunityId,
+                reason
+            }
+        });
+
+        res.status(201).json({
+            feedback,
+            message: 'Feedback submitted successfully'
+        });
+    } catch (error: any) {
+        // Handle unique constraint violation
+        if (error.code === 'P2002') {
+            return next(new AppError('You have already submitted feedback for this opportunity', 400));
+        }
+        next(error);
+    }
+});
+
+export default router;

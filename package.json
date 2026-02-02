@@ -1,0 +1,44 @@
+{
+    "name": "job-platform",
+    "version": "1.0.0",
+    "description": "Job & Walk-in Opportunity Platform - Proper Monorepo",
+    "private": true,
+    "workspaces": [
+        "apps/*",
+        "packages/*"
+    ],
+    "scripts": {
+        "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+        "dev:api": "npm run dev --workspace=apps/api",
+        "dev:web": "npm run dev --workspace=apps/web",
+        "build": "npm run build --workspaces --if-present",
+        "build:api": "npm run build --workspace=apps/api",
+        "build:web": "npm run build --workspace=apps/web",
+        "start:api": "npm start --workspace=apps/api",
+        "start:web": "npm start --workspace=apps/web",
+        "db:generate": "npm run db:generate --workspace=apps/api",
+        "db:push": "npm run db:push --workspace=apps/api",
+        "db:seed": "npm run db:seed --workspace=apps/api",
+        "db:studio": "npm run db:studio --workspace=apps/api",
+        "lint": "npm run lint --workspaces --if-present",
+        "clean": "rimraf apps/*/node_modules apps/*/dist packages/*/node_modules packages/*/dist node_modules",
+        "typecheck": "npm run typecheck --workspaces --if-present"
+    },
+    "devDependencies": {
+        "concurrently": "^8.2.2",
+        "rimraf": "^5.0.5",
+        "typescript": "^5.7.3"
+    },
+    "engines": {
+        "node": ">=18.0.0",
+        "npm": ">=9.0.0"
+    },
+    "keywords": [
+        "monorepo",
+        "jobs",
+        "walk-ins",
+        "opportunities"
+    ],
+    "author": "",
+    "license": "MIT"
+}

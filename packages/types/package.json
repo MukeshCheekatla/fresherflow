@@ -1,0 +1,19 @@
+{
+    "name": "@job-platform/types",
+    "version": "1.0.0",
+    "description": "Shared TypeScript types for Job Platform",
+    "main": "index.ts",
+    "types": "index.ts",
+    "scripts": {
+        "typecheck": "tsc --noEmit"
+    },
+    "keywords": [
+        "types",
+        "typescript"
+    ],
+    "author": "",
+    "license": "MIT",
+    "devDependencies": {
+        "typescript": "^5.7.3"
+    }
+}

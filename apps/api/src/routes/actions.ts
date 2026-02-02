@@ -1,0 +1,146 @@
+import express, { Router, Request, Response, NextFunction } from 'express';
+import { PrismaClient, OpportunityType, OpportunityStatus } from '@prisma/client';
+import { requireAuth } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { userActionSchema } from '../utils/validation';
+import { AppError } from '../middleware/errorHandler';
+import { checkEligibility } from '../domain/eligibility';
+
+const router: Router = express.Router();
+const prisma = new PrismaClient();
+
+// POST /api/opportunities/:id/action
+router.post('/:id/action', requireAuth, validate(userActionSchema), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id: opportunityId } = req.params;
+        const { actionType } = req.body;
+
+        // Fetch opportunity with walk-in details
+        const opportunity = await prisma.opportunity.findUnique({
+            where: { id: opportunityId },
+            include: {
+                walkInDetails: true
+            }
+        });
+
+        if (!opportunity) {
+            return next(new AppError('Opportunity not found', 404));
+        }
+
+        // STATUS CHECK - Only ACTIVE opportunities accept actions
+        if (opportunity.status !== OpportunityStatus.ACTIVE) {
+            return next(new AppError('Opportunity is no longer active', 410));
+        }
+
+        // ELIGIBILITY CHECK - User must be eligible
+        const profile = await prisma.profile.findUnique({
+            where: { userId: req.userId }
+        });
+
+        if (!profile) {
+            return next(new AppError('Profile not found', 404));
+        }
+
+        const eligibilityResult = checkEligibility(opportunity, profile, req.userId);
+
+        if (!eligibilityResult.eligible) {
+            return next(new AppError(
+                eligibilityResult.reason || 'Not eligible for this opportunity',
+                403
+            ));
+        }
+
+        // WALK-IN ATTENDED VALIDATION (Backend Only)
+        // Can only mark ATTENDED after EARLIEST date has passed
+        if (opportunity.type === OpportunityType.WALKIN && actionType === 'ATTENDED') {
+            const nowUTC = new Date();
+
+            if (!opportunity.walkInDetails || !opportunity.walkInDetails.dates.length) {
+                return next(new AppError('Walk-in dates not found', 400));
+            }
+
+            // Get EARLIEST date (event semantics)
+            const dates = opportunity.walkInDetails.dates.map(d => new Date(d));
+            const earliestDate = dates.sort((a, b) => a.getTime() - b.getTime())[0];
+
+            if (nowUTC < earliestDate) {
+                return next(new AppError(
+                    'Cannot mark as attended before walk-in date',
+                    400
+                ));
+            }
+        }
+
+        // UPSERT ACTION (Idempotent - replaces previous action)
+        const action = await prisma.userAction.upsert({
+            where: {
+                userId_opportunityId: {
+                    userId: req.userId!,
+                    opportunityId
+                }
+            },
+            update: {
+                actionType
+            },
+            create: {
+                userId: req.userId!,
+                opportunityId,
+                actionType
+            }
+        });
+
+        res.json({ action, message: 'Action recorded successfully' });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// GET /api/actions - User's own actions only
+router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const actions = await prisma.userAction.findMany({
+            where: { userId: req.userId },
+            include: {
+                opportunity: {
+                    include: {
+                        walkInDetails: true
+                    }
+                }
+            },
+            orderBy: { updatedAt: 'desc' }
+        });
+
+        res.json({ actions });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// GET /api/actions/summary - Aggregated counts only
+router.get('/summary', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const [applied, planning, attended] = await Promise.all([
+            prisma.userAction.count({
+                where: { userId: req.userId, actionType: 'APPLIED' }
+            }),
+            prisma.userAction.count({
+                where: { userId: req.userId, actionType: 'PLANNING' }
+            }),
+            prisma.userAction.count({
+                where: { userId: req.userId, actionType: 'ATTENDED' }
+            })
+        ]);
+
+        res.json({
+            summary: {
+                applied,
+                planning,
+                attended
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+export default router;

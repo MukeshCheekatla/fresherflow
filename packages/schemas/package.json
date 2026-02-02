@@ -1,0 +1,24 @@
+{
+    "name": "@job-platform/schemas",
+    "version": "1.0.0",
+    "description": "Shared Zod validation schemas for Job Platform",
+    "main": "index.ts",
+    "types": "index.ts",
+    "scripts": {
+        "typecheck": "tsc --noEmit"
+    },
+    "keywords": [
+        "validation",
+        "zod",
+        "schemas"
+    ],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "@job-platform/types": "*",
+        "zod": "^3.24.1"
+    },
+    "devDependencies": {
+        "typescript": "^5.7.3"
+    }
+}
