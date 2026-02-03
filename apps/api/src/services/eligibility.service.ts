@@ -1,4 +1,5 @@
 import { EducationLevel, WorkMode, Availability, OpportunityType } from '@prisma/client';
+import Fuse from 'fuse.js';
 
 /**
  * Centralized Eligibility Matching Engine
@@ -20,6 +21,7 @@ interface UserProfile {
 interface OpportunityRequirements {
     type: OpportunityType;
     allowedDegrees: EducationLevel[];
+    allowedCourses: string[];
     allowedPassoutYears: number[];
     allowedAvailability: Availability[];
     requiredSkills: string[];
@@ -181,11 +183,16 @@ export class EligibilityService {
         // Skills match (30 points)
         maxScore += 30;
         if (opportunity.requiredSkills.length > 0) {
-            const matchingSkills = opportunity.requiredSkills.filter((skill) =>
-                profile.skills.some((userSkill) =>
-                    userSkill.toLowerCase().includes(skill.toLowerCase())
-                )
-            );
+            const fuse = new Fuse(profile.skills, {
+                threshold: 0.3, // Allow moderate typos/variations
+                distance: 100,
+            });
+
+            const matchingSkills = opportunity.requiredSkills.filter((skill) => {
+                const results = fuse.search(skill);
+                return results.length > 0;
+            });
+
             const skillMatchRatio = matchingSkills.length / opportunity.requiredSkills.length;
             score += skillMatchRatio * 30;
         } else {

@@ -29,12 +29,14 @@ export default function EditOpportunityPage() {
 
     // Form state
     const [type, setType] = useState<'JOB' | 'INTERNSHIP' | 'WALKIN'>('JOB');
+    const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED' | 'ARCHIVED'>('PUBLISHED');
     const [title, setTitle] = useState('');
     const [company, setCompany] = useState('');
     const [description, setDescription] = useState('');
     const [locations, setLocations] = useState('');
     const [requiredSkills, setRequiredSkills] = useState('');
     const [allowedDegrees, setAllowedDegrees] = useState<string[]>([]);
+    const [allowedCourses, setAllowedCourses] = useState<string[]>([]);
     const [passoutYears, setPassoutYears] = useState<number[]>([]);
     const [workMode, setWorkMode] = useState<'ONSITE' | 'HYBRID' | 'REMOTE'>('ONSITE');
     const [salaryMin, setSalaryMin] = useState('');
@@ -65,12 +67,15 @@ export default function EditOpportunityPage() {
             const opp = data.opportunity;
 
             setType(opp.type);
+            // If it's a DRAFT, assume the admin is here to finish it and promote to PUBLISHED
+            setStatus(opp.status === 'DRAFT' ? 'PUBLISHED' : opp.status);
             setTitle(opp.title);
             setCompany(opp.company);
             setDescription(opp.description || '');
             setLocations(opp.locations.join(', '));
             setRequiredSkills(opp.requiredSkills.join(', '));
             setAllowedDegrees(opp.allowedDegrees);
+            setAllowedCourses(opp.allowedCourses || []);
             setPassoutYears(opp.allowedPassoutYears);
             setWorkMode(opp.workMode || 'ONSITE');
             setSalaryMin(opp.salaryMin?.toString() || '');
@@ -102,6 +107,19 @@ export default function EditOpportunityPage() {
         );
     };
 
+    const handleCourseToggle = (course: string) => {
+        setAllowedCourses(prev =>
+            prev.includes(course)
+                ? prev.filter(c => c !== course)
+                : [...prev, course]
+        );
+    };
+
+    const COMMON_COURSES = [
+        'B.Tech / B.E.', 'B.Sc.', 'BCA', 'BBA', 'B.Com', 'B.A.',
+        'M.Tech / M.E.', 'M.Sc.', 'MCA', 'MBA', 'M.Com', 'M.A.'
+    ];
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
@@ -110,10 +128,12 @@ export default function EditOpportunityPage() {
         try {
             const payload: any = {
                 type,
+                status,
                 title,
                 company,
                 description,
                 allowedDegrees,
+                allowedCourses,
                 allowedPassoutYears: passoutYears,
                 requiredSkills: requiredSkills.split(',').map(s => s.trim()).filter(Boolean),
                 locations: locations.split(',').map(s => s.trim()).filter(Boolean),
@@ -178,6 +198,57 @@ export default function EditOpportunityPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Type Selection */}
+                <div className="bg-card border border-border rounded-lg p-6 space-y-4">
+                    <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+                        <InformationCircleIcon className="w-4 h-4 text-muted-foreground" />
+                        Modify Listing Type
+                    </h3>
+                    <div className="grid grid-cols-3 gap-4">
+                        {(['JOB', 'INTERNSHIP', 'WALKIN'] as const).map((t) => (
+                            <button
+                                key={t}
+                                type="button"
+                                onClick={() => setType(t)}
+                                className={`flex flex-col items-center justify-center p-4 rounded-lg border transition-all text-center ${type === t
+                                    ? 'bg-primary/5 border-primary ring-1 ring-primary'
+                                    : 'bg-background border-border hover:bg-accent/50 hover:border-accent-foreground/50'
+                                    }`}
+                            >
+                                <span className={`text-sm font-medium ${type === t ? 'text-primary' : 'text-foreground'}`}>{t}</span>
+                                <span className="text-xs text-muted-foreground mt-1 leading-none">
+                                    {t === 'WALKIN' ? 'On-site' : 'Direct'}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Status Selection (Compact) */}
+                <div className="bg-card border border-border rounded-lg p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <ClockIcon className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status:</span>
+                    </div>
+                    <div className="flex gap-2">
+                        {(['DRAFT', 'PUBLISHED', 'ARCHIVED'] as const).map((s) => (
+                            <button
+                                key={s}
+                                type="button"
+                                onClick={() => setStatus(s)}
+                                className={`px-3 py-1 rounded-full border text-[10px] font-bold transition-all ${status === s
+                                    ? s === 'PUBLISHED' ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600' :
+                                        s === 'ARCHIVED' ? 'bg-rose-500/10 border-rose-500 text-rose-600' :
+                                            'bg-slate-500/10 border-slate-500 text-slate-600'
+                                    : 'bg-background border-border text-muted-foreground hover:bg-accent'
+                                    }`}
+                            >
+                                {s}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 {/* Main Details */}
                 <div className="bg-card border border-border rounded-lg p-6 space-y-6">
                     <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
@@ -211,8 +282,8 @@ export default function EditOpportunityPage() {
                         <textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            rows={6}
-                            className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                            rows={12}
+                            className="flex min-h-[250px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-y"
                         />
                     </div>
 
@@ -261,19 +332,46 @@ export default function EditOpportunityPage() {
                     </h3>
 
                     <div className="space-y-3">
-                        <label className="text-xs font-medium text-muted-foreground tracking-wide">Allowed Education Levels</label>
+                        <label className="text-xs font-medium text-muted-foreground tracking-wide">
+                            Allowed Education Levels
+                            <span className="ml-1 text-[9px] lowercase opacity-70">(Optional - leave empty for any degree)</span>
+                        </label>
                         <div className="flex flex-wrap gap-3">
                             {['DIPLOMA', 'DEGREE', 'PG'].map((deg) => (
                                 <button
                                     key={deg}
                                     type="button"
                                     onClick={() => handleDegreeToggle(deg)}
-                                    className={`h-9 px-3 rounded-md text-xs font-medium border transition-colors ${allowedDegrees.includes(deg)
-                                        ? 'bg-primary/10 border-primary text-primary'
+                                    className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-colors flex flex-col items-start gap-0.5 ${allowedDegrees.includes(deg)
+                                        ? 'bg-primary/10 border-primary text-primary shadow-sm'
                                         : 'bg-background border-input text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                                         }`}
                                 >
-                                    {deg}
+                                    <span>{deg}</span>
+                                    {deg === 'DEGREE' && <span className="text-[8px] opacity-60">Any UG</span>}
+                                    {deg === 'PG' && <span className="text-[8px] opacity-60">Any PG</span>}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        <label className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
+                            Restrict to Specific Courses
+                            <span className="ml-1 text-[9px] lowercase opacity-70">(Optional - Select to filter strictly)</span>
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                            {COMMON_COURSES.map((course) => (
+                                <button
+                                    key={course}
+                                    type="button"
+                                    onClick={() => handleCourseToggle(course)}
+                                    className={`px-2 py-1 rounded-md text-[10px] md:text-xs font-bold transition-all border ${allowedCourses.includes(course)
+                                        ? 'bg-primary text-primary-foreground border-primary'
+                                        : 'bg-muted/50 border-transparent text-muted-foreground hover:bg-muted hover:text-foreground'
+                                        }`}
+                                >
+                                    {course}
                                 </button>
                             ))}
                         </div>
@@ -281,12 +379,15 @@ export default function EditOpportunityPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-xs font-medium text-muted-foreground tracking-wide">Passout Years (comma separated)</label>
+                            <label className="text-xs font-medium text-muted-foreground tracking-wide">
+                                Passout Years
+                                <span className="ml-1 text-[9px] lowercase opacity-70">(Optional for general freshers)</span>
+                            </label>
                             <input
-                                required
                                 value={passoutYears.join(', ')}
                                 onChange={(e) => setPassoutYears(e.target.value.split(',').map(y => parseInt(y.trim())).filter(Boolean))}
                                 className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                placeholder="e.g. 2024, 2025"
                             />
                         </div>
                         <div className="space-y-2">

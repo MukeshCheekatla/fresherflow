@@ -52,7 +52,7 @@ export function Navbar() {
     ];
 
     return (
-        <nav
+        <nav suppressHydrationWarning
             className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 border-b ${scrolled
                 ? 'bg-background border-border py-2'
                 : 'bg-background/50 border-transparent py-4'

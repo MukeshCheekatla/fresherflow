@@ -23,10 +23,11 @@ describe('Eligibility Matching Engine', () => {
         locations: ['Bangalore'],
         requiredSkills: ['React'],
         allowedDegrees: [EducationLevel.DEGREE],
+        allowedCourses: [],
         allowedPassoutYears: [2024],
         postedAt: new Date(),
         expiresAt: new Date(Date.now() + 86400000),
-        status: OpportunityStatus.ACTIVE,
+        status: OpportunityStatus.PUBLISHED,
         workMode: WorkMode.REMOTE,
         adminId: 'admin-1',
     };

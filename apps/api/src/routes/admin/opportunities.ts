@@ -6,6 +6,8 @@ import { withAdminAudit, validateReason } from '../../middleware/adminAudit';
 import { validate } from '../../middleware/validate';
 import { opportunitySchema } from '../../utils/validation';
 import { AppError } from '../../middleware/errorHandler';
+import { OpportunityService } from '../../services/opportunity.service';
+import { ParserService } from '../../services/parser.service';
 
 const router: Router = express.Router();
 const prisma = new PrismaClient();
@@ -48,6 +50,21 @@ router.get('/summary', async (_req: Request, res: Response, next: NextFunction) 
                 expired
             }
         });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// POST /api/admin/opportunities/parse
+router.post('/parse', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { text } = req.body;
+        if (!text) {
+            return res.status(400).json({ message: 'Text is required' });
+        }
+
+        const parsed = ParserService.parse(text);
+        res.json({ parsed });
     } catch (error) {
         next(error);
     }
@@ -99,6 +116,7 @@ router.post(
                     company: data.company,
                     description: data.description,
                     allowedDegrees: data.allowedDegrees,
+                    allowedCourses: data.allowedCourses || [],
                     allowedPassoutYears: data.allowedPassoutYears,
                     requiredSkills: data.requiredSkills || [],
                     locations: data.locations,
@@ -116,6 +134,7 @@ router.post(
                     applyLink: data.applyLink,
                     expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
                     postedByAdminId: req.adminId!,
+                    status: OpportunityStatus.PUBLISHED,
 
                     ...(walkInCreate && { walkInDetails: walkInCreate })
                 },
@@ -281,16 +300,21 @@ router.put(
                 where: { id },
                 data: {
                     type: data.type,
+                    status: data.status,
                     title: data.title,
                     company: data.company,
                     description: data.description,
                     allowedDegrees: data.allowedDegrees,
+                    allowedCourses: data.allowedCourses || [],
                     allowedPassoutYears: data.allowedPassoutYears,
                     requiredSkills: data.requiredSkills || [],
                     locations: data.locations,
                     workMode: data.workMode,
                     salaryMin: data.salaryMin,
                     salaryMax: data.salaryMax,
+                    salaryRange: data.salaryRange,
+                    stipend: data.stipend,
+                    employmentType: data.employmentType,
                     applyLink: data.applyLink,
                     expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
                     lastVerified: new Date(),

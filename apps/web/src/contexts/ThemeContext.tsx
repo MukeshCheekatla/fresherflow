@@ -15,13 +15,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const [theme, setTheme] = useState<Theme>('light');
 
     useEffect(() => {
-        // Check local storage or system preference
-        const savedTheme = localStorage.getItem('theme') as Theme;
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        // Sync with the class applied by ThemeScript (which runs before hydration)
+        const isDark = document.documentElement.classList.contains('dark');
+        setTheme(isDark ? 'dark' : 'light');
 
-        const initialTheme = savedTheme || systemTheme;
-        setTheme(initialTheme);
-        document.documentElement.classList.toggle('dark', initialTheme === 'dark');
+        // Ensure state and storage are consistent
+        const savedTheme = localStorage.getItem('theme') as Theme;
+        if (savedTheme) {
+            setTheme(savedTheme);
+            document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+        }
     }, []);
 
     const toggleTheme = () => {

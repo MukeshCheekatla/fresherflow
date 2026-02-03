@@ -276,9 +276,9 @@ export default function EditProfilePage() {
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div className="space-y-2">
-                                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Course/Degree</label>
+                                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">UG Course</label>
                                                 <select value={gradCourse} onChange={(e) => { setGradCourse(e.target.value); setGradSpecialization(''); }} className="premium-input !h-12">
-                                                    <option value="">Select Degree</option>
+                                                    <option value="">Select UG</option>
                                                     {(educationLevel === 'DIPLOMA' ? DIPLOMA_DEGREES : educationLevel === 'DEGREE' ? UG_DEGREES : educationLevel === 'PG' ? PG_DEGREES : []).map(d => <option key={d}>{d}</option>)}
                                                 </select>
                                             </div>
@@ -292,7 +292,7 @@ export default function EditProfilePage() {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Degree Passout Year</label>
+                                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">UG Passout Year</label>
                                             <input type="text" maxLength={4} value={gradYear} onChange={(e) => setGradYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-12" placeholder="2024" />
                                         </div>
                                     </div>
@@ -308,9 +308,9 @@ export default function EditProfilePage() {
                                         <div className="space-y-6 animate-in slide-in-from-top-4 duration-500 pt-2 pb-6 border-b border-border/50">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 <div className="space-y-2">
-                                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">PG Degree</label>
+                                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">PG Course</label>
                                                     <select value={pgCourse} onChange={(e) => setPgCourse(e.target.value)} className="premium-input !h-11">
-                                                        <option value="">Select Degree</option>
+                                                        <option value="">Select PG</option>
                                                         {PG_DEGREES.map(d => <option key={d}>{d}</option>)}
                                                     </select>
                                                 </div>

@@ -3,7 +3,8 @@ import { PrismaClient, OpportunityStatus } from '@prisma/client';
 import { requireAuth } from '../middleware/auth';
 import { profileGate } from '../middleware/profileGate';
 import { AppError } from '../middleware/errorHandler';
-import { filterOpportunitiesForUser, sortOpportunitiesWithWalkinsFirst } from '../domain/eligibility';
+import { filterOpportunitiesForUser, sortOpportunitiesWithWalkinsFirst, checkEligibility } from '../domain/eligibility';
+import { verifyAccessToken } from '@fresherflow/auth';
 
 const router: Router = express.Router();
 const prisma = new PrismaClient();
@@ -33,16 +34,15 @@ router.get('/', requireAuth, profileGate, async (req: Request, res: Response, ne
         }
 
         // Stage 1: DB-Level Filtering (Coarse)
+        // We only filter by status and type here. 
+        // Strict matching for years/degrees is handled by the Eligibility Engine in Stage 2.
         const dbFiltered = await prisma.opportunity.findMany({
             where: {
                 status: OpportunityStatus.PUBLISHED,
-                ...(filterType ? { type: filterType.toUpperCase() as any } : { type: { in: profile.interestedIn } }),
+                ...(filterType ? { type: filterType.toUpperCase() as any } : {}),
                 ...(city ? {
                     locations: { has: city as string }
-                } : {
-                    locations: { hasSome: profile.preferredCities }
-                }),
-                allowedPassoutYears: { has: profile.gradYear }
+                } : {}),
             },
             include: {
                 walkInDetails: true,
@@ -73,9 +73,14 @@ router.get('/', requireAuth, profileGate, async (req: Request, res: Response, ne
 });
 
 // GET /api/opportunities/:id
-router.get('/:id', requireAuth, profileGate, async (req: Request, res: Response, next: NextFunction) => {
+// Publicly accessible route
+router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params as { id: string };
+
+        // 1. Identify User (Optional Auth)
+        const token = req.cookies.accessToken;
+        const userId = token ? verifyAccessToken(token) : null;
 
         const opportunity = await prisma.opportunity.findUnique({
             where: { id },
@@ -86,9 +91,11 @@ router.get('/:id', requireAuth, profileGate, async (req: Request, res: Response,
                         fullName: true
                     }
                 },
-                actions: {
-                    where: { userId: req.userId }
-                }
+                ...(userId ? {
+                    actions: {
+                        where: { userId }
+                    }
+                } : {})
             }
         });
 
@@ -96,25 +103,30 @@ router.get('/:id', requireAuth, profileGate, async (req: Request, res: Response,
             return next(new AppError('Opportunity not found', 404));
         }
 
-        // Check if user is eligible
-        const profile = await prisma.profile.findUnique({
-            where: { userId: req.userId }
+        // 2. Logic for Logged-in vs Guest
+        let isEligible = true;
+        let eligibilityReason: string | undefined;
+
+        if (userId) {
+            const profile = await prisma.profile.findUnique({
+                where: { userId }
+            });
+
+            if (profile) {
+                const result = checkEligibility(opportunity as any, profile as any, userId);
+                isEligible = result.eligible;
+                eligibilityReason = result.reason;
+            }
+        }
+
+        res.json({
+            opportunity,
+            isEligible,
+            eligibilityReason
         });
-
-        if (!profile) {
-            return next(new AppError('Profile not found', 404));
-        }
-
-        const eligible = filterOpportunitiesForUser([opportunity] as any, profile as any);
-        if (eligible.length === 0) {
-            return next(new AppError('You are not eligible for this opportunity', 403));
-        }
-
-        res.json({ opportunity });
     } catch (error) {
         next(error);
     }
 });
 
 export default router;
-

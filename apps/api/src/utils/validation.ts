@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { OpportunityType, WorkMode, EducationLevel, Availability, ActionType, FeedbackReason } from '@prisma/client';
+import { OpportunityType, OpportunityStatus, WorkMode, EducationLevel, Availability, ActionType, FeedbackReason } from '@prisma/client';
 
 // Auth Schemas
 export const registerSchema = z.object({
@@ -52,6 +52,7 @@ export const readinessSchema = z.object({
 // Admin Schemas
 export const opportunitySchema = z.object({
     type: z.nativeEnum(OpportunityType).optional(), // Backend
+    status: z.nativeEnum(OpportunityStatus).optional(),
     category: z.enum(['job', 'internship', 'walk-in']).optional(), // Frontend alias
 
     title: z.string().min(1, 'Title is required'),
@@ -59,7 +60,8 @@ export const opportunitySchema = z.object({
     description: z.string().min(10, 'Description must be at least 10 characters').optional(),
 
     // Core Filters
-    allowedDegrees: z.array(z.nativeEnum(EducationLevel)).min(1, 'Select at least one degree'),
+    allowedDegrees: z.array(z.nativeEnum(EducationLevel)).optional().default([]),
+    allowedCourses: z.array(z.string()).optional().default([]),
     allowedPassoutYears: z.array(z.number().int()).optional().default([]),
     requiredSkills: z.array(z.string()).default([]),
     locations: z.array(z.string()).min(1, 'Add at least one location'),

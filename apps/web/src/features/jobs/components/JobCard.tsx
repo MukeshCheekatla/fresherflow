@@ -39,8 +39,13 @@ export default function JobCard({ job, jobId, onClick, isSaved = false, isApplie
     const { user } = useAuth();
 
     const formatSalary = () => {
+        if (job.salaryRange) return job.salaryRange;
+        if (job.stipend) return job.stipend;
+
         if (!job.salary) return 'Not disclosed';
         const { min, max } = job.salary;
+
+        if (min === 0 && max === 0 && job.type === 'INTERNSHIP') return 'Unpaid';
         if (min && max) {
             return `₹${(min / 100000).toFixed(0)}-${(max / 100000).toFixed(0)}L`;
         }

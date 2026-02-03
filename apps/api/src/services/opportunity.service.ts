@@ -22,7 +22,7 @@ export class OpportunityService {
             data: {
                 ...data,
                 postedByAdminId: adminId,
-                status: OpportunityStatus.DRAFT, // Always start as draft
+                status: OpportunityStatus.PUBLISHED, // Default to published for admin ease
             },
             include: {
                 walkInDetails: true,
@@ -201,6 +201,7 @@ export class OpportunityService {
                     {
                         type: opp.type,
                         allowedDegrees: opp.allowedDegrees,
+                        allowedCourses: (opp as any).allowedCourses || [],
                         allowedPassoutYears: opp.allowedPassoutYears,
                         allowedAvailability: opp.allowedAvailability,
                         requiredSkills: opp.requiredSkills,
@@ -226,6 +227,7 @@ export class OpportunityService {
                             {
                                 type: opp.type,
                                 allowedDegrees: opp.allowedDegrees,
+                                allowedCourses: (opp as any).allowedCourses || [],
                                 allowedPassoutYears: opp.allowedPassoutYears,
                                 allowedAvailability: opp.allowedAvailability,
                                 requiredSkills: opp.requiredSkills,

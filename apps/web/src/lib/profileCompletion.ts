@@ -36,9 +36,9 @@ export function calculateProfileCompletion(profile: any): ProfileCompletionResul
     } else {
         missingCategories.education = true;
         if (!profile?.educationLevel) missingFields.push('Education Level');
-        if (!profile?.gradCourse) missingFields.push('Degree/Course');
+        if (!profile?.gradCourse) missingFields.push('UG Course');
         if (!profile?.gradSpecialization) missingFields.push('Specialization');
-        if (!profile?.gradYear) missingFields.push('Degree Passout Year');
+        if (!profile?.gradYear) missingFields.push('UG Passout Year');
     }
 
     // Part 2: Secondary Education (15%)

@@ -53,6 +53,12 @@ export const adminApi = {
 
     // Get all feedback
     getFeedback: () =>
-        apiClient('/api/admin/feedback')
-};
+        apiClient('/api/admin/feedback'),
 
+    // Parse job description text
+    parseJobText: (text: string) =>
+        apiClient('/api/admin/opportunities/parse', {
+            method: 'POST',
+            body: JSON.stringify({ text })
+        })
+};

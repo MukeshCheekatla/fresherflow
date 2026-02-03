@@ -35,6 +35,7 @@ export default function CreateOpportunityPage() {
     const [company, setCompany] = useState('');
     const [description, setDescription] = useState('');
     const [allowedDegrees, setAllowedDegrees] = useState<string[]>([]);
+    const [allowedCourses, setAllowedCourses] = useState<string[]>([]);
     const [passoutYears, setPassoutYears] = useState<number[]>([]);
     const [requiredSkills, setRequiredSkills] = useState<string>('');
     const [locations, setLocations] = useState<string>('');
@@ -83,63 +84,65 @@ export default function CreateOpportunityPage() {
         );
     };
 
+    const handleCourseToggle = (course: string) => {
+        setAllowedCourses(prev =>
+            prev.includes(course)
+                ? prev.filter(c => c !== course)
+                : [...prev, course]
+        );
+    };
+
+    const COMMON_COURSES = [
+        'B.Tech / B.E.', 'B.Sc.', 'BCA', 'BBA', 'B.Com', 'B.A.',
+        'M.Tech / M.E.', 'M.Sc.', 'MCA', 'MBA', 'M.Com', 'M.A.'
+    ];
+
     // Auto-fill parser
     const [showParser, setShowParser] = useState(false);
     const [pastedText, setPastedText] = useState('');
 
-    const parseJobPosting = () => {
+    const parseJobPosting = async () => {
         if (!pastedText.trim()) return;
 
         const text = pastedText;
         const loadingToast = toast.loading('✨ Analyzing text...');
 
-        setTimeout(() => {
-            // Extract title
-            const titleMatch = text.match(/^([A-Z][^\n]{10,80}?)$/m);
-            if (titleMatch) setTitle(titleMatch[1].trim());
+        try {
+            const { parsed } = await adminApi.parseJobText(text);
 
-            // Extract company
-            const companyMatch = text.match(/\b((?:[A-Z][a-z]+\s?){1,4}(?:Inc|Ltd|LLC|Corporation|Corp|Company|Group|Technologies|Systems)?)/);
-            if (companyMatch) setCompany(companyMatch[1].trim());
+            if (parsed.title) setTitle(parsed.title);
+            if (parsed.company) setCompany(parsed.company);
+            if (parsed.locations?.length > 0) setLocations(parsed.locations.join(', '));
+            if (parsed.skills?.length > 0) setRequiredSkills(parsed.skills.join(', '));
+            if (parsed.type) setType(parsed.type);
 
-            // Extract location
-            const locationMatch = text.match(/([A-Z][a-z]+(?:\s[A-Z][a-z]+)?),\s*([A-Z][a-z]+)/);
-            if (locationMatch) setLocations(`${locationMatch[1]}, ${locationMatch[2]}`);
-
-            // Extract skills
-            const skillsPool = ['JavaScript', 'TypeScript', 'React', 'Angular', 'Vue', 'Node', 'Python', 'Java', 'C#', 'C\\+\\+',
-                'SQL', 'NoSQL', 'MongoDB', 'PostgreSQL', 'MySQL', 'AWS', 'Azure', 'GCP', 'Docker', 'Kubernetes',
-                'Git', 'REST', 'API', 'GraphQL', 'HTML', 'CSS', 'Next.js', 'Express', 'ASP.NET', 'VB', 'MVC', 'SSIS', 'Blazor'];
-            const found = skillsPool.filter(s => new RegExp(`\\b${s}\\b`, 'gi').test(text));
-            if (found.length > 0) setRequiredSkills(found.join(', '));
-
-            // Detect work mode
-            if (/\b(remote|work from home|wfh)\b/i.test(text)) setWorkMode('REMOTE');
-            else if (/\b(hybrid)\b/i.test(text)) setWorkMode('HYBRID');
-            else setWorkMode('ONSITE');
-
-            // Set description
-            setDescription(text.trim().substring(0, 2000));
-
-            // Auto-detect degrees
-            if (/\b(bachelor|B\.?E|B\.?Tech|graduation|graduate)\b/i.test(text) && !allowedDegrees.includes('DEGREE')) {
-                setAllowedDegrees(prev => [...prev.filter(d => d !== 'DEGREE'), 'DEGREE']);
-            }
-            if (/\b(master|M\.?E|M\.?Tech|post.?graduate|PG)\b/i.test(text) && !allowedDegrees.includes('PG')) {
-                setAllowedDegrees(prev => [...prev.filter(d => d !== 'PG'), 'PG']);
+            // Handle Passout Years & Fresher Status
+            if (parsed.allowedPassoutYears?.length > 0) {
+                setPassoutYears(parsed.allowedPassoutYears);
+            } else if (parsed.isFresherOnly) {
+                // If it's a fresher-only role without specific years, 
+                // we leave years empty (which means 'All Freshers' in our logic)
+                setPassoutYears([]);
             }
 
-            // Default passout years
-            const year = new Date().getFullYear();
-            setPassoutYears([year - 1, year, year + 1]);
+            if (parsed.allowedDegrees?.length > 0) {
+                setAllowedDegrees(parsed.allowedDegrees);
+            } else {
+                setAllowedDegrees([]);
+            }
 
-            toast.success('Form auto-filled.', {
+            if (parsed.isRemote) setWorkMode('REMOTE');
+            setDescription(text.trim());
+
+            toast.success('AI Analysis Complete. Form auto-filled.', {
                 id: loadingToast,
                 icon: <CheckCircleIcon className="w-5 h-5 text-emerald-500" />
             });
             setShowParser(false);
             setPastedText('');
-        }, 1000);
+        } catch (err: any) {
+            toast.error('Could not parse text automatically.', { id: loadingToast });
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -154,6 +157,7 @@ export default function CreateOpportunityPage() {
                 company,
                 description,
                 allowedDegrees,
+                allowedCourses,
                 allowedPassoutYears: passoutYears,
                 requiredSkills: requiredSkills.split(',').map(s => s.trim()).filter(Boolean),
                 locations: locations.split(',').map(s => s.trim()).filter(Boolean),
@@ -308,8 +312,8 @@ export default function CreateOpportunityPage() {
                         <textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            rows={6}
-                            className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                            rows={12}
+                            className="flex min-h-[250px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-y"
                             placeholder="Roles and responsibilities..."
                         />
                     </div>
@@ -355,19 +359,46 @@ export default function CreateOpportunityPage() {
                     </h3>
 
                     <div className="space-y-2 md:space-y-3">
-                        <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide">EDUCATION LEVELS</label>
+                        <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide">
+                            EDUCATION LEVELS
+                            <span className="ml-1 text-[9px] lowercase opacity-70">(Optional - leave empty for any degree)</span>
+                        </label>
                         <div className="flex flex-wrap gap-2">
                             {['DIPLOMA', 'DEGREE', 'PG'].map((deg) => (
                                 <button
                                     key={deg}
                                     type="button"
                                     onClick={() => handleDegreeToggle(deg)}
-                                    className={`px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-md text-xs md:text-sm font-medium border transition-colors ${allowedDegrees.includes(deg)
-                                        ? 'bg-primary/10 border-primary text-primary'
+                                    className={`px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-md text-xs md:text-sm font-medium border transition-colors flex flex-col items-start gap-0.5 ${allowedDegrees.includes(deg)
+                                        ? 'bg-primary/10 border-primary text-primary shadow-sm'
                                         : 'bg-background border-input text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                                         }`}
                                 >
-                                    {deg}
+                                    <span>{deg}</span>
+                                    {deg === 'DEGREE' && <span className="text-[8px] opacity-60">Any UG</span>}
+                                    {deg === 'PG' && <span className="text-[8px] opacity-60">Any PG</span>}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="space-y-2 md:space-y-3">
+                        <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide uppercase">
+                            Restrict to Specific Courses
+                            <span className="ml-1 text-[9px] lowercase opacity-70">(Optional - Select to filter strictly)</span>
+                        </label>
+                        <div className="flex flex-wrap gap-1.5 md:gap-2">
+                            {COMMON_COURSES.map((course) => (
+                                <button
+                                    key={course}
+                                    type="button"
+                                    onClick={() => handleCourseToggle(course)}
+                                    className={`px-2 py-1 rounded-md text-[10px] md:text-xs font-bold transition-all border ${allowedCourses.includes(course)
+                                        ? 'bg-primary text-primary-foreground border-primary'
+                                        : 'bg-muted/50 border-transparent text-muted-foreground hover:bg-muted hover:text-foreground'
+                                        }`}
+                                >
+                                    {course}
                                 </button>
                             ))}
                         </div>
@@ -375,13 +406,15 @@ export default function CreateOpportunityPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                         <div className="space-y-1.5 md:space-y-2">
-                            <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide">PASSOUT YEARS</label>
+                            <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide">
+                                PASSOUT YEARS
+                                <span className="ml-1 text-[9px] lowercase opacity-70">(Optional for general freshers)</span>
+                            </label>
                             <input
-                                required
                                 value={passoutYears.join(', ')}
                                 onChange={(e) => setPassoutYears(e.target.value.split(',').map(y => parseInt(y.trim())).filter(Boolean))}
                                 className="flex h-10 md:h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                placeholder="2024, 2025"
+                                placeholder="e.g. 2024, 2025"
                             />
                         </div>
                         <div className="space-y-1.5 md:space-y-2">

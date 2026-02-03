@@ -326,16 +326,9 @@ function OpportunitiesContent() {
                                         <JobCard
                                             key={opp.id}
                                             job={{
-                                                company: opp.company,
+                                                ...opp,
                                                 normalizedRole: opp.title,
-                                                locations: opp.locations,
-                                                experienceRange: { min: 0, max: 0 },
-                                                salary: (opp.salaryMin && opp.salaryMax) ? { min: opp.salaryMin, max: opp.salaryMax } : undefined,
-                                                employmentType: opp.type,
-                                                workType: opp.workMode,
-                                                postedDate: opp.postedAt,
-                                                description: opp.description,
-                                                skills: opp.requiredSkills
+                                                salary: (opp.salaryMin !== undefined && opp.salaryMax !== undefined) ? { min: opp.salaryMin, max: opp.salaryMax } : undefined,
                                             } as any}
                                             jobId={opp.id}
                                             isApplied={(opp as any).actions?.some((a: any) => a.actionType === 'APPLIED')}
@@ -376,4 +369,3 @@ export default function OpportunitiesPage() {
         </Suspense>
     );
 }
-

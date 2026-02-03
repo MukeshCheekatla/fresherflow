@@ -16,10 +16,45 @@ export interface EligibilityRule {
 export const degreeRule: EligibilityRule = {
     name: 'DEGREE_MATCH',
     check: (opp, profile) => {
+        // If no degrees or courses specified, it's open to all
+        const hasLevelRestrictions = !!(opp.allowedDegrees && opp.allowedDegrees.length > 0);
+        const hasCourseRestrictions = !!((opp as any).allowedCourses && (opp as any).allowedCourses.length > 0);
+
+        if (!hasLevelRestrictions && !hasCourseRestrictions) return true;
         if (!profile.educationLevel) return false;
-        return opp.allowedDegrees.includes(profile.educationLevel);
+
+        // 1. Check Course Restrictions (highest priority)
+        if (hasCourseRestrictions) {
+            const allowedCourses = (opp as any).allowedCourses as string[];
+            const userCourse = profile.gradCourse;
+            const userPGCourse = profile.pgCourse;
+
+            const courseMatch = (userCourse && allowedCourses.includes(userCourse)) ||
+                (userPGCourse && allowedCourses.includes(userPGCourse));
+
+            if (courseMatch) return true;
+        }
+
+        // 2. Check Level Restrictions
+        if (hasLevelRestrictions) {
+            const levels = ['DIPLOMA', 'DEGREE', 'PG'];
+            const userLevelIndex = levels.indexOf(profile.educationLevel);
+
+            const levelMatch = opp.allowedDegrees.some(deg => {
+                const degIndex = levels.indexOf(deg);
+                return degIndex !== -1 && degIndex <= userLevelIndex;
+            });
+
+            if (levelMatch) return true;
+        }
+
+        return false;
     },
     getReason: (opp, profile) => {
+        const hasCourses = (opp as any).allowedCourses && (opp as any).allowedCourses.length > 0;
+        if (hasCourses) {
+            return `This opportunity requires specific courses: ${(opp as any).allowedCourses.join(', ')}`;
+        }
         return `Your education level (${profile.educationLevel}) is not in the allowed degrees: ${opp.allowedDegrees.join(', ')}`;
     }
 };
@@ -31,9 +66,14 @@ export const degreeRule: EligibilityRule = {
 export const passoutYearRule: EligibilityRule = {
     name: 'PASSOUT_YEAR_MATCH',
     check: (opp, profile) => {
-        const passoutYear = profile.pgYear || profile.gradYear;
-        if (!passoutYear) return false;
-        return opp.allowedPassoutYears.includes(passoutYear);
+        // If no years specified, it's open to all freshers
+        if (!opp.allowedPassoutYears || opp.allowedPassoutYears.length === 0) return true;
+
+        // User is eligible if EITHER their graduation year or PG year matches
+        return !!(
+            (profile.gradYear && opp.allowedPassoutYears.includes(profile.gradYear)) ||
+            (profile.pgYear && opp.allowedPassoutYears.includes(profile.pgYear))
+        );
     },
     getReason: (opp, profile) => {
         const passoutYear = profile.pgYear || profile.gradYear;
@@ -108,7 +148,6 @@ export const workModeRule: EligibilityRule = {
 export const HARD_RULES: EligibilityRule[] = [
     degreeRule,
     passoutYearRule,
-    skillsRule,
 ];
 
 /**
@@ -116,6 +155,7 @@ export const HARD_RULES: EligibilityRule[] = [
  * These are preferences but not blockers
  */
 export const SOFT_RULES: EligibilityRule[] = [
+    skillsRule,
     locationRule,
     workModeRule,
 ];

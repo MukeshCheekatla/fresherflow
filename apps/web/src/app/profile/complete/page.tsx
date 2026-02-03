@@ -355,9 +355,9 @@ export default function ProfileCompletePage() {
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 <div className="space-y-2">
-                                                    <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Course/Degree</label>
+                                                    <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">UG Course</label>
                                                     <Select value={gradCourse} onChange={(e) => { setGradCourse(e.target.value); setGradSpecialization(''); }}>
-                                                        <option value="">Select Degree</option>
+                                                        <option value="">Select UG</option>
                                                         {(educationLevel === 'DIPLOMA' ? DIPLOMA_DEGREES : educationLevel === 'DEGREE' ? UG_DEGREES : educationLevel === 'PG' ? PG_DEGREES : []).map(d => <option key={d}>{d}</option>)}
                                                     </Select>
                                                 </div>
@@ -371,7 +371,7 @@ export default function ProfileCompletePage() {
                                             </div>
 
                                             <div className="space-y-2">
-                                                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Passout Year</label>
+                                                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">UG Passout Year</label>
                                                 <Input type="text" maxLength={4} value={gradYear} onChange={(e) => setGradYear(e.target.value.replace(/\D/g, ''))} placeholder="2024" />
                                             </div>
                                         </div>
@@ -387,9 +387,9 @@ export default function ProfileCompletePage() {
                                             <div className="space-y-6 animate-in slide-in-from-top-4 duration-500 pt-2 pb-6 border-b border-border/50">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     <div className="space-y-2">
-                                                        <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">PG Degree</label>
+                                                        <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">PG Course</label>
                                                         <Select value={pgCourse} onChange={(e) => setPgCourse(e.target.value)}>
-                                                            <option value="">Select Degree</option>
+                                                            <option value="">Select PG</option>
                                                             {PG_DEGREES.map(d => <option key={d}>{d}</option>)}
                                                         </Select>
                                                     </div>

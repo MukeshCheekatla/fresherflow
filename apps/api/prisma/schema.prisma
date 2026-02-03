@@ -175,6 +175,7 @@ model Opportunity {
 
   // Eligibility Rules (DB-filterable)
   allowedDegrees      EducationLevel[]
+  allowedCourses      String[] // Specific courses like "B.Tech", "MCA", "MBA"
   allowedPassoutYears Int[] // Array for specific batches (e.g. 2023, 2025)
   passoutYearMin      Int?  // Range Optimization
   passoutYearMax      Int?  // Range Optimization

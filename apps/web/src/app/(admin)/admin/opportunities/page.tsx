@@ -18,7 +18,8 @@ import {
     ClockIcon,
     PencilSquareIcon,
     XMarkIcon,
-    DocumentTextIcon
+    DocumentTextIcon,
+    CheckCircleIcon
 } from '@heroicons/react/24/outline';
 
 export default function OpportunitiesListPage() {
@@ -177,6 +178,17 @@ export default function OpportunitiesListPage() {
                 }
             }
         });
+    };
+
+    const handleStatusUpdate = async (id: string, newStatus: string) => {
+        const loadingToast = toast.loading(`Updating to ${newStatus}...`);
+        try {
+            await adminApi.updateOpportunity(id, { status: newStatus });
+            toast.success(` Listing updated to ${newStatus}`, { id: loadingToast });
+            loadOpportunities();
+        } catch (err: any) {
+            toast.error(` Failed: ${err.message}`, { id: loadingToast });
+        }
     };
 
     const handleDelete = (id: string, title: string) => {
@@ -366,11 +378,11 @@ export default function OpportunitiesListPage() {
                                             </div>
                                         </div>
                                     </div>
-                                    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${opp.status === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' :
-                                        opp.status === 'EXPIRED' ? 'bg-amber-50 text-amber-700 ring-amber-600/20' :
-                                            'bg-rose-50 text-rose-700 ring-rose-600/10'
+                                    <span className={`inline-flex items-center rounded-md px-2 py-1 text-[10px] font-bold ring-1 ring-inset ${opp.status === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' :
+                                        opp.status === 'ARCHIVED' ? 'bg-rose-50 text-rose-700 ring-rose-600/10' :
+                                            'bg-slate-50 text-slate-600 ring-slate-500/10'
                                         }`}>
-                                        {opp.status}
+                                        {opp.status === 'PUBLISHED' ? 'LIVE' : opp.status}
                                     </span>
                                 </div>
 
@@ -394,6 +406,16 @@ export default function OpportunitiesListPage() {
                                         <PencilSquareIcon className="w-4 h-4 mr-1.5" />
                                         Edit
                                     </Link>
+                                    {opp.status === 'DRAFT' && (
+                                        <button
+                                            onClick={() => handleStatusUpdate(opp.id, 'PUBLISHED')}
+                                            className="h-9 px-3 inline-flex items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
+                                            title="Publish Now"
+                                        >
+                                            <CheckCircleIcon className="w-4 h-4 mr-1.5" />
+                                            Publish
+                                        </button>
+                                    )}
                                     {opp.status === 'PUBLISHED' && (
                                         <button
                                             onClick={() => handleExpire(opp.id, opp.title)}
@@ -461,11 +483,11 @@ export default function OpportunitiesListPage() {
                                             </div>
                                         </td>
                                         <td className="px-5 py-4">
-                                            <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${opp.status === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' :
-                                                opp.status === 'EXPIRED' ? 'bg-amber-50 text-amber-700 ring-amber-600/20' :
-                                                    'bg-rose-50 text-rose-700 ring-rose-600/10'
+                                            <span className={`inline-flex items-center rounded-md px-2 py-1 text-[10px] font-bold ring-1 ring-inset ${opp.status === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' :
+                                                opp.status === 'ARCHIVED' ? 'bg-rose-50 text-rose-700 ring-rose-600/10' :
+                                                    'bg-slate-50 text-slate-600 ring-slate-500/10'
                                                 }`}>
-                                                {opp.status}
+                                                {opp.status === 'PUBLISHED' ? 'LIVE' : opp.status}
                                             </span>
                                         </td>
                                         <td className="px-5 py-4 text-right">
@@ -477,6 +499,15 @@ export default function OpportunitiesListPage() {
                                                 >
                                                     <PencilSquareIcon className="w-4 h-4" />
                                                 </Link>
+                                                {opp.status === 'DRAFT' && (
+                                                    <button
+                                                        onClick={() => handleStatusUpdate(opp.id, 'PUBLISHED')}
+                                                        className="p-2 text-emerald-700 hover:bg-emerald-50 rounded-md transition-all"
+                                                        title="Publish Now"
+                                                    >
+                                                        <CheckCircleIcon className="w-4 h-4" />
+                                                    </button>
+                                                )}
                                                 {opp.status === 'PUBLISHED' && (
                                                     <button
                                                         onClick={() => handleExpire(opp.id, opp.title)}

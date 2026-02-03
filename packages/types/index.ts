@@ -12,9 +12,9 @@ export enum OpportunityType {
 }
 
 export enum OpportunityStatus {
-    ACTIVE = 'ACTIVE',
-    EXPIRED = 'EXPIRED',
-    REMOVED = 'REMOVED'
+    DRAFT = 'DRAFT',
+    PUBLISHED = 'PUBLISHED',
+    ARCHIVED = 'ARCHIVED'
 }
 
 export enum EducationLevel {
@@ -108,6 +108,7 @@ export interface Opportunity {
 
     // Eligibility
     allowedDegrees: EducationLevel[];
+    allowedCourses: string[];
     allowedPassoutYears: number[];
     requiredSkills: string[];
 
@@ -118,29 +119,30 @@ export interface Opportunity {
     // Compensation
     salaryMin?: number;
     salaryMax?: number;
+    salaryRange?: string;
+    stipend?: string;
+    employmentType?: string;
+
+    // UI Mapping Support
     salary?: {
         min: number;
         max: number;
         currency?: string;
     } | null;
 
-    // Eligibility
+    // Selection criteria
     experienceRange?: {
         min: number;
         max: number;
     };
-    normalizedRole?: string; // Support for UI role mapping
-    employmentType?: OpportunityType; // Support for UI mapping
-    workType?: WorkMode; // Support for UI mapping
-    postedDate?: Date; // Support for UI mapping
-    skills?: string[]; // Support for UI mapping
+    normalizedRole?: string;
 
     // Application
     applyLink?: string;
 
     // Administrative
     postedAt: Date;
-    expiresAt?: Date;
+    expiresAt?: Date | string;
     adminId: string;
     admin?: Admin;
 
@@ -249,6 +251,7 @@ export interface CreateOpportunityRequest {
     company: string;
     description: string;
     allowedDegrees: EducationLevel[];
+    allowedCourses: string[];
     allowedPassoutYears: number[];
     requiredSkills: string[];
     locations: string[];
