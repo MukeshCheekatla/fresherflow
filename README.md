@@ -1,4 +1,4 @@
-# Job Platform - Proper Monorepo
+# FresherFlow - Monorepo
 
 > **A product-based monorepo, not tech symmetry.**  
 > Apps are products. Packages are contracts.
@@ -6,15 +6,17 @@
 ## 🏗️ Architecture
 
 ```
-job/
+fresherflow/
 ├── apps/
 │   ├── api/          # Backend product (Express + Prisma)
 │   └── web/          # Frontend product (Next.js)
 │
 ├── packages/
-│   ├── types/        # Shared TypeScript types (single source of truth)
-│   └── schemas/      # Shared Zod validation (business rules)
+│   ├── types/        # Shared TypeScript types (@fresherflow/types)
+│   ├── schemas/      # Shared Zod validation (@fresherflow/schemas)
+│   └── constants/    # Shared constants (@fresherflow/constants)
 │
+├── turbo.json        # Turbo configuration (caching & tasks)
 ├── package.json      # Root workspace config
 └── README.md
 ```
@@ -31,8 +33,8 @@ job/
 ```
 
 **Enforcement**:
-- Frontend: Import ONLY from `@job-platform/types` and `@job-platform/schemas`
-- Backend: Import ONLY from `@job-platform/types` and `@job-platform/schemas`
+- Frontend: Import ONLY from `@fresherflow/types` and `@fresherflow/schemas`
+- Backend: Import ONLY from `@fresherflow/types` and `@fresherflow/schemas`
 - NO local type definitions in apps/
 - NO duplicated types
 
@@ -91,8 +93,8 @@ job/
 
 ### Rule 6: Single Source of Truth
 ```
-✅ All types in @job-platform/types
-✅ All validation in @job-platform/schemas
+✅ All types in @fresherflow/types
+✅ All validation in @fresherflow/schemas
 ✅ Prisma schema is database truth
 ❌ NO local type files in apps/
 ```
@@ -104,11 +106,11 @@ job/
 
 ### Rule 7: Naming Consistency
 ```
-✅ Use @job-platform/* everywhere
-❌ NO mixing job/job-platform/jobdiscover
+✅ Use @fresherflow/* everywhere
+❌ NO mixing names/scopes
 ```
 
-**Current standard**: `@job-platform/*`
+**Current standard**: `@fresherflow/*`
 
 ---
 
@@ -202,24 +204,24 @@ npm run dev:web    # http://localhost:3000
 
 ## 📦 Package Details
 
-### `@job-platform/types`
+### `@fresherflow/types`
 **Purpose**: Single source of truth for all TypeScript types  
 **Contains**: Enums, interfaces, API contracts  
 **Used by**: Both apps/api and apps/web  
 **Never contains**: Business logic, validation, database code
 
 ```typescript
-import { OpportunityType, User, Profile } from '@job-platform/types';
+import { OpportunityType, User, Profile } from '@fresherflow/types';
 ```
 
-### `@job-platform/schemas`
+### `@fresherflow/schemas`
 **Purpose**: Shared Zod validation with business rules  
 **Contains**: Input validation, refinements, constraints  
 **Used by**: Both apps/api (enforce) and apps/web (client validation)  
 **Never contains**: Database queries, HTTP handlers
 
 ```typescript
-import { opportunitySchema, educationSchema } from '@job-platform/schemas';
+import { opportunitySchema, educationSchema } from '@fresherflow/schemas';
 ```
 
 ## 🎯 Core Features
@@ -383,13 +385,14 @@ apps/web
 ## 🎯 Success Metrics
 
 Platform is production-ready when:
-- ✅ `npm run dev` starts both servers
+- ✅ `npm run dev` starts both servers (with Turbo!)
 - ✅ User can register → profile → browse
 - ✅ Admin can login → create opportunities
-- ✅ Types are imported from `@job-platform/types`
+- ✅ Types are imported from `@fresherflow/types`
 - ✅ Schemas are shared between API and Web
 - ✅ No eligibility logic in Web app
 - ✅ Expiry cron runs (check logs)
+- ✅ Turbo caching works (`npm run build` twice = instant second build)
 
 ## 🤝 Contributing
 
@@ -416,7 +419,7 @@ Platform is production-ready when:
 export interface Opportunity { ... }
 
 // ✅ GOOD - Import from shared package
-import { Opportunity } from '@job-platform/types';
+import { Opportunity } from '@fresherflow/types';
 ```
 
 ```typescript

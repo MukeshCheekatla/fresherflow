@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: fresherflow-api
+    runtime: node
+    region: singapore
+    plan: free
+    buildCommand: npm install && npm run db:generate && npm run build:api
+    startCommand: npm run start:api
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false
+      - key: NODE_ENV
+        value: production
+    healthCheckPath: /api/health

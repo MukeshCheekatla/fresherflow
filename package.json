@@ -1,5 +1,5 @@
 {
-    "name": "job-platform",
+    "name": "fresherflow",
     "version": "1.0.0",
     "description": "Job & Walk-in Opportunity Platform - Proper Monorepo",
     "private": true,
@@ -8,10 +8,11 @@
         "packages/*"
     ],
     "scripts": {
-        "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+        "kill:port": "powershell -Command \"$p = (Get-NetTCPConnection -LocalPort 5000 -EA SilentlyContinue).OwningProcess | Select-Object -First 1; if ($p) { taskkill /F /PID $p } else { Write-Host 'Port 5000 is free' }\"",
+        "dev": "npm run kill:port && turbo run dev",
         "dev:api": "npm run dev --workspace=apps/api",
         "dev:web": "npm run dev --workspace=apps/web",
-        "build": "npm run build --workspaces --if-present",
+        "build": "turbo run build",
         "build:api": "npm run build --workspace=apps/api",
         "build:web": "npm run build --workspace=apps/web",
         "start:api": "npm start --workspace=apps/api",
@@ -27,8 +28,10 @@
     "devDependencies": {
         "concurrently": "^8.2.2",
         "rimraf": "^5.0.5",
+        "turbo": "^2.8.1",
         "typescript": "^5.7.3"
     },
+    "packageManager": "npm@9.8.0",
     "engines": {
         "node": ">=18.0.0",
         "npm": ">=9.0.0"

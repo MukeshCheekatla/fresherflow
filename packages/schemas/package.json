@@ -1,5 +1,5 @@
 {
-    "name": "@job-platform/schemas",
+    "name": "@fresherflow/schemas",
     "version": "1.0.0",
     "description": "Shared Zod validation schemas for Job Platform",
     "main": "index.ts",
@@ -15,7 +15,7 @@
     "author": "",
     "license": "MIT",
     "dependencies": {
-        "@job-platform/types": "*",
+        "@fresherflow/types": "*",
         "zod": "^3.24.1"
     },
     "devDependencies": {

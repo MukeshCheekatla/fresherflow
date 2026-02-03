@@ -94,3 +94,4 @@ export const userActionSchema = z.object({
 export const feedbackSchema = z.object({
     reason: z.nativeEnum(FeedbackReason)
 });
+

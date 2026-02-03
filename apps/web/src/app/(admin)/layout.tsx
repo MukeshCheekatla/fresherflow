@@ -3,7 +3,7 @@
 import AdminBottomNav from "@/shared/components/navigation/AdminBottomNav";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import LoadingScreen from "@/shared/components/ui/LoadingScreen";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 import { AdminProvider } from "@/contexts/AdminContext";
 
 export default function AdminLayout({
@@ -46,3 +46,4 @@ export default function AdminLayout({
         </AdminProvider>
     );
 }
+

@@ -14,3 +14,4 @@ export function requestIdMiddleware(req: Request, res: Response, next: NextFunct
     res.setHeader('X-Request-ID', req.requestId);
     next();
 }
+

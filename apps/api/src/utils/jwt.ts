@@ -1,8 +1,20 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
-const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET!;
-const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
+// Runtime validation for required env vars
+if (!process.env.JWT_ACCESS_SECRET || !process.env.JWT_REFRESH_SECRET) {
+    throw new Error(
+        '❌ CRITICAL: JWT secrets not configured!\n' +
+        'Required environment variables:\n' +
+        '  - JWT_ACCESS_SECRET\n' +
+        '  - JWT_REFRESH_SECRET\n' +
+        'Set these in your .env file before starting the server.'
+    );
+}
+
+// Type-safe constants after validation
+const ACCESS_SECRET: string = process.env.JWT_ACCESS_SECRET;
+const REFRESH_SECRET: string = process.env.JWT_REFRESH_SECRET;
 const ACCESS_EXPIRY = process.env.ACCESS_TOKEN_EXPIRY || '15m';
 const REFRESH_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY || '30d';
 
@@ -71,3 +83,4 @@ export function verifyAdminToken(token: string): string | null {
         return null;
     }
 }
+

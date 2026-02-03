@@ -1,5 +1,5 @@
 {
-    "name": "@job-platform/types",
+    "name": "@fresherflow/types",
     "version": "1.0.0",
     "description": "Shared TypeScript types for Job Platform",
     "main": "index.ts",

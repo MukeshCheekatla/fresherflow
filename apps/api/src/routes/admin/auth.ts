@@ -70,3 +70,4 @@ router.get('/me', requireAdmin, async (req: Request, res: Response, next: NextFu
 });
 
 export default router;
+

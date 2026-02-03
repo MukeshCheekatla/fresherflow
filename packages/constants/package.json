@@ -1,5 +1,5 @@
 {
-    "name": "@job-platform/constants",
+    "name": "@fresherflow/constants",
     "version": "1.0.0",
     "description": "Shared constants for Job Platform",
     "main": "index.ts",

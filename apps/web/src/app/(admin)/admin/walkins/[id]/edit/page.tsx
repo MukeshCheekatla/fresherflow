@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect } from 'react';
 import { WalkinsService } from '@/features/walkins/services/walkins.service';
-import { WalkinJob } from '@/types/walkin';
+import { Opportunity } from '@fresherflow/types';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useRouter } from 'next/navigation';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';

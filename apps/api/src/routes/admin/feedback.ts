@@ -89,3 +89,4 @@ router.get('/opportunities/:id', requireAdmin, async (req: Request, res: Respons
 });
 
 export default router;
+

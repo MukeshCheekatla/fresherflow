@@ -3,13 +3,13 @@
 import { useEffect } from 'react';
 import { useWalkins } from '@/features/walkins/hooks/useWalkins';
 import { WalkinsService } from '@/features/walkins/services/walkins.service';
-import { WalkinJob } from '@/types/walkin';
+import { Opportunity } from '@fresherflow/types';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useRouter } from 'next/navigation';
-import LoadingScreen from '@/shared/components/ui/LoadingScreen';
-import { TableRowSkeleton, CardSkeleton } from '@/shared/components/ui/Skeleton';
+import LoadingScreen from '@/components/ui/LoadingScreen';
+import { TableRowSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 
 export default function AdminWalkinsList() {
     const { isAuthenticated, isLoading } = useAdmin();
@@ -160,3 +160,4 @@ export default function AdminWalkinsList() {
         </div>
     );
 }
+

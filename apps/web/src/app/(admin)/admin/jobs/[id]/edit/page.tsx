@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect } from 'react';
 import { JobsService } from '@/features/jobs/services/jobs.service';
-import { OnlineJob } from '@/types/job';
+import { Opportunity } from '@fresherflow/types';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useRouter } from 'next/navigation';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
@@ -44,20 +44,20 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                 const { data } = result;
                 // Flatten constraints for form
                 setFormData({
-                    normalizedRole: data.normalizedRole,
+                    title: data.title,
                     company: data.company,
-                    experienceMin: data.experienceRange.min,
-                    experienceMax: data.experienceRange.max,
-                    mustHaveSkills: data.mustHaveSkills.join(', '),
-                    niceToHaveSkills: data.niceToHaveSkills.join(', '),
-                    workType: data.workType,
-                    salaryMin: data.salary?.min || '',
-                    salaryMax: data.salary?.max || '',
-                    currency: data.salary?.currency || 'INR',
-                    employmentType: data.employmentType,
+                    experienceMin: data.experienceMin || 0,
+                    experienceMax: data.experienceMax || 0,
+                    mustHaveSkills: (data.requiredSkills || []).join(', '),
+                    niceToHaveSkills: '',
+                    workType: data.workMode,
+                    salaryMin: data.salaryMin || '',
+                    salaryMax: data.salaryMax || '',
+                    currency: 'INR',
+                    employmentType: data.type,
                     locations: data.locations,
                     applyLink: data.applyLink,
-                    source: data.source,
+                    source: data.source || '',
                 });
             } else {
                 alert('Job not found');
@@ -74,21 +74,17 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
         e.preventDefault();
         setLoading(true);
         try {
-            const jobData: Partial<OnlineJob> = {
-                normalizedRole: formData.normalizedRole,
+            const jobData: any = {
+                title: formData.title,
+                type: formData.employmentType,
                 company: formData.company,
-                experienceRange: { min: parseInt(formData.experienceMin), max: parseInt(formData.experienceMax) },
-                mustHaveSkills: formData.mustHaveSkills.split(',').map((s: string) => s.trim()).filter(Boolean),
-                niceToHaveSkills: formData.niceToHaveSkills.split(',').map((s: string) => s.trim()).filter(Boolean),
-                workType: formData.workType,
-                salary: formData.salaryMin && formData.salaryMax
-                    ? { min: parseInt(formData.salaryMin), max: parseInt(formData.salaryMax), currency: formData.currency }
-                    : null,
-                employmentType: formData.employmentType,
+                requiredSkills: formData.mustHaveSkills.split(',').map((s: string) => s.trim()).filter(Boolean),
+                workMode: formData.workType,
+                salaryMin: formData.salaryMin ? parseInt(formData.salaryMin) : null,
+                salaryMax: formData.salaryMax ? parseInt(formData.salaryMax) : null,
                 locations: formData.locations,
                 applyLink: formData.applyLink,
-                source: formData.source,
-                lastVerified: new Date().toISOString(),
+                expiresAt: null, // Default
             };
 
             await JobsService.update(jobId, jobData);
@@ -124,8 +120,8 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                     <div>
                         <label className="block text-sm font-bold text-slate-400 mb-2">Role</label>
                         <select
-                            value={formData.normalizedRole}
-                            onChange={(e) => setFormData({ ...formData, normalizedRole: e.target.value })}
+                            value={formData.title}
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                             className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 focus:border-blue-600 outline-none transition-all"
                             required
                         >

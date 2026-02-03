@@ -139,3 +139,4 @@ export function parseJobText(text: string) {
 
     return result;
 }
+

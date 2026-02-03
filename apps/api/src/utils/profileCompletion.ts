@@ -50,3 +50,4 @@ export function calculateCompletion(profile: Profile): number {
 export function isProfileComplete(profile: Profile): boolean {
     return calculateCompletion(profile) === 100;
 }
+

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { OnlineJob } from '@/types/job';
+import { Opportunity } from '@fresherflow/types';
 import { JobsService } from '@/features/jobs/services/jobs.service';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useRouter } from 'next/navigation';
@@ -211,3 +211,4 @@ export default function NewJobPage() {
         </div>
     );
 }
+

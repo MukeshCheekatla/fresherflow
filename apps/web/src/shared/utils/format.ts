@@ -1,6 +1,6 @@
-import { OnlineJob, WalkinJob } from '@/types';
+import { Opportunity } from '@fresherflow/types';
 
-export const formatSalary = (salary: OnlineJob['salary']) => {
+export const formatSalary = (salary: { min?: number; max?: number; currency?: string } | null | undefined) => {
     if (!salary) return 'Not disclosed';
     const { min, max } = salary;
     if (min && max) {
@@ -24,3 +24,4 @@ export const formatDate = (dateStr: string) => {
         year: 'numeric'
     });
 };
+

@@ -1,7 +1,7 @@
 // Eligibility Rules - Deterministic & Explainable
 // Every rule must have a clear reason
 
-import { Opportunity, Profile, EducationLevel } from '@job-platform/types';
+import { Opportunity, Profile, EducationLevel } from '@fresherflow/types';
 
 export interface EligibilityRule {
     name: string;
@@ -125,3 +125,4 @@ export const ALL_RULES: EligibilityRule[] = [
     ...HARD_RULES,
     ...SOFT_RULES,
 ];
+

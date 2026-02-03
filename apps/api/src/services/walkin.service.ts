@@ -144,3 +144,4 @@ export class WalkinService {
         return actions.map((action) => action.opportunity);
     }
 }
+

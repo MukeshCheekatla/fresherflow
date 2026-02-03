@@ -4,12 +4,12 @@ import { useEffect } from 'react';
 
 import { useJobs } from '@/features/jobs/hooks/useJobs';
 import { JobsService } from '@/features/jobs/services/jobs.service';
-import { OnlineJob } from '@/types/job';
+import { Opportunity } from '@fresherflow/types';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import LoadingScreen from '@/shared/components/ui/LoadingScreen';
-import { TableRowSkeleton, CardSkeleton } from '@/shared/components/ui/Skeleton';
+import LoadingScreen from '@/components/ui/LoadingScreen';
+import { TableRowSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 import Link from 'next/link';
 
 export default function AdminJobsList() {
@@ -162,3 +162,4 @@ export default function AdminJobsList() {
         </div>
     );
 }
+

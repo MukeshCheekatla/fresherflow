@@ -48,3 +48,4 @@ export function sortOpportunitiesWithWalkinsFirst(opportunities: Opportunity[]):
         return new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime();
     });
 }
+

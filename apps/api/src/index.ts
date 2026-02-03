@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import { requestIdMiddleware } from './middleware/requestId';
 import { errorHandler } from './middleware/errorHandler';
 import logger from './utils/logger';
+import httpLogger from './middleware/httpLogger';
 import { startExpiryCron } from './cron/expiryCron';
 
 // Import routes
@@ -47,6 +48,9 @@ const PORT = process.env.PORT || 5000;
 
 // Request ID (must be first for logging)
 app.use(requestIdMiddleware);
+
+// HTTP Request Logging (colorful!)
+app.use(httpLogger);
 
 // Security
 app.use(helmet());
@@ -177,3 +181,4 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 export default app;
+

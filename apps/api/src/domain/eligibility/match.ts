@@ -1,7 +1,7 @@
 // Eligibility Matching Engine
 // Deterministic, explainable, logged
 
-import { Opportunity, Profile } from '@job-platform/types';
+import { Opportunity, Profile } from '@fresherflow/types';
 import { HARD_RULES, SOFT_RULES, EligibilityRule } from './rules';
 import logger from '../../utils/logger';
 
@@ -122,3 +122,4 @@ export function filterOpportunitiesForUser(
         checkEligibility(opp, profile).eligible
     );
 }
+

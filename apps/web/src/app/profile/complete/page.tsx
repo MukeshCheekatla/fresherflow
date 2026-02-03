@@ -17,6 +17,9 @@ import {
     SparklesIcon,
     PlusIcon
 } from '@heroicons/react/24/outline';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 
 type Step = 'education' | 'preferences' | 'readiness';
 
@@ -229,12 +232,12 @@ export default function ProfileCompletePage() {
                                             className="text-primary transition-all duration-1000 ease-out"
                                         />
                                     </svg>
-                                    <div className="absolute inset-0 flex items-center justify-center text-sm font-black italic">
+                                    <div className="absolute inset-0 flex items-center justify-center text-base font-black italic">
                                         {completion}%
                                     </div>
                                 </div>
                                 <div className="space-y-0.5">
-                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none">Completion</p>
+                                    <p className="text-xs font-black text-muted-foreground uppercase tracking-widest leading-none">Completion</p>
                                     <p className="text-lg font-black text-foreground italic">{completion}% Finished</p>
                                 </div>
                             </div>
@@ -262,8 +265,8 @@ export default function ProfileCompletePage() {
                                                 <s.icon className="w-5 h-5" />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className="text-[11px] font-black uppercase tracking-wider leading-none mb-1">{s.label}</p>
-                                                <p className={cn("text-[10px] font-medium opacity-70 truncate", isActive ? "text-white/80" : "text-muted-foreground")}>{s.desc}</p>
+                                                <p className="text-xs font-black uppercase tracking-wider leading-none mb-1">{s.label}</p>
+                                                <p className={cn("text-xs font-medium opacity-70 truncate", isActive ? "text-white/80" : "text-muted-foreground")}>{s.desc}</p>
                                             </div>
                                             {isDone && !isActive && <CheckCircleIcon className="w-5 h-5 ml-auto text-primary" />}
                                         </div>
@@ -303,24 +306,24 @@ export default function ProfileCompletePage() {
                                             {/* 10th Standard */}
                                             <div className="space-y-6">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-8 h-8 rounded bg-muted flex items-center justify-center text-[10px] font-bold">10th</div>
+                                                    <div className="w-8 h-8 rounded bg-muted flex items-center justify-center text-xs font-bold">10th</div>
                                                     <h3 className="text-sm font-black italic uppercase tracking-wider">Secondary</h3>
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Year of Passing</label>
-                                                    <input type="text" maxLength={4} value={tenthYear} onChange={(e) => setTenthYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-12" placeholder="2018" />
+                                                    <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Year of Passing</label>
+                                                    <Input type="text" maxLength={4} value={tenthYear} onChange={(e) => setTenthYear(e.target.value.replace(/\D/g, ''))} placeholder="2018" />
                                                 </div>
                                             </div>
 
                                             {/* 12th / Diploma */}
                                             <div className="space-y-6">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-8 h-8 rounded bg-muted flex items-center justify-center text-[10px] font-bold">12th</div>
+                                                    <div className="w-8 h-8 rounded bg-muted flex items-center justify-center text-xs font-bold">12th</div>
                                                     <h3 className="text-sm font-black italic uppercase tracking-wider">Higher Secondary</h3>
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Year of Passing</label>
-                                                    <input type="text" maxLength={4} value={twelfthYear} onChange={(e) => setTwelfthYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-12" placeholder="2020" />
+                                                    <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Year of Passing</label>
+                                                    <Input type="text" maxLength={4} value={twelfthYear} onChange={(e) => setTwelfthYear(e.target.value.replace(/\D/g, ''))} placeholder="2020" />
                                                 </div>
                                             </div>
                                         </div>
@@ -328,19 +331,19 @@ export default function ProfileCompletePage() {
                                         {/* Higher Education */}
                                         <div className="space-y-6 pt-4 border-t border-border/50">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-8 h-8 rounded bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold">UG</div>
+                                                <div className="w-8 h-8 rounded bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">UG</div>
                                                 <h3 className="text-sm font-black italic uppercase tracking-wider">Graduation (Primary)</h3>
                                             </div>
 
                                             <div className="space-y-3">
-                                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Education Level</p>
+                                                <p className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Education Level</p>
                                                 <div className="grid grid-cols-3 gap-3">
                                                     {EDUCATION_LEVELS.map(level => (
                                                         <button
                                                             key={level}
                                                             onClick={() => setEducationLevel(level)}
                                                             className={cn(
-                                                                "h-12 rounded-xl font-bold border-1 transition-all text-xs uppercase tracking-widest",
+                                                                "h-12 rounded-xl font-bold border-2 transition-all text-xs uppercase tracking-widest",
                                                                 educationLevel === level ? "bg-primary border-primary text-white shadow-lg" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/40"
                                                             )}
                                                         >
@@ -352,24 +355,24 @@ export default function ProfileCompletePage() {
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 <div className="space-y-2">
-                                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Course/Degree</label>
-                                                    <select value={gradCourse} onChange={(e) => { setGradCourse(e.target.value); setGradSpecialization(''); }} className="premium-input !h-12">
+                                                    <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Course/Degree</label>
+                                                    <Select value={gradCourse} onChange={(e) => { setGradCourse(e.target.value); setGradSpecialization(''); }}>
                                                         <option value="">Select Degree</option>
                                                         {(educationLevel === 'DIPLOMA' ? DIPLOMA_DEGREES : educationLevel === 'DEGREE' ? UG_DEGREES : educationLevel === 'PG' ? PG_DEGREES : []).map(d => <option key={d}>{d}</option>)}
-                                                    </select>
+                                                    </Select>
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Specialization</label>
-                                                    <select value={gradSpecialization} onChange={(e) => setGradSpecialization(e.target.value)} className="premium-input !h-12" disabled={!gradCourse}>
+                                                    <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Specialization</label>
+                                                    <Select value={gradSpecialization} onChange={(e) => setGradSpecialization(e.target.value)} disabled={!gradCourse}>
                                                         <option value="">Select Field</option>
                                                         {getSpecializations(gradCourse).map(s => <option key={s}>{s}</option>)}
-                                                    </select>
+                                                    </Select>
                                                 </div>
                                             </div>
 
                                             <div className="space-y-2">
-                                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Passout Year</label>
-                                                <input type="text" maxLength={4} value={gradYear} onChange={(e) => setGradYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-12" placeholder="2024" />
+                                                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Passout Year</label>
+                                                <Input type="text" maxLength={4} value={gradYear} onChange={(e) => setGradYear(e.target.value.replace(/\D/g, ''))} placeholder="2024" />
                                             </div>
                                         </div>
 
@@ -384,30 +387,30 @@ export default function ProfileCompletePage() {
                                             <div className="space-y-6 animate-in slide-in-from-top-4 duration-500 pt-2 pb-6 border-b border-border/50">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     <div className="space-y-2">
-                                                        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">PG Degree</label>
-                                                        <select value={pgCourse} onChange={(e) => setPgCourse(e.target.value)} className="premium-input !h-11">
+                                                        <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">PG Degree</label>
+                                                        <Select value={pgCourse} onChange={(e) => setPgCourse(e.target.value)}>
                                                             <option value="">Select Degree</option>
                                                             {PG_DEGREES.map(d => <option key={d}>{d}</option>)}
-                                                        </select>
+                                                        </Select>
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">PG Specialization</label>
-                                                        <select value={pgSpecialization} onChange={(e) => setPgSpecialization(e.target.value)} className="premium-input !h-11">
+                                                        <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">PG Specialization</label>
+                                                        <Select value={pgSpecialization} onChange={(e) => setPgSpecialization(e.target.value)}>
                                                             <option value="">Select Field</option>
                                                             {getSpecializations(pgCourse).map(s => <option key={s}>{s}</option>)}
-                                                        </select>
+                                                        </Select>
                                                     </div>
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">PG Passout Year</label>
-                                                    <input type="text" maxLength={4} value={pgYear} onChange={(e) => setPgYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-11" placeholder="2026" />
+                                                    <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">PG Passout Year</label>
+                                                    <Input type="text" maxLength={4} value={pgYear} onChange={(e) => setPgYear(e.target.value.replace(/\D/g, ''))} placeholder="2026" />
                                                 </div>
                                             </div>
                                         )}
 
-                                        <button onClick={handleEducationSubmit} disabled={isLoading} className="w-full premium-button !h-14 text-base shadow-xl shadow-primary/20">
+                                        <Button onClick={handleEducationSubmit} disabled={isLoading} className="w-full text-base shadow-xl shadow-primary/20 italic font-black">
                                             {isLoading ? <ArrowPathIcon className="w-6 h-6 animate-spin" /> : <span>Step 1: Lockdown Foundations</span>}
-                                        </button>
+                                        </Button>
                                     </div>
                                 )}
 
@@ -465,9 +468,9 @@ export default function ProfileCompletePage() {
                                             </div>
                                         </div>
 
-                                        <button onClick={handlePreferencesSubmit} disabled={isLoading} className="w-full premium-button !h-14 text-base shadow-xl shadow-primary/20">
+                                        <Button onClick={handlePreferencesSubmit} disabled={isLoading} className="w-full text-base shadow-xl shadow-primary/20 italic font-black">
                                             {isLoading ? <ArrowPathIcon className="w-6 h-6 animate-spin" /> : <span>Step 2: Map Interests</span>}
-                                        </button>
+                                        </Button>
                                     </div>
                                 )}
 
@@ -504,9 +507,9 @@ export default function ProfileCompletePage() {
                                             </div>
                                         </div>
 
-                                        <button onClick={handleReadinessSubmit} disabled={isLoading} className="w-full premium-button !h-16 text-lg bg-foreground !text-background hover:bg-foreground/90 shadow-2xl">
+                                        <Button onClick={handleReadinessSubmit} disabled={isLoading} className="w-full !h-16 text-lg bg-foreground !text-background hover:bg-foreground/90 shadow-2xl italic font-black">
                                             {isLoading ? <ArrowPathIcon className="w-6 h-6 animate-spin" /> : <div className="flex items-center gap-2"><span>Finish Entire Setup</span><CheckCircleIcon className="w-6 h-6" /></div>}
-                                        </button>
+                                        </Button>
                                     </div>
                                 )}
                             </div>
@@ -517,3 +520,4 @@ export default function ProfileCompletePage() {
         </AuthGate>
     );
 }
+

@@ -40,3 +40,4 @@ export async function profileGate(req: Request, res: Response, next: NextFunctio
         next(error);
     }
 }
+

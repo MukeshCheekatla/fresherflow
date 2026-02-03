@@ -68,18 +68,25 @@ export interface Profile {
 
     // Education (40% weight)
     educationLevel?: EducationLevel;
-    course?: string;
-    specialization?: string;
-    passoutYear?: number;
+    tenthYear?: number;
+    twelfthYear?: number;
+    gradCourse?: string;
+    gradSpecialization?: string;
+    gradYear?: number;
+    pgCourse?: string;
+    pgSpecialization?: string;
+    pgYear?: number;
 
     // Preferences (40% weight)
     interestedIn: OpportunityType[];
     preferredCities: string[];
     preferredWorkModes: WorkMode[];
+    workModes?: WorkMode[]; // UI Mapping alias
 
     // Readiness (20% weight)
     availability?: Availability;
     skills: string[];
+    skillTags?: string[]; // UI Mapping alias
 }
 
 export interface Admin {
@@ -111,6 +118,22 @@ export interface Opportunity {
     // Compensation
     salaryMin?: number;
     salaryMax?: number;
+    salary?: {
+        min: number;
+        max: number;
+        currency?: string;
+    } | null;
+
+    // Eligibility
+    experienceRange?: {
+        min: number;
+        max: number;
+    };
+    normalizedRole?: string; // Support for UI role mapping
+    employmentType?: OpportunityType; // Support for UI mapping
+    workType?: WorkMode; // Support for UI mapping
+    postedDate?: Date; // Support for UI mapping
+    skills?: string[]; // Support for UI mapping
 
     // Application
     applyLink?: string;

@@ -26,6 +26,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { SkeletonJobCard } from '@/components/ui/Skeleton';
 import JobCard from '@/features/jobs/components/JobCard';
+import { Button } from '@/components/ui/Button';
 
 export default function DashboardPage() {
     const { user, profile, logout } = useAuth();
@@ -83,10 +84,12 @@ export default function DashboardPage() {
                             </p>
                         </div>
                         <div className="hidden md:flex items-center gap-2">
-                            <Link href="/opportunities" className="premium-button !h-10 !px-5 text-xs">
-                                <MagnifyingGlassIcon className="w-4 h-4" />
-                                Search Jobs
-                            </Link>
+                            <Button asChild className="!h-10 !px-5 text-xs">
+                                <Link href="/opportunities">
+                                    <MagnifyingGlassIcon className="w-4 h-4" />
+                                    Search Jobs
+                                </Link>
+                            </Button>
                         </div>
                     </div>
 
@@ -98,14 +101,14 @@ export default function DashboardPage() {
                                 <div className="p-1.5 bg-background border border-border rounded text-primary">
                                     <UserIcon className="w-4 h-4" />
                                 </div>
-                                <span className="text-[8px] md:text-[10px] font-black text-muted-foreground uppercase tracking-widest hidden sm:block">Status</span>
+                                <span className="text-xs font-black text-muted-foreground uppercase tracking-widest hidden sm:block">Status</span>
                             </div>
                             <div className="flex items-end justify-between">
                                 <div>
                                     <h4 className="text-xl md:text-3xl font-black text-foreground">
                                         {profile?.completionPercentage}%
                                     </h4>
-                                    <p className="text-[8px] md:text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Ready</p>
+                                    <p className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">Ready</p>
                                 </div>
                                 <div className="w-8 h-8 md:w-12 md:h-12 relative text-primary">
                                     <svg className="w-full h-full transform -rotate-90">
@@ -128,7 +131,7 @@ export default function DashboardPage() {
                                     </div>
                                 </div>
                                 <h4 className="text-xl md:text-3xl font-black text-foreground">{isLoading ? '..' : stat.value}</h4>
-                                <p className="text-[8px] md:text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">{stat.label}</p>
+                                <p className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">{stat.label}</p>
                             </div>
                         ))}
                     </div>
@@ -141,9 +144,9 @@ export default function DashboardPage() {
                             <div className="flex items-center justify-between border-b border-border pb-3">
                                 <div className="flex items-center gap-2">
                                     <h2 className="text-sm md:text-xl font-black tracking-tight italic uppercase">Active Feed</h2>
-                                    <span className="px-1.5 py-0.5 bg-muted text-muted-foreground rounded text-[8px] font-black uppercase tracking-widest border border-border">Live</span>
+                                    <span className="px-1.5 py-0.5 bg-muted text-muted-foreground rounded text-xs font-black uppercase tracking-widest border border-border">Live</span>
                                 </div>
-                                <Link href="/opportunities" className="text-[9px] md:text-[10px] font-black text-primary uppercase hover:underline tracking-widest">More →</Link>
+                                <Link href="/opportunities" className="text-xs font-black text-primary uppercase hover:underline tracking-widest">More →</Link>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
@@ -152,8 +155,10 @@ export default function DashboardPage() {
                                 ) : recentOpps.length === 0 ? (
                                     <div className="col-span-full premium-card text-center p-8 md:p-12 border-dashed border-2">
                                         <h3 className="font-black text-foreground uppercase italic text-sm">No feed data available</h3>
-                                        <p className="text-[10px] text-muted-foreground mt-1 max-w-xs mx-auto font-medium">Update parameters to initialize matches.</p>
-                                        <Link href="/profile/edit" className="premium-button mt-4 inline-flex uppercase text-[9px] tracking-widest !px-4 !h-8">Initialize</Link>
+                                        <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto font-medium">Update parameters to initialize matches.</p>
+                                        <Button asChild className="mt-4 inline-flex uppercase text-xs tracking-widest !px-4 !h-8">
+                                            <Link href="/profile/edit">Initialize</Link>
+                                        </Button>
                                     </div>
                                 ) : (
                                     recentOpps.map((opp) => (
@@ -172,6 +177,7 @@ export default function DashboardPage() {
                                                 skills: opp.requiredSkills
                                             } as any}
                                             jobId={opp.id}
+                                            isApplied={(opp as any).actions?.some((a: any) => a.actionType === 'APPLIED')}
                                             onClick={() => router.push(`/opportunities/${opp.id}`)}
                                         />
                                     ))
@@ -190,7 +196,7 @@ export default function DashboardPage() {
                                         </div>
                                         <h4 className="text-xs font-black text-foreground italic uppercase tracking-tight">Application Activity</h4>
                                     </div>
-                                    <p className="text-[10px] md:text-xs text-muted-foreground leading-relaxed font-medium italic opacity-80">
+                                    <p className="text-xs text-muted-foreground leading-relaxed font-medium italic opacity-80">
                                         You have tracked {actionsSummary?.APPLIED || 0} applications so far. Keep monitoring the feed for new verified listings matching your profile.
                                     </p>
                                 </div>
@@ -202,10 +208,12 @@ export default function DashboardPage() {
                                         </div>
                                         <h3 className="font-black text-sm md:text-base tracking-tight leading-none italic uppercase">Profile Verification</h3>
                                     </div>
-                                    <p className="text-[10px] md:text-xs text-muted-foreground leading-relaxed font-medium italic opacity-80 uppercase tracking-widest">
+                                    <p className="text-xs text-muted-foreground leading-relaxed font-medium italic opacity-80 uppercase tracking-widest">
                                         Keep your career metadata updated for maximum match accuracy.
                                     </p>
-                                    <Link href="/profile/edit" className="w-full premium-button !h-10 text-[10px] uppercase font-black tracking-widest">Update Profile</Link>
+                                    <Button asChild className="w-full !h-10 text-xs uppercase font-black tracking-widest">
+                                        <Link href="/profile/edit">Update Profile</Link>
+                                    </Button>
                                 </div>
                             </div>
                         </div>
@@ -215,3 +223,4 @@ export default function DashboardPage() {
         </AuthGate>
     );
 }
+

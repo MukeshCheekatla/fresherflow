@@ -40,6 +40,9 @@ router.get('/', requireAuth, profileGate, async (req: Request, res: Response, ne
                     select: {
                         fullName: true
                     }
+                },
+                actions: {
+                    where: { userId: req.userId }
                 }
             }
         });
@@ -72,6 +75,9 @@ router.get('/:id', requireAuth, profileGate, async (req: Request, res: Response,
                     select: {
                         fullName: true
                     }
+                },
+                actions: {
+                    where: { userId: req.userId }
                 }
             }
         });
@@ -101,3 +107,4 @@ router.get('/:id', requireAuth, profileGate, async (req: Request, res: Response,
 });
 
 export default router;
+

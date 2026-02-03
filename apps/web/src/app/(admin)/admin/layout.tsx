@@ -2,7 +2,8 @@
 
 import { useAdmin } from '@/contexts/AdminContext';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import {
     Squares2X2Icon,
     BriefcaseIcon,
@@ -16,8 +17,19 @@ import {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const { logout, isAuthenticated } = useAdmin();
     const pathname = usePathname();
+    const router = useRouter();
 
-    if (!isAuthenticated && !pathname.includes('/login')) return <>{children}</>;
+    // Security: Redirect unauthenticated users
+    useEffect(() => {
+        if (!isAuthenticated && !pathname.includes('/login')) {
+            router.push('/admin/login');
+        }
+    }, [isAuthenticated, pathname, router]);
+
+    // Don't render admin UI for unauthenticated users (except login page)
+    if (!isAuthenticated && !pathname.includes('/login')) {
+        return null;
+    }
 
     const navItems = [
         { href: '/admin/dashboard', label: 'Dashboard', icon: Squares2X2Icon },
@@ -87,3 +99,4 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
     );
 }
+

@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { opportunitiesApi, actionsApi } from '@/lib/api/client';
 import { AuthGate, ProfileGate } from '@/components/gates/ProfileGate';
-import { Opportunity } from '@/types/api';
+import { Opportunity } from '@fresherflow/types';
 import toast from 'react-hot-toast';
 import {
     MapPinIcon,
@@ -21,6 +21,8 @@ import {
     CheckBadgeIcon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
+import LoadingScreen from '@/components/ui/LoadingScreen';
+import { Button } from '@/components/ui/Button';
 
 export default function OpportunityDetailPage() {
     const { id } = useParams();
@@ -66,14 +68,7 @@ export default function OpportunityDetailPage() {
         }
     };
 
-    if (isLoading) return (
-        <div className="min-h-screen bg-background flex items-center justify-center">
-            <div className="space-y-4 text-center">
-                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Synchronizing Opportunity Data</p>
-            </div>
-        </div>
-    );
+    if (isLoading) return <LoadingScreen message="Synchronizing Opportunity Data" />;
 
     if (!opp) return null;
 
@@ -88,20 +83,20 @@ export default function OpportunityDetailPage() {
                             <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
 
                             <div className="relative z-10 space-y-4 md:space-y-6">
-                                <Link href="/opportunities" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors font-black text-[9px] uppercase tracking-widest group/back">
-                                    <ArrowLeftIcon className="w-3.5 h-3.5 group-hover/back:-translate-x-1 transition-transform" />
+                                <Link href="/opportunities" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors font-black text-xs uppercase tracking-widest group/back">
+                                    <ArrowLeftIcon className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" />
                                     Return to Feed
                                 </Link>
 
                                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 md:gap-10">
                                     <div className="space-y-4 md:space-y-5 flex-1">
                                         <div className="flex flex-wrap items-center gap-2">
-                                            <span className="badge badge-primary !px-3 !py-1 !text-[10px]">{opp.type}</span>
-                                            <div className="flex items-center gap-1 px-3 py-1 bg-muted/50 rounded-full text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+                                            <span className="inline-flex items-center px-3 py-1 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-full">{opp.type}</span>
+                                            <div className="flex items-center gap-1 px-3 py-1 bg-muted/50 rounded-full text-xs font-black text-muted-foreground uppercase tracking-widest">
                                                 <GlobeAltIcon className="w-3.5 h-3.5" />
                                                 {opp.workMode || 'ONSITE'}
                                             </div>
-                                            <div className="flex items-center gap-1 px-3 py-1 bg-success/10 text-success rounded-full text-[9px] font-black uppercase tracking-widest">
+                                            <div className="flex items-center gap-1 px-3 py-1 bg-success/10 text-success rounded-full text-xs font-black uppercase tracking-widest">
                                                 <CheckBadgeIcon className="w-3.5 h-3.5" />
                                                 Verified Feed
                                             </div>
@@ -127,16 +122,17 @@ export default function OpportunityDetailPage() {
                                     </div>
 
                                     <div className="hidden md:block">
-                                        <div className="premium-card bg-primary text-primary-foreground !p-6 text-center space-y-3 min-w-[240px]">
-                                            <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-80">Application Protocol</p>
-                                            <button
+                                        <div className="premium-card bg-primary text-primary-foreground !p-6 text-center space-y-4 min-w-[240px]">
+                                            <p className="text-xs font-black uppercase tracking-[0.2em] opacity-80">Application Protocol</p>
+                                            <Button
+                                                variant="secondary"
                                                 onClick={handleApply}
-                                                className="w-full h-11 bg-background text-foreground rounded-lg font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 transition-all"
+                                                className="w-full h-11 bg-background text-foreground hover:bg-background/90"
                                             >
                                                 Apply Now
                                                 <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                                            </button>
-                                            <p className="text-[8px] font-bold opacity-60">Redirects to official portal</p>
+                                            </Button>
+                                            <p className="text-[10px] font-bold opacity-60">Redirects to official portal</p>
                                         </div>
                                     </div>
                                 </div>
@@ -167,17 +163,17 @@ export default function OpportunityDetailPage() {
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                                         <div className="space-y-1 p-3 bg-muted/30 rounded-xl border border-border/50">
-                                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Allowed Degrees</p>
-                                            <p className="text-foreground font-black text-[11px]">{(opp.allowedDegrees || []).join(', ') || 'Omni-Degree (Any)'}</p>
+                                            <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">Allowed Degrees</p>
+                                            <p className="text-foreground font-black text-xs">{(opp.allowedDegrees || []).join(', ') || 'Omni-Degree (Any)'}</p>
                                         </div>
                                         <div className="space-y-1 p-3 bg-muted/30 rounded-xl border border-border/50">
-                                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Target Batches</p>
-                                            <p className="text-foreground font-black text-[11px]">{(opp.allowedPassoutYears || []).join(', ') || 'All Cohorts'}</p>
+                                            <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">Target Batches</p>
+                                            <p className="text-foreground font-black text-xs">{(opp.allowedPassoutYears || []).join(', ') || 'All Cohorts'}</p>
                                         </div>
                                         <div className="col-span-full space-y-2.5">
-                                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1">Core Competencies</p>
+                                            <p className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Core Competencies</p>
                                             <div className="flex flex-wrap gap-1.5">
-                                                {(opp.requiredSkills || []).map(s => (
+                                                {(opp.requiredSkills || []).map((s: string) => (
                                                     <span key={s} className="px-3 py-1 bg-primary/5 text-primary border border-primary/20 rounded-lg text-[10px] font-black uppercase tracking-widest">
                                                         {s}
                                                     </span>
@@ -199,7 +195,7 @@ export default function OpportunityDetailPage() {
                                                 This listing is a direct physical recruitment event. Ensure all academic credentials and identification documents are ready.
                                             </p>
                                             {opp.expiresAt && (
-                                                <div className="inline-flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg shadow-orange-500/20">
+                                                <div className="inline-flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-orange-500/20">
                                                     <CalendarDaysIcon className="w-4 h-4" />
                                                     <span>Event Active: {new Date(opp.expiresAt).toLocaleDateString(undefined, { dateStyle: 'long' })}</span>
                                                 </div>
@@ -213,18 +209,18 @@ export default function OpportunityDetailPage() {
                             <aside className="space-y-4 lg:sticky lg:top-24 h-fit">
                                 <div className="premium-card !bg-foreground !text-background !p-6 space-y-6 shadow-2xl">
                                     <div className="space-y-4">
-                                        <h3 className="font-black tracking-[0.25em] uppercase text-[9px] opacity-40">Intelligence Feed</h3>
+                                        <h3 className="font-black tracking-[0.25em] uppercase text-xs opacity-40">Intelligence Feed</h3>
                                         <div className="space-y-4">
                                             <div>
-                                                <p className="text-[9px] font-black opacity-40 uppercase mb-0.5">Status</p>
+                                                <p className="text-xs font-black opacity-40 uppercase mb-0.5">Status</p>
                                                 <p className="text-base font-black text-success italic leading-none">Hiring Active</p>
                                             </div>
                                             <div>
-                                                <p className="text-[9px] font-black opacity-40 uppercase mb-0.5">Integrity</p>
+                                                <p className="text-xs font-black opacity-40 uppercase mb-0.5">Integrity</p>
                                                 <p className="text-base font-black text-primary italic leading-none">Flow Verified</p>
                                             </div>
                                             <div>
-                                                <p className="text-[9px] font-black opacity-40 uppercase mb-0.5">Expected Salary</p>
+                                                <p className="text-xs font-black opacity-40 uppercase mb-0.5">Expected Salary</p>
                                                 <div className="flex items-center gap-1 text-base font-black italic leading-none text-white">
                                                     <CurrencyRupeeIcon className="w-4 h-4" />
                                                     <span>Competitive</span>
@@ -252,13 +248,13 @@ export default function OpportunityDetailPage() {
 
                     {/* Mobile Dynamic Action Bar - Positioned above fixed bottom nav */}
                     <div className="md:hidden fixed bottom-[72px] left-4 right-4 z-50">
-                        <button
+                        <Button
                             onClick={handleApply}
-                            className="w-full premium-button !h-12 flex items-center justify-center gap-2 text-sm"
+                            className="w-full text-sm font-black italic uppercase tracking-widest shadow-2xl"
                         >
-                            Execute Application
+                            Complete Application
                             <ArrowTopRightOnSquareIcon className="w-5 h-5" />
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </ProfileGate>

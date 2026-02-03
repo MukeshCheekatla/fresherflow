@@ -96,3 +96,4 @@ export const WalkinsService = {
         return response.json();
     }
 };
+

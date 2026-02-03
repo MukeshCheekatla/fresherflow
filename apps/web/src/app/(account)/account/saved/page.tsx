@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { actionsApi, opportunitiesApi } from '@/lib/api/client';
-import { Opportunity } from '@/types/api';
+import { Opportunity } from '@fresherflow/types';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MapPinIcon, TrashIcon, ExclamationCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
@@ -149,3 +149,4 @@ export default function SavedJobsPage() {
         </div>
     );
 }
+

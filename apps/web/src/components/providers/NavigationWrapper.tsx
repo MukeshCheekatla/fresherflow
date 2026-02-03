@@ -25,7 +25,7 @@ export function NavigationWrapper({ children }: { children: React.ReactNode }) {
                 "animate-in fade-in duration-300 relative",
                 !isAuthRoute && !isAdminRoute && "pt-20 md:pt-24",
                 !isAuthRoute && !isAdminRoute && !isHomePage && "container-app pb-4 md:pb-10",
-                (isAuthRoute || isAdminRoute) && "h-[100dvh] overflow-hidden flex flex-col"
+                (isAuthRoute || isAdminRoute) && "min-h-screen flex flex-col"
             )}>
                 <div className={cn(
                     "flex-1 flex flex-col",
@@ -42,3 +42,4 @@ export function NavigationWrapper({ children }: { children: React.ReactNode }) {
         </>
     );
 }
+

@@ -16,6 +16,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 import { useAuthFormData } from '@/contexts/AuthFormDataContext';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
 export default function RegisterPage() {
     const { email, setEmail, fullName, setFullName } = useAuthFormData();
@@ -104,54 +106,54 @@ export default function RegisterPage() {
                         <h1 className="text-2xl font-black tracking-tight text-foreground uppercase italic leading-none">
                             Join Now
                         </h1>
-                        <p className="text-muted-foreground font-medium uppercase text-[9px] tracking-widest text-foreground/60">
+                        <p className="text-muted-foreground font-semibold uppercase text-xs tracking-widest">
                             Create your professional identity.
                         </p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-3">
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">
                                 Full Name
                             </label>
                             <div className="relative group">
-                                <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                                <input
+                                <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
+                                <Input
                                     type="text"
                                     required
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
-                                    className="premium-input !h-10 pl-11 !text-xs"
+                                    className="pl-11"
                                     placeholder="EX: JOHN DOE"
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">
                                 Email Address
                             </label>
                             <div className="relative group">
-                                <EnvelopeIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                                <input
+                                <EnvelopeIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
+                                <Input
                                     type="email"
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="premium-input !h-10 pl-11 !text-xs"
+                                    className="pl-11"
                                     placeholder="your@email.com"
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-1.5">
+                        <div className="space-y-2">
                             <div className="flex justify-between items-center px-1">
-                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest">
                                     Create Password
                                 </label>
                                 {password && (
                                     <div className={cn(
-                                        "px-2 py-0.5 rounded text-[7px] font-black uppercase tracking-tighter text-white transition-all",
+                                        "px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider text-white transition-all",
                                         strengthConfig[strength - 1]?.color
                                     )}>
                                         {strengthConfig[strength - 1]?.label}
@@ -159,24 +161,24 @@ export default function RegisterPage() {
                                 )}
                             </div>
                             <div className="relative group">
-                                <LockClosedIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                                <input
+                                <LockClosedIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
+                                <Input
                                     type={showPassword ? "text" : "password"}
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="premium-input !h-10 pl-11 pr-11 !text-xs"
+                                    className="pl-11 pr-11"
                                     placeholder="••••••••"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors z-10 p-1"
                                 >
-                                    {showPassword ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
+                                    {showPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
                                 </button>
                             </div>
-                            <div className="flex gap-1 px-1 h-1 mt-1.5">
+                            <div className="flex gap-1 px-1 h-1.5 mt-2">
                                 {[...Array(4)].map((_, i) => (
                                     <div
                                         key={i}
@@ -189,47 +191,47 @@ export default function RegisterPage() {
                             </div>
                         </div>
 
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">
                                 Confirm Password
                             </label>
                             <div className="relative group">
-                                <LockClosedIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                                <input
+                                <LockClosedIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
+                                <Input
                                     type={showConfirmPassword ? "text" : "password"}
                                     required
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="premium-input !h-10 pl-11 pr-11 !text-xs"
+                                    className="pl-11 pr-11"
                                     placeholder="••••••••"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors z-10 p-1"
                                 >
-                                    {showConfirmPassword ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
+                                    {showConfirmPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
                                 </button>
                             </div>
                         </div>
 
-                        <button
+                        <Button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full premium-button !h-11 text-xs uppercase font-black tracking-widest active:scale-[0.98] transition-all mt-2"
+                            className="w-full mt-4 font-black uppercase tracking-widest italic"
                         >
                             {isLoading ? (
-                                <ArrowPathIcon className="w-4 h-4 animate-spin mx-auto" />
+                                <ArrowPathIcon className="w-5 h-5 animate-spin mx-auto" />
                             ) : (
-                                "Initialize Identity"
+                                "Create Account"
                             )}
-                        </button>
+                        </Button>
                     </form>
 
-                    <div className="text-center pt-1">
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                    <div className="text-center pt-2">
+                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                             Member already?{' '}
-                            <Link href="/login" className="text-primary hover:underline font-black">
+                            <Link href="/login" className="text-primary hover:underline font-black ml-1">
                                 Sign In
                             </Link>
                         </p>
@@ -246,3 +248,4 @@ export default function RegisterPage() {
         </div>
     );
 }
+

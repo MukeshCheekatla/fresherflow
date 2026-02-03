@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useMemo, useCallback, Suspense } from 'react';
 import Link from 'next/link';
-import { Opportunity } from '@/types/api';
+import { Opportunity } from '@fresherflow/types';
 import toast from 'react-hot-toast';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { SkeletonJobCard } from '@/components/ui/Skeleton';
@@ -24,6 +24,8 @@ import {
     XMarkIcon,
     ShieldCheckIcon
 } from '@heroicons/react/24/outline';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
 const FILTERS = {
     type: [
@@ -46,6 +48,7 @@ function OpportunitiesContent() {
     const [selectedType, setSelectedType] = useState<string | null>(null);
     const [selectedLoc, setSelectedLoc] = useState<string | null>(null);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [profileIncomplete, setProfileIncomplete] = useState<{ percentage: number; message: string } | null>(null);
 
     const debouncedSearch = useDebounce(search, 300);
 
@@ -65,6 +68,7 @@ function OpportunitiesContent() {
 
     const loadOpportunities = useCallback(async () => {
         setIsLoading(true);
+        setProfileIncomplete(null); // Reset error state
         try {
             const data = await opportunitiesApi.list({
                 type: selectedType || undefined,
@@ -72,7 +76,15 @@ function OpportunitiesContent() {
             });
             setOpportunities(data.opportunities || []);
         } catch (error: any) {
-            toast.error(error.message || 'Failed to load feed');
+            // Check if this is a profile incomplete error
+            if (error.code === 'PROFILE_INCOMPLETE') {
+                setProfileIncomplete({
+                    percentage: error.completionPercentage || 0,
+                    message: error.message || 'Complete your profile to access job listings'
+                });
+            } else {
+                toast.error(error.message || 'Failed to load feed');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -122,14 +134,14 @@ function OpportunitiesContent() {
                         <div className="flex items-center gap-3">
                             <div className="px-3 py-1.5 bg-muted rounded-full border border-border flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 rounded-full bg-success" />
-                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                                <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">
                                     {filteredOpps.length} {selectedType ? selectedType.replace('JOB', 'Jobs').replace('WALKIN', 'Walk-ins').replace('INTERNSHIP', 'Internships') : 'Opportunities'} Found
                                 </p>
                             </div>
                             {selectedType && (
                                 <button
                                     onClick={() => updateType(null)}
-                                    className="text-[10px] font-black text-primary uppercase hover:underline"
+                                    className="text-xs font-black text-primary uppercase hover:underline"
                                 >
                                     Clear Category
                                 </button>
@@ -138,24 +150,22 @@ function OpportunitiesContent() {
                         <div className="flex items-center gap-2">
                             <div className="relative w-full md:w-64">
                                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                                <input
+                                <Input
                                     type="text"
                                     placeholder="Search feed..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    className="premium-input !pl-9 !h-9 !text-xs italic"
+                                    className="pl-9 !h-9 text-xs italic"
                                 />
                             </div>
-                            <button
+                            <Button
+                                variant={isFilterOpen ? "default" : "outline"}
                                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                                className={cn(
-                                    "premium-button-outline !h-9 px-4 text-[10px] uppercase tracking-widest",
-                                    isFilterOpen && "bg-muted border-primary text-primary"
-                                )}
+                                className="!h-9 px-4 text-xs font-black uppercase tracking-widest"
                             >
                                 <FunnelIcon className="w-3.5 h-3.5" />
                                 {isFilterOpen ? 'Close' : 'Filters'}
-                            </button>
+                            </Button>
                         </div>
                     </div>
 
@@ -168,7 +178,7 @@ function OpportunitiesContent() {
                             <div className="p-6 rounded-2xl border border-border bg-card space-y-8 shadow-sm">
                                 <div>
                                     <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Job Type</h3>
+                                        <h3 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">Job Type</h3>
                                     </div>
                                     <div className="space-y-2">
                                         {FILTERS.type.map(type => (
@@ -191,9 +201,9 @@ function OpportunitiesContent() {
 
                                 <div>
                                     <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Location</h3>
+                                        <h3 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">Location</h3>
                                         {selectedLoc && (
-                                            <button onClick={() => setSelectedLoc(null)} className="text-[9px] font-black text-primary uppercase">Reset</button>
+                                            <button onClick={() => setSelectedLoc(null)} className="text-xs font-black text-primary uppercase">Reset</button>
                                         )}
                                     </div>
                                     <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
@@ -202,7 +212,7 @@ function OpportunitiesContent() {
                                                 key={loc}
                                                 onClick={() => setSelectedLoc(selectedLoc === loc ? null : loc)}
                                                 className={cn(
-                                                    "flex items-center gap-3 p-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all",
+                                                    "flex items-center gap-3 p-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all",
                                                     selectedLoc === loc
                                                         ? "bg-primary/5 border-primary text-primary shadow-sm"
                                                         : "bg-background border-border text-muted-foreground hover:border-primary/30"
@@ -217,7 +227,7 @@ function OpportunitiesContent() {
 
                                 <div className="pt-4 border-t border-border/50">
                                     <div className="p-4 bg-muted/30 rounded-xl border border-border">
-                                        <p className="text-[10px] font-bold text-muted-foreground italic leading-relaxed">
+                                        <p className="text-xs font-bold text-muted-foreground italic leading-relaxed">
                                             Platform ensures 100% verification for all listed opportunities.
                                         </p>
                                     </div>
@@ -230,7 +240,45 @@ function OpportunitiesContent() {
                             "transition-all duration-300",
                             isFilterOpen ? "lg:col-span-9" : "lg:col-span-12"
                         )}>
-                            {isLoading ? (
+                            {/* Profile Incomplete Error */}
+                            {profileIncomplete ? (
+                                <div className="p-12 md:p-20 text-center rounded-3xl border-2 border-primary/20 bg-primary/5">
+                                    <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-primary/20">
+                                        <ShieldCheckIcon className="w-10 h-10 text-primary" />
+                                    </div>
+                                    <h3 className="text-2xl md:text-3xl font-black text-foreground uppercase italic tracking-tight mb-3">
+                                        Profile Completion Required
+                                    </h3>
+                                    <div className="max-w-md mx-auto space-y-4">
+                                        <p className="text-sm md:text-base text-muted-foreground font-medium leading-relaxed">
+                                            {profileIncomplete.message}
+                                        </p>
+                                        <div className="flex items-center justify-center gap-3 py-4">
+                                            <div className="text-center">
+                                                <div className="text-4xl font-black text-primary">{profileIncomplete.percentage}%</div>
+                                                <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider mt-1">Complete</div>
+                                            </div>
+                                            <div className="text-2xl text-muted-foreground">→</div>
+                                            <div className="text-center">
+                                                <div className="text-4xl font-black text-success">100%</div>
+                                                <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider mt-1">Required</div>
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground italic">
+                                            Add missing education details and preferences to unlock job listings
+                                        </p>
+                                        <Button
+                                            asChild
+                                            className="inline-flex items-center gap-2 mt-6 !h-12 !px-8 text-sm font-black uppercase tracking-widest"
+                                        >
+                                            <Link href="/profile/edit">
+                                                Complete Your Profile
+                                                <ChevronRightIcon className="w-4 h-4" />
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : isLoading ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {[1, 2, 3, 4, 5, 6].map(i => <SkeletonJobCard key={i} />)}
                                 </div>
@@ -243,16 +291,16 @@ function OpportunitiesContent() {
                                     <p className="text-sm text-muted-foreground mt-2 font-medium max-w-sm mx-auto">
                                         No opportunities current match your defined parameters in the {selectedType || 'global'} feed.
                                     </p>
-                                    <button
+                                    <Button
                                         onClick={() => {
                                             setSearch('');
                                             updateType(null);
                                             setSelectedLoc(null);
                                         }}
-                                        className="premium-button mt-8 mx-auto"
+                                        className="mt-8 mx-auto"
                                     >
                                         Flush All Filters
-                                    </button>
+                                    </Button>
                                 </div>
                             ) : (
                                 <div className={cn(
@@ -275,6 +323,7 @@ function OpportunitiesContent() {
                                                 skills: opp.requiredSkills
                                             } as any}
                                             jobId={opp.id}
+                                            isApplied={(opp as any).actions?.some((a: any) => a.actionType === 'APPLIED')}
                                             onClick={() => router.push(`/opportunities/${opp.id}`)}
                                         />
                                     ))}
@@ -284,7 +333,7 @@ function OpportunitiesContent() {
                             {/* Feed Metadata Footer */}
                             {!isLoading && (
                                 <div className="mt-12 text-center pb-8 border-t border-border pt-8">
-                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.4em]">
+                                    <p className="text-xs font-black text-muted-foreground uppercase tracking-[0.4em]">
                                         Total opportunities synchronized.
                                     </p>
                                 </div>
@@ -312,3 +361,4 @@ export default function OpportunitiesPage() {
         </Suspense>
     );
 }
+

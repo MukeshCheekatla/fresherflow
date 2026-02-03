@@ -195,3 +195,4 @@ export class EligibilityService {
         return maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
     }
 }
+

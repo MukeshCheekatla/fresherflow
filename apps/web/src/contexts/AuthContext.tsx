@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authApi, setTokens, clearTokens, getTokens } from '@/lib/api/client';
-import { User, Profile } from '@/types/api';
+import { User, Profile } from '@fresherflow/types';
 
 interface AuthContextType {
     user: User | null;
@@ -56,16 +56,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     async function login(email: string, password: string) {
         const response = await authApi.login(email, password);
-        setTokens(response.tokens.accessToken, response.tokens.refreshToken);
+        setTokens(response.accessToken, response.refreshToken);
         setUser(response.user);
-        setProfile(response.profile);
+        // Profile is not returned in AuthResponse, need to fetch separately
+        const profileResponse: any = await authApi.me();
+        setProfile(profileResponse.profile);
     }
 
     async function register(email: string, password: string, fullName: string) {
         const response = await authApi.register(email, password, fullName);
-        setTokens(response.tokens.accessToken, response.tokens.refreshToken);
+        setTokens(response.accessToken, response.refreshToken);
         setUser(response.user);
-        setProfile(response.profile);
+        // Profile is not returned in AuthResponse, need to fetch separately
+        const profileResponse: any = await authApi.me();
+        setProfile(profileResponse.profile);
     }
 
     async function logout() {
@@ -98,3 +102,4 @@ export function useAuth() {
     }
     return context;
 }
+

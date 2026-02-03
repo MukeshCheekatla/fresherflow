@@ -96,3 +96,4 @@ export const JobsService = {
         return response.json();
     }
 };
+

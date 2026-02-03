@@ -37,3 +37,4 @@ export function validateReason(reason: string | undefined, action: string): void
         throw new Error('Invalid reason - provide a meaningful explanation');
     }
 }
+

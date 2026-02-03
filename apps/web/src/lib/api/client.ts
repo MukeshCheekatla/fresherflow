@@ -1,6 +1,6 @@
-import { AuthResponse, ApiError, Profile } from '@/types/api';
+import { AuthResponse, Profile } from '@fresherflow/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ;
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Token management
 let accessToken: string | null = null;
@@ -124,13 +124,25 @@ export async function apiClient<T = any>(
 
         if (!response.ok) {
             let errorMessage = 'Request failed';
+            let errorData: any = {};
+
             try {
-                const errorData: ApiError = await response.json();
-                errorMessage = errorData.error?.message || errorMessage;
+                errorData = await response.json();
+                errorMessage = errorData.error?.message || errorData.error || errorMessage;
             } catch (jsonError) {
                 // Fallback if response is not JSON
                 errorMessage = `System Error (${response.status})`;
             }
+
+            // Special handling for 403 profile incomplete errors
+            if (response.status === 403 && errorData.completionPercentage !== undefined) {
+                const error: any = new Error(errorMessage);
+                error.code = 'PROFILE_INCOMPLETE';
+                error.completionPercentage = errorData.completionPercentage;
+                error.requiredCompletion = errorData.requiredCompletion || 100;
+                throw error;
+            }
+
             throw new Error(errorMessage);
         }
 
@@ -250,3 +262,4 @@ export const feedbackApi = {
             body: JSON.stringify({ reason })
         })
 };
+

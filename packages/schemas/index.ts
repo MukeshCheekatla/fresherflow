@@ -10,7 +10,7 @@ import {
     Availability,
     UserActionStatus,
     FeedbackReason
-} from '@job-platform/types';
+} from '@fresherflow/types';
 
 // ========================================
 // AUTH SCHEMAS

@@ -34,3 +34,4 @@ export function useWalkins(limit?: number) {
         refetch: fetchWalkins
     };
 }
+
