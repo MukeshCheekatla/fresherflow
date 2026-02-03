@@ -16,7 +16,7 @@
         "build:api": "turbo run build --filter=fresherflow-api",
         "build:web": "turbo run build --filter=fresherflow-web",
         "deploy:web": "npm run build:web",
-        "deploy:api": "turbo run db:generate --filter=fresherflow-api && turbo run build --filter=fresherflow-api",
+        "deploy:api": "npx turbo run db:generate --filter=fresherflow-api && npx turbo run build --filter=fresherflow-api",
         "start:api": "cd apps/api && npm start",
         "start:web": "cd apps/web && npm start",
         "db:generate": "cd apps/api && npm run db:generate",
@@ -27,10 +27,12 @@
         "clean": "rimraf apps/*/node_modules apps/*/dist packages/*/node_modules packages/*/dist node_modules",
         "typecheck": "npm run typecheck --workspaces --if-present"
     },
+    "dependencies": {
+        "turbo": "^2.8.1"
+    },
     "devDependencies": {
         "concurrently": "^8.2.2",
         "rimraf": "^5.0.5",
-        "turbo": "^2.8.1",
         "typescript": "^5.7.3"
     },
     "packageManager": "npm@9.8.0",
