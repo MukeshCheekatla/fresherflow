@@ -1,3 +1,4 @@
+import 'dotenv/config'; // Load env vars
 import { PrismaClient, OpportunityType, EducationLevel, WorkMode } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
@@ -61,7 +62,7 @@ async function main() {
 
         await prisma.opportunity.create({
             data: {
-                status: 'ACTIVE',
+                status: 'PUBLISHED',
                 type: OpportunityType.JOB,
                 title: jobTitles[i],
                 company: companies[i % companies.length],
@@ -104,7 +105,7 @@ async function main() {
     for (let i = 0; i < 20; i++) {
         await prisma.opportunity.create({
             data: {
-                status: 'ACTIVE',
+                status: 'PUBLISHED',
                 type: OpportunityType.INTERNSHIP,
                 title: internTitles[i],
                 company: companies[(i + 5) % companies.length],
@@ -141,7 +142,7 @@ async function main() {
 
         const opp = await prisma.opportunity.create({
             data: {
-                status: 'ACTIVE',
+                status: 'PUBLISHED',
                 type: OpportunityType.WALKIN,
                 title: `Walk-in Interview - ${i % 2 === 0 ? 'Multiple Positions' : 'Software Roles'}`,
                 company: walkInCompanies[i],

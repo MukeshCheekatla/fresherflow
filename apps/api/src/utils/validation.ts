@@ -51,39 +51,43 @@ export const readinessSchema = z.object({
 
 // Admin Schemas
 export const opportunitySchema = z.object({
-    type: z.nativeEnum(OpportunityType),
+    type: z.nativeEnum(OpportunityType).optional(), // Backend
+    category: z.enum(['job', 'internship', 'walk-in']).optional(), // Frontend alias
+
     title: z.string().min(1, 'Title is required'),
     company: z.string().min(1, 'Company is required'),
     description: z.string().min(10, 'Description must be at least 10 characters').optional(),
+
+    // Core Filters
     allowedDegrees: z.array(z.nativeEnum(EducationLevel)).min(1, 'Select at least one degree'),
     allowedPassoutYears: z.array(z.number().int()).optional().default([]),
     requiredSkills: z.array(z.string()).default([]),
     locations: z.array(z.string()).min(1, 'Add at least one location'),
+
+    // Job/Internship Fields
     workMode: z.nativeEnum(WorkMode).optional(),
-    salaryMin: z.number().int().positive().optional(),
-    salaryMax: z.number().int().positive().optional(),
+    salaryMin: z.number().optional(), // Legacy
+    salaryMax: z.number().optional(), // Legacy
+    salaryRange: z.string().optional(), // New
+    stipend: z.string().optional(),     // New
+    employmentType: z.string().optional(), // New
     applyLink: z.string().url().optional(),
+
     expiresAt: z.string().optional(),
-    // Walk-in specific (optional)
+
+    // Walk-in specific (Simplified)
     walkInDetails: z.object({
-        dates: z.array(z.string()).optional(),
+        date: z.string().optional(), // Frontend sends singular date often
+        dates: z.array(z.string()).optional(), // Backend expects array
         venueAddress: z.string().optional(),
+        venue: z.string().optional(), // Frontend alias
         reportingTime: z.string().optional(),
+        startTime: z.string().optional(), // Frontend alias for reportingTime
+        endTime: z.string().optional(),
         requiredDocuments: z.array(z.string()).optional(),
         contactPerson: z.string().optional(),
         contactPhone: z.string().optional()
     }).optional()
-}).refine(data => {
-    // If type is WALKIN, walkInDetails is required
-    if (data.type === 'WALKIN') {
-        return data.walkInDetails &&
-            data.walkInDetails.dates &&
-            data.walkInDetails.venueAddress &&
-            data.walkInDetails.reportingTime;
-    }
-    return true;
-}, {
-    message: 'Walk-in details are required for WALKIN opportunities'
 });
 
 // User Action Schemas

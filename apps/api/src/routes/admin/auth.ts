@@ -1,7 +1,7 @@
 import express, { Router, Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
-import { generateAdminToken } from '../../utils/jwt';
+import { generateAdminToken } from '@fresherflow/auth';
 import { validate } from '../../middleware/validate';
 import { loginSchema } from '../../utils/validation';
 import { AppError } from '../../middleware/errorHandler';
@@ -9,6 +9,13 @@ import { requireAdmin } from '../../middleware/auth';
 
 const router: Router = express.Router();
 const prisma = new PrismaClient();
+
+const COOKIE_OPTIONS = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' as 'none' | 'lax' | 'strict',
+    path: '/'
+};
 
 // POST /api/admin/auth/login
 router.post('/login', validate(loginSchema), async (req: Request, res: Response, next: NextFunction) => {
@@ -33,14 +40,30 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response,
         // Generate admin token
         const token = generateAdminToken(admin.id);
 
+        res.cookie('adminAccessToken', token, {
+            ...COOKIE_OPTIONS,
+            maxAge: 15 * 60 * 1000 // 15 mins (Consistent with other tokens)
+        });
+
         res.json({
             admin: {
                 id: admin.id,
                 email: admin.email,
                 fullName: admin.fullName
-            },
-            accessToken: token
+            }
+            // token removed
         });
+    } catch (error) {
+        console.error('❌ Admin Login Error:', error);
+        next(error);
+    }
+});
+
+// POST /api/admin/auth/logout
+router.post('/logout', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        res.clearCookie('adminAccessToken', COOKIE_OPTIONS);
+        res.json({ message: 'Logged out successfully' });
     } catch (error) {
         next(error);
     }
@@ -70,4 +93,3 @@ router.get('/me', requireAdmin, async (req: Request, res: Response, next: NextFu
 });
 
 export default router;
-

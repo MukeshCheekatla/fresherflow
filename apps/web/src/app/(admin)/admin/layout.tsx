@@ -15,16 +15,21 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-    const { logout, isAuthenticated } = useAdmin();
+    const { logout, isAuthenticated, isLoading } = useAdmin();
     const pathname = usePathname();
     const router = useRouter();
 
     // Security: Redirect unauthenticated users
     useEffect(() => {
-        if (!isAuthenticated && !pathname.includes('/login')) {
+        if (!isLoading && !isAuthenticated && !pathname.includes('/login')) {
             router.push('/admin/login');
         }
-    }, [isAuthenticated, pathname, router]);
+    }, [isAuthenticated, isLoading, pathname, router]);
+
+    if (isLoading) {
+        // You might want a loading spinner here
+        return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">Loading Admin Portal...</div>;
+    }
 
     // Don't render admin UI for unauthenticated users (except login page)
     if (!isAuthenticated && !pathname.includes('/login')) {

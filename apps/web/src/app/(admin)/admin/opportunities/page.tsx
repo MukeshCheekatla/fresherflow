@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAdmin } from '@/contexts/AdminContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { adminApi } from '@/lib/api/admin';
 import toast from 'react-hot-toast';
@@ -24,13 +24,17 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function OpportunitiesListPage() {
-    const { isAuthenticated, token } = useAdmin();
+    const { isAuthenticated } = useAdmin();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
     const [opportunities, setOpportunities] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [typeFilter, setTypeFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
+    const [page, setPage] = useState(1);
+    const pageSize = 20;
     const [confirmModal, setConfirmModal] = useState<{
         show: boolean;
         title: string;
@@ -48,21 +52,53 @@ export default function OpportunitiesListPage() {
     });
 
     useEffect(() => {
+        const typeParam = searchParams.get('type');
+        const statusParam = searchParams.get('status');
+
+        if (typeParam) {
+            setTypeFilter(typeParam.toUpperCase());
+        } else {
+            setTypeFilter('');
+        }
+
+        if (statusParam) {
+            setStatusFilter(statusParam.toUpperCase());
+        } else {
+            setStatusFilter('');
+        }
+        setPage(1);
+    }, [searchParams]);
+
+    useEffect(() => {
         if (!isAuthenticated) {
             router.push('/admin/login');
             return;
         }
         loadOpportunities();
-    }, [isAuthenticated, typeFilter, statusFilter]);
+    }, [isAuthenticated, typeFilter, statusFilter, page]);
+
+    useEffect(() => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (typeFilter) params.set('type', typeFilter);
+        else params.delete('type');
+        if (statusFilter) params.set('status', statusFilter);
+        else params.delete('status');
+
+        const next = params.toString();
+        const current = searchParams.toString();
+        if (next !== current) {
+            router.replace(`${pathname}?${next}`);
+        }
+    }, [typeFilter, statusFilter, searchParams, pathname, router]);
 
     const loadOpportunities = async () => {
-        if (!token) return;
-
         setIsLoading(true);
         try {
-            const data = await adminApi.getOpportunities(token, {
+            const data = await adminApi.getOpportunities({
                 type: typeFilter || undefined,
-                status: statusFilter || undefined
+                status: statusFilter || undefined,
+                limit: pageSize,
+                offset: (page - 1) * pageSize
             });
             setOpportunities(data.opportunities || []);
             setError('');
@@ -90,7 +126,7 @@ export default function OpportunitiesListPage() {
             action: async () => {
                 const loadingToast = toast.loading('⏳ Updating status...');
                 try {
-                    await adminApi.expireOpportunity(token!, id);
+                    await adminApi.expireOpportunity(id);
                     toast.success('✅ Opportunity marked as expired', { id: loadingToast });
                     loadOpportunities();
                     setConfirmModal(prev => ({ ...prev, show: false }));
@@ -111,7 +147,7 @@ export default function OpportunitiesListPage() {
             action: async () => {
                 const loadingToast = toast.loading('⏳ Removing listing...');
                 try {
-                    await adminApi.deleteOpportunity(token!, id, 'Removed by admin via dashboard');
+                    await adminApi.deleteOpportunity(id, 'Removed by admin via dashboard');
                     toast.success('✅ Opportunity removed', { id: loadingToast });
                     loadOpportunities();
                     setConfirmModal(prev => ({ ...prev, show: false }));
@@ -123,6 +159,8 @@ export default function OpportunitiesListPage() {
     };
 
     if (!isAuthenticated) return null;
+
+    const hasNextPage = opportunities.length === pageSize;
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -136,6 +174,34 @@ export default function OpportunitiesListPage() {
                     <PlusCircleIcon className="w-5 h-5" />
                     New Listing
                 </Link>
+            </div>
+
+            {/* Quick Toggle */}
+            <div className="flex flex-wrap items-center gap-2">
+                <button
+                    onClick={() => setTypeFilter('JOB')}
+                    className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all ${typeFilter === 'JOB'
+                        ? 'bg-blue-950/30 text-blue-300 border-blue-900/40'
+                        : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+                        }`}
+                >
+                    Jobs
+                </button>
+                <button
+                    onClick={() => setTypeFilter('WALKIN')}
+                    className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all ${typeFilter === 'WALKIN'
+                        ? 'bg-orange-950/30 text-orange-300 border-orange-900/40'
+                        : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+                        }`}
+                >
+                    Walk-ins
+                </button>
+                <button
+                    onClick={() => setTypeFilter('')}
+                    className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border border-slate-800 bg-slate-950 text-slate-500 hover:text-slate-300 transition-all"
+                >
+                    All Types
+                </button>
             </div>
 
             {/* Filters Bar */}
@@ -171,9 +237,9 @@ export default function OpportunitiesListPage() {
                         className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm font-medium text-slate-300 outline-none focus:ring-2 focus:ring-slate-800 cursor-pointer"
                     >
                         <option value="">All Statuses</option>
-                        <option value="ACTIVE">Active</option>
+                        <option value="PUBLISHED">Published</option>
                         <option value="EXPIRED">Expired</option>
-                        <option value="REMOVED">Removed</option>
+                        <option value="ARCHIVED">Archived</option>
                     </select>
                 </div>
             </div>
@@ -244,11 +310,11 @@ export default function OpportunitiesListPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-5">
-                                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${opp.status === 'ACTIVE' ? 'bg-emerald-950/30 text-emerald-400' :
+                                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${opp.status === 'PUBLISHED' ? 'bg-emerald-950/30 text-emerald-400' :
                                                 opp.status === 'EXPIRED' ? 'bg-amber-950/30 text-amber-400' :
                                                     'bg-rose-950/30 text-rose-400'
                                                 }`}>
-                                                <div className={`w-1.5 h-1.5 rounded-full ${opp.status === 'ACTIVE' ? 'bg-emerald-500' :
+                                                <div className={`w-1.5 h-1.5 rounded-full ${opp.status === 'PUBLISHED' ? 'bg-emerald-500' :
                                                     opp.status === 'EXPIRED' ? 'bg-amber-500' :
                                                         'bg-rose-500'
                                                     }`} />
@@ -264,7 +330,7 @@ export default function OpportunitiesListPage() {
                                                 >
                                                     <PencilSquareIcon className="w-5 h-5" />
                                                 </Link>
-                                                {opp.status === 'ACTIVE' && (
+                                                {opp.status === 'PUBLISHED' && (
                                                     <button
                                                         onClick={() => handleExpire(opp.id, opp.title)}
                                                         className="p-2.5 text-slate-500 hover:text-amber-400 hover:bg-amber-950/30 rounded-xl transition-all"
@@ -287,6 +353,35 @@ export default function OpportunitiesListPage() {
                             </tbody>
                         </table>
                     </div>
+                </div>
+            )}
+
+            {/* Pagination */}
+            {!isLoading && opportunities.length > 0 && (
+                <div className="flex items-center justify-between">
+                    <button
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all ${page === 1
+                            ? 'bg-slate-900 text-slate-600 border-slate-800 cursor-not-allowed'
+                            : 'bg-slate-950 text-slate-300 border-slate-800 hover:text-white'
+                            }`}
+                    >
+                        Prev
+                    </button>
+                    <span className="text-xs font-black uppercase tracking-widest text-slate-500">
+                        Page {page}
+                    </span>
+                    <button
+                        onClick={() => setPage(p => p + 1)}
+                        disabled={!hasNextPage}
+                        className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all ${!hasNextPage
+                            ? 'bg-slate-900 text-slate-600 border-slate-800 cursor-not-allowed'
+                            : 'bg-slate-950 text-slate-300 border-slate-800 hover:text-white'
+                            }`}
+                    >
+                        Next
+                    </button>
                 </div>
             )}
 

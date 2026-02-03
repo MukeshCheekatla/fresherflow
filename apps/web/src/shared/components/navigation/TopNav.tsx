@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useState, useContext } from 'react';
 import { cn } from '@/lib/utils';
 import { AuthContext } from '@/contexts/AuthContext';
@@ -9,6 +9,7 @@ import AuthDialog from '@/features/auth/components/AuthDialog';
 
 export default function TopNav() {
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     // Use AuthContext directly to avoid error on admin pages
     const authContext = useContext(AuthContext);
     const user = authContext?.user || null;
@@ -17,8 +18,10 @@ export default function TopNav() {
     const [isAuthOpen, setIsAuthOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-    const isJobsMode = pathname === '/' || pathname.startsWith('/jobs');
-    const isWalkinsMode = pathname.startsWith('/walkins');
+    const typeParam = (searchParams.get('type') || '').toUpperCase();
+    const isOpportunitiesRoute = pathname === '/' || pathname.startsWith('/opportunities');
+    const isWalkinsMode = isOpportunitiesRoute && (typeParam === 'WALKIN' || typeParam === 'WALK-IN' || typeParam === 'WALK-INS');
+    const isJobsMode = isOpportunitiesRoute && !isWalkinsMode;
     const isAdminRoute = pathname.startsWith('/admin');
 
     const handleAccountClick = (e: React.MouseEvent) => {
@@ -55,7 +58,7 @@ export default function TopNav() {
                             isAdminRoute ? "hidden" : "flex"
                         )}>
                             <Link
-                                href="/"
+                                href="/opportunities?type=JOB"
                                 className={cn(
                                     "px-4 py-2 text-sm font-medium rounded-md transition-colors",
                                     isJobsMode
@@ -66,7 +69,7 @@ export default function TopNav() {
                                 Jobs
                             </Link>
                             <Link
-                                href="/walkins"
+                                href="/opportunities?type=WALKIN"
                                 className={cn(
                                     "px-4 py-2 text-sm font-medium rounded-md transition-colors",
                                     isWalkinsMode

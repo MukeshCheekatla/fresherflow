@@ -23,10 +23,9 @@ enum OpportunityType {
 }
 
 enum OpportunityStatus {
-  DRAFT // Not yet published by admin
-  ACTIVE // Live and visible to eligible users
-  EXPIRED // Past expiry date (auto-set)
-  REMOVED // Soft deleted by admin
+  DRAFT
+  PUBLISHED
+  ARCHIVED
 }
 
 enum ActionType {
@@ -176,16 +175,21 @@ model Opportunity {
 
   // Eligibility Rules (DB-filterable)
   allowedDegrees      EducationLevel[]
-  allowedPassoutYears Int[]
+  allowedPassoutYears Int[] // Array for specific batches (e.g. 2023, 2025)
+  passoutYearMin      Int?  // Range Optimization
+  passoutYearMax      Int?  // Range Optimization
   allowedAvailability Availability[] // When candidate should be available
   requiredSkills      String[]
   locations           String[] // For DB-level filtering
 
   // Job/Internship Specific
-  workMode  WorkMode?
-  salaryMin Int?
-  salaryMax Int?
-  applyLink String?
+  workMode       WorkMode?
+  salaryMin      Int? // Legacy: Can map salaryRange to this
+  salaryMax      Int?
+  salaryRange    String? // New: "6-8 LPA"
+  stipend        String? // New: "10k/month"
+  employmentType String? // New: "full-time"
+  applyLink      String?
 
   // Walk-in Specific (nullable for non-walk-ins)
   walkInDetails WalkInDetails?

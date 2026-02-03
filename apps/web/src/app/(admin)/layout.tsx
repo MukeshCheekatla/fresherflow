@@ -1,9 +1,6 @@
 'use client';
 
 import AdminBottomNav from "@/shared/components/navigation/AdminBottomNav";
-import { useRouter, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import LoadingScreen from "@/components/ui/LoadingScreen";
 import { AdminProvider } from "@/contexts/AdminContext";
 
 export default function AdminLayout({
@@ -11,39 +8,19 @@ export default function AdminLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const router = useRouter();
-    const pathname = usePathname();
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-
-    // Skip auth check for login page
-    const isLoginPage = pathname === '/admin/login';
-
-    useEffect(() => {
-        // Check for admin token in localStorage
-        const adminToken = localStorage.getItem('adminToken');
-        setIsAuthenticated(!!adminToken);
-        setIsLoading(false);
-
-        if (!isLoginPage && !adminToken) {
-            router.push('/admin/login');
-        }
-    }, [pathname, router, isLoginPage]);
-
-    if (isLoginPage) {
-        return <AdminProvider>{children}</AdminProvider>;
-    }
-
-    if (isLoading) return <LoadingScreen message="Loading..." />;
-    if (!isAuthenticated) return null;
-
+    // We strictly defer auth logic to the AdminProvider and the Inner Layout
+    // This outer layout just ensures the Context is available.
     return (
         <AdminProvider>
             <div className="min-h-screen">
                 {children}
-                <AdminBottomNav />
+                {/* AdminBottomNav is likely for mobile/tablet, can be kept here or moved inner */}
+                {/* Previous code had it conditional. Let's keep it here for now, but it might verify context? */}
+                {/* Actually, AdminBottomNav probably needs context to show valid links? */}
+                {/* Let's leave it. If user is not logged in, they see login page content mostly. */}
+                {/* Checking previous file: logic was: if (isLoginPage) return plain; else return with Nav. */}
+                {/* Let's stick to simple wrapper. Navigation should be in the authenticated layout. */}
             </div>
         </AdminProvider>
     );
 }
-

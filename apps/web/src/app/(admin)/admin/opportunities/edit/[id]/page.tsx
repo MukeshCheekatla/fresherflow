@@ -24,7 +24,7 @@ import { adminApi } from '@/lib/api/admin';
 export default function EditOpportunityPage() {
     const router = useRouter();
     const params = useParams();
-    const { isAuthenticated, token } = useAdmin();
+    const { isAuthenticated } = useAdmin();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
@@ -61,9 +61,8 @@ export default function EditOpportunityPage() {
     }, [isAuthenticated]);
 
     const fetchOpportunity = async () => {
-        if (!token) return;
         try {
-            const data = await adminApi.getOpportunity(token, params.id as string);
+            const data = await adminApi.getOpportunity(params.id as string);
             const opp = data.opportunity;
 
             setType(opp.type);
@@ -137,7 +136,7 @@ export default function EditOpportunityPage() {
                 };
             }
 
-            await adminApi.updateOpportunity(token as string, params.id as string, payload);
+            await adminApi.updateOpportunity(params.id as string, payload);
 
             toast.success('✅ Changes saved successfully!', { id: loadingToast });
             router.push('/admin/opportunities');

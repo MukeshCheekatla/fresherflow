@@ -24,7 +24,7 @@ export class WalkinService {
         const walkins = await prisma.opportunity.findMany({
             where: {
                 type: OpportunityType.WALKIN,
-                status: OpportunityStatus.ACTIVE,
+                status: OpportunityStatus.PUBLISHED,
                 deletedAt: null,
                 locations: {
                     has: city, // Array contains city
@@ -67,7 +67,7 @@ export class WalkinService {
         const walkins = await prisma.opportunity.findMany({
             where: {
                 type: OpportunityType.WALKIN,
-                status: OpportunityStatus.ACTIVE,
+                status: OpportunityStatus.PUBLISHED,
                 deletedAt: null,
                 locations: {
                     has: city,

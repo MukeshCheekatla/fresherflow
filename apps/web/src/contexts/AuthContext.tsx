@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authApi, setTokens, clearTokens, getTokens } from '@/lib/api/client';
+import { authApi } from '@/lib/api/client';
 import { User, Profile } from '@fresherflow/types';
 
 interface AuthContextType {
@@ -28,27 +28,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     async function loadUser() {
-        const tokens = getTokens();
-
-        if (!tokens.accessToken) {
-            setIsLoading(false);
-            return;
-        }
-
         try {
+            // Attempt to fetch current user
+            // If we have valid cookies, this will succeed.
+            // If not, it will throw 401, and we'll catch it.
             const response = await authApi.me();
             setUser(response.user);
-            setProfile(response.profile);
+            // Verify if profile is full Profile or partial
+            // The /me endpoint returns profile data
+            setProfile(response.profile as Profile);
         } catch (error: any) {
-            console.error('Failed to load user:', error);
-            // ONLY clear tokens if the error is an authentication error (401)
-            // or if the apiClient already redirected/cleared them.
-            // If it's a network error or 500, we keep the tokens and let the user try again.
-            if (error.message?.includes('401') || error.message?.includes('Unauthorized') || error.message?.includes('expired')) {
-                clearTokens();
-                setUser(null);
-                setProfile(null);
-            }
+            // If 401, user is not logged in.
+            // Don't log error to console as it's expected for guests.
+            // Just ensure state is null.
+            setUser(null);
+            setProfile(null);
         } finally {
             setIsLoading(false);
         }
@@ -56,24 +50,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     async function login(email: string, password: string) {
         const response = await authApi.login(email, password);
-        setTokens(response.accessToken, response.refreshToken);
+        // Cookies are set by server
         setUser(response.user);
-        // Profile is not returned in AuthResponse, need to fetch separately
-        const profileResponse: any = await authApi.me();
-        setProfile(profileResponse.profile);
+
+        // Response might contain partial profile or full.
+        // If partial, maybe we fetch full?
+        // But /login returns completionPercentage.
+        // Let's assume we might want to fetch full profile or just use what we have.
+        // For consistency, let's call loadUser or set what we have.
+        // But authApi.me() is the single source of truth for "session restored".
+
+        // Ideally response from login has same shape as me, so we can use it.
+        // If not, fetch me.
+        const meResponse = await authApi.me();
+        setUser(meResponse.user);
+        setProfile(meResponse.profile as Profile);
     }
 
     async function register(email: string, password: string, fullName: string) {
+        // Register also sets cookies
         const response = await authApi.register(email, password, fullName);
-        setTokens(response.accessToken, response.refreshToken);
         setUser(response.user);
-        // Profile is not returned in AuthResponse, need to fetch separately
-        const profileResponse: any = await authApi.me();
-        setProfile(profileResponse.profile);
+        // Ensure we load full profile state
+        const meResponse = await authApi.me();
+        setUser(meResponse.user);
+        setProfile(meResponse.profile as Profile);
     }
 
     async function logout() {
-        await authApi.logout();
+        try {
+            await authApi.logout();
+        } catch (e) {
+            // Ignore logout errors
+        }
         setUser(null);
         setProfile(null);
     }
@@ -102,4 +111,3 @@ export function useAuth() {
     }
     return context;
 }
-

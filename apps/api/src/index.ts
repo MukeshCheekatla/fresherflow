@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 // import * as Sentry from '@sentry/node'; // Disabled for first run
 import { requestIdMiddleware } from './middleware/requestId';
 import { errorHandler } from './middleware/errorHandler';
@@ -57,6 +58,9 @@ app.use(httpLogger);
 // Security
 app.use(helmet());
 
+// Cookies
+app.use(cookieParser());
+
 // CORS - Hardened for production
 app.use(cors({
     origin: process.env.FRONTEND_URL,
@@ -68,9 +72,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Rate Limiting - Stricter on auth routes
+// Rate Limiting - Stricter on auth routes
 const defaultLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // 100 requests per window
+    max: 1000, // 1000 requests per window (Relaxed for dev)
     standardHeaders: true,
     legacyHeaders: false,
     handler: (req, res) => {
@@ -90,13 +95,13 @@ const defaultLimiter = rateLimit({
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 50, // 50 login attempts per window (increased for testing)
+    max: 500, // 500 login attempts (Relaxed for dev)
     skipSuccessfulRequests: true
 });
 
 const registerLimiter = rateLimit({
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 3 // 3 registrations per hour
+    max: 100 // 100 registrations (Relaxed for dev)
 });
 
 // Apply default rate limiting
@@ -183,4 +188,3 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 export default app;
-

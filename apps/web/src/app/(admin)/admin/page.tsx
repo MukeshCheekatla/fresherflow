@@ -1,7 +1,7 @@
 'use client';
 
-import { useJobs } from '@/features/jobs/hooks/useJobs';
-import { useWalkins } from '@/features/walkins/hooks/useWalkins';
+import { useEffect, useState } from 'react';
+import { adminApi } from '@/lib/api/admin';
 import { cn } from '@/lib/utils';
 import {
     BriefcaseIcon,
@@ -12,22 +12,58 @@ import {
     ClockIcon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 
 export default function AdminDashboardHome() {
-    const { jobs, loading: jobsLoading } = useJobs();
-    const { walkins, loading: walkinsLoading } = useWalkins();
+    const [recent, setRecent] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [stats, setStats] = useState({
+        jobs: 0,
+        walkins: 0,
+        total: 0,
+        recent24h: 0
+    });
 
-    const liveJobsCount = jobs.length;
-    const walkinsCount = walkins.length;
+    useEffect(() => {
+        const load = async () => {
+            setLoading(true);
+            try {
+                const [summaryRes, recentRes] = await Promise.all([
+                    adminApi.getOpportunitiesSummary(),
+                    adminApi.getOpportunities({ limit: 5 })
+                ]);
 
-    const stats = [
-        { label: 'Live Online Jobs', value: liveJobsCount, icon: BriefcaseIcon, color: 'text-blue-600', bg: 'bg-blue-50' },
-        { label: 'Walk-in Drives', value: walkinsCount, icon: MapPinIcon, color: 'text-purple-600', bg: 'bg-purple-50' },
-        { label: 'Total Postings', value: liveJobsCount + walkinsCount, icon: ChartBarIcon, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-        { label: 'Recent (24h)', value: 0, icon: ClockIcon, color: 'text-amber-600', bg: 'bg-amber-50' },
+                const summary = summaryRes.summary || {};
+                const opportunities = recentRes.opportunities || [];
+
+                setRecent(opportunities);
+                setStats({
+                    jobs: (summary.total || 0) - (summary.walkins || 0),
+                    walkins: summary.walkins || 0,
+                    total: summary.total || 0,
+                    recent24h: opportunities.filter((o: any) => {
+                        const posted = new Date(o.postedAt).getTime();
+                        return posted > Date.now() - 24 * 60 * 60 * 1000;
+                    }).length
+                });
+            } catch (error: any) {
+                toast.error(`Failed to load dashboard: ${error.message || 'Unknown error'}`);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        load();
+    }, []);
+
+    const statsCards = [
+        { label: 'Live Online Jobs', value: stats.jobs, icon: BriefcaseIcon, color: 'text-blue-600', bg: 'bg-blue-50' },
+        { label: 'Walk-in Drives', value: stats.walkins, icon: MapPinIcon, color: 'text-purple-600', bg: 'bg-purple-50' },
+        { label: 'Total Postings', value: stats.total, icon: ChartBarIcon, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+        { label: 'Recent (24h)', value: stats.recent24h, icon: ClockIcon, color: 'text-amber-600', bg: 'bg-amber-50' },
     ];
 
-    if (jobsLoading || walkinsLoading) {
+    if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
                 <div className="w-10 h-10 border-4 border-slate-900 border-t-transparent rounded-full animate-spin" />
@@ -44,7 +80,7 @@ export default function AdminDashboardHome() {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {stats.map((stat) => (
+                {statsCards.map((stat) => (
                     <div key={stat.label} className="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-sm hover:shadow-md transition-all">
                         <div className="flex items-center justify-between mb-4">
                             <div className={cn("p-2 rounded-xl bg-opacity-10", stat.bg.replace('bg-', 'bg-opacity-10 bg-'), stat.color)}>
@@ -103,30 +139,27 @@ export default function AdminDashboardHome() {
                     <Link href="/admin/opportunities" className="text-xs font-black text-blue-400 uppercase tracking-widest hover:underline">Full Log</Link>
                 </div>
                 <div className="divide-y divide-slate-800">
-                    {[...jobs, ...walkins]
-                        .sort((a, b) => new Date(b.data.postedAt).getTime() - new Date(a.data.postedAt).getTime())
-                        .slice(0, 5)
-                        .map((item) => {
-                            const isWalkin = item.data.type === 'WALKIN';
+                    {recent.map((item) => {
+                        const isWalkin = item.type === 'WALKIN';
                             return (
                                 <div key={item.id} className="px-8 py-5 flex items-center justify-between hover:bg-slate-800/50 transition-colors">
                                     <div className="min-w-0 flex-1">
                                         <p className="font-extrabold text-slate-200 truncate">
-                                            {item.data.company}
+                                            {item.company}
                                         </p>
                                         <p className="text-xs font-bold text-slate-500 truncate">
-                                            {item.data.title || item.data.normalizedRole}
+                                            {item.title || item.normalizedRole}
                                         </p>
                                     </div>
                                     <div className="ml-4 flex-shrink-0 text-right space-y-1">
                                         <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest block">
-                                            {new Date(item.data.postedAt).toLocaleDateString()}
+                                            {new Date(item.postedAt).toLocaleDateString()}
                                         </span>
                                         <span className={cn(
                                             "text-[9px] uppercase font-black tracking-widest px-2 py-0.5 rounded-full",
                                             isWalkin ? "bg-orange-100 text-orange-600" : "bg-blue-100 text-blue-600"
                                         )}>
-                                            {item.data.type}
+                                            {item.type}
                                         </span>
                                     </div>
                                 </div>

@@ -51,11 +51,10 @@ export function startExpiryCron() {
             const expiredJobsResult = await prisma.opportunity.updateMany({
                 where: {
                     type: { in: [OpportunityType.JOB, OpportunityType.INTERNSHIP] },
-                    status: OpportunityStatus.ACTIVE, // Only expire ACTIVE
+                    status: OpportunityStatus.PUBLISHED, // Only expire PUBLISHED
                     expiresAt: { lt: nowUTC } // expiresAt < now (UTC)
                 },
                 data: {
-                    status: OpportunityStatus.EXPIRED,
                     expiredAt: nowUTC // Set expiry timestamp
                 }
             });
@@ -74,7 +73,7 @@ export function startExpiryCron() {
             const activeWalkIns = await prisma.opportunity.findMany({
                 where: {
                     type: OpportunityType.WALKIN,
-                    status: OpportunityStatus.ACTIVE
+                    status: OpportunityStatus.PUBLISHED
                 },
                 include: {
                     walkInDetails: true
@@ -116,10 +115,9 @@ export function startExpiryCron() {
             const expiredWalkInsResult = await prisma.opportunity.updateMany({
                 where: {
                     id: { in: walkInIdsToExpire },
-                    status: OpportunityStatus.ACTIVE // Safety check (idempotency)
+                    status: OpportunityStatus.PUBLISHED // Safety check (idempotency)
                 },
                 data: {
-                    status: OpportunityStatus.EXPIRED,
                     expiredAt: nowUTC
                 }
             });
@@ -140,7 +138,7 @@ export function startExpiryCron() {
 
             const staleListings = await prisma.opportunity.findMany({
                 where: {
-                    status: OpportunityStatus.ACTIVE,
+                    status: OpportunityStatus.PUBLISHED,
                     expiresAt: null,
                     type: { not: OpportunityType.WALKIN }, // Walk-ins use dates
                     lastVerified: { lt: thirtyDaysAgo }

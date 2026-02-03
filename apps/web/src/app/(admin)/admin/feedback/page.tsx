@@ -23,7 +23,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function FeedbackPage() {
-    const { isAuthenticated, token } = useAdmin();
+    const { isAuthenticated } = useAdmin();
     const router = useRouter();
     const [feedback, setFeedback] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -38,11 +38,9 @@ export default function FeedbackPage() {
     }, [isAuthenticated]);
 
     const loadFeedback = async () => {
-        if (!token) return;
-
         setIsLoading(true);
         try {
-            const data = await adminApi.getFeedback(token);
+            const data = await adminApi.getFeedback();
             setFeedback(data.feedback || []);
             setError('');
         } catch (err: any) {
@@ -200,4 +198,3 @@ export default function FeedbackPage() {
         </div>
     );
 }
-

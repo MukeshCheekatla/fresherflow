@@ -11,7 +11,8 @@ const prisma = new PrismaClient();
 // GET /api/opportunities - Get filtered feed (DB + Code filtering)
 router.get('/', requireAuth, profileGate, async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { type, city, closingSoon } = req.query;
+        const { type, category, city, closingSoon } = req.query;
+        const filterType = (type || category) as string | undefined;
 
         // Get user profile for filtering
         const profile = await prisma.profile.findUnique({
@@ -25,8 +26,8 @@ router.get('/', requireAuth, profileGate, async (req: Request, res: Response, ne
         // Stage 1: DB-Level Filtering (Coarse)
         const dbFiltered = await prisma.opportunity.findMany({
             where: {
-                status: OpportunityStatus.ACTIVE,
-                ...(type ? { type: type as any } : { type: { in: profile.interestedIn } }),
+                status: OpportunityStatus.PUBLISHED,
+                ...(filterType ? { type: filterType.toUpperCase() as any } : { type: { in: profile.interestedIn } }),
                 ...(city ? {
                     locations: { has: city as string }
                 } : {

@@ -28,7 +28,7 @@ router.post('/:id/action', requireAuth, validate(userActionSchema), async (req: 
         }
 
         // STATUS CHECK - Only ACTIVE opportunities accept actions
-        if (opportunity.status !== OpportunityStatus.ACTIVE) {
+        if (opportunity.status !== OpportunityStatus.PUBLISHED) {
             return next(new AppError('Opportunity is no longer active', 410));
         }
 

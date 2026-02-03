@@ -10,20 +10,80 @@ import { AppError } from '../../middleware/errorHandler';
 const router: Router = express.Router();
 const prisma = new PrismaClient();
 
+// Apply Admin Auth Globally for this router
+router.use(requireAdmin);
+
+// GET /api/admin/opportunities/summary
+router.get('/summary', async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+        const now = new Date();
+        const [total, active, walkins, expired] = await prisma.$transaction([
+            prisma.opportunity.count(),
+            prisma.opportunity.count({
+                where: {
+                    status: OpportunityStatus.PUBLISHED,
+                    OR: [{ expiresAt: null }, { expiresAt: { gt: now } }]
+                }
+            }),
+            prisma.opportunity.count({ where: { type: OpportunityType.WALKIN } }),
+            prisma.opportunity.count({ where: { expiresAt: { lte: now } } })
+        ]);
+
+        res.json({
+            summary: {
+                total,
+                active,
+                walkins,
+                expired
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
 // POST /api/admin/opportunities
 router.post(
     '/',
-    requireAdmin,
-    adminRateLimit,
+    adminRateLimit, // Rate limit mutation
     withAdminAudit('CREATE'),
     validate(opportunitySchema as any),
     async (req: Request, res: Response, next: NextFunction) => {
         try {
             const data = req.body;
 
+            // 1. Map Category -> Type
+            let type = data.type;
+            if (data.category) {
+                const map: any = { 'job': 'JOB', 'internship': 'INTERNSHIP', 'walk-in': 'WALKIN' };
+                type = map[data.category] || 'JOB';
+            }
+
+            // 2. Normalize Walk-in Details
+            let walkInCreate = undefined;
+            if (type === OpportunityType.WALKIN && data.walkInDetails) {
+                // Handle aliases (date -> dates, venue -> venueAddress)
+                const dates = data.walkInDetails.dates || (data.walkInDetails.date ? [data.walkInDetails.date] : []);
+                const venueAddress = data.walkInDetails.venueAddress || data.walkInDetails.venue;
+                const reportingTime = data.walkInDetails.reportingTime || data.walkInDetails.startTime;
+
+                if (dates.length && venueAddress && reportingTime) {
+                    walkInCreate = {
+                        create: {
+                            dates: dates.map((d: string) => new Date(d)),
+                            venueAddress,
+                            reportingTime,
+                            requiredDocuments: data.walkInDetails.requiredDocuments || [],
+                            contactPerson: data.walkInDetails.contactPerson,
+                            contactPhone: data.walkInDetails.contactPhone
+                        }
+                    };
+                }
+            }
+
             const opportunity = await prisma.opportunity.create({
                 data: {
-                    type: data.type,
+                    type: type as OpportunityType,
                     title: data.title,
                     company: data.company,
                     description: data.description,
@@ -32,23 +92,21 @@ router.post(
                     requiredSkills: data.requiredSkills || [],
                     locations: data.locations,
                     workMode: data.workMode,
-                    salaryMin: data.salaryMin,
+
+                    // New Fields
+                    salaryRange: data.salaryRange,
+                    stipend: data.stipend,
+                    employmentType: data.employmentType,
+
+                    // Legacy Mapping
+                    salaryMin: data.salaryMin || (data.salaryRange ? parseInt(data.salaryRange) : undefined), // Fallback
                     salaryMax: data.salaryMax,
+
                     applyLink: data.applyLink,
                     expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
                     postedByAdminId: req.adminId!,
-                    ...(data.type === OpportunityType.WALKIN && data.walkInDetails && {
-                        walkInDetails: {
-                            create: {
-                                dates: data.walkInDetails.dates?.map((d: string) => new Date(d)) || [],
-                                venueAddress: data.walkInDetails.venueAddress!,
-                                reportingTime: data.walkInDetails.reportingTime!,
-                                requiredDocuments: data.walkInDetails.requiredDocuments || [],
-                                contactPerson: data.walkInDetails.contactPerson,
-                                contactPhone: data.walkInDetails.contactPhone
-                            }
-                        }
-                    })
+
+                    ...(walkInCreate && { walkInDetails: walkInCreate })
                 },
                 include: {
                     walkInDetails: true
@@ -66,17 +124,40 @@ router.post(
 );
 
 // GET /api/admin/opportunities
-router.get('/', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const { type, status, includeCounts, includeWalkInDetails, limit, offset } = req.query;
+        const where: any = {};
+
+        if (typeof type === 'string' && Object.values(OpportunityType).includes(type as OpportunityType)) {
+            where.type = type as OpportunityType;
+        }
+        if (typeof status === 'string' && Object.values(OpportunityStatus).includes(status as OpportunityStatus)) {
+            where.status = status as OpportunityStatus;
+        }
+
+        const take = typeof limit === 'string' && !Number.isNaN(Number(limit)) ? Number(limit) : undefined;
+        const skip = typeof offset === 'string' && !Number.isNaN(Number(offset)) ? Number(offset) : undefined;
+
+        const shouldIncludeCounts = includeCounts === 'true';
+        const shouldIncludeWalkInDetails = includeWalkInDetails === 'true';
+
         const opportunities = await prisma.opportunity.findMany({
+            where,
+            ...(take !== undefined ? { take } : {}),
+            ...(skip !== undefined ? { skip } : {}),
             include: {
-                walkInDetails: true,
-                _count: {
-                    select: {
-                        actions: true,
-                        feedback: true
+                ...(shouldIncludeWalkInDetails ? { walkInDetails: true } : {}),
+                ...(shouldIncludeCounts
+                    ? {
+                        _count: {
+                            select: {
+                                actions: true,
+                                feedback: true
+                            }
+                        }
                     }
-                }
+                    : {})
             },
             orderBy: { postedAt: 'desc' }
         });
@@ -88,7 +169,7 @@ router.get('/', requireAdmin, async (req: Request, res: Response, next: NextFunc
 });
 
 // GET /api/admin/opportunities/:id
-router.get('/:id', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id = req.params.id as string;
         if (!id) throw new AppError('Opportunity ID is required', 400);
@@ -118,8 +199,7 @@ router.get('/:id', requireAdmin, async (req: Request, res: Response, next: NextF
 // PUT /api/admin/opportunities/:id
 router.put(
     '/:id',
-    requireAdmin,
-    adminRateLimit,
+    adminRateLimit, // Rate limit mutation
     withAdminAudit('UPDATE'),
     validate(opportunitySchema as any),
     async (req: Request, res: Response, next: NextFunction) => {
@@ -188,7 +268,7 @@ router.put(
 // POST /api/admin/opportunities/:id/expire
 router.post(
     '/:id/expire',
-    requireAdmin,
+    adminRateLimit, // Rate limit mutation
     withAdminAudit('EXPIRE'),
     async (req: Request, res: Response, next: NextFunction) => {
         try {
@@ -198,7 +278,6 @@ router.post(
             const opportunity = await prisma.opportunity.update({
                 where: { id },
                 data: {
-                    status: OpportunityStatus.EXPIRED,
                     expiredAt: new Date()
                 }
             });
@@ -216,8 +295,7 @@ router.post(
 // DELETE /api/admin/opportunities/:id
 router.delete(
     '/:id',
-    requireAdmin,
-    adminRateLimit,
+    adminRateLimit, // Rate limit mutation
     validateReason,
     withAdminAudit('DELETE'),
     async (req: Request, res: Response, next: NextFunction) => {
@@ -226,11 +304,11 @@ router.delete(
             if (!id) throw new AppError('Opportunity ID is required', 400);
             const { reason } = req.body;
 
-            // Soft delete - mark as REMOVED
+            // Soft delete - mark as ARCHIVED
             const opportunity = await prisma.opportunity.update({
                 where: { id },
                 data: {
-                    status: OpportunityStatus.REMOVED,
+                    status: OpportunityStatus.ARCHIVED,
                     deletedAt: new Date(),
                     deletionReason: reason || 'Deleted by admin'
                 }

@@ -53,7 +53,7 @@ export class OpportunityService {
         return await prisma.opportunity.update({
             where: { id },
             data: {
-                status: OpportunityStatus.ACTIVE,
+                status: OpportunityStatus.PUBLISHED,
                 lastVerified: new Date(),
             },
         });
@@ -107,7 +107,7 @@ export class OpportunityService {
         return await prisma.opportunity.update({
             where: { id },
             data: {
-                status: OpportunityStatus.REMOVED,
+                status: OpportunityStatus.ARCHIVED,
                 deletedAt: new Date(),
                 deletionReason: reason,
             },
@@ -121,7 +121,6 @@ export class OpportunityService {
         return await prisma.opportunity.update({
             where: { id },
             data: {
-                status: OpportunityStatus.EXPIRED,
                 expiredAt: new Date(),
             },
         });
@@ -171,7 +170,7 @@ export class OpportunityService {
         // Get all active, non-deleted opportunities
         const opportunities = await prisma.opportunity.findMany({
             where: {
-                status: OpportunityStatus.ACTIVE,
+                status: OpportunityStatus.PUBLISHED,
                 deletedAt: null,
                 OR: [
                     { expiresAt: null }, // No expiry date

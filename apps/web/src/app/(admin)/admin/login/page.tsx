@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import { useAdmin } from '@/contexts/AdminContext';
 import {
     LockClosedIcon,
     ShieldCheckIcon,
@@ -13,39 +14,27 @@ import {
 export default function AdminLoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+
+    // Use Context
+    const { login, isLoading } = useAdmin();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsLoading(true);
+
+        // Validation
+        if (!email || !password) {
+            toast.error('Please fill in all fields');
+            return;
+        }
+
         const loadingToast = toast.loading('🔒 Verifying credentials...');
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
-
-            const data = await response.json();
-
-            if (!response.status.toString().startsWith('2')) {
-                throw new Error(data.error?.message || 'Unauthorized access');
-            }
-
+            await login(email, password);
             toast.success('✅ Welcome back, Admin.', { id: loadingToast });
-
-            // Store token
-            localStorage.setItem('adminToken', data.accessToken || data.token);
-
-            // Redirect with full reload for context
-            setTimeout(() => {
-                window.location.href = '/admin/dashboard';
-            }, 500);
+            // Redirect handled by Context (router.push)
         } catch (err: any) {
             toast.error(err.message || 'Login failed', { id: loadingToast });
-        } finally {
-            setIsLoading(false);
         }
     };
 
@@ -57,7 +46,7 @@ export default function AdminLoginPage() {
                     <div className="w-16 h-16 bg-slate-900 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-slate-200 rotate-3 transform hover:rotate-0 transition-all duration-500">
                         <LockClosedIcon className="w-8 h-8 text-white" />
                     </div>
-                    <h1 className="tracking-tighter">
+                    <h1 className="tracking-tighter text-2xl font-bold">
                         Admin Portal
                     </h1>
                     <p className="text-slate-500 font-medium tracking-tight">
@@ -77,7 +66,7 @@ export default function AdminLoginPage() {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="premium-input bg-white"
+                                className="premium-input bg-white w-full p-3 border rounded-xl"
                                 placeholder="admin@fresherflow.com"
                             />
                         </div>
@@ -91,7 +80,7 @@ export default function AdminLoginPage() {
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="premium-input bg-white"
+                                className="premium-input bg-white w-full p-3 border rounded-xl"
                                 placeholder="••••••••"
                             />
                         </div>
@@ -99,7 +88,7 @@ export default function AdminLoginPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full premium-button h-[56px]"
+                            className="w-full premium-button h-[56px] flex items-center justify-center gap-2 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-colors"
                         >
                             {isLoading ? (
                                 <ArrowPathIcon className="w-5 h-5 animate-spin" />
@@ -131,4 +120,3 @@ export default function AdminLoginPage() {
         </div>
     );
 }
-

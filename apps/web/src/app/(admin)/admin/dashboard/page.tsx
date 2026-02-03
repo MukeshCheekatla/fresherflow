@@ -1,6 +1,7 @@
 'use client';
 
 import { useAdmin } from '@/contexts/AdminContext';
+import { adminApi } from '@/lib/api/admin';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -19,7 +20,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function AdminDashboardPage() {
-    const { isAuthenticated, logout, token } = useAdmin();
+    const { isAuthenticated, logout } = useAdmin();
     const router = useRouter();
 
     // Stats state
@@ -40,34 +41,17 @@ export default function AdminDashboardPage() {
     }, [isAuthenticated, router]);
 
     const fetchStats = async () => {
-        if (!token) return;
+        if (!isAuthenticated) return;
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/opportunities`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (response.status === 403 || response.status === 401) {
-                toast.error('🔒 Session expired. Please login again.');
-                logout();
-                return;
-            }
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            const data = await response.json();
-            const opportunities = data.opportunities || [];
+            const data = await adminApi.getOpportunitiesSummary();
+            const summary = data.summary || {};
 
             setStats({
-                total: opportunities.length,
-                active: opportunities.filter((o: any) => o.status === 'ACTIVE').length,
-                walkins: opportunities.filter((o: any) => o.type === 'WALKIN').length,
-                expired: opportunities.filter((o: any) => o.status === 'EXPIRED').length,
+                total: summary.total || 0,
+                active: summary.active || 0,
+                walkins: summary.walkins || 0,
+                expired: summary.expired || 0,
                 loading: false
             });
         } catch (error: any) {

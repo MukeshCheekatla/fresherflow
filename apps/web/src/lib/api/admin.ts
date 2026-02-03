@@ -1,111 +1,56 @@
-import { AdminProvider } from '@/contexts/AdminContext';
+import { apiClient } from './client';
 
-// Extend API client with admin methods
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
+// Admin API methods using the centralized client (cookie-based auth)
 export const adminApi = {
-    // Create new opportunity
-    createOpportunity: async (token: string, data: any) => {
-        const response = await fetch(`${API_URL}/api/admin/opportunities`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(data)
-        });
+    // Summary stats
+    getOpportunitiesSummary: () =>
+        apiClient('/api/admin/opportunities/summary'),
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error?.message || 'Failed to create opportunity');
-        }
-        return await response.json();
-    },
+    // Create new opportunity
+    createOpportunity: (data: any) =>
+        apiClient('/api/admin/opportunities', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
 
     // Get all opportunities (with filters)
-    getOpportunities: async (token: string, filters?: { type?: string; status?: string }) => {
+    getOpportunities: (filters?: { type?: string; status?: string; limit?: number; offset?: number }) => {
         const query = new URLSearchParams();
         if (filters?.type) query.append('type', filters.type);
         if (filters?.status) query.append('status', filters.status);
+        if (filters?.limit !== undefined) query.append('limit', String(filters.limit));
+        if (filters?.offset !== undefined) query.append('offset', String(filters.offset));
 
-        const response = await fetch(`${API_URL}/api/admin/opportunities?${query.toString()}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) throw new Error('Failed to fetch opportunities');
-        return await response.json();
+        const queryString = query.toString();
+        return apiClient(`/api/admin/opportunities${queryString ? `?${queryString}` : ''}`);
     },
 
     // Get single opportunity
-    getOpportunity: async (token: string, id: string) => {
-        const response = await fetch(`${API_URL}/api/admin/opportunities/${id}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) throw new Error('Failed to fetch opportunity');
-        return await response.json();
-    },
+    getOpportunity: (id: string) =>
+        apiClient(`/api/admin/opportunities/${id}`),
 
     // Update opportunity
-    updateOpportunity: async (token: string, id: string, data: any) => {
-        const response = await fetch(`${API_URL}/api/admin/opportunities/${id}`, {
+    updateOpportunity: (id: string, data: any) =>
+        apiClient(`/api/admin/opportunities/${id}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
             body: JSON.stringify(data)
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error?.message || 'Failed to update opportunity');
-        }
-        return await response.json();
-    },
+        }),
 
     // Expire opportunity
-    expireOpportunity: async (token: string, id: string) => {
-        const response = await fetch(`${API_URL}/api/admin/opportunities/${id}/expire`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) throw new Error('Failed to expire opportunity');
-        return await response.json();
-    },
+    expireOpportunity: (id: string) =>
+        apiClient(`/api/admin/opportunities/${id}/expire`, {
+            method: 'POST'
+        }),
 
     // Delete opportunity
-    deleteOpportunity: async (token: string, id: string, reason?: string) => {
-        const response = await fetch(`${API_URL}/api/admin/opportunities/${id}`, {
+    deleteOpportunity: (id: string, reason?: string) =>
+        apiClient(`/api/admin/opportunities/${id}`, {
             method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
             body: JSON.stringify({ reason: reason || 'Deleted by admin' })
-        });
-
-        if (!response.ok) throw new Error('Failed to delete opportunity');
-        return await response.json();
-    },
+        }),
 
     // Get all feedback
-    getFeedback: async (token: string) => {
-        const response = await fetch(`${API_URL}/api/admin/feedback`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) throw new Error('Failed to fetch feedback');
-        return await response.json();
-    }
+    getFeedback: () =>
+        apiClient('/api/admin/feedback')
 };
 

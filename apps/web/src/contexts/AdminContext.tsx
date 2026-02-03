@@ -1,50 +1,74 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { adminAuthApi } from '@/lib/api/client';
+import { useRouter, usePathname } from 'next/navigation';
 
 interface AdminContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
-    token: string | null;
-    logout: () => void;
+    admin: any | null;
+    login: (email: string, password: string) => Promise<void>;
+    logout: () => Promise<void>;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
-// Initialize token synchronously to avoid race condition
-const getInitialToken = (): string | null => {
-    if (typeof window !== 'undefined') {
-        return localStorage.getItem('adminToken');
-    }
-    return null;
-};
-
 export function AdminProvider({ children }: { children: ReactNode }) {
-    // Load token synchronously on mount to prevent race condition
-    const [token, setToken] = useState<string | null>(getInitialToken);
-    const [isLoading, setIsLoading] = useState(false);
+    const [admin, setAdmin] = useState<any | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const router = useRouter();
+    const pathname = usePathname();
 
-    // Listen for token changes in localStorage (e.g., from login page)
+    // Check admin session on mount
     useEffect(() => {
-        const handleStorageChange = () => {
-            const savedToken = localStorage.getItem('adminToken');
-            setToken(savedToken);
-        };
-
-        window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
+        checkAdminSession();
     }, []);
 
-    const logout = () => {
-        setToken(null);
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('adminToken');
-            window.location.href = '/admin/login';
+    async function checkAdminSession() {
+        try {
+            const response = await adminAuthApi.me();
+            setAdmin(response.admin);
+        } catch (error) {
+            setAdmin(null);
+        } finally {
+            setIsLoading(false);
         }
-    };
+    }
+
+    async function login(email: string, password: string) {
+        setIsLoading(true);
+        try {
+            const response = await adminAuthApi.login(email, password);
+            setAdmin(response.admin);
+            router.push('/admin/dashboard');
+        } catch (error) {
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+    async function logout() {
+        try {
+            await adminAuthApi.logout();
+        } catch (e) {
+            // Ignore logout errors
+        }
+        setAdmin(null);
+        router.push('/admin/login');
+    }
 
     return (
-        <AdminContext.Provider value={{ isAuthenticated: !!token, isLoading, token, logout }}>
+        <AdminContext.Provider
+            value={{
+                isAuthenticated: !!admin,
+                isLoading,
+                admin,
+                login,
+                logout
+            }}
+        >
             {children}
         </AdminContext.Provider>
     );
@@ -57,4 +81,3 @@ export function useAdmin() {
     }
     return context;
 }
-

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifyAccessToken, verifyAdminToken } from '../utils/jwt';
+import { verifyAccessToken, verifyAdminToken } from '@fresherflow/auth';
 import { AppError } from './errorHandler';
 
 declare global {
@@ -13,13 +13,13 @@ declare global {
 
 // User Authentication Middleware
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
-    const authHeader = req.headers.authorization;
+    // Cookie-based auth only
+    const token = req.cookies.accessToken;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
         return next(new AppError('No token provided', 401));
     }
 
-    const token = authHeader.substring(7);
     const userId = verifyAccessToken(token);
 
     if (!userId) {
@@ -30,15 +30,18 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
     next();
 }
 
-// Admin Authentication Middleware (Completely Separate)
+// Admin Authentication Middleware
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
-    const authHeader = req.headers.authorization;
+    // Cookie-based auth only (assuming admin also sets a cookie, if not currently implemented, this might break admin if admin frontend uses headers)
+    // For safety, checking both or just keeping headers if admin is separate?
+    // User said "Cookie-based auth only", implying the whole backend.
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return next(new AppError('No token provided', 401));
+    const token = req.cookies.adminAccessToken;
+
+    if (!token) {
+        return next(new AppError('No admin token provided', 401));
     }
 
-    const token = authHeader.substring(7);
     const adminId = verifyAdminToken(token);
 
     if (!adminId) {
@@ -48,4 +51,3 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
     req.adminId = adminId;
     next();
 }
-

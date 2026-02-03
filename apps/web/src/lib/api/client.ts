@@ -2,123 +2,47 @@ import { AuthResponse, Profile } from '@fresherflow/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// Token management
-let accessToken: string | null = null;
-let refreshToken: string | null = null;
-
-export function setTokens(access: string, refresh: string) {
-    accessToken = access;
-    refreshToken = refresh;
-
-    // Store in localStorage for persistence
-    if (typeof window !== 'undefined') {
-        localStorage.setItem('accessToken', access);
-        localStorage.setItem('refreshToken', refresh);
-    }
-}
-
-export function getTokens() {
-    if (typeof window !== 'undefined') {
-        return {
-            accessToken: localStorage.getItem('accessToken'),
-            refreshToken: localStorage.getItem('refreshToken')
-        };
-    }
-    return { accessToken: null, refreshToken: null };
-}
-
-export function clearTokens() {
-    accessToken = null;
-    refreshToken = null;
-
-    if (typeof window !== 'undefined') {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-    }
-}
-
-// Refresh access token
-async function refreshAccessToken(): Promise<string | null> {
-    const tokens = getTokens();
-
-    if (!tokens.refreshToken) {
-        clearTokens();
-        return null;
-    }
-
-    try {
-        const response = await fetch(`${API_URL}/api/auth/refresh`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ refreshToken: tokens.refreshToken })
-        });
-
-        if (!response.ok) {
-            // Only clear tokens if the refresh token is definitely invalid (400, 401, 403)
-            // If it's a 500 or network error, we don't clear tokens, just return null so the request fails
-            if (response.status === 400 || response.status === 401 || response.status === 403) {
-                clearTokens();
-            }
-            return null;
-        }
-
-        const data = await response.json();
-        accessToken = data.accessToken;
-
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('accessToken', data.accessToken);
-        }
-
-        return data.accessToken;
-    } catch (error) {
-        clearTokens();
-        return null;
-    }
-}
-
-// API Client with automatic token injection and refresh
+// API Client with automatic cookie handling
 export async function apiClient<T = any>(
     endpoint: string,
     options: RequestInit = {}
 ): Promise<T> {
-    const tokens = getTokens();
-
-    // Inject access token if available
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
         ...(options.headers as Record<string, string> || {}),
     };
 
-    if (tokens.accessToken && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register')) {
-        headers['Authorization'] = `Bearer ${tokens.accessToken}`;
-    }
+    // Defaults: credentials include for cookies
+    const fetchOptions: RequestInit = {
+        ...options,
+        headers,
+        credentials: 'include' // CRITICAL: This sends/receives cookies
+    };
 
     try {
-        let response = await fetch(`${API_URL}${endpoint}`, {
-            ...options,
-            headers
-        });
+        let response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
 
-        // If 401 and we have a refresh token, try to refresh
-        if (response.status === 401 && tokens.refreshToken && !endpoint.includes('/auth/refresh')) {
-            const newAccessToken = await refreshAccessToken();
-
-            if (newAccessToken) {
-                // Retry with new token
-                headers['Authorization'] = `Bearer ${newAccessToken}`;
-                response = await fetch(`${API_URL}${endpoint}`, {
-                    ...options,
-                    headers
+        // If 401, trying to auto-refresh is handled by the browser sending the refresh cookie to the /refresh endpoint.
+        // But we need to CALL that endpoint.
+        if (response.status === 401 && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register') && !endpoint.includes('/auth/refresh')) {
+            // Attempt refresh
+            try {
+                const refreshResponse = await fetch(`${API_URL}/api/auth/refresh`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include' // Validate refresh cookie
                 });
-            } else {
-                // Refresh failed, redirect to login
-                clearTokens();
-                if (typeof window !== 'undefined' &&
-                    !window.location.pathname.startsWith('/login') &&
-                    !window.location.pathname.startsWith('/register')) {
-                    window.location.href = '/login';
+
+                if (refreshResponse.ok) {
+                    // Refresh succeeded (new access cookie set)
+                    // Retry original request
+                    response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
+                } else {
+                    // Refresh failed (refresh cookie expired or invalid)
+                    // Throw 401 to let caller handle redirect/logout
                 }
-                throw new Error('Session expired. Please login again.');
+            } catch (e) {
+                // Network error on refresh, throw original error or new one
             }
         }
 
@@ -168,17 +92,30 @@ export const authApi = {
         }),
 
     logout: async () => {
-        const tokens = getTokens();
-        if (tokens.refreshToken) {
-            await apiClient('/api/auth/logout', {
-                method: 'POST',
-                body: JSON.stringify({ refreshToken: tokens.refreshToken })
-            });
-        }
-        clearTokens();
+        await apiClient('/api/auth/logout', {
+            method: 'POST'
+        });
+        // reload or clear state handled by context
     },
 
     me: () => apiClient('/api/auth/me')
+};
+
+// Admin Auth API calls
+export const adminAuthApi = {
+    login: (email: string, password: string) =>
+        apiClient<{ admin: any }>('/api/admin/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ email, password })
+        }),
+
+    logout: async () => {
+        await apiClient('/api/admin/auth/logout', {
+            method: 'POST'
+        });
+    },
+
+    me: () => apiClient<{ admin: any }>('/api/admin/auth/me')
 };
 
 // Profile API calls
@@ -263,3 +200,6 @@ export const feedbackApi = {
         })
 };
 
+export const setTokens = (a: any, b: any) => { }; // Deprecated: No-op
+export const getTokens = () => ({ accessToken: null, refreshToken: null }); // Deprecated: No-op
+export const clearTokens = () => { }; // Deprecated: No-op

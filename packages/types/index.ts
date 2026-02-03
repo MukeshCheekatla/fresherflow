@@ -184,8 +184,9 @@ export interface ListingFeedback {
 
 export interface AuthResponse {
     user: User;
-    accessToken: string;
-    refreshToken: string;
+    profile?: {
+        completionPercentage: number;
+    } | Profile;
 }
 
 export interface ProfileResponse {

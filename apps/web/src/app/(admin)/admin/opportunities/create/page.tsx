@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAdmin } from '@/contexts/AdminContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { adminApi } from '@/lib/api/admin';
@@ -24,8 +24,9 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function CreateOpportunityPage() {
-    const { isAuthenticated, token } = useAdmin();
+    const { isAuthenticated } = useAdmin();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState(false);
 
     // Form state
@@ -56,6 +57,15 @@ export default function CreateOpportunityPage() {
             router.push('/admin/login');
         }
     }, [isAuthenticated, router]);
+
+    useEffect(() => {
+        const typeParam = searchParams.get('type');
+        if (!typeParam) return;
+        const normalized = typeParam.toUpperCase();
+        if (normalized === 'JOB' || normalized === 'INTERNSHIP' || normalized === 'WALKIN') {
+            setType(normalized as 'JOB' | 'INTERNSHIP' | 'WALKIN');
+        }
+    }, [searchParams]);
 
     const handleDegreeToggle = (degree: string) => {
         setAllowedDegrees(prev =>
@@ -158,7 +168,7 @@ export default function CreateOpportunityPage() {
                 };
             }
 
-            await adminApi.createOpportunity(token as string, payload);
+            await adminApi.createOpportunity(payload);
 
             toast.success('🚀 Opportunity published!', { id: loadingToast });
             router.push('/admin/opportunities');
@@ -506,4 +516,3 @@ export default function CreateOpportunityPage() {
         </div>
     );
 }
-
