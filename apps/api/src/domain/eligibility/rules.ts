@@ -31,11 +31,13 @@ export const degreeRule: EligibilityRule = {
 export const passoutYearRule: EligibilityRule = {
     name: 'PASSOUT_YEAR_MATCH',
     check: (opp, profile) => {
-        if (!profile.passoutYear) return false;
-        return opp.allowedPassoutYears.includes(profile.passoutYear);
+        const passoutYear = profile.pgYear || profile.gradYear;
+        if (!passoutYear) return false;
+        return opp.allowedPassoutYears.includes(passoutYear);
     },
     getReason: (opp, profile) => {
-        return `Your passout year (${profile.passoutYear}) is not in the allowed years: ${opp.allowedPassoutYears.join(', ')}`;
+        const passoutYear = profile.pgYear || profile.gradYear;
+        return `Your passout year (${passoutYear}) is not in the allowed years: ${opp.allowedPassoutYears.join(', ')}`;
     }
 };
 
