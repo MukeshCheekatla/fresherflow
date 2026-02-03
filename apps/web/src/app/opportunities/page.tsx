@@ -289,7 +289,7 @@ function OpportunitiesContent() {
                                     </div>
                                     <h3 className="text-xl font-black text-foreground uppercase italic tracking-tight">Null ResultSet</h3>
                                     <p className="text-sm text-muted-foreground mt-2 font-medium max-w-sm mx-auto">
-                                        No opportunities current match your defined parameters in the {selectedType || 'global'} feed.
+                                        No opportunities currently match your defined parameters in the {selectedType || 'global'} feed.
                                     </p>
                                     <Button
                                         onClick={() => {

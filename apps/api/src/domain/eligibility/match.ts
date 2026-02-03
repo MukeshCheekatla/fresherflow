@@ -123,3 +123,16 @@ export function filterOpportunitiesForUser(
     );
 }
 
+/**
+ * Sort opportunities with walk-ins pinned at top
+ */
+export function sortOpportunitiesWithWalkinsFirst<T extends { type: string; postedAt: Date | string }>(opportunities: T[]): T[] {
+    return [...opportunities].sort((a, b) => {
+        // Walk-ins first
+        if (a.type === 'WALKIN' && b.type !== 'WALKIN') return -1;
+        if (a.type !== 'WALKIN' && b.type === 'WALKIN') return 1;
+
+        // Then by posted date (newest first)
+        return new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime();
+    });
+}

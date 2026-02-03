@@ -3,7 +3,7 @@ import { PrismaClient, OpportunityStatus } from '@prisma/client';
 import { requireAuth } from '../middleware/auth';
 import { profileGate } from '../middleware/profileGate';
 import { AppError } from '../middleware/errorHandler';
-import { filterOpportunitiesForUser, sortOpportunitiesWithWalkinsFirst } from '../utils/eligibility';
+import { filterOpportunitiesForUser, sortOpportunitiesWithWalkinsFirst } from '../domain/eligibility';
 
 const router: Router = express.Router();
 const prisma = new PrismaClient();
@@ -48,7 +48,7 @@ router.get('/', requireAuth, profileGate, async (req: Request, res: Response, ne
         });
 
         // Stage 2: Code-Level Filtering (Fine)
-        const codeFiltered = filterOpportunitiesForUser(dbFiltered, profile as any);
+        const codeFiltered = filterOpportunitiesForUser(dbFiltered as any, profile as any);
 
         // Sort with walk-ins first
         const sorted = sortOpportunitiesWithWalkinsFirst(codeFiltered);
@@ -95,7 +95,7 @@ router.get('/:id', requireAuth, profileGate, async (req: Request, res: Response,
             return next(new AppError('Profile not found', 404));
         }
 
-        const eligible = filterOpportunitiesForUser([opportunity], profile);
+        const eligible = filterOpportunitiesForUser([opportunity] as any, profile as any);
         if (eligible.length === 0) {
             return next(new AppError('You are not eligible for this opportunity', 403));
         }

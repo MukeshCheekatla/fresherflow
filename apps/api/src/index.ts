@@ -20,8 +20,10 @@ import adminAuthRoutes from './routes/admin/auth';
 import adminOpportunitiesRoutes from './routes/admin/opportunities';
 import adminFeedbackRoutes from './routes/admin/feedback';
 
-// Load environment variables
-dotenv.config();
+// Load environment variables (Local only)
+if (process.env.NODE_ENV !== 'production') {
+    dotenv.config();
+}
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
@@ -105,7 +107,7 @@ app.use(defaultLimiter);
 // ============================================================================
 
 // Health check
-app.get('/health', (req, res) => {
+app.get(['/health', '/api/health'], (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
