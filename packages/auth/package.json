@@ -8,11 +8,10 @@
         "dev": "tsc --watch"
     },
     "dependencies": {
-        "jsonwebtoken": "^9.0.2"
-    },
-    "devDependencies": {
+        "jsonwebtoken": "^9.0.2",
         "@types/jsonwebtoken": "^9.0.7",
         "@types/node": "^20.0.0",
         "typescript": "^5.0.0"
-    }
+    },
+    "devDependencies": {}
 }
