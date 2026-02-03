@@ -36,6 +36,21 @@ const FILTERS = {
     location: ['Bangalore', 'Mumbai', 'Delhi', 'Hyderabad', 'Pune', 'Remote'],
 };
 
+const typeParamToEnum = (value: string) => {
+    const v = value.toLowerCase();
+    if (v === 'job' || v === 'jobs' || v === 'full-time' || v === 'full time') return 'JOB';
+    if (v === 'internship' || v === 'internships') return 'INTERNSHIP';
+    if (v === 'walk-in' || v === 'walkin' || v === 'walkins' || v === 'walk-ins') return 'WALKIN';
+    return value.toUpperCase();
+};
+
+const enumToTypeParam = (value: string) => {
+    if (value === 'JOB') return 'job';
+    if (value === 'INTERNSHIP') return 'internship';
+    if (value === 'WALKIN') return 'walk-in';
+    return value.toLowerCase();
+};
+
 function OpportunitiesContent() {
     const { user } = useAuth();
     const router = useRouter();
@@ -43,6 +58,7 @@ function OpportunitiesContent() {
     const searchParams = useSearchParams();
 
     const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+    const [totalCount, setTotalCount] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [selectedType, setSelectedType] = useState<string | null>(null);
@@ -56,10 +72,10 @@ function OpportunitiesContent() {
     useEffect(() => {
         const typeParam = searchParams.get('type');
         if (typeParam) {
-            const t = typeParam.toUpperCase();
-            if (t === 'FULL-TIME' || t === 'JOB') setSelectedType('JOB');
+            const t = typeParamToEnum(typeParam);
+            if (t === 'JOB') setSelectedType('JOB');
             else if (t === 'INTERNSHIP') setSelectedType('INTERNSHIP');
-            else if (t === 'WALKIN' || t === 'WALK-IN' || t === 'WALK-INS') setSelectedType('WALKIN');
+            else if (t === 'WALKIN') setSelectedType('WALKIN');
             else setSelectedType(t);
         } else {
             setSelectedType(null);
@@ -75,6 +91,7 @@ function OpportunitiesContent() {
                 city: selectedLoc || undefined
             });
             setOpportunities(data.opportunities || []);
+            setTotalCount(data.count || 0);
         } catch (error: any) {
             // Check if this is a profile incomplete error
             if (error.code === 'PROFILE_INCOMPLETE') {
@@ -116,9 +133,7 @@ function OpportunitiesContent() {
         // Update URL to match state
         const params = new URLSearchParams(searchParams.toString());
         if (type) {
-            // Map JOB back to Full-time for cleaner URLs if desired, or just use JOB
-            const label = FILTERS.type.find(t => t.value === type)?.label || type;
-            params.set('type', label);
+            params.set('type', enumToTypeParam(type));
         } else {
             params.delete('type');
         }
@@ -135,7 +150,7 @@ function OpportunitiesContent() {
                             <div className="px-3 py-1.5 bg-muted rounded-full border border-border flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 rounded-full bg-success" />
                                 <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-                                    {filteredOpps.length} {selectedType ? selectedType.replace('JOB', 'Jobs').replace('WALKIN', 'Walk-ins').replace('INTERNSHIP', 'Internships') : 'Opportunities'} Found
+                                    {filteredOpps.length} of {totalCount} {selectedType ? selectedType.replace('JOB', 'Jobs').replace('WALKIN', 'Walk-ins').replace('INTERNSHIP', 'Internships') : 'Opportunities'} Found
                                 </p>
                             </div>
                             {selectedType && (
@@ -334,7 +349,7 @@ function OpportunitiesContent() {
                             {!isLoading && (
                                 <div className="mt-12 text-center pb-8 border-t border-border pt-8">
                                     <p className="text-xs font-black text-muted-foreground uppercase tracking-[0.4em]">
-                                        Total opportunities synchronized.
+                                        Total opportunities synchronized: {totalCount}.
                                     </p>
                                 </div>
                             )}

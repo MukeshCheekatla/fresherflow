@@ -18,9 +18,10 @@ export default function TopNav() {
     const [isAuthOpen, setIsAuthOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-    const typeParam = (searchParams.get('type') || '').toUpperCase();
+    const typeParamRaw = searchParams.get('type') || '';
+    const typeParam = typeParamRaw.toLowerCase();
     const isOpportunitiesRoute = pathname === '/' || pathname.startsWith('/opportunities');
-    const isWalkinsMode = isOpportunitiesRoute && (typeParam === 'WALKIN' || typeParam === 'WALK-IN' || typeParam === 'WALK-INS');
+    const isWalkinsMode = isOpportunitiesRoute && (typeParam === 'walkin' || typeParam === 'walk-in' || typeParam === 'walkins' || typeParam === 'walk-ins' || typeParam === 'walkin');
     const isJobsMode = isOpportunitiesRoute && !isWalkinsMode;
     const isAdminRoute = pathname.startsWith('/admin');
 
@@ -58,7 +59,7 @@ export default function TopNav() {
                             isAdminRoute ? "hidden" : "flex"
                         )}>
                             <Link
-                                href="/opportunities?type=JOB"
+                                href="/opportunities?type=job"
                                 className={cn(
                                     "px-4 py-2 text-sm font-medium rounded-md transition-colors",
                                     isJobsMode
@@ -69,7 +70,7 @@ export default function TopNav() {
                                 Jobs
                             </Link>
                             <Link
-                                href="/opportunities?type=WALKIN"
+                                href="/opportunities?type=walk-in"
                                 className={cn(
                                     "px-4 py-2 text-sm font-medium rounded-md transition-colors",
                                     isWalkinsMode

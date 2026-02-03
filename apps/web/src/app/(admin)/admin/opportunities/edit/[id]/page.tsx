@@ -14,7 +14,6 @@ import {
     CalendarIcon,
     LinkIcon,
     CheckIcon,
-    TrashIcon,
     InformationCircleIcon,
     ClockIcon,
     BuildingOfficeIcon
@@ -90,7 +89,7 @@ export default function EditOpportunityPage() {
 
             setLoading(false);
         } catch (error: any) {
-            toast.error(`❌ Failed to load: ${error.message}`);
+            toast.error(` Failed to load: ${error.message}`);
             router.push('/admin/opportunities');
         }
     };
@@ -106,7 +105,7 @@ export default function EditOpportunityPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
-        const loadingToast = toast.loading('⏳ Saving changes...');
+        const loadingToast = toast.loading(' Saving changes...');
 
         try {
             const payload: any = {
@@ -138,10 +137,10 @@ export default function EditOpportunityPage() {
 
             await adminApi.updateOpportunity(params.id as string, payload);
 
-            toast.success('✅ Changes saved successfully!', { id: loadingToast });
+            toast.success(' Changes saved successfully!', { id: loadingToast });
             router.push('/admin/opportunities');
         } catch (error: any) {
-            toast.error(`❌ Failed: ${error.message}`, { id: loadingToast });
+            toast.error(` Failed: ${error.message}`, { id: loadingToast });
         } finally {
             setSaving(false);
         }
@@ -157,21 +156,21 @@ export default function EditOpportunityPage() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+        <div className="max-w-5xl mx-auto space-y-6 md:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <Link href="/admin/opportunities" className="inline-flex items-center gap-2 text-xs font-black text-slate-500 hover:text-slate-200 transition-colors mb-4 uppercase tracking-widest leading-none">
+                    <Link href="/admin/opportunities" className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors mb-3">
                         <ArrowLeftIcon className="w-4 h-4" />
                         Back to Log
                     </Link>
-                    <h1 className="tracking-tighter text-slate-200">Edit Opportunity</h1>
-                    <p className="text-slate-400 font-medium tracking-tight">Modify entry Details and requirements.</p>
+                    <h1 className="text-2xl font-semibold tracking-tight text-foreground">Edit Opportunity</h1>
+                    <p className="text-sm text-muted-foreground">Modify entry details and requirements.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <span className={`px-4 py-2 rounded-2xl text-[10px] font-black tracking-widest uppercase ${type === 'WALKIN' ? 'bg-orange-900/30 text-orange-400 border border-orange-900/50' :
-                        type === 'INTERNSHIP' ? 'bg-purple-900/30 text-purple-400 border border-purple-900/50' :
-                            'bg-blue-900/30 text-blue-400 border border-blue-900/50'
+                    <span className={`inline-flex h-8 items-center rounded-md px-3 text-xs font-medium ${type === 'WALKIN' ? 'bg-amber-500/10 text-amber-700 border border-amber-500/30' :
+                        type === 'INTERNSHIP' ? 'bg-purple-500/10 text-purple-700 border border-purple-500/30' :
+                            'bg-blue-500/10 text-blue-700 border border-blue-500/30'
                         }`}>
                         {type} Protocol Active
                     </span>
@@ -180,98 +179,98 @@ export default function EditOpportunityPage() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Main Details */}
-                <div className="bg-slate-900 rounded-[2rem] border border-slate-800 p-8 space-y-8 shadow-sm">
-                    <h3 className="font-extrabold text-slate-200 mb-2 flex items-center gap-2 tracking-tight">
-                        <BriefcaseIcon className="w-5 h-5 text-slate-500" />
+                <div className="bg-card border border-border rounded-lg p-6 space-y-6">
+                    <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+                        <BriefcaseIcon className="w-4 h-4 text-muted-foreground" />
                         Base Specifications
                     </h3>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-400 font-display">Job Title *</label>
+                            <label className="text-xs font-medium text-muted-foreground tracking-wide">Job Title *</label>
                             <input
                                 required
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                className="premium-input bg-slate-950 border-slate-800 text-slate-200 focus:border-blue-600"
+                                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-400">Company Name *</label>
+                            <label className="text-xs font-medium text-muted-foreground tracking-wide">Company Name *</label>
                             <input
                                 required
                                 value={company}
                                 onChange={(e) => setCompany(e.target.value)}
-                                className="premium-input bg-slate-950 border-slate-800 text-slate-200 focus:border-blue-600"
+                                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                             />
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-slate-400 font-display">Full Description</label>
+                        <label className="text-xs font-medium text-muted-foreground tracking-wide">Full Description</label>
                         <textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             rows={6}
-                            className="premium-input resize-none bg-slate-950 border-slate-800 text-slate-300 focus:border-blue-600"
+                            className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                            <label className="text-xs font-medium text-muted-foreground tracking-wide flex items-center gap-2">
                                 <CurrencyRupeeIcon className="w-4 h-4" /> Entry Point
                             </label>
                             <input
                                 type="number"
                                 value={salaryMin}
                                 onChange={(e) => setSalaryMin(e.target.value)}
-                                className="premium-input bg-slate-950/50 border-slate-800 text-slate-200"
+                                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                            <label className="text-xs font-medium text-muted-foreground tracking-wide flex items-center gap-2">
                                 <CurrencyRupeeIcon className="w-4 h-4" /> Upper Bound
                             </label>
                             <input
                                 type="number"
                                 value={salaryMax}
                                 onChange={(e) => setSalaryMax(e.target.value)}
-                                className="premium-input bg-slate-950/50 border-slate-800 text-slate-200"
+                                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                            <label className="text-xs font-medium text-muted-foreground tracking-wide flex items-center gap-2">
                                 <CalendarIcon className="w-4 h-4" /> Deactivation Mark
                             </label>
                             <input
                                 type="datetime-local"
                                 value={expiresAt}
                                 onChange={(e) => setExpiresAt(e.target.value)}
-                                className="premium-input bg-slate-950/50 border-slate-800 text-slate-200 p-2.5"
+                                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                             />
                         </div>
                     </div>
                 </div>
 
                 {/* Requirements */}
-                <div className="bg-slate-900 rounded-[2rem] border border-slate-800 p-8 space-y-8 shadow-sm">
-                    <h3 className="font-extrabold text-slate-200 mb-2 flex items-center gap-2 tracking-tight">
-                        <AcademicCapIcon className="w-5 h-5 text-slate-500" />
+                <div className="bg-card border border-border rounded-lg p-6 space-y-6">
+                    <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+                        <AcademicCapIcon className="w-4 h-4 text-muted-foreground" />
                         Credential Criteria
                     </h3>
 
                     <div className="space-y-3">
-                        <label className="text-sm font-bold text-slate-400">Allowed Education Levels</label>
+                        <label className="text-xs font-medium text-muted-foreground tracking-wide">Allowed Education Levels</label>
                         <div className="flex flex-wrap gap-3">
                             {['DIPLOMA', 'DEGREE', 'PG'].map((deg) => (
                                 <button
                                     key={deg}
                                     type="button"
                                     onClick={() => handleDegreeToggle(deg)}
-                                    className={`px-6 py-2 rounded-xl font-bold border-2 transition-all ${allowedDegrees.includes(deg)
-                                        ? 'bg-blue-900/30 border-blue-500 text-blue-400'
-                                        : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'
+                                    className={`h-9 px-3 rounded-md text-xs font-medium border transition-colors ${allowedDegrees.includes(deg)
+                                        ? 'bg-primary/10 border-primary text-primary'
+                                        : 'bg-background border-input text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                                         }`}
                                 >
                                     {deg}
@@ -280,56 +279,56 @@ export default function EditOpportunityPage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-400">Passout Years (comma separated)</label>
+                            <label className="text-xs font-medium text-muted-foreground tracking-wide">Passout Years (comma separated)</label>
                             <input
                                 required
                                 value={passoutYears.join(', ')}
                                 onChange={(e) => setPassoutYears(e.target.value.split(',').map(y => parseInt(y.trim())).filter(Boolean))}
-                                className="premium-input bg-slate-950 border-slate-800 text-slate-200"
+                                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-400">Key Skills Required</label>
+                            <label className="text-xs font-medium text-muted-foreground tracking-wide">Key Skills Required</label>
                             <input
                                 value={requiredSkills}
                                 onChange={(e) => setRequiredSkills(e.target.value)}
-                                className="premium-input bg-slate-950 border-slate-800 text-slate-200"
+                                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                             />
                         </div>
                     </div>
                 </div>
 
                 {/* Logistics */}
-                <div className="bg-slate-900 rounded-[2rem] border border-slate-800 p-8 space-y-8 shadow-sm">
-                    <h3 className="font-extrabold text-slate-200 mb-2 flex items-center gap-2 tracking-tight">
-                        <MapPinIcon className="w-5 h-5 text-slate-500" />
+                <div className="bg-card border border-border rounded-lg p-6 space-y-6">
+                    <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+                        <MapPinIcon className="w-4 h-4 text-muted-foreground" />
                         Logistics & Presence
                     </h3>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-slate-400">Locations (comma separated)</label>
+                        <label className="text-xs font-medium text-muted-foreground tracking-wide">Locations (comma separated)</label>
                         <input
                             required
                             value={locations}
                             onChange={(e) => setLocations(e.target.value)}
-                            className="premium-input bg-slate-950 border-slate-800 text-slate-200"
+                            className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                         />
                     </div>
 
                     {type !== 'WALKIN' && (
                         <div className="space-y-3 pt-2">
-                            <label className="text-sm font-bold text-slate-400">Primary Work Mode</label>
+                            <label className="text-xs font-medium text-muted-foreground tracking-wide">Primary Work Mode</label>
                             <div className="grid grid-cols-3 gap-3">
                                 {(['ONSITE', 'HYBRID', 'REMOTE'] as const).map((mode) => (
                                     <button
                                         key={mode}
                                         type="button"
                                         onClick={() => setWorkMode(mode)}
-                                        className={`py-3 rounded-xl font-bold border-2 transition-all ${workMode === mode
-                                            ? 'bg-indigo-900/30 border-indigo-500 text-indigo-400'
-                                            : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'
+                                        className={`h-9 rounded-md text-xs font-medium border transition-colors ${workMode === mode
+                                            ? 'bg-primary/10 border-primary text-primary'
+                                            : 'bg-background border-input text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                                             }`}
                                     >
                                         {mode}
@@ -341,76 +340,76 @@ export default function EditOpportunityPage() {
                 </div>
 
                 {/* Apply Settings */}
-                <div className="bg-slate-900 rounded-[2rem] border border-slate-800 p-8 space-y-8 shadow-sm">
-                    <h3 className="font-extrabold text-slate-200 mb-2 flex items-center gap-2 tracking-tight">
-                        <LinkIcon className="w-5 h-5 text-slate-500" />
+                <div className="bg-card border border-border rounded-lg p-6 space-y-6">
+                    <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+                        <LinkIcon className="w-4 h-4 text-muted-foreground" />
                         Engagement Path
                     </h3>
 
                     {type === 'WALKIN' ? (
-                        <div className="bg-orange-950/20 border border-orange-900/50 rounded-2xl p-6 space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-orange-400 tracking-tight">Walk-in Dates *</label>
+                                    <label className="text-xs font-medium text-amber-700 dark:text-amber-400 tracking-wide">Walk-in Dates *</label>
                                     <input
                                         required
                                         value={walkInDates}
                                         onChange={(e) => setWalkInDates(e.target.value)}
-                                        className="premium-input bg-slate-950 border-orange-900/50 text-orange-100 placeholder:text-orange-500/50"
+                                        className="flex h-11 w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-orange-400 tracking-tight">Reporting Time *</label>
+                                    <label className="text-xs font-medium text-amber-700 dark:text-amber-400 tracking-wide">Reporting Time *</label>
                                     <input
                                         required
                                         value={reportingTime}
                                         onChange={(e) => setReportingTime(e.target.value)}
-                                        className="premium-input bg-slate-950 border-orange-900/50 text-orange-100 placeholder:text-orange-500/50"
+                                        className="flex h-11 w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
                                     />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-bold text-orange-400 tracking-tight">Venue Address *</label>
+                                <label className="text-xs font-medium text-amber-700 dark:text-amber-400 tracking-wide">Venue Address *</label>
                                 <textarea
                                     required
                                     value={venueAddress}
                                     onChange={(e) => setVenueAddress(e.target.value)}
                                     rows={3}
-                                    className="premium-input bg-slate-950 border-orange-900/50 text-orange-100 placeholder:text-orange-500/50 resize-none"
+                                    className="flex h-11 w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                                 />
                             </div>
                         </div>
                     ) : (
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-400">Official Apply URL *</label>
+                            <label className="text-xs font-medium text-muted-foreground tracking-wide">Official Apply URL *</label>
                             <input
                                 type="url"
                                 required
                                 value={applyLink}
                                 onChange={(e) => setApplyLink(e.target.value)}
-                                className="premium-input bg-slate-950 border-slate-800 text-slate-200"
+                                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                             />
                         </div>
                     )}
                 </div>
 
                 {/* Footer Actions */}
-                <div className="flex flex-col sm:flex-row gap-4 pt-10">
+                <div className="flex flex-col sm:flex-row gap-3 pt-6">
                     <button
                         type="submit"
                         disabled={saving}
-                        className="flex-1 premium-button bg-emerald-600 hover:bg-emerald-500 h-[64px] shadow-2xl shadow-emerald-900/20"
+                        className="flex-1 inline-flex items-center justify-center rounded-md bg-primary px-8 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-11"
                     >
                         {saving ? (
-                            <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
                         ) : (
-                            <CheckIcon className="w-6 h-6" />
+                            <CheckIcon className="w-5 h-5 mr-2" />
                         )}
                         {saving ? 'Synchronizing...' : 'Update Listing'}
                     </button>
                     <Link
                         href="/admin/opportunities"
-                        className="premium-button-outline py-5 px-10 text-center border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200 hover:bg-slate-900"
+                        className="inline-flex h-11 items-center justify-center rounded-md border border-input bg-background px-8 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
                     >
                         Discard
                     </Link>

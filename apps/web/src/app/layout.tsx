@@ -5,6 +5,7 @@ import { ConditionalAuthProvider } from "@/components/providers/ConditionalAuthP
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { NavigationWrapper } from "@/components/providers/NavigationWrapper";
+import ServiceWorkerRegister from "@/components/providers/ServiceWorkerRegister";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -13,7 +14,7 @@ const inter = Inter({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#6366F1",
+  themeColor: "#020617",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -24,10 +25,19 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "FresherFlow | Premium Career Feed for Freshers",
   description: "A verified feed of jobs, internships, and walk-ins. Engineering the future of entry-level hiring with direct access to official company portals.",
-  // manifest: "/manifest.webmanifest", // Missing assets in /public
-  // icons: {
-  //   apple: "/icons/apple-touch-icon.png",
-  // },
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512x512.png", sizes: "512x512", type: "image/png" }
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }]
+  },
+  appleWebApp: {
+    capable: true,
+    title: "FresherFlow",
+    statusBarStyle: "default"
+  }
 };
 
 import { AuthFormDataProvider } from "@/contexts/AuthFormDataContext";
@@ -49,6 +59,7 @@ export default function RootLayout({
             </ConditionalAuthProvider>
           </AuthFormDataProvider>
         </ThemeProvider>
+        <ServiceWorkerRegister />
         <Toaster
           position="top-center"
           toastOptions={{

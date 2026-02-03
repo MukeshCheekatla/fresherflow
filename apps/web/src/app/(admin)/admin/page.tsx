@@ -57,114 +57,117 @@ export default function AdminDashboardHome() {
     }, []);
 
     const statsCards = [
-        { label: 'Live Online Jobs', value: stats.jobs, icon: BriefcaseIcon, color: 'text-blue-600', bg: 'bg-blue-50' },
-        { label: 'Walk-in Drives', value: stats.walkins, icon: MapPinIcon, color: 'text-purple-600', bg: 'bg-purple-50' },
-        { label: 'Total Postings', value: stats.total, icon: ChartBarIcon, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-        { label: 'Recent (24h)', value: stats.recent24h, icon: ClockIcon, color: 'text-amber-600', bg: 'bg-amber-50' },
+        { label: 'Live Online Jobs', value: stats.jobs, icon: BriefcaseIcon, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+        { label: 'Walk-in Drives', value: stats.walkins, icon: MapPinIcon, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+        { label: 'Total Postings', value: stats.total, icon: ChartBarIcon, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+        { label: 'Recent (24h)', value: stats.recent24h, icon: ClockIcon, color: 'text-amber-500', bg: 'bg-amber-500/10' },
     ];
 
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
-                <div className="w-10 h-10 border-4 border-slate-900 border-t-transparent rounded-full animate-spin" />
+                <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="space-y-10 animate-in fade-in duration-700">
+        <div className="space-y-4 md:space-y-8 animate-in fade-in duration-700 pb-4 md:pb-12 text-foreground">
             <header className="space-y-1">
-                <h1 className="tracking-tighter text-slate-100">Command Center</h1>
-                <p className="text-slate-400 font-medium">Platform overview and management hub.</p>
+                <h1 className="text-xl md:text-2xl font-semibold tracking-tight">Command Center</h1>
+                <p className="text-xs md:text-sm text-muted-foreground">Platform overview and management hub.</p>
             </header>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                 {statsCards.map((stat) => (
-                    <div key={stat.label} className="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-sm hover:shadow-md transition-all">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className={cn("p-2 rounded-xl bg-opacity-10", stat.bg.replace('bg-', 'bg-opacity-10 bg-'), stat.color)}>
-                                <stat.icon className="w-6 h-6" />
-                            </div>
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">
+                    <div key={stat.label} className="bg-card p-3 md:p-5 rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-1.5 md:mb-2">
+                            <span className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide truncate pr-2">
                                 {stat.label}
                             </span>
+                            <stat.icon className={cn("w-3.5 h-3.5 md:w-4 md:h-4 shrink-0", stat.color)} />
                         </div>
-                        <p className="text-3xl font-black text-slate-100 tracking-tighter">{stat.value}</p>
+                        <p className="text-lg md:text-2xl font-semibold tracking-tight">{stat.value}</p>
                     </div>
                 ))}
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                 <Link
                     href="/admin/opportunities/create"
-                    className="group bg-blue-600 p-8 rounded-[2rem] text-white flex items-center justify-between transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-blue-900/20"
+                    className="group bg-card p-4 md:p-5 rounded-lg border border-border shadow-sm flex items-center justify-between transition-all hover:border-primary/50 hover:shadow-md"
                 >
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-blue-200">
-                            <PlusCircleIcon className="w-5 h-5 font-bold" />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Global Stream</span>
+                    <div className="space-y-0.5 md:space-y-1">
+                        <div className="flex items-center gap-2 text-primary">
+                            <PlusCircleIcon className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                            <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wider">Global Stream</span>
                         </div>
-                        <h3 className="text-2xl font-black tracking-tight">Post New Listing</h3>
-                        <p className="text-blue-100 text-sm font-medium">Add jobs, internships or walk-ins.</p>
+                        <h3 className="text-sm md:text-base font-semibold">Post New Listing</h3>
+                        <p className="text-[11px] md:text-xs text-muted-foreground font-medium">Add jobs, internships or walk-ins.</p>
                     </div>
-                    <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center group-hover:bg-white/20 transition-colors">
-                        <ArrowRightIcon className="w-6 h-6" />
+                    <div className="w-8 h-8 md:w-10 md:h-10 bg-primary/10 rounded-md flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                        <ArrowRightIcon className="w-3.5 h-3.5 md:w-4 md:h-4 text-primary" />
                     </div>
                 </Link>
 
                 <Link
                     href="/admin/feedback"
-                    className="group bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-sm flex items-center justify-between transition-all hover:border-slate-700 hover:shadow-xl active:scale-95"
+                    className="group bg-card p-4 md:p-5 rounded-lg border border-border shadow-sm flex items-center justify-between transition-all hover:border-primary/50 hover:shadow-md"
                 >
-                    <div className="space-y-2">
+                    <div className="space-y-0.5 md:space-y-1">
                         <div className="flex items-center gap-2 text-emerald-500">
-                            <ChartBarIcon className="w-5 h-5" />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Platform Pulse</span>
+                            <ChartBarIcon className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                            <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wider">Platform Pulse</span>
                         </div>
-                        <h3 className="text-2xl font-black tracking-tight text-slate-100">Review Feedback</h3>
-                        <p className="text-slate-400 text-sm font-medium">Analyze user reports and logs.</p>
+                        <h3 className="text-sm md:text-base font-semibold">Review Feedback</h3>
+                        <p className="text-[11px] md:text-xs text-muted-foreground font-medium">Analyze user reports and logs.</p>
                     </div>
-                    <div className="w-14 h-14 bg-slate-800 rounded-2xl flex items-center justify-center group-hover:bg-slate-700 transition-colors">
-                        <ArrowRightIcon className="w-6 h-6 text-slate-100" />
+                    <div className="w-8 h-8 md:w-10 md:h-10 bg-muted rounded-md flex items-center justify-center group-hover:bg-muted/80 transition-colors">
+                        <ArrowRightIcon className="w-3.5 h-3.5 md:w-4 md:h-4 text-foreground/70" />
                     </div>
                 </Link>
             </div>
 
             {/* Recent Postings Simple List */}
-            <div className="bg-slate-900 rounded-[2rem] border border-slate-800 shadow-sm overflow-hidden">
-                <div className="px-8 py-6 border-b border-slate-800 flex justify-between items-center">
-                    <h3 className="text-lg font-black tracking-tight text-slate-100">Recent Activity Stream</h3>
-                    <Link href="/admin/opportunities" className="text-xs font-black text-blue-400 uppercase tracking-widest hover:underline">Full Log</Link>
+            <div className="bg-card dark:bg-card/40 rounded-lg border border-border shadow-sm overflow-hidden w-full">
+                <div className="px-4 py-3 md:px-5 md:py-4 border-b border-border flex justify-between items-center bg-muted/20 md:bg-transparent">
+                    <h3 className="text-sm md:text-base font-semibold tracking-tight">Recent Activity Stream</h3>
+                    <Link href="/admin/opportunities" className="text-[10px] md:text-xs font-medium text-primary hover:underline">View Full Log</Link>
                 </div>
-                <div className="divide-y divide-slate-800">
+                <div className="divide-y divide-border">
                     {recent.map((item) => {
                         const isWalkin = item.type === 'WALKIN';
-                            return (
-                                <div key={item.id} className="px-8 py-5 flex items-center justify-between hover:bg-slate-800/50 transition-colors">
-                                    <div className="min-w-0 flex-1">
-                                        <p className="font-extrabold text-slate-200 truncate">
-                                            {item.company}
-                                        </p>
-                                        <p className="text-xs font-bold text-slate-500 truncate">
-                                            {item.title || item.normalizedRole}
-                                        </p>
-                                    </div>
-                                    <div className="ml-4 flex-shrink-0 text-right space-y-1">
-                                        <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest block">
-                                            {new Date(item.postedAt).toLocaleDateString()}
-                                        </span>
-                                        <span className={cn(
-                                            "text-[9px] uppercase font-black tracking-widest px-2 py-0.5 rounded-full",
-                                            isWalkin ? "bg-orange-100 text-orange-600" : "bg-blue-100 text-blue-600"
-                                        )}>
-                                            {item.type}
-                                        </span>
-                                    </div>
+                        return (
+                            <div key={item.id} className="px-4 py-2.5 md:px-5 md:py-3 flex items-center justify-between hover:bg-muted/50 transition-colors">
+                                <div className="min-w-0 flex-1 pr-3">
+                                    <p className="text-xs md:text-sm font-medium truncate">
+                                        {item.company}
+                                    </p>
+                                    <p className="text-[10px] md:text-xs text-muted-foreground truncate font-medium">
+                                        {item.title || item.normalizedRole}
+                                    </p>
                                 </div>
-                            );
-                        })}
+                                <div className="flex-shrink-0 text-right space-y-0.5 md:space-y-1">
+                                    <span className="text-[9px] md:text-[10px] text-muted-foreground font-medium block">
+                                        {new Date(item.postedAt).toLocaleDateString()}
+                                    </span>
+                                    <span className={cn(
+                                        "inline-flex items-center rounded-md px-1 py-0.5 md:px-1.5 text-[9px] md:text-[10px] font-medium ring-1 ring-inset",
+                                        isWalkin ? "bg-amber-500/10 text-amber-500 ring-amber-500/20" : "bg-blue-500/10 text-blue-500 ring-blue-500/20"
+                                    )}>
+                                        {item.type}
+                                    </span>
+                                </div>
+                            </div>
+                        );
+                    })}
+                    {recent.length === 0 && (
+                        <div className="px-4 py-6 md:px-5 md:py-8 text-center text-xs md:text-sm text-muted-foreground">
+                            No recent activity found.
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

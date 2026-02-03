@@ -53,10 +53,10 @@
     --error: 0 84% 60%; /* Red */
     
     /* Typography Scale */
-    --fs-h1: 28px;
-    --fs-h2: 22px;
-    --fs-h3: 17px;
-    --fs-body: 14px;
+    --fs-h1: 24px;
+    --fs-h2: 20px;
+    --fs-h3: 18px;
+    --fs-body: 16px;
     --fs-small: 12px;
     --fs-button: 14px;
     
@@ -97,12 +97,12 @@
 
   @media (min-width: 1024px) {
     :root {
-      --fs-h1: 42px;
-      --fs-h2: 28px;
+      --fs-h1: 30px;
+      --fs-h2: 24px;
       --fs-h3: 20px;
       --fs-body: 16px;
       --fs-small: 14px;
-      --fs-button: 15px;
+      --fs-button: 14px;
     }
   }
 
@@ -241,7 +241,7 @@
   /* Inputs & Selects - Production Grade */
   .premium-input, select.premium-input {
     width: 100%;
-    height: 40px;
+    height: 44px;
     padding-left: 0.875rem;
     padding-right: 0.875rem;
     background-color: hsl(var(--card));
@@ -256,6 +256,79 @@
   .premium-input::placeholder {
     color: hsl(var(--muted-foreground));
     opacity: 0.6;
+    font-size: 14px;
+  }
+
+  /* Admin UI Typography + Layout Tokens */
+  .admin-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: hsl(var(--foreground));
+  }
+
+  .admin-subtitle {
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .admin-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: hsl(var(--foreground));
+  }
+
+  .admin-card-title {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    line-height: 1.3;
+    color: hsl(var(--foreground));
+  }
+
+  .admin-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .admin-card {
+    background-color: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+  }
+
+  .admin-section {
+    background-color: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+  }
+
+  @media (min-width: 768px) {
+    .admin-card,
+    .admin-section {
+      padding: 1.5rem;
+    }
+  }
+
+  .admin-button {
+    height: 2.5rem;
+    padding: 0 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
+  }
+
+  .admin-button-secondary {
+    height: 2.25rem;
+    padding: 0 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
   }
   
   .premium-input:hover {
@@ -373,6 +446,28 @@
   background-color: hsl(var(--background)); 
 }
 
+
+
+@layer utilities {
+  .tap-highlight-none {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Custom Scrollbar - Production Grade */
+::-webkit-scrollbar { 
+  width: 8px; 
+  height: 8px;
+}
+
+::-webkit-scrollbar-track { 
+  background-color: hsl(var(--background)); 
+}
+
 ::-webkit-scrollbar-thumb { 
   background-color: hsl(var(--muted-foreground) / 0.3); 
   border-radius: 9999px; 
@@ -380,4 +475,10 @@
 
 ::-webkit-scrollbar-thumb:hover { 
   background-color: hsl(var(--muted-foreground) / 0.5); 
+}
+
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    display: none;
+  }
 }

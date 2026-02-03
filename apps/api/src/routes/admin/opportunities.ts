@@ -13,6 +13,17 @@ const prisma = new PrismaClient();
 // Apply Admin Auth Globally for this router
 router.use(requireAdmin);
 
+function normalizeTypeParam(raw?: string) {
+    if (!raw) return undefined;
+    const value = raw.toLowerCase();
+    if (value === 'job' || value === 'jobs') return OpportunityType.JOB;
+    if (value === 'internship' || value === 'internships') return OpportunityType.INTERNSHIP;
+    if (value === 'walk-in' || value === 'walkin' || value === 'walkins' || value === 'walk-ins') return OpportunityType.WALKIN;
+    const upper = raw.toUpperCase();
+    if (Object.values(OpportunityType).includes(upper as OpportunityType)) return upper as OpportunityType;
+    return undefined;
+}
+
 // GET /api/admin/opportunities/summary
 router.get('/summary', async (_req: Request, res: Response, next: NextFunction) => {
     try {
@@ -126,12 +137,11 @@ router.post(
 // GET /api/admin/opportunities
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { type, status, includeCounts, includeWalkInDetails, limit, offset } = req.query;
+        const { type, status, includeCounts, includeWalkInDetails, limit, offset, q, sort } = req.query;
         const where: any = {};
 
-        if (typeof type === 'string' && Object.values(OpportunityType).includes(type as OpportunityType)) {
-            where.type = type as OpportunityType;
-        }
+        const normalizedType = typeof type === 'string' ? normalizeTypeParam(type) : undefined;
+        if (normalizedType) where.type = normalizedType;
         if (typeof status === 'string' && Object.values(OpportunityStatus).includes(status as OpportunityStatus)) {
             where.status = status as OpportunityStatus;
         }
@@ -141,6 +151,32 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
         const shouldIncludeCounts = includeCounts === 'true';
         const shouldIncludeWalkInDetails = includeWalkInDetails === 'true';
+
+        const keyword = typeof q === 'string' ? q.trim() : '';
+        if (keyword) {
+            where.OR = [
+                { title: { contains: keyword, mode: 'insensitive' } },
+                { company: { contains: keyword, mode: 'insensitive' } },
+                { description: { contains: keyword, mode: 'insensitive' } },
+                { locations: { has: keyword } }
+            ];
+        }
+
+        const sortKey = typeof sort === 'string' ? sort : '';
+        let orderBy: any = { postedAt: 'desc' };
+        if (sortKey === 'postedAt_asc') orderBy = { postedAt: 'asc' };
+        if (sortKey === 'company_asc') orderBy = { company: 'asc' };
+        if (sortKey === 'company_desc') orderBy = { company: 'desc' };
+        if (sortKey === 'title_asc') orderBy = { title: 'asc' };
+        if (sortKey === 'title_desc') orderBy = { title: 'desc' };
+        if (sortKey === 'status_asc') orderBy = { status: 'asc' };
+        if (sortKey === 'status_desc') orderBy = { status: 'desc' };
+
+        const total = await prisma.opportunity.count({ where });
+
+        const orderByClause = Array.isArray(orderBy)
+            ? orderBy
+            : [{ status: 'asc' }, orderBy];
 
         const opportunities = await prisma.opportunity.findMany({
             where,
@@ -159,10 +195,20 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                     }
                     : {})
             },
-            orderBy: { postedAt: 'desc' }
+            orderBy: orderByClause
         });
 
-        res.json({ opportunities });
+        const pageSize = take || total || 1;
+        const currentPage = take ? Math.floor((skip || 0) / take) + 1 : 1;
+        const totalPages = take ? Math.max(1, Math.ceil(total / take)) : 1;
+
+        res.json({
+            opportunities,
+            total,
+            page: currentPage,
+            pageSize,
+            totalPages
+        });
     } catch (error) {
         next(error);
     }

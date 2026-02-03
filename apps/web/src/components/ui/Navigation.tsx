@@ -46,9 +46,9 @@ export function Navbar() {
 
     const navLinks = [
         { href: '/dashboard', label: 'Dashboard' },
-        { href: '/opportunities?type=Full-time', label: 'Jobs' },
-        { href: '/opportunities?type=Internship', label: 'Internships' },
-        { href: '/opportunities?type=WALKIN', label: 'Walk-ins' },
+        { href: '/opportunities?type=job', label: 'Jobs' },
+        { href: '/opportunities?type=internship', label: 'Internships' },
+        { href: '/opportunities?type=walk-in', label: 'Walk-ins' },
     ];
 
     return (
@@ -145,8 +145,8 @@ export function MobileNav() {
     const tabs = user ? [
         { href: '/dashboard', label: 'Home', icon: HomeIcon },
         { href: '/opportunities', label: 'Search', icon: MagnifyingGlassIcon },
-        { href: '/opportunities?type=Full-time', label: 'Jobs', icon: BriefcaseIcon },
-        { href: '/opportunities?type=WALKIN', label: 'Walk-ins', icon: MapPinIcon },
+        { href: '/opportunities?type=job', label: 'Jobs', icon: BriefcaseIcon },
+        { href: '/opportunities?type=walk-in', label: 'Walk-ins', icon: MapPinIcon },
         { href: '/profile/edit', label: 'Profile', icon: UserIcon },
     ] : [
         { href: '/', label: 'Home', icon: HomeIcon },

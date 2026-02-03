@@ -21,16 +21,16 @@ const buttonVariants = cva(
             variant: {
                 default: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
                 destructive: "bg-red-600 text-white shadow-sm hover:bg-red-700",
-                outline: "border-2 border-border bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground",
+                outline: "border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground",
                 secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
                 ghost: "hover:bg-accent hover:text-accent-foreground",
                 link: "text-primary underline-offset-4 hover:underline",
             },
             size: {
-                default: "h-12 px-4 py-2 text-base",      // 48px - Material Design standard
-                sm: "h-10 px-3 text-sm",                   // 40px - absolute minimum
-                lg: "h-14 px-6 text-lg",                   // 56px - primary actions
-                icon: "h-12 w-12",                         // 48x48px - touch-safe square
+                default: "h-10 px-4 py-2 text-sm",         // 40px - Standard Admin
+                sm: "h-9 px-3 text-sm",                    // 36px - Compact/Utility
+                lg: "h-11 px-8 text-sm",                   // 44px - Prominent but not huge
+                icon: "h-9 w-9",                           // 36px - Standard icon
             },
         },
         defaultVariants: {

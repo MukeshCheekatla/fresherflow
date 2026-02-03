@@ -21,6 +21,7 @@ const COOKIE_OPTIONS = {
 router.post('/login', validate(loginSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { email, password } = req.body;
+        console.log(`🔐 Admin login attempt for: ${email}`);
 
         // Find admin
         const admin = await prisma.admin.findUnique({
@@ -28,14 +29,20 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response,
         });
 
         if (!admin) {
+            console.log('❌ Admin not found');
             return next(new AppError('Invalid credentials', 401));
         }
+
+        console.log('✅ Admin found, verifying password...');
 
         // Verify password
         const isValid = await bcrypt.compare(password, admin.passwordHash);
         if (!isValid) {
+            console.log('❌ Invalid password');
             return next(new AppError('Invalid credentials', 401));
         }
+
+        console.log('✅ Password verified, generating token...');
 
         // Generate admin token
         const token = generateAdminToken(admin.id);
@@ -44,6 +51,8 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response,
             ...COOKIE_OPTIONS,
             maxAge: 15 * 60 * 1000 // 15 mins (Consistent with other tokens)
         });
+
+        console.log('✅ Login successful');
 
         res.json({
             admin: {
@@ -54,7 +63,7 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response,
             // token removed
         });
     } catch (error) {
-        console.error('❌ Admin Login Error:', error);
+        console.error('❌ Admin Login Error Detailed:', error);
         next(error);
     }
 });

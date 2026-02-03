@@ -8,11 +8,20 @@ import { filterOpportunitiesForUser, sortOpportunitiesWithWalkinsFirst } from '.
 const router: Router = express.Router();
 const prisma = new PrismaClient();
 
+function normalizeTypeParam(raw?: string) {
+    if (!raw) return undefined;
+    const value = raw.toLowerCase();
+    if (value === 'job' || value === 'jobs') return 'JOB';
+    if (value === 'internship' || value === 'internships') return 'INTERNSHIP';
+    if (value === 'walk-in' || value === 'walkin' || value === 'walkins' || value === 'walk-ins') return 'WALKIN';
+    return raw.toUpperCase();
+}
+
 // GET /api/opportunities - Get filtered feed (DB + Code filtering)
 router.get('/', requireAuth, profileGate, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { type, category, city, closingSoon } = req.query;
-        const filterType = (type || category) as string | undefined;
+        const filterType = normalizeTypeParam((type || category) as string | undefined);
 
         // Get user profile for filtering
         const profile = await prisma.profile.findUnique({

@@ -9,6 +9,15 @@ const config: Config = {
     darkMode: "class",
     theme: {
         extend: {
+            fontSize: {
+                xs: ["12px", "16px"],
+                sm: ["14px", "20px"],
+                base: ["16px", "24px"],
+                lg: ["18px", "26px"],
+                xl: ["20px", "28px"],
+                "2xl": ["24px", "32px"],
+                "3xl": ["30px", "38px"],
+            },
             colors: {
                 primary: {
                     DEFAULT: "hsl(var(--primary))",

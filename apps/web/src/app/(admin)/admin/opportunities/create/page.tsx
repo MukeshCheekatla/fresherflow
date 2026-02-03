@@ -52,6 +52,14 @@ export default function CreateOpportunityPage() {
     const [contactPerson, setContactPerson] = useState('');
     const [contactPhone, setContactPhone] = useState('');
 
+    const typeParamToEnum = (value: string) => {
+        const v = value.toLowerCase();
+        if (v === 'job' || v === 'jobs') return 'JOB';
+        if (v === 'internship' || v === 'internships') return 'INTERNSHIP';
+        if (v === 'walk-in' || v === 'walkin' || v === 'walkins' || v === 'walk-ins') return 'WALKIN';
+        return value.toUpperCase();
+    };
+
     useEffect(() => {
         if (!isAuthenticated) {
             router.push('/admin/login');
@@ -61,7 +69,7 @@ export default function CreateOpportunityPage() {
     useEffect(() => {
         const typeParam = searchParams.get('type');
         if (!typeParam) return;
-        const normalized = typeParam.toUpperCase();
+        const normalized = typeParamToEnum(typeParam);
         if (normalized === 'JOB' || normalized === 'INTERNSHIP' || normalized === 'WALKIN') {
             setType(normalized as 'JOB' | 'INTERNSHIP' | 'WALKIN');
         }
@@ -182,82 +190,83 @@ export default function CreateOpportunityPage() {
     if (!isAuthenticated) return null;
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+        <div className="max-w-5xl mx-auto space-y-4 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-2 md:pb-24">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <Link href="/admin/opportunities" className="inline-flex items-center gap-2 text-xs font-black text-slate-500 hover:text-slate-200 transition-colors mb-4 uppercase tracking-widest leading-none">
-                        <ArrowLeftIcon className="w-4 h-4" />
-                        Back to Log
-                    </Link>
-                    <h1 className="tracking-tighter text-slate-200">Post Opportunity</h1>
-                    <p className="text-slate-400 font-medium tracking-tight">Create and publish a new listing for matched candidates.</p>
+            <div className="space-y-3 md:space-y-4">
+                <Link href="/admin/opportunities" className="hidden md:inline-flex items-center gap-2 text-xs md:text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    <ArrowLeftIcon className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                    Back to Log
+                </Link>
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-3 md:gap-4">
+                    <div>
+                        <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground">Post Opportunity</h1>
+                        <p className="text-xs md:text-sm text-muted-foreground mt-0.5 md:mt-1">
+                            Create and publish a new listing for matched candidates.
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setShowParser(!showParser)}
+                        className="inline-flex items-center justify-center h-9 md:h-10 px-3 md:px-4 rounded-md text-xs md:text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm w-full md:w-auto"
+                    >
+                        <BoltIcon className="w-3.5 h-3.5 md:w-4 md:h-4 mr-2" />
+                        Auto-Fill
+                    </button>
                 </div>
-                <button
-                    onClick={() => setShowParser(!showParser)}
-                    className="premium-button bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-100"
-                >
-                    <PlusCircleIcon className="w-5 h-5" />
-                    Auto-Fill (AI Parser)
-                </button>
             </div>
 
             {/* AI Parser Overlay */}
             {showParser && (
-                <div className="bg-blue-950/60 border-2 border-blue-900 backdrop-blur-xl rounded-[2.5rem] p-10 relative overflow-hidden group">
-                    <div className="relative z-10">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-xl font-bold text-blue-200 flex items-center gap-2 tracking-tight">
-                                <BoltIcon className="w-6 h-6" />
+                <div className="bg-muted/30 border border-border/50 rounded-xl p-4 md:p-6 relative overflow-hidden">
+                    <div className="relative z-10 space-y-3 md:space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-sm md:text-base font-medium flex items-center gap-2">
+                                <BoltIcon className="w-4 h-4" />
                                 Paste Content
                             </h3>
-                            <button onClick={() => setShowParser(false)} className="text-blue-400 hover:text-blue-300 transition-colors">
-                                <XMarkIcon className="w-6 h-6" />
+                            <button onClick={() => setShowParser(false)} className="text-muted-foreground hover:text-foreground">
+                                <XMarkIcon className="w-5 h-5" />
                             </button>
                         </div>
-                        <p className="text-blue-300 font-medium text-sm mb-6">Paste the raw job description, and our engine will extract the core keys.</p>
                         <textarea
                             value={pastedText}
                             onChange={(e) => setPastedText(e.target.value)}
-                            rows={8}
-                            className="premium-input bg-slate-950/50 border-blue-900 placeholder:text-blue-500/50 text-blue-100 focus:border-blue-500 mb-6"
-                            placeholder="Example: Software Engineer at Google, Mumbai. Req: React, Node.js..."
+                            rows={6}
+                            className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs md:text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            placeholder="Paste job description here..."
                         />
                         <button
                             onClick={parseJobPosting}
                             disabled={!pastedText.trim()}
-                            className="premium-button w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center gap-2 h-[56px]"
+                            className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 disabled:opacity-50 w-full md:w-auto"
                         >
-                            <BoltIcon className="w-5 h-5" />
-                            Execute Magic Parser
+                            <BoltIcon className="w-4 h-4 mr-2" />
+                            Parse
                         </button>
                     </div>
-                    {/* Decor */}
-                    <div className="absolute -right-12 -bottom-12 w-48 h-48 bg-blue-400/20 rounded-full blur-3xl" />
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
                 {/* Type Selection */}
-                <div className="bg-slate-900 rounded-[2rem] border border-slate-800 p-8 shadow-sm">
-                    <h3 className="font-extrabold text-slate-200 mb-6 flex items-center gap-2 tracking-tight">
-                        <InformationCircleIcon className="w-5 h-5 text-slate-500" />
-                        Listing Type Selection
+                <div className="space-y-2 md:space-y-4">
+                    <h3 className="text-sm md:text-base font-semibold text-foreground flex items-center gap-2">
+                        <InformationCircleIcon className="w-4 h-4 text-muted-foreground" />
+                        Listing Type
                     </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-3 gap-2 md:gap-4">
                         {(['JOB', 'INTERNSHIP', 'WALKIN'] as const).map((t) => (
                             <button
                                 key={t}
                                 type="button"
                                 onClick={() => setType(t)}
-                                className={`flex flex-col items-center justify-center py-6 px-4 rounded-2xl border-2 transition-all duration-300 ${type === t
-                                    ? 'bg-blue-600 border-blue-500 text-white shadow-xl shadow-blue-900/20'
-                                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700 hover:bg-slate-900'
+                                className={`flex flex-col items-center justify-center p-2 md:p-4 rounded-lg border transition-all text-center ${type === t
+                                    ? 'bg-primary/5 border-primary ring-1 ring-primary'
+                                    : 'bg-card border-border hover:bg-accent/50 hover:border-accent-foreground/50'
                                     }`}
                             >
-                                <span className="font-black text-xl tracking-tighter mb-1">{t}</span>
-                                <span className="text-xs font-bold opacity-60 uppercase tracking-widest">
-                                    {t === 'WALKIN' ? 'On-site Drive' : 'Direct Hire'}
+                                <span className={`text-xs md:text-sm font-medium ${type === t ? 'text-primary' : 'text-foreground'}`}>{t}</span>
+                                <span className="text-[9px] md:text-xs text-muted-foreground mt-0.5 md:mt-1 leading-none">
+                                    {t === 'WALKIN' ? 'On-site' : 'Direct'}
                                 </span>
                             </button>
                         ))}
@@ -265,103 +274,97 @@ export default function CreateOpportunityPage() {
                 </div>
 
                 {/* Main Details */}
-                <div className="bg-slate-900 rounded-[2rem] border border-slate-800 p-8 space-y-8 shadow-sm">
-                    <h3 className="font-extrabold text-slate-200 mb-2 flex items-center gap-2 tracking-tight">
-                        <BriefcaseIcon className="w-5 h-5 text-slate-500" />
+                <div className="space-y-4 md:space-y-6 border border-border rounded-lg p-4 md:p-6 bg-card">
+                    <h3 className="text-sm md:text-base font-semibold text-foreground flex items-center gap-2">
+                        <BriefcaseIcon className="w-4 h-4 text-muted-foreground" />
                         Core Identity
                     </h3>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-400">Job Title *</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                        <div className="space-y-1.5 md:space-y-2">
+                            <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide">JOB TITLE *</label>
                             <input
                                 required
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                className="premium-input bg-slate-950 border-slate-800 text-slate-200 focus:border-blue-600"
+                                className="flex h-10 md:h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 placeholder="e.g. Senior Frontend Engineer"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-400">Company Name *</label>
+                        <div className="space-y-1.5 md:space-y-2">
+                            <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide">COMPANY NAME *</label>
                             <input
                                 required
                                 value={company}
                                 onChange={(e) => setCompany(e.target.value)}
-                                className="premium-input bg-slate-950 border-slate-800 text-slate-200 focus:border-blue-600"
+                                className="flex h-10 md:h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 placeholder="e.g. Google India"
                             />
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-slate-400">Full Description</label>
+                    <div className="space-y-1.5 md:space-y-2">
+                        <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide">FULL DESCRIPTION</label>
                         <textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             rows={6}
-                            className="premium-input resize-none bg-slate-950 border-slate-800 text-slate-300 focus:border-blue-600"
+                            className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                             placeholder="Roles and responsibilities..."
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
-                                <CurrencyRupeeIcon className="w-4 h-4" /> Floor Comp
-                            </label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                        <div className="space-y-1.5 md:space-y-2">
+                            <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide">MIN SALARY</label>
                             <input
                                 type="number"
                                 value={salaryMin}
                                 onChange={(e) => setSalaryMin(e.target.value)}
-                                className="premium-input bg-slate-950/50 border-slate-800 text-slate-200"
+                                className="flex h-10 md:h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 placeholder="3,00,000"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
-                                <CurrencyRupeeIcon className="w-4 h-4" /> Ceiling Comp
-                            </label>
+                        <div className="space-y-1.5 md:space-y-2">
+                            <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide">MAX SALARY</label>
                             <input
                                 type="number"
                                 value={salaryMax}
                                 onChange={(e) => setSalaryMax(e.target.value)}
-                                className="premium-input bg-slate-950/50 border-slate-800 text-slate-200"
+                                className="flex h-10 md:h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 placeholder="12,00,000"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                                <CalendarIcon className="w-4 h-4" /> Expiry Protocol
-                            </label>
+                        <div className="space-y-1.5 md:space-y-2">
+                            <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide">EXPIRY DATE</label>
                             <input
                                 type="datetime-local"
                                 value={expiresAt}
                                 onChange={(e) => setExpiresAt(e.target.value)}
-                                className="premium-input p-2.5 bg-slate-950 border-slate-800 text-slate-200"
+                                className="flex h-10 md:h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             />
                         </div>
                     </div>
                 </div>
 
                 {/* Requirements */}
-                <div className="bg-slate-900 rounded-[2rem] border border-slate-800 p-8 space-y-8 shadow-sm">
-                    <h3 className="font-extrabold text-slate-200 mb-2 flex items-center gap-2 tracking-tight">
-                        <AcademicCapIcon className="w-5 h-5 text-slate-500" />
+                <div className="space-y-4 md:space-y-6 border border-border rounded-lg p-4 md:p-6 bg-card">
+                    <h3 className="text-sm md:text-base font-semibold text-foreground flex items-center gap-2">
+                        <AcademicCapIcon className="w-4 h-4 text-muted-foreground" />
                         Target Parameters
                     </h3>
 
-                    <div className="space-y-3">
-                        <label className="text-sm font-bold text-slate-400">Allowed Education Levels</label>
-                        <div className="flex flex-wrap gap-3">
+                    <div className="space-y-2 md:space-y-3">
+                        <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide">EDUCATION LEVELS</label>
+                        <div className="flex flex-wrap gap-2">
                             {['DIPLOMA', 'DEGREE', 'PG'].map((deg) => (
                                 <button
                                     key={deg}
                                     type="button"
                                     onClick={() => handleDegreeToggle(deg)}
-                                    className={`px-6 py-2 rounded-xl font-bold border-2 transition-all ${allowedDegrees.includes(deg)
-                                        ? 'bg-blue-900/30 border-blue-500 text-blue-400'
-                                        : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'
+                                    className={`px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-md text-xs md:text-sm font-medium border transition-colors ${allowedDegrees.includes(deg)
+                                        ? 'bg-primary/10 border-primary text-primary'
+                                        : 'bg-background border-input text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                                         }`}
                                 >
                                     {deg}
@@ -370,23 +373,23 @@ export default function CreateOpportunityPage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-400">Passout Years (comma separated)</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                        <div className="space-y-1.5 md:space-y-2">
+                            <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide">PASSOUT YEARS</label>
                             <input
                                 required
                                 value={passoutYears.join(', ')}
                                 onChange={(e) => setPassoutYears(e.target.value.split(',').map(y => parseInt(y.trim())).filter(Boolean))}
-                                className="premium-input bg-slate-950 border-slate-800 text-slate-200"
+                                className="flex h-10 md:h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 placeholder="2024, 2025"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-400">Key Skills Required</label>
+                        <div className="space-y-1.5 md:space-y-2">
+                            <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide">KEY SKILLS</label>
                             <input
                                 value={requiredSkills}
                                 onChange={(e) => setRequiredSkills(e.target.value)}
-                                className="premium-input bg-slate-950 border-slate-800 text-slate-200"
+                                className="flex h-10 md:h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 placeholder="React, Node.js, AWS..."
                             />
                         </div>
@@ -394,35 +397,35 @@ export default function CreateOpportunityPage() {
                 </div>
 
                 {/* Logistics */}
-                <div className="bg-slate-900 rounded-[2rem] border border-slate-800 p-8 space-y-8 shadow-sm">
-                    <h3 className="font-extrabold text-slate-200 mb-2 flex items-center gap-2 tracking-tight">
-                        <MapPinIcon className="w-5 h-5 text-slate-500" />
-                        Deployment Centers
+                <div className="space-y-4 md:space-y-6 border border-border rounded-lg p-4 md:p-6 bg-card">
+                    <h3 className="text-sm md:text-base font-semibold text-foreground flex items-center gap-2">
+                        <MapPinIcon className="w-4 h-4 text-muted-foreground" />
+                        Logistics
                     </h3>
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-slate-400">Locations (comma separated)</label>
+                    <div className="space-y-1.5 md:space-y-2">
+                        <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide">LOCATIONS</label>
                         <input
                             required
                             value={locations}
                             onChange={(e) => setLocations(e.target.value)}
-                            className="premium-input bg-slate-950 border-slate-800 text-slate-200"
+                            className="flex h-10 md:h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             placeholder="Mumbai, Bangalore, Remote"
                         />
                     </div>
 
                     {type !== 'WALKIN' && (
-                        <div className="space-y-3 pt-2">
-                            <label className="text-sm font-bold text-slate-400">Primary Work Mode</label>
-                            <div className="grid grid-cols-3 gap-3">
+                        <div className="space-y-2 md:space-y-3">
+                            <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide">WORK MODE</label>
+                            <div className="grid grid-cols-3 gap-2 md:gap-3">
                                 {(['ONSITE', 'HYBRID', 'REMOTE'] as const).map((mode) => (
                                     <button
                                         key={mode}
                                         type="button"
                                         onClick={() => setWorkMode(mode)}
-                                        className={`py-3 rounded-xl font-bold border-2 transition-all ${workMode === mode
-                                            ? 'bg-indigo-900/30 border-indigo-500 text-indigo-400'
-                                            : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'
+                                        className={`h-8 md:h-9 rounded-md text-xs md:text-sm font-medium border transition-colors ${workMode === mode
+                                            ? 'bg-primary/10 border-primary text-primary'
+                                            : 'bg-background border-input text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                                             }`}
                                     >
                                         {mode}
@@ -434,83 +437,83 @@ export default function CreateOpportunityPage() {
                 </div>
 
                 {/* Apply Settings */}
-                <div className="bg-slate-900 rounded-[2rem] border border-slate-800 p-8 space-y-8 shadow-sm">
-                    <h3 className="font-extrabold text-slate-200 mb-2 flex items-center gap-2 tracking-tight">
-                        <LinkIcon className="w-5 h-5 text-slate-500" />
+                <div className="space-y-4 md:space-y-6 border border-border rounded-lg p-4 md:p-6 bg-card">
+                    <h3 className="text-sm md:text-base font-semibold text-foreground flex items-center gap-2">
+                        <LinkIcon className="w-4 h-4 text-muted-foreground" />
                         Application Channel
                     </h3>
 
                     {type === 'WALKIN' ? (
-                        <div className="bg-orange-950/20 border border-orange-900/50 rounded-2xl p-6 space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold text-orange-400 tracking-tight">Walk-in Dates *</label>
+                        <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                                <div className="space-y-1.5 md:space-y-2">
+                                    <label className="text-[10px] md:text-xs font-medium text-amber-700 dark:text-amber-400 tracking-wide">WALK-IN DATES *</label>
                                     <input
                                         required
                                         value={walkInDates}
                                         onChange={(e) => setWalkInDates(e.target.value)}
-                                        className="premium-input bg-slate-950 border-orange-900/50 text-orange-100 placeholder:text-orange-500/50"
+                                        className="flex h-10 md:h-11 w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
                                         placeholder="2024-05-10, 2024-05-11"
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold text-orange-400 tracking-tight">Reporting Time *</label>
+                                <div className="space-y-1.5 md:space-y-2">
+                                    <label className="text-[10px] md:text-xs font-medium text-amber-700 dark:text-amber-400 tracking-wide">REPORTING TIME *</label>
                                     <input
                                         required
                                         value={reportingTime}
                                         onChange={(e) => setReportingTime(e.target.value)}
-                                        className="premium-input bg-slate-950 border-orange-900/50 text-orange-100 placeholder:text-orange-500/50"
+                                        className="flex h-10 md:h-11 w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
                                         placeholder="09:00 AM - 12:00 PM"
                                     />
                                 </div>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-orange-400 tracking-tight">Venue Address *</label>
+                            <div className="space-y-1.5 md:space-y-2">
+                                <label className="text-[10px] md:text-xs font-medium text-amber-700 dark:text-amber-400 tracking-wide">VENUE ADDRESS *</label>
                                 <textarea
                                     required
                                     value={venueAddress}
                                     onChange={(e) => setVenueAddress(e.target.value)}
                                     rows={3}
-                                    className="premium-input bg-slate-950 border-orange-900/50 text-orange-100 placeholder:text-orange-500/50 resize-none"
+                                    className="flex min-h-[60px] w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                                     placeholder="Complete street address..."
                                 />
                             </div>
                         </div>
                     ) : (
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-400">Official Apply URL *</label>
+                        <div className="space-y-1.5 md:space-y-2">
+                            <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide">OFFICIAL APPLY URL *</label>
                             <input
                                 type="url"
                                 required
                                 value={applyLink}
                                 onChange={(e) => setApplyLink(e.target.value)}
-                                className="premium-input bg-slate-950 border-slate-800 text-slate-200"
-                                placeholder="https://careers.google.com/jobs/..."
+                                className="flex h-10 md:h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                placeholder="https://careers.company.com/..."
                             />
                         </div>
                     )}
                 </div>
 
                 {/* Footer Actions */}
-                <div className="flex flex-col sm:flex-row gap-4 pt-10">
+                <div className="flex items-center justify-end gap-3 pt-4">
+                    <Link
+                        href="/admin/opportunities"
+                        className="inline-flex h-9 md:h-10 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 w-full md:w-auto order-1"
+                    >
+                        Cancel
+                    </Link>
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="flex-1 premium-button bg-blue-600 hover:bg-blue-500 h-[64px] shadow-2xl shadow-blue-900/20"
+                        className="inline-flex h-9 md:h-10 items-center justify-center rounded-md bg-primary px-4 md:px-8 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:pointer-events-none ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 w-full md:w-auto order-2"
                     >
                         {isLoading ? (
-                            <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
                         ) : (
-                            <PaperAirplaneIcon className="w-6 h-6" />
+                            <PaperAirplaneIcon className="w-4 h-4 mr-2" />
                         )}
-                        {isLoading ? 'Decrypting & Publishing...' : 'Finalize & Launch Stream'}
+                        {isLoading ? 'Publishing...' : 'Publish'}
                     </button>
-                    <Link
-                        href="/admin/opportunities"
-                        className="premium-button-outline py-5 px-10 text-center border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200 hover:bg-slate-900"
-                    >
-                        Discard
-                    </Link>
                 </div>
             </form>
         </div>
