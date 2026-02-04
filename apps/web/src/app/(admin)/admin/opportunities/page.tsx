@@ -39,6 +39,7 @@ export default function OpportunitiesListPage() {
     const [totalPages, setTotalPages] = useState(1);
     const pageSize = 20;
     const debouncedSearch = useDebounce(search, 300);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
     const typeParamToEnum = (value: string) => {
         const v = value.toLowerCase();
@@ -210,6 +211,51 @@ export default function OpportunitiesListPage() {
         });
     };
 
+    const handleBulkAction = async (action: 'DELETE' | 'ARCHIVE' | 'PUBLISH' | 'EXPIRE') => {
+        if (selectedIds.length === 0) return;
+
+        const actionNames = {
+            'DELETE': 'remove',
+            'ARCHIVE': 'archive',
+            'PUBLISH': 'publish',
+            'EXPIRE': 'expire'
+        };
+
+        setConfirmModal({
+            show: true,
+            title: `Bulk ${action.charAt(0) + action.slice(1).toLowerCase()}`,
+            message: `Are you sure you want to ${actionNames[action]} ${selectedIds.length} listings? This action cannot be easily undone.`,
+            type: action === 'DELETE' ? 'danger' : 'warning',
+            confirmText: `Yes, ${action.toLowerCase()} all`,
+            action: async () => {
+                const loadingToast = toast.loading(` Processing bulk ${action.toLowerCase()}...`);
+                try {
+                    await adminApi.bulkAction(selectedIds, action);
+                    toast.success(` Success: ${selectedIds.length} items updated`, { id: loadingToast });
+                    setSelectedIds([]);
+                    loadOpportunities();
+                    setConfirmModal(prev => ({ ...prev, show: false }));
+                } catch (err: unknown) {
+                    toast.error(` Failed: ${(err as Error).message}`, { id: loadingToast });
+                }
+            }
+        });
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedIds.length === displayOpportunities.length) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(displayOpportunities.map(o => o.id));
+        }
+    };
+
+    const toggleSelect = (id: string) => {
+        setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
     if (!isAuthenticated) return null;
 
     const computedTotalPages = totalCount > 0 ? Math.ceil(totalCount / pageSize) : 1;
@@ -234,6 +280,47 @@ export default function OpportunitiesListPage() {
                     New Listing
                 </Link>
             </div>
+
+            {/* Bulk Actions Bar */}
+            {selectedIds.length > 0 && (
+                <div className="flex items-center justify-between p-3 bg-primary/5 border border-primary/20 rounded-lg animate-in slide-in-from-top-4 duration-300">
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-bold">
+                                {selectedIds.length}
+                            </div>
+                            <span className="text-sm font-medium text-primary">Selected for Bulk Action</span>
+                        </div>
+                        <div className="h-4 w-[1px] bg-primary/20" />
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => handleBulkAction('PUBLISH')}
+                                className="h-8 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-100/50 rounded-md transition-colors"
+                            >
+                                Publish All
+                            </button>
+                            <button
+                                onClick={() => handleBulkAction('ARCHIVE')}
+                                className="h-8 px-3 text-xs font-semibold text-amber-700 hover:bg-amber-100/50 rounded-md transition-colors"
+                            >
+                                Archive All
+                            </button>
+                            <button
+                                onClick={() => handleBulkAction('DELETE')}
+                                className="h-8 px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100/50 rounded-md transition-colors"
+                            >
+                                Delete All
+                            </button>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => setSelectedIds([])}
+                        className="text-xs font-medium text-muted-foreground hover:text-foreground px-2"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            )}
 
             {/* Quick Toggle - Hidden on Mobile to avoid duplicates */}
             <div className="hidden md:flex items-center gap-2">
@@ -361,6 +448,17 @@ export default function OpportunitiesListPage() {
                             <div key={opp.id} className="bg-card rounded-lg border border-border p-4 shadow-sm">
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex items-start gap-3">
+                                        <div
+                                            onClick={() => toggleSelect(opp.id)}
+                                            className={`w-4 h-4 mt-1 rounded border transition-colors cursor-pointer flex-shrink-0 flex items-center justify-center ${selectedIds.includes(opp.id)
+                                                    ? 'bg-primary border-primary'
+                                                    : 'border-muted-foreground/30 hover:border-primary'
+                                                }`}
+                                        >
+                                            {selectedIds.includes(opp.id) && (
+                                                <div className="w-2 h-2 bg-primary-foreground rounded-[1px]" />
+                                            )}
+                                        </div>
                                         <div className={`w-9 h-9 rounded-md flex items-center justify-center font-semibold text-xs ${opp.type === 'WALKIN' ? 'bg-amber-100 text-amber-700' :
                                             opp.type === 'INTERNSHIP' ? 'bg-purple-100 text-purple-700' :
                                                 'bg-blue-100 text-blue-700'
@@ -441,6 +539,19 @@ export default function OpportunitiesListPage() {
                         <table className="w-full text-left text-sm">
                             <thead>
                                 <tr className="border-b border-border bg-muted/50">
+                                    <th className="group px-5 py-3 w-10">
+                                        <div
+                                            onClick={toggleSelectAll}
+                                            className={`w-4 h-4 rounded border transition-colors cursor-pointer flex items-center justify-center ${selectedIds.length === displayOpportunities.length && displayOpportunities.length > 0
+                                                ? 'bg-primary border-primary'
+                                                : 'border-muted-foreground/30 hover:border-primary'
+                                                }`}
+                                        >
+                                            {selectedIds.length === displayOpportunities.length && displayOpportunities.length > 0 && (
+                                                <div className="w-2 h-2 bg-primary-foreground rounded-[1px]" />
+                                            )}
+                                        </div>
+                                    </th>
                                     <th className="px-5 py-3 text-xs font-medium text-muted-foreground">Opportunity</th>
                                     <th className="px-5 py-3 text-xs font-medium text-muted-foreground">Details</th>
                                     <th className="px-5 py-3 text-xs font-medium text-muted-foreground">Status</th>
@@ -449,7 +560,20 @@ export default function OpportunitiesListPage() {
                             </thead>
                             <tbody className="divide-y divide-border">
                                 {displayOpportunities.map((opp) => (
-                                    <tr key={opp.id} className="hover:bg-muted/50 transition-colors group">
+                                    <tr key={opp.id} className={`hover:bg-muted/50 transition-colors group ${selectedIds.includes(opp.id) ? 'bg-primary/5' : ''}`}>
+                                        <td className="px-5 py-4">
+                                            <div
+                                                onClick={() => toggleSelect(opp.id)}
+                                                className={`w-4 h-4 rounded border transition-colors cursor-pointer flex items-center justify-center ${selectedIds.includes(opp.id)
+                                                        ? 'bg-primary border-primary'
+                                                        : 'border-muted-foreground/30 hover:border-primary'
+                                                    }`}
+                                            >
+                                                {selectedIds.includes(opp.id) && (
+                                                    <div className="w-2 h-2 bg-primary-foreground rounded-[1px]" />
+                                                )}
+                                            </div>
+                                        </td>
                                         <td className="px-5 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className={`w-8 h-8 rounded-md flex items-center justify-center font-semibold text-xs ${opp.type === 'WALKIN' ? 'bg-amber-100 text-amber-700' :

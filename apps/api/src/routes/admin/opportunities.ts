@@ -70,6 +70,63 @@ router.post('/parse', async (req: Request, res: Response, next: NextFunction) =>
     }
 });
 
+// POST /api/admin/opportunities/bulk
+router.post(
+    '/bulk',
+    withAdminAudit('BULK_ACTION'),
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const { ids, action, reason } = req.body;
+
+            if (!ids || !Array.isArray(ids) || ids.length === 0) {
+                return res.status(400).json({ message: 'IDs array is required' });
+            }
+
+            if (!action) {
+                return res.status(400).json({ message: 'Action is required' });
+            }
+
+            let result;
+            const now = new Date();
+
+            switch (action) {
+                case 'DELETE':
+                    result = await prisma.opportunity.deleteMany({
+                        where: { id: { in: ids } }
+                    });
+                    break;
+                case 'ARCHIVE':
+                    result = await prisma.opportunity.updateMany({
+                        where: { id: { in: ids } },
+                        data: { status: OpportunityStatus.ARCHIVED }
+                    });
+                    break;
+                case 'PUBLISH':
+                    result = await prisma.opportunity.updateMany({
+                        where: { id: { in: ids } },
+                        data: { status: OpportunityStatus.PUBLISHED }
+                    });
+                    break;
+                case 'EXPIRE':
+                    result = await prisma.opportunity.updateMany({
+                        where: { id: { in: ids } },
+                        data: { expiredAt: now }
+                    });
+                    break;
+                default:
+                    return res.status(400).json({ message: 'Invalid action' });
+            }
+
+            res.json({
+                message: `Bulk ${action.toLowerCase()} completed`,
+                count: result.count
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+);
+
 // POST /api/admin/opportunities
 router.post(
     '/',

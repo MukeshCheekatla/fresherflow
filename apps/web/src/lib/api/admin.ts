@@ -62,5 +62,12 @@ export const adminApi = {
         apiClient('/api/admin/opportunities/parse', {
             method: 'POST',
             body: JSON.stringify({ text })
+        }),
+
+    // Bulk actions
+    bulkAction: (ids: string[], action: 'DELETE' | 'ARCHIVE' | 'PUBLISH' | 'EXPIRE', reason?: string) =>
+        apiClient('/api/admin/opportunities/bulk', {
+            method: 'POST',
+            body: JSON.stringify({ ids, action, reason })
         })
 };
