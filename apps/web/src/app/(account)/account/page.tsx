@@ -1,7 +1,6 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import {
     BookmarkIcon,
@@ -13,7 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function AccountPage() {
-    const { user, profile, isLoading, logout } = useAuth();
+    const { user, isLoading, logout } = useAuth();
 
     if (isLoading) return (
         <div className="min-h-screen bg-background flex items-center justify-center">

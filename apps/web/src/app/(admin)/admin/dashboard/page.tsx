@@ -3,10 +3,9 @@
 import { useAdmin } from '@/contexts/AdminContext';
 import { adminApi } from '@/lib/api/admin';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { cn } from '@/lib/utils';
 import {
     BriefcaseIcon,
     ClockIcon,
@@ -20,7 +19,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function AdminDashboardPage() {
-    const { isAuthenticated, logout } = useAdmin();
+    const { isAuthenticated } = useAdmin();
     const router = useRouter();
 
     // Stats state
@@ -32,15 +31,7 @@ export default function AdminDashboardPage() {
         loading: true
     });
 
-    useEffect(() => {
-        if (!isAuthenticated) {
-            router.push('/admin/login');
-            return;
-        }
-        fetchStats();
-    }, [isAuthenticated, router]);
-
-    const fetchStats = async () => {
+    const fetchStats = useCallback(async () => {
         if (!isAuthenticated) return;
 
         try {
@@ -54,12 +45,21 @@ export default function AdminDashboardPage() {
                 expired: summary.expired || 0,
                 loading: false
             });
-        } catch (error: any) {
+        } catch (err: unknown) {
+            const error = err as Error;
             console.error('Error fetching stats:', error);
             toast.error(`❌ Failed to load stats: ${error.message}`);
             setStats(prev => ({ ...prev, loading: false }));
         }
-    };
+    }, [isAuthenticated]);
+
+    useEffect(() => {
+        if (!isAuthenticated) {
+            router.push('/admin/login');
+            return;
+        }
+        fetchStats();
+    }, [isAuthenticated, router, fetchStats]);
 
     if (!isAuthenticated) return null;
 

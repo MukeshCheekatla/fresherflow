@@ -33,8 +33,9 @@ export default function AdminLoginPage() {
             await login(email, password);
             toast.success('✅ Welcome back, Admin.', { id: loadingToast });
             // Redirect handled by Context (router.push)
-        } catch (err: any) {
-            toast.error(err.message || 'Login failed', { id: loadingToast });
+        } catch (err) {
+            const error = err as Error;
+            toast.error(error.message || 'Login failed', { id: loadingToast });
         }
     };
 

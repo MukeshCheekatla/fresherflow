@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { actionsApi, opportunitiesApi } from '@/lib/api/client';
+import { actionsApi } from '@/lib/api/client';
 import { Opportunity } from '@fresherflow/types';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { MapPinIcon, TrashIcon, ExclamationCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { MapPinIcon, TrashIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
 export default function SavedJobsPage() {
@@ -15,28 +15,29 @@ export default function SavedJobsPage() {
     const [fetchingJobs, setFetchingJobs] = useState(true);
     const router = useRouter();
 
-    const loadSavedJobs = async () => {
+    const loadSavedJobs = useCallback(async () => {
         setFetchingJobs(true);
         try {
             const actions = await actionsApi.list();
             // Assuming actions returns [{ opportunity: Opportunity, actionType: string }]
             const saved = actions
-                .filter((a: any) => a.actionType === 'PLANNING')
-                .map((a: any) => a.opportunity);
+                .filter((a: { actionType: string }) => a.actionType === 'PLANNING')
+                .map((a: { opportunity: Opportunity }) => a.opportunity);
             setSavedJobs(saved);
-        } catch (error: any) {
+        } catch (err: unknown) {
+            const error = err as Error;
             console.error('Error loading saved jobs:', error);
             toast.error('Failed to sync saved stream');
         } finally {
             setFetchingJobs(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         if (user) {
             loadSavedJobs();
         }
-    }, [user]);
+    }, [user, loadSavedJobs]);
 
     const handleRemove = async (e: React.MouseEvent, id: string) => {
         e.stopPropagation();

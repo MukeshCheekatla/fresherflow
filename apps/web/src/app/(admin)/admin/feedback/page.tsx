@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -19,12 +19,38 @@ import {
     UserIcon
 } from '@heroicons/react/24/outline';
 
+interface FeedbackItem {
+    id: string;
+    opportunityId: string;
+    reason: string;
+    createdAt: string;
+    user?: {
+        fullName?: string;
+    };
+    opportunity?: {
+        title: string;
+        company: string;
+    };
+}
+
 export default function FeedbackPage() {
     const { isAuthenticated } = useAdmin();
     const router = useRouter();
-    const [feedback, setFeedback] = useState<any[]>([]);
+    const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState('');
+
+    const loadFeedback = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const data = await adminApi.getFeedback();
+            setFeedback(data.feedback || []);
+        } catch (err: unknown) {
+            const error = err as Error;
+            toast.error(`❌ ${error.message}`);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -32,21 +58,7 @@ export default function FeedbackPage() {
             return;
         }
         loadFeedback();
-    }, [isAuthenticated]);
-
-    const loadFeedback = async () => {
-        setIsLoading(true);
-        try {
-            const data = await adminApi.getFeedback();
-            setFeedback(data.feedback || []);
-            setError('');
-        } catch (err: any) {
-            toast.error(`❌ ${err.message}`);
-            setError(err.message || 'Failed to load feedback');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    }, [isAuthenticated, router, loadFeedback]);
 
     const groupedFeedback = feedback.reduce((acc, fb) => {
         const oppId = fb.opportunityId;
@@ -58,7 +70,7 @@ export default function FeedbackPage() {
         }
         acc[oppId].items.push(fb);
         return acc;
-    }, {} as Record<string, any>);
+    }, {} as Record<string, { opportunity?: FeedbackItem['opportunity'], items: FeedbackItem[] }>);
 
     if (!isAuthenticated) return null;
 
