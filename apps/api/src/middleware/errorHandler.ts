@@ -14,11 +14,16 @@ export function errorHandler(
 
     // Detect Prisma database errors and show clean message
     const isPrismaError = errorMsg.includes('Prisma') || errorMsg.includes('does not exist in the current database');
+    const statusCode = err.statusCode || 500;
 
     if (isPrismaError) {
         console.log(chalk.red(`✖ Database Error`));
         console.log(chalk.gray(`  ${errorMsg.split('\n')[0]}`)); // First line only
         console.log(chalk.yellow(`  → Run: npm run db:push to sync database`));
+    } else if (statusCode === 401 || statusCode === 404) {
+        // Log authentication or not found as warnings (less alarming)
+        console.log(chalk.yellow(`⚠ ${statusCode === 401 ? 'Auth' : 'NotFound'}: ${errorMsg.split('\n')[0]}`));
+        console.log(chalk.gray(`  at ${location}`));
     } else {
         // Log clean error message
         console.log(chalk.red(`✖ Error: ${errorMsg.split('\n')[0]}`)); // First line only
@@ -36,7 +41,6 @@ export function errorHandler(
         });
     }
 
-    const statusCode = err.statusCode || 500;
     const isDev = process.env.NODE_ENV === 'development';
 
     /**
