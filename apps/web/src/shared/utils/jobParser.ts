@@ -11,6 +11,7 @@ export function parseJobText(text: string) {
         text = text.replace(pattern, '');
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result: any = {
         title: '', company: '', location: '', skills: '',
         workMode: 'ONSITE', degrees: [], passoutYears: []

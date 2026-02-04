@@ -10,14 +10,11 @@ import {
     ArrowLeftIcon,
     InformationCircleIcon,
     BoltIcon,
-    CheckCircleIcon,
-    DocumentTextIcon,
     BriefcaseIcon,
     AcademicCapIcon,
     MapPinIcon,
     LinkIcon,
-    PaperAirplaneIcon,
-    XMarkIcon
+    PaperAirplaneIcon
 } from '@heroicons/react/24/outline';
 
 export default function CreateOpportunityPage() {
@@ -51,12 +48,7 @@ export default function CreateOpportunityPage() {
     const [experienceMax, setExperienceMax] = useState('');
 
     // Walk-in specific
-    const [walkInDates, setWalkInDates] = useState<string>('');
     const [venueAddress, setVenueAddress] = useState('');
-    const [reportingTime, setReportingTime] = useState('');
-    const [requiredDocuments, setRequiredDocuments] = useState<string>('');
-    const [contactPerson, setContactPerson] = useState('');
-    const [contactPhone, setContactPhone] = useState('');
     const [walkInDateRange, setWalkInDateRange] = useState('');
     const [walkInTimeRange, setWalkInTimeRange] = useState('');
     const [venueLink, setVenueLink] = useState('');
@@ -178,7 +170,7 @@ export default function CreateOpportunityPage() {
 
             toast.success('Successfully auto-filled from content!', { id: toastId });
             setShowParser(false);
-        } catch (error) {
+        } catch {
             toast.error('Failed to parse text. Please fill manually.', { id: toastId });
         } finally {
             setIsParsing(false);
@@ -189,7 +181,7 @@ export default function CreateOpportunityPage() {
         if (!expiresAt) return;
         const [date, time] = expiresAt.split('T');
         if (!time) return;
-        let [hours, minutes] = time.split(':');
+        const [hours, minutes] = time.split(':');
         let h = parseInt(hours);
 
         if (target === 'PM' && h < 12) h += 12;
@@ -229,7 +221,7 @@ export default function CreateOpportunityPage() {
         const loadingToast = toast.loading('⏳ Publishing to platform...');
 
         try {
-            const payload: any = {
+            const payload: Record<string, unknown> = {
                 type,
                 title,
                 company,
@@ -257,15 +249,11 @@ export default function CreateOpportunityPage() {
                 const autoTimeRange = `${formatTime(startTime)} - ${formatTime(endTime)}`;
 
                 payload.walkInDetails = {
-                    dates: walkInDates.split(',').map(d => d.trim()).filter(Boolean),
                     dateRange: autoDateRange || walkInDateRange || undefined,
                     timeRange: autoTimeRange || walkInTimeRange || undefined,
                     venueAddress,
                     venueLink: venueLink || undefined,
-                    reportingTime: reportingTime || autoTimeRange || undefined,
-                    requiredDocuments: requiredDocuments.split(',').map(s => s.trim()).filter(Boolean),
-                    contactPerson: contactPerson || undefined,
-                    contactPhone: contactPhone || undefined,
+                    reportingTime: autoTimeRange || undefined,
                 };
             }
 
@@ -273,8 +261,9 @@ export default function CreateOpportunityPage() {
 
             toast.success('🚀 Opportunity published!', { id: loadingToast });
             router.push('/admin/opportunities');
-        } catch (err: any) {
-            toast.error(`❌ Error: ${err.message}`, { id: loadingToast });
+        } catch (err: unknown) {
+            const error = err as Error;
+            toast.error(`❌ Error: ${error.message}`, { id: loadingToast });
         } finally {
             setIsLoading(false);
         }

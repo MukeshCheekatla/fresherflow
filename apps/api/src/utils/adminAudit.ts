@@ -15,7 +15,7 @@ export async function logAdminAction(
 ): Promise<void> {
     await prisma.adminAudit.create({
         data: {
-            adminId,
+            userId: adminId,
             action,
             targetId,
             reason: reason || null

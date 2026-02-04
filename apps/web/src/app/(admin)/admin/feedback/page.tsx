@@ -134,7 +134,7 @@ export default function FeedbackPage() {
                 </div>
             ) : (
                 <div className="space-y-4 md:space-y-6">
-                    {Object.entries(groupedFeedback).map(([oppId, data]: [string, any]) => (
+                    {Object.entries(groupedFeedback).map(([oppId, data]) => (
                         <div key={oppId} className="bg-card rounded-lg border border-border overflow-hidden shadow-sm">
                             {/* Opportunity Information */}
                             <div className="bg-muted/40 p-3 md:p-4 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -169,7 +169,7 @@ export default function FeedbackPage() {
 
                             {/* Reports Grid */}
                             <div className="p-3 md:p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-                                {data.items.map((fb: any) => (
+                                {data.items.map((fb: FeedbackItem) => (
                                     <div key={fb.id} className="p-3 rounded-lg border border-border bg-background/50 hover:bg-background transition-colors">
                                         <div className="flex items-center justify-between mb-2">
                                             <span className={cn(

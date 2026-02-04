@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAdmin } from '@/contexts/AdminContext';
 import Link from 'next/link';
@@ -16,9 +16,7 @@ import {
     CheckIcon,
     InformationCircleIcon,
     ClockIcon,
-    BuildingOfficeIcon,
     BoltIcon,
-    XMarkIcon,
     CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import { adminApi } from '@/lib/api/admin';
@@ -99,16 +97,7 @@ export default function EditOpportunityPage() {
         return `${hours}:${m} ${ampm}`;
     };
 
-    useEffect(() => {
-        if (!isAuthenticated) {
-            router.push('/admin/login');
-            return;
-        }
-
-        fetchOpportunity();
-    }, [isAuthenticated]);
-
-    const fetchOpportunity = async () => {
+    const fetchOpportunity = useCallback(async () => {
         try {
             const data = await adminApi.getOpportunity(params.id as string);
             const opp = data.opportunity;
@@ -178,11 +167,21 @@ export default function EditOpportunityPage() {
             }
 
             setLoading(false);
-        } catch (error: any) {
-            toast.error(` Failed to load: ${error.message}`);
+        } catch (err: unknown) {
+            const error = err as Error;
+            toast.error(`❌ Failed to load: ${error.message}`);
             router.push('/admin/opportunities');
         }
-    };
+    }, [params.id, router]);
+
+    useEffect(() => {
+        if (!isAuthenticated) {
+            router.push('/admin/login');
+            return;
+        }
+
+        void fetchOpportunity();
+    }, [isAuthenticated, router, fetchOpportunity]);
 
     const handleQuickLocation = (loc: string) => {
         if (locations.toLowerCase().includes(loc.toLowerCase())) return;
@@ -193,7 +192,7 @@ export default function EditOpportunityPage() {
         if (!expiresAt) return;
         const [date, time] = expiresAt.split('T');
         if (!time) return;
-        let [hours, minutes] = time.split(':');
+        const [hours, minutes] = time.split(':');
         let h = parseInt(hours);
 
         if (target === 'PM' && h < 12) h += 12;
@@ -247,7 +246,7 @@ export default function EditOpportunityPage() {
         const loadingToast = toast.loading(' Saving changes...');
 
         try {
-            const payload: any = {
+            const payload: Record<string, unknown> = {
                 type,
                 status,
                 title,
@@ -291,7 +290,8 @@ export default function EditOpportunityPage() {
 
             toast.success(' Changes saved successfully!', { id: loadingToast });
             router.push('/admin/opportunities');
-        } catch (error: any) {
+        } catch (err: unknown) {
+            const error = err as Error;
             toast.error(` Failed: ${error.message}`, { id: loadingToast });
         } finally {
             setSaving(false);

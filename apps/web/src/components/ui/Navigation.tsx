@@ -8,7 +8,6 @@ import { useContext, useState, useEffect } from 'react';
 import {
     HomeIcon,
     BriefcaseIcon,
-    AcademicCapIcon,
     UserIcon,
     ArrowRightOnRectangleIcon,
     MagnifyingGlassIcon,
@@ -40,7 +39,7 @@ export function Navbar() {
             }
             toast.success('Goodbye!', { id: loading });
             window.location.href = '/login';
-        } catch (err) {
+        } catch {
             toast.error('Logout error', { id: loading });
         }
     };

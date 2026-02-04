@@ -1,8 +1,9 @@
-import { AuthResponse, Profile } from '@fresherflow/types';
+import { AuthResponse, Profile, Admin } from '@fresherflow/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // API Client with automatic cookie handling
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function apiClient<T = any>(
     endpoint: string,
     options: RequestInit = {}
@@ -41,18 +42,21 @@ export async function apiClient<T = any>(
                     // Refresh failed (refresh cookie expired or invalid)
                     // Throw 401 to let caller handle redirect/logout
                 }
-            } catch (e) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            } catch (_e) {
                 // Network error on refresh, throw original error or new one
             }
         }
 
         if (!response.ok) {
             let errorMessage = 'Request failed';
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             let errorData: any = {};
 
             try {
                 errorData = await response.json();
                 errorMessage = errorData.error?.message || errorData.error || errorMessage;
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
             } catch (jsonError) {
                 // Fallback if response is not JSON
                 errorMessage = `System Error (${response.status})`;
@@ -60,6 +64,7 @@ export async function apiClient<T = any>(
 
             // Special handling for 403 profile incomplete errors
             if (response.status === 403 && errorData.completionPercentage !== undefined) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const error: any = new Error(errorMessage);
                 error.code = 'PROFILE_INCOMPLETE';
                 error.completionPercentage = errorData.completionPercentage;
@@ -104,7 +109,13 @@ export const authApi = {
 // Admin Auth API calls
 export const adminAuthApi = {
     login: (email: string, password: string) =>
-        apiClient<{ admin: any }>('/api/admin/auth/login', {
+        apiClient<{ admin: Admin; setupRequired?: boolean }>('/api/admin/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ email, password })
+        }),
+
+    setupPassword: (email: string, password: string) =>
+        apiClient<{ admin: Admin; success: boolean }>('/api/admin/auth/setup-password', {
             method: 'POST',
             body: JSON.stringify({ email, password })
         }),
@@ -115,7 +126,7 @@ export const adminAuthApi = {
         });
     },
 
-    me: () => apiClient<{ admin: any }>('/api/admin/auth/me')
+    me: () => apiClient<{ admin: Admin }>('/api/admin/auth/me')
 };
 
 // Profile API calls
@@ -200,6 +211,7 @@ export const feedbackApi = {
         })
 };
 
-export const setTokens = (a: any, b: any) => { }; // Deprecated: No-op
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const setTokens = (_a: string, _b: string) => { }; // Deprecated: No-op
 export const getTokens = () => ({ accessToken: null, refreshToken: null }); // Deprecated: No-op
 export const clearTokens = () => { }; // Deprecated: No-op

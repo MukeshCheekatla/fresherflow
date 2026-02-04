@@ -46,7 +46,7 @@ router.get('/', requireAuth, profileGate, async (req: Request, res: Response, ne
             },
             include: {
                 walkInDetails: true,
-                admin: {
+                user: {
                     select: {
                         fullName: true
                     }
@@ -86,7 +86,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
             where: { id },
             include: {
                 walkInDetails: true,
-                admin: {
+                user: {
                     select: {
                         fullName: true
                     }

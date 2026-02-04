@@ -39,8 +39,8 @@ export default function LoginPage() {
             await login(email, password);
             toast.success('Welcome back!', { id: loadingToast });
             router.push('/dashboard');
-        } catch (err: any) {
-            toast.error(err.message || 'Authentication failed.', { id: loadingToast });
+        } catch (err: unknown) {
+            toast.error((err as Error).message || 'Authentication failed.', { id: loadingToast });
         } finally {
             setIsLoading(false);
         }

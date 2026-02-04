@@ -15,6 +15,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 
 export default function AdminDashboardHome() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [recent, setRecent] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
@@ -41,12 +42,14 @@ export default function AdminDashboardHome() {
                     jobs: (summary.total || 0) - (summary.walkins || 0),
                     walkins: summary.walkins || 0,
                     total: summary.total || 0,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     recent24h: opportunities.filter((o: any) => {
                         const posted = new Date(o.postedAt).getTime();
                         return posted > Date.now() - 24 * 60 * 60 * 1000;
                     }).length
                 });
-            } catch (error: any) {
+            } catch (err: unknown) {
+                const error = err as Error;
                 toast.error(`Failed to load dashboard: ${error.message || 'Unknown error'}`);
             } finally {
                 setLoading(false);

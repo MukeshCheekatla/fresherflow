@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Verify if profile is full Profile or partial
             // The /me endpoint returns profile data
             setProfile(response.profile as Profile);
-        } catch (error: any) {
+        } catch {
             // If 401, user is not logged in.
             // Don't log error to console as it's expected for guests.
             // Just ensure state is null.
@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async function logout() {
         try {
             await authApi.logout();
-        } catch (e) {
+        } catch {
             // Ignore logout errors
         }
         setUser(null);

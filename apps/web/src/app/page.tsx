@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import {
     BriefcaseIcon,
-    RocketLaunchIcon,
     ShieldCheckIcon,
     CheckCircleIcon
 } from '@heroicons/react/24/outline';

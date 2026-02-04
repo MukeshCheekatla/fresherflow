@@ -1,6 +1,5 @@
 'use client';
 
-import { useAuth } from '@/contexts/AuthContext';
 import { AuthGate, ProfileGate } from '@/components/gates/ProfileGate';
 import { opportunitiesApi } from '@/lib/api/client';
 import { cn } from '@/lib/utils';
@@ -15,13 +14,8 @@ import JobCard from '@/features/jobs/components/JobCard';
 import {
     MagnifyingGlassIcon,
     MapPinIcon,
-    BriefcaseIcon,
-    ClockIcon,
-    CurrencyRupeeIcon,
-    AdjustmentsHorizontalIcon,
     ChevronRightIcon,
     FunnelIcon,
-    XMarkIcon,
     ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/Button';
@@ -52,7 +46,6 @@ const enumToTypeParam = (value: string) => {
 };
 
 function OpportunitiesContent() {
-    const { user } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -92,7 +85,8 @@ function OpportunitiesContent() {
             });
             setOpportunities(data.opportunities || []);
             setTotalCount(data.count || 0);
-        } catch (error: any) {
+        } catch (err: unknown) {
+            const error = err as { code?: string; completionPercentage?: number; message?: string };
             // Check if this is a profile incomplete error
             if (error.code === 'PROFILE_INCOMPLETE') {
                 setProfileIncomplete({
@@ -319,9 +313,9 @@ function OpportunitiesContent() {
                                                 ...opp,
                                                 normalizedRole: opp.title,
                                                 salary: (opp.salaryMin !== undefined && opp.salaryMax !== undefined) ? { min: opp.salaryMin, max: opp.salaryMax } : undefined,
-                                            } as any}
+                                            }}
                                             jobId={opp.id}
-                                            isApplied={(opp as any).actions?.some((a: any) => a.actionType === 'APPLIED')}
+                                            isApplied={false}
                                             onClick={() => router.push(`/opportunities/${opp.id}`)}
                                         />
                                     ))}

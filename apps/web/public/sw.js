@@ -1,5 +1,4 @@
-/* eslint-disable */
-const CACHE_NAME = 'fresherflow-pwa-v1';
+const CACHE_NAME = 'fresherflow-pwa-v1.2.0';
 const OFFLINE_URL = '/offline.html';
 
 self.addEventListener('install', (event) => {

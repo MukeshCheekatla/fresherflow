@@ -16,6 +16,11 @@ datasource db {
 // ENUMS - Type Safety (No Free-Text Strings)
 // ============================================================================
 
+enum Role {
+  USER
+  ADMIN
+}
+
 enum OpportunityType {
   JOB
   INTERNSHIP
@@ -72,8 +77,9 @@ enum Availability {
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
-  passwordHash String
+  passwordHash String?
   fullName     String
+  role         Role     @default(USER)
   createdAt    DateTime @default(now())
 
   // Relations
@@ -81,6 +87,10 @@ model User {
   refreshTokens RefreshToken[]
   actions       UserAction[]
   feedback      ListingFeedback[]
+  
+  // Admin Relations (only for role=ADMIN)
+  postedOpportunities Opportunity[]
+  auditLogs           AdminAudit[]
 }
 
 model RefreshToken {
@@ -135,32 +145,20 @@ model Profile {
 }
 
 // ============================================================================
-// ADMIN MODEL (Isolated from Users)
+// ADMIN TRACKING (Audit trail for Users with ADMIN role)
 // ============================================================================
-
-model Admin {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  fullName     String
-  createdAt    DateTime @default(now())
-
-  // Relations
-  postedOpportunities Opportunity[] // Referential integrity
-  auditLog            AdminAudit[] // Audit trail
-}
 
 model AdminAudit {
   id        String   @id @default(uuid())
-  adminId   String
+  userId    String
   action    String // CREATE, UPDATE, DELETE, EXPIRE
   targetId  String // Opportunity ID
   reason    String? // Required for DELETE/EXPIRE
   createdAt DateTime @default(now())
 
-  admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([adminId])
+  @@index([userId])
   @@index([action])
   @@index([createdAt])
 }
@@ -214,9 +212,9 @@ model Opportunity {
   deletedAt      DateTime? // Null = not deleted, set = soft deleted
   deletionReason String? // Why was it removed (audit trail)
 
-  // Metadata - Referential Integrity with Admin
-  postedByAdminId String
-  admin           Admin    @relation(fields: [postedByAdminId], references: [id])
+  // Metadata - Referential Integrity with Admin roles
+  postedByUserId String
+  user           User    @relation(fields: [postedByUserId], references: [id])
   postedAt        DateTime @default(now())
   lastVerified    DateTime @default(now())
 

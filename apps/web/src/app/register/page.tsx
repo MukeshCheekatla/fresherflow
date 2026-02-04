@@ -70,8 +70,8 @@ export default function RegisterPage() {
             await register(email, password, fullName);
             toast.success('Welcome to the flow!', { id: loadingToast });
             router.push('/profile/complete');
-        } catch (err: any) {
-            toast.error(err.message || 'Registration failed.', { id: loadingToast });
+        } catch (err: unknown) {
+            toast.error((err as Error).message || 'Registration failed.', { id: loadingToast });
         } finally {
             setIsLoading(false);
         }

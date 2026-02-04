@@ -1,22 +1,27 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { opportunitiesApi, actionsApi, feedbackApi } from '@/lib/api/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { AuthGate, ProfileGate } from '@/components/gates/ProfileGate';
-import { Opportunity } from '@fresherflow/types';
+import type { Opportunity } from '@fresherflow/types';
+
+interface WalkInDetails {
+    dateRange?: string;
+    timeRange?: string;
+    reportingTime?: string;
+    venueAddress?: string;
+    venueLink?: string;
+}
 import toast from 'react-hot-toast';
 import {
     MapPinIcon,
     BriefcaseIcon,
     ClockIcon,
-    CalendarDaysIcon,
     BuildingOfficeIcon,
     ArrowLeftIcon,
     ArrowTopRightOnSquareIcon,
     InformationCircleIcon,
-    SparklesIcon,
     GlobeAltIcon,
     CurrencyRupeeIcon,
     CheckBadgeIcon,
@@ -24,7 +29,7 @@ import {
     FlagIcon,
     ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
-import { ShareIcon as ShareIconSolid } from '@heroicons/react/24/solid';
+
 import Link from 'next/link';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import { Button } from '@/components/ui/Button';
@@ -38,11 +43,7 @@ export default function OpportunityDetailPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [showReports, setShowReports] = useState(false);
 
-    useEffect(() => {
-        if (id) loadOpportunity();
-    }, [id]);
-
-    const loadOpportunity = async () => {
+    const loadOpportunity = useCallback(async () => {
         setIsLoading(true);
         try {
             const { opportunity } = await opportunitiesApi.getById(id as string);
@@ -55,13 +56,19 @@ export default function OpportunityDetailPage() {
                 allowedPassoutYears: opportunity.allowedPassoutYears || []
             };
             setOpp(sanitized);
-        } catch (error: any) {
+        } catch {
             toast.error('Listing protocol failed. Resource not found.');
             router.push('/opportunities');
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [id, router]);
+
+    useEffect(() => {
+        if (id) {
+            void loadOpportunity();
+        }
+    }, [id, loadOpportunity]);
 
     const handleApply = async () => {
         if (!opp || !opp.applyLink) {
@@ -71,7 +78,7 @@ export default function OpportunityDetailPage() {
         try {
             await actionsApi.track(opp.id, 'APPLIED');
             window.open(opp.applyLink, '_blank');
-        } catch (error) {
+        } catch {
             window.open(opp.applyLink, '_blank');
         }
     };
@@ -107,8 +114,8 @@ export default function OpportunityDetailPage() {
             await feedbackApi.submit(opp!.id, reason);
             toast.success('Report received. Our moderation team will review this listing.', { id: loadingToast });
             setShowReports(false);
-        } catch (error: any) {
-            toast.error(error.message || 'Transmission failed.', { id: loadingToast });
+        } catch (err: unknown) {
+            toast.error((err as Error).message || 'Transmission failed.', { id: loadingToast });
         }
     };
 
@@ -296,21 +303,21 @@ export default function OpportunityDetailPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-1.5">
                                         <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Walk-in Schedule</p>
-                                        <p className="text-sm font-black text-foreground italic">{(opp as any).walkInDetails?.dateRange || 'Check Description'}</p>
+                                        <p className="text-sm font-black text-foreground italic">{(opp as Opportunity & { walkInDetails?: WalkInDetails }).walkInDetails?.dateRange || 'Check Description'}</p>
                                     </div>
                                     <div className="space-y-1.5">
                                         <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Reporting Window</p>
-                                        <p className="text-sm font-black text-foreground italic">{(opp as any).walkInDetails?.timeRange || (opp as any).walkInDetails?.reportingTime}</p>
+                                        <p className="text-sm font-black text-foreground italic">{(opp as Opportunity & { walkInDetails?: WalkInDetails }).walkInDetails?.timeRange || (opp as Opportunity & { walkInDetails?: WalkInDetails }).walkInDetails?.reportingTime}</p>
                                     </div>
                                     <div className="col-span-full space-y-3">
                                         <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Venue Location</p>
                                         <div className="bg-background/50 border border-amber-500/10 rounded-xl p-4 space-y-3">
-                                            <p className="text-xs font-bold leading-relaxed text-foreground">{(opp as any).walkInDetails?.venueAddress}</p>
-                                            {(opp as any).walkInDetails?.venueLink && (
+                                            <p className="text-xs font-bold leading-relaxed text-foreground">{(opp as Opportunity & { walkInDetails?: WalkInDetails }).walkInDetails?.venueAddress}</p>
+                                            {(opp as Opportunity & { walkInDetails?: WalkInDetails }).walkInDetails?.venueLink && (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
-                                                    onClick={() => window.open((opp as any).walkInDetails.venueLink, '_blank')}
+                                                    onClick={() => window.open((opp as Opportunity & { walkInDetails?: WalkInDetails }).walkInDetails?.venueLink, '_blank')}
                                                     className="h-9 border-amber-500/20 text-amber-700 hover:bg-amber-500/10 font-black text-[10px] uppercase tracking-wider"
                                                 >
                                                     <MapPinIcon className="w-3.5 h-3.5 mr-2" />
@@ -377,7 +384,7 @@ export default function OpportunityDetailPage() {
                         </div>
 
                         {/* Guest CTA */}
-                        {!isLoading && !(opp as any).actions?.length && (
+                        {!isLoading && (
                             <div className="premium-card !p-6 bg-primary/10 border-primary/20 space-y-4">
                                 <p className="text-xs font-bold text-foreground">Want more personalized jobs?</p>
                                 <Link href="/register" className="premium-button block text-center text-[10px] py-3">

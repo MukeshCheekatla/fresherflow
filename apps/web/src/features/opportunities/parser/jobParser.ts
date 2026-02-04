@@ -1,4 +1,15 @@
-export function parseJobText(text: string) {
+interface ParsedJob {
+    title: string;
+    company: string;
+    location: string;
+    skills: string;
+    workMode: 'ONSITE' | 'HYBRID' | 'REMOTE';
+    degrees: string[];
+    passoutYears: number[];
+    description?: string;
+}
+
+export function parseJobText(text: string): ParsedJob {
     // Remove common navigation noise
     const navPatterns = [
         /Skip to Main Content/gi, /JOIN THE CONVERSATION/gi, /Careers Homepage/gi,
@@ -11,7 +22,7 @@ export function parseJobText(text: string) {
         text = text.replace(pattern, '');
     });
 
-    const result: any = {
+    const result: ParsedJob = {
         title: '', company: '', location: '', skills: '',
         workMode: 'ONSITE', degrees: [], passoutYears: []
     };

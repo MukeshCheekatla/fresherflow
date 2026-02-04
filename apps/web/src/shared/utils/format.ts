@@ -1,4 +1,4 @@
-import { Opportunity } from '@fresherflow/types';
+
 
 export const formatSalary = (salary: { min?: number; max?: number; currency?: string } | null | undefined) => {
     if (!salary) return 'Not disclosed';

@@ -9,7 +9,9 @@
             "outputs": [
                 "dist/**",
                 ".next/**",
-                "build/**"
+                "build/**",
+                "public/sitemap*.xml",
+                "public/robots.txt"
             ]
         },
         "dev": {
@@ -30,9 +32,6 @@
             "cache": false
         },
         "db:push": {
-            "cache": false
-        },
-        "db:seed": {
             "cache": false
         }
     }

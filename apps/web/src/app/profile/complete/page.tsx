@@ -142,8 +142,8 @@ export default function ProfileCompletePage() {
             toast.success('Academy profile locked!', { id: loadingToast });
             setCurrentStep('preferences');
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        } catch (err: any) {
-            toast.error(err.message || 'Update failed', { id: loadingToast });
+        } catch (err: unknown) {
+            toast.error((err as Error).message || 'Update failed', { id: loadingToast });
         } finally {
             setIsLoading(false);
         }
@@ -163,8 +163,8 @@ export default function ProfileCompletePage() {
             toast.success('Interests mapped!', { id: loadingToast });
             setCurrentStep('readiness');
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        } catch (err: any) {
-            toast.error(err.message || 'Update failed', { id: loadingToast });
+        } catch (err: unknown) {
+            toast.error((err as Error).message || 'Update failed', { id: loadingToast });
         } finally {
             setIsLoading(false);
         }
@@ -183,8 +183,8 @@ export default function ProfileCompletePage() {
             await refreshUser();
             toast.success('Profile setup complete!', { id: loadingToast });
             router.push('/dashboard');
-        } catch (err: any) {
-            toast.error(err.message || 'Finalization failed', { id: loadingToast });
+        } catch (err: unknown) {
+            toast.error((err as Error).message || 'Update failed', { id: loadingToast });
         } finally {
             setIsLoading(false);
         }

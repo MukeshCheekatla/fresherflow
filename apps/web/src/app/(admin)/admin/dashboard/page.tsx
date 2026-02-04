@@ -58,7 +58,8 @@ export default function AdminDashboardPage() {
             router.push('/admin/login');
             return;
         }
-        fetchStats();
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        void fetchStats();
     }, [isAuthenticated, router, fetchStats]);
 
     if (!isAuthenticated) return null;

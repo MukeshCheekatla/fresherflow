@@ -2,23 +2,25 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { adminAuthApi } from '@/lib/api/client';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+
+import { Admin } from '@fresherflow/types';
 
 interface AdminContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
-    admin: any | null;
-    login: (email: string, password: string) => Promise<void>;
+    admin: Admin | null;
+    login: (email: string, password: string) => Promise<{ setupRequired?: boolean }>;
+    setupPassword: (email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 export function AdminProvider({ children }: { children: ReactNode }) {
-    const [admin, setAdmin] = useState<any | null>(null);
+    const [admin, setAdmin] = useState<Admin | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
-    const pathname = usePathname();
 
     // Check admin session on mount
     useEffect(() => {
@@ -29,7 +31,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         try {
             const response = await adminAuthApi.me();
             setAdmin(response.admin);
-        } catch (error) {
+        } catch {
             setAdmin(null);
         } finally {
             setIsLoading(false);
@@ -40,9 +42,30 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         setIsLoading(true);
         try {
             const response = await adminAuthApi.login(email, password);
+            if (response.setupRequired) {
+                return { setupRequired: true };
+            }
             setAdmin(response.admin);
             router.push('/admin/dashboard');
+            return { setupRequired: false };
         } catch (error) {
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+    async function setupPassword(email: string, password: string) {
+        setIsLoading(true);
+        try {
+            console.log('[AdminContext] setupPassword called with:', email);
+            const response = await adminAuthApi.setupPassword(email, password);
+            console.log('[AdminContext] setupPassword response:', response);
+            setAdmin(response.admin);
+            console.log('[AdminContext] Admin set, navigating to dashboard...');
+            router.push('/admin/dashboard');
+        } catch (error) {
+            console.error('[AdminContext] setupPassword error:', error);
             throw error;
         } finally {
             setIsLoading(false);
@@ -52,7 +75,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     async function logout() {
         try {
             await adminAuthApi.logout();
-        } catch (e) {
+        } catch {
             // Ignore logout errors
         }
         setAdmin(null);
@@ -66,6 +89,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
                 isLoading,
                 admin,
                 login,
+                setupPassword,
                 logout
             }}
         >

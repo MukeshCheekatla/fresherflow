@@ -6,22 +6,15 @@ import { actionsApi, opportunitiesApi } from '@/lib/api/client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Opportunity, UserStatsResponse } from '@fresherflow/types';
 import toast from 'react-hot-toast';
 import {
     BriefcaseIcon,
-    MapPinIcon,
     UserIcon,
-    ArrowRightOnRectangleIcon,
     DocumentTextIcon,
-    CalendarDaysIcon,
-    Squares2X2Icon,
     MagnifyingGlassIcon,
-    AdjustmentsHorizontalIcon,
-    ArrowRightIcon,
     ChartBarIcon,
     ClockIcon,
-    IdentificationIcon,
-    InformationCircleIcon,
     CheckBadgeIcon,
 } from '@heroicons/react/24/outline';
 import { SkeletonJobCard } from '@/components/ui/Skeleton';
@@ -29,11 +22,11 @@ import JobCard from '@/features/jobs/components/JobCard';
 import { Button } from '@/components/ui/Button';
 
 export default function DashboardPage() {
-    const { user, profile, logout } = useAuth();
+    const { user, profile } = useAuth();
     const router = useRouter();
-    const [recentOpps, setRecentOpps] = useState<any[]>([]);
+    const [recentOpps, setRecentOpps] = useState<Opportunity[]>([]);
     const [isLoadingOpps, setIsLoadingOpps] = useState(true);
-    const [actionsSummary, setActionsSummary] = useState<any>(null);
+    const [actionsSummary, setActionsSummary] = useState<UserStatsResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -44,13 +37,13 @@ export default function DashboardPage() {
     const loadRecentOpportunities = async () => {
         try {
             const data = await opportunitiesApi.list();
-            const sanitized = (data.opportunities || []).slice(0, 3).map((o: any) => ({
+            const sanitized = (data.opportunities || []).slice(0, 3).map((o: Opportunity) => ({
                 ...o,
                 locations: o.locations || [],
                 requiredSkills: o.requiredSkills || []
             }));
             setRecentOpps(sanitized);
-        } catch (error) {
+        } catch {
             console.error('Failed to load recs');
         } finally {
             setIsLoadingOpps(false);
@@ -59,9 +52,10 @@ export default function DashboardPage() {
 
     const loadDashboardData = async () => {
         try {
-            const summary = await actionsApi.summary();
-            setActionsSummary(summary);
-        } catch (error: any) {
+            const data = await actionsApi.summary();
+            setActionsSummary(data.summary || null);
+        } catch (err: unknown) {
+            const error = err as Error;
             toast.error(`❌ Session sync failed: ${error.message}`);
         } finally {
             setIsLoading(false);
@@ -115,9 +109,9 @@ export default function DashboardPage() {
                         </div>
 
                         {[
-                            { label: 'Applied Jobs', value: actionsSummary?.APPLIED || 0, icon: DocumentTextIcon },
-                            { label: 'Planned Tasks', value: actionsSummary?.PLANNING || 0, icon: ClockIcon },
-                            { label: 'Interviews', value: actionsSummary?.ATTENDED || 0, icon: BriefcaseIcon }
+                            { label: 'Applied Jobs', value: actionsSummary?.appliedCount || 0, icon: DocumentTextIcon },
+                            { label: 'Planned Tasks', value: actionsSummary?.planningCount || 0, icon: ClockIcon },
+                            { label: 'Interviews', value: actionsSummary?.attendedCount || 0, icon: BriefcaseIcon }
                         ].map((stat, i) => (
                             <div key={i} className="bg-card/50 rounded-xl border border-border/50 p-3 md:p-5">
                                 <div className="flex items-center justify-between mb-2">
@@ -169,9 +163,10 @@ export default function DashboardPage() {
                                                 postedDate: opp.postedAt,
                                                 description: opp.description,
                                                 skills: opp.requiredSkills
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                             } as any}
                                             jobId={opp.id}
-                                            isApplied={(opp as any).actions?.some((a: any) => a.actionType === 'APPLIED')}
+                                            isApplied={false}
                                             onClick={() => router.push(`/opportunities/${opp.id}`)}
                                         />
                                     ))
@@ -189,7 +184,7 @@ export default function DashboardPage() {
                                         <h4 className="text-[10px] font-black uppercase tracking-wider">Snapshot</h4>
                                     </div>
                                     <p className="text-[11px] text-muted-foreground leading-snug font-medium">
-                                        {actionsSummary?.APPLIED || 0} active tracks. Complete profiles get 3x higher visibility.
+                                        {actionsSummary?.appliedCount || 0} active tracks. Complete profiles get 3x higher visibility.
                                     </p>
                                 </div>
 

@@ -10,15 +10,11 @@
         "db:push": "prisma db push",
         "db:studio": "prisma studio",
         "db:generate": "prisma generate",
-        "db:seed": "ts-node prisma/seed.ts",
         "test": "vitest run",
         "test:watch": "vitest",
         "test:ui": "vitest --ui",
         "build:api": "npm run build",
         "start:api": "npm run start"
-    },
-    "prisma": {
-        "seed": "ts-node prisma/seed.ts"
     },
     "keywords": [
         "jobs",

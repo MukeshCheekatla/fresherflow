@@ -1,6 +1,5 @@
 import { Opportunity } from '@fresherflow/types';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext';
 import {
     BookmarkIcon,
     MapPinIcon,
@@ -35,8 +34,7 @@ interface JobCardProps {
     onToggleSave?: () => void;
 }
 
-export default function JobCard({ job, jobId, onClick, isSaved = false, isApplied = false, onToggleSave }: JobCardProps) {
-    const { user } = useAuth();
+export default function JobCard({ job, onClick, isSaved = false, isApplied = false }: JobCardProps) {
 
     const formatSalary = () => {
         if (job.salaryRange) return job.salaryRange;
@@ -155,35 +153,45 @@ export default function JobCard({ job, jobId, onClick, isSaved = false, isApplie
             </div>
 
             {/* Walk-in Specific Details Block */}
+            {/* Walk-in Specific Details Block */}
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {job.type === 'WALKIN' && (job as any).walkInDetails && (
                 <div className="bg-amber-500/5 border border-amber-500/10 rounded-lg p-2.5 space-y-2">
-                    <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-0.5">
-                            <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest leading-none">Drive Schedule</p>
-                            <p className="text-xs font-bold text-foreground">
-                                {(job as any).walkInDetails.dateRange || 'Multiple Dates'}
-                            </p>
-                        </div>
-                        <div className="text-right space-y-0.5">
-                            <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest leading-none">Timing Window</p>
-                            <p className="text-xs font-bold text-foreground">
-                                {(job as any).walkInDetails.timeRange || (job as any).walkInDetails.reportingTime}
-                            </p>
-                        </div>
-                    </div>
-                    {(job as any).walkInDetails.venueLink && (
-                        <a
-                            href={(job as any).walkInDetails.venueLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="flex items-center gap-1.5 text-[10px] font-black text-primary hover:text-primary/80 transition-colors uppercase tracking-tight w-fit pt-0.5"
-                        >
-                            <MapPinIcon className="w-3 h-3" />
-                            View Venue Map
-                            <ChevronRightIcon className="w-2.5 h-2.5" />
-                        </a>
-                    )}
+                    {(() => {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const details = (job as any).walkInDetails;
+                        return (
+                            <>
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="space-y-0.5">
+                                        <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest leading-none">Drive Schedule</p>
+                                        <p className="text-xs font-bold text-foreground">
+                                            {details.dateRange || 'Multiple Dates'}
+                                        </p>
+                                    </div>
+                                    <div className="text-right space-y-0.5">
+                                        <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest leading-none">Timing Window</p>
+                                        <p className="text-xs font-bold text-foreground">
+                                            {details.timeRange || details.reportingTime}
+                                        </p>
+                                    </div>
+                                </div>
+                                {details.venueLink && (
+                                    <a
+                                        href={details.venueLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="flex items-center gap-1.5 text-[10px] font-black text-primary hover:text-primary/80 transition-colors uppercase tracking-tight w-fit pt-0.5"
+                                    >
+                                        <MapPinIcon className="w-3 h-3" />
+                                        View Venue Map
+                                        <ChevronRightIcon className="w-2.5 h-2.5" />
+                                    </a>
+                                )}
+                            </>
+                        );
+                    })()}
                 </div>
             )}
 

@@ -46,7 +46,7 @@ router.post('/:id/action', requireAuth, validate(userActionSchema), async (req: 
         // Assuming checkEligibility expects 'adminId', but Prisma result has 'postedByAdminId'.
         const opportunityForCheck = {
             ...opportunity,
-            adminId: opportunity.postedByAdminId
+            adminId: opportunity.postedByUserId
         };
 
         const profileForCheck = {

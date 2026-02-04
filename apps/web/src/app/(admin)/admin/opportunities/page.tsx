@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -27,9 +27,9 @@ export default function OpportunitiesListPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const pathname = usePathname();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [opportunities, setOpportunities] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState('');
     const [typeFilter, setTypeFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [search, setSearch] = useState('');
@@ -104,13 +104,40 @@ export default function OpportunitiesListPage() {
         setPage(1);
     }, [searchParams]);
 
+    const loadOpportunities = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const data = await adminApi.getOpportunities({
+                type: typeFilter || undefined,
+                status: statusFilter || undefined,
+                q: debouncedSearch || undefined,
+                sort,
+                limit: pageSize,
+                offset: (page - 1) * pageSize
+            });
+            setOpportunities(data.opportunities || []);
+            setTotalCount(data.total || 0);
+            setTotalPages(data.totalPages || 1);
+        } catch (err: unknown) {
+            const errorMsg = (err as Error).message || 'Failed to load opportunities';
+            toast.error(` ${errorMsg}`);
+
+            if (errorMsg.includes('403') || errorMsg.includes('Unauthorized')) {
+                toast.error(' Session expired. Please login again.');
+                setTimeout(() => router.push('/admin/login'), 1500);
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    }, [typeFilter, statusFilter, debouncedSearch, sort, page, router]);
+
     useEffect(() => {
         if (!isAuthenticated) {
             router.push('/admin/login');
             return;
         }
-        loadOpportunities();
-    }, [isAuthenticated, typeFilter, statusFilter, debouncedSearch, sort, page]);
+        void loadOpportunities();
+    }, [isAuthenticated, loadOpportunities, router]);
 
     useEffect(() => {
         const params = new URLSearchParams(searchParams.toString());
@@ -130,35 +157,6 @@ export default function OpportunitiesListPage() {
         }
     }, [typeFilter, statusFilter, search, sort, searchParams, pathname, router]);
 
-    const loadOpportunities = async () => {
-        setIsLoading(true);
-        try {
-            const data = await adminApi.getOpportunities({
-                type: typeFilter || undefined,
-                status: statusFilter || undefined,
-                q: debouncedSearch || undefined,
-                sort,
-                limit: pageSize,
-                offset: (page - 1) * pageSize
-            });
-            setOpportunities(data.opportunities || []);
-            setTotalCount(data.total || 0);
-            setTotalPages(data.totalPages || 1);
-            setError('');
-        } catch (err: any) {
-            const errorMsg = err.message || 'Failed to load opportunities';
-            setError(errorMsg);
-            toast.error(` ${errorMsg}`);
-
-            if (err.message?.includes('403') || err.message?.includes('Unauthorized')) {
-                toast.error(' Session expired. Please login again.');
-                setTimeout(() => router.push('/admin/login'), 1500);
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     const handleExpire = (id: string, title: string) => {
         setConfirmModal({
             show: true,
@@ -173,8 +171,8 @@ export default function OpportunitiesListPage() {
                     toast.success(' Opportunity marked as expired', { id: loadingToast });
                     loadOpportunities();
                     setConfirmModal(prev => ({ ...prev, show: false }));
-                } catch (err: any) {
-                    toast.error(` Failed: ${err.message}`, { id: loadingToast });
+                } catch (err: unknown) {
+                    toast.error(` Failed: ${(err as Error).message}`, { id: loadingToast });
                 }
             }
         });
@@ -186,8 +184,8 @@ export default function OpportunitiesListPage() {
             await adminApi.updateOpportunity(id, { status: newStatus });
             toast.success(` Listing updated to ${newStatus}`, { id: loadingToast });
             loadOpportunities();
-        } catch (err: any) {
-            toast.error(` Failed: ${err.message}`, { id: loadingToast });
+        } catch (err: unknown) {
+            toast.error(` Failed: ${(err as Error).message}`, { id: loadingToast });
         }
     };
 
@@ -205,8 +203,8 @@ export default function OpportunitiesListPage() {
                     toast.success(' Opportunity removed', { id: loadingToast });
                     loadOpportunities();
                     setConfirmModal(prev => ({ ...prev, show: false }));
-                } catch (err: any) {
-                    toast.error(` Failed: ${err.message}`, { id: loadingToast });
+                } catch (err: unknown) {
+                    toast.error(` Failed: ${(err as Error).message}`, { id: loadingToast });
                 }
             }
         });

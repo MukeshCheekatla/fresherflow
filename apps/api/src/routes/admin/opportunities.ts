@@ -141,7 +141,7 @@ router.post(
 
                     applyLink: data.applyLink,
                     expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
-                    postedByAdminId: req.adminId!,
+                    postedByUserId: req.adminId!,
                     status: OpportunityStatus.PUBLISHED,
 
                     ...(walkInCreate && { walkInDetails: walkInCreate })

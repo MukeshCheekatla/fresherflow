@@ -8,13 +8,9 @@ import toast from 'react-hot-toast';
 import {
     EnvelopeIcon,
     LockClosedIcon,
-    ArrowRightIcon,
-    BriefcaseIcon,
     ArrowPathIcon,
     ShieldCheckIcon,
     UserIcon,
-    CheckCircleIcon,
-    ChartBarIcon,
     GlobeAltIcon,
     SparklesIcon
 } from '@heroicons/react/24/outline';
@@ -72,8 +68,8 @@ function AuthContent() {
                 toast.success('Welcome to the flow!', { id: loadingToast });
                 router.push('/profile/complete');
             }
-        } catch (err: any) {
-            toast.error(err.message || 'Authentication protocol failed.', { id: loadingToast });
+        } catch (err: unknown) {
+            toast.error((err as Error).message || 'Authentication protocol failed.', { id: loadingToast });
         } finally {
             setIsLoading(false);
         }

@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { AuthGate, ProfileGate } from '@/components/gates/ProfileGate';
 import { profileApi } from '@/lib/api/client';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
@@ -14,9 +14,7 @@ import {
     CheckIcon,
     AcademicCapIcon,
     BoltIcon,
-    MapPinIcon,
     ArrowPathIcon,
-    UserCircleIcon,
     IdentificationIcon,
     PlusIcon,
     XMarkIcon
@@ -74,7 +72,6 @@ const DEGREE_SPECIALIZATIONS: Record<string, string[]> = {
 
 export default function EditProfilePage() {
     const { profile, refreshUser } = useAuth();
-    const router = useRouter();
     const [saving, setSaving] = useState(false);
 
     // Form state
@@ -158,8 +155,8 @@ export default function EditProfilePage() {
             });
             await refreshUser();
             toast.success('Academy updated!', { id: loadingToast });
-        } catch (err: any) {
-            toast.error(err.message || 'Update failed', { id: loadingToast });
+        } catch (err: unknown) {
+            toast.error((err as Error).message || 'Update failed', { id: loadingToast });
         } finally {
             setSaving(false);
         }
@@ -177,8 +174,8 @@ export default function EditProfilePage() {
             await profileApi.updatePreferences({ interestedIn, preferredCities, workModes });
             await refreshUser();
             toast.success('Interests synced!', { id: loadingToast });
-        } catch (err: any) {
-            toast.error(err.message || 'Update failed', { id: loadingToast });
+        } catch (err: unknown) {
+            toast.error((err as Error).message || 'Update failed', { id: loadingToast });
         } finally {
             setSaving(false);
         }
@@ -196,8 +193,8 @@ export default function EditProfilePage() {
             await profileApi.updateReadiness({ availability, skills });
             await refreshUser();
             toast.success('Talent profile updated!', { id: loadingToast });
-        } catch (err: any) {
-            toast.error(err.message || 'Finalization failed', { id: loadingToast });
+        } catch (err: unknown) {
+            toast.error((err as Error).message || 'Finalization failed', { id: loadingToast });
         } finally {
             setSaving(false);
         }

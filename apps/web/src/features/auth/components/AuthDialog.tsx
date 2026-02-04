@@ -37,8 +37,8 @@ export default function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
             }
             router.push('/dashboard');
             onClose();
-        } catch (err: any) {
-            setError(err.message || 'Authentication failed');
+        } catch (err: unknown) {
+            setError((err as Error).message || 'Authentication failed');
         } finally {
             setLoading(false);
         }

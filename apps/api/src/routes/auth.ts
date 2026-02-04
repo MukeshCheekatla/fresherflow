@@ -111,6 +111,11 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response,
             return next(new AppError('Invalid email or password', 401));
         }
 
+        // Verify password exists (admins might not have one yet)
+        if (!user.passwordHash) {
+            return next(new AppError('Account setup incomplete. If you are an admin, please visit the admin portal.', 401));
+        }
+
         // Verify password
         const isValid = await bcrypt.compare(password, user.passwordHash);
         if (!isValid) {

@@ -21,7 +21,7 @@ export class OpportunityService {
         return await prisma.opportunity.create({
             data: {
                 ...data,
-                postedByAdminId: adminId,
+                postedByUserId: adminId,
                 status: OpportunityStatus.PUBLISHED, // Default to published for admin ease
             },
             include: {
@@ -42,7 +42,7 @@ export class OpportunityService {
             throw new Error('Opportunity not found');
         }
 
-        if (opportunity.postedByAdminId !== adminId) {
+        if (opportunity.postedByUserId !== adminId) {
             throw new Error('Unauthorized');
         }
 
@@ -71,7 +71,7 @@ export class OpportunityService {
             throw new Error('Opportunity not found');
         }
 
-        if (existing.postedByAdminId !== adminId) {
+        if (existing.postedByUserId !== adminId) {
             throw new Error('Unauthorized');
         }
 
@@ -99,7 +99,7 @@ export class OpportunityService {
             throw new Error('Opportunity not found');
         }
 
-        if (existing.postedByAdminId !== adminId) {
+        if (existing.postedByUserId !== adminId) {
             throw new Error('Unauthorized');
         }
 
@@ -133,14 +133,14 @@ export class OpportunityService {
         const where: any = {};
 
         if (adminId) {
-            where.postedByAdminId = adminId;
+            where.postedByUserId = adminId;
         }
 
         return await prisma.opportunity.findMany({
             where,
             include: {
                 walkInDetails: true,
-                admin: {
+                user: {
                     select: {
                         id: true,
                         fullName: true,
@@ -259,7 +259,7 @@ export class OpportunityService {
             where: { id },
             include: {
                 walkInDetails: true,
-                admin: {
+                user: {
                     select: {
                         fullName: true,
                         email: true,

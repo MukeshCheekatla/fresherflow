@@ -7,6 +7,7 @@ export const adminApi = {
         apiClient('/api/admin/opportunities/summary'),
 
     // Create new opportunity
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     createOpportunity: (data: any) =>
         apiClient('/api/admin/opportunities', {
             method: 'POST',
@@ -32,6 +33,7 @@ export const adminApi = {
         apiClient(`/api/admin/opportunities/${id}`),
 
     // Update opportunity
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     updateOpportunity: (id: string, data: any) =>
         apiClient(`/api/admin/opportunities/${id}`, {
             method: 'PUT',

@@ -15,14 +15,9 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
     const { profile, isLoading } = useAuth();
     const router = useRouter();
     const [countdown, setCountdown] = useState(3);
-    const [shouldRedirect, setShouldRedirect] = useState(false);
 
-    // Check if profile is incomplete
-    useEffect(() => {
-        if (!isLoading && profile && profile.completionPercentage < 100) {
-            setShouldRedirect(true);
-        }
-    }, [profile, isLoading]);
+    // Compute if we should redirect
+    const shouldRedirect = !isLoading && profile && profile.completionPercentage < 100;
 
     // Handle countdown timer
     useEffect(() => {

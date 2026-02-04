@@ -24,7 +24,7 @@ export function withAdminAudit(action: AdminAction) {
                 // Log asynchronously (don't block response)
                 prisma.adminAudit.create({
                     data: {
-                        adminId: req.adminId,
+                        userId: req.adminId,
                         action,
                         targetId,
                         reason: req.body?.reason || null

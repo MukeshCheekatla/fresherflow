@@ -1,6 +1,5 @@
 'use client';
 
-import AdminBottomNav from "@/shared/components/navigation/AdminBottomNav";
 import { AdminProvider } from "@/contexts/AdminContext";
 
 export default function AdminLayout({

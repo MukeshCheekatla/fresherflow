@@ -51,7 +51,7 @@ export default function SavedJobsPage() {
             await actionsApi.track(id, 'IGNORED');
             setSavedJobs(prev => prev.filter(j => j.id !== id));
             toast.success('Opportunity removed', { id: loading });
-        } catch (error) {
+        } catch {
             toast.error('Failed to remove', { id: loading });
         }
     };
