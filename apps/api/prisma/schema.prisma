@@ -54,6 +54,11 @@ enum WorkMode {
   REMOTE
 }
 
+enum SalaryPeriod {
+  MONTHLY
+  YEARLY
+}
+
 enum Availability {
   IMMEDIATE
   DAYS_15
@@ -182,12 +187,17 @@ model Opportunity {
   allowedAvailability Availability[] // When candidate should be available
   requiredSkills      String[]
   locations           String[] // For DB-level filtering
+  experienceMin       Int?     // Experience in years (e.g. 0)
+  experienceMax       Int?     // Experience in years (e.g. 3)
 
   // Job/Internship Specific
   workMode       WorkMode?
   salaryMin      Int? // Legacy: Can map salaryRange to this
   salaryMax      Int?
   salaryRange    String? // New: "6-8 LPA"
+  salaryPeriod   SalaryPeriod @default(YEARLY) // Default to Annual (India standard)
+  incentives     String? // Optional: "Rs. 20k - 1L targets"
+  jobFunction    String? // Optional: "Banking", "Sales", "Engineering"
   stipend        String? // New: "10k/month"
   employmentType String? // New: "full-time"
   applyLink      String?
@@ -227,7 +237,10 @@ model WalkInDetails {
   opportunityId String @unique
 
   dates             DateTime[] // Multiple walk-in dates
+  dateRange         String?    // New: "2nd Feb - 6th Feb"
+  timeRange         String?    // New: "11:00 AM - 1:00 PM"
   venueAddress      String     @db.Text
+  venueLink         String?    // New: Google Maps URL
   reportingTime     String
   requiredDocuments String[]
   contactPerson     String?

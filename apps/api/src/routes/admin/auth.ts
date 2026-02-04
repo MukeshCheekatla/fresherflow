@@ -47,9 +47,11 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response,
         // Generate admin token
         const token = generateAdminToken(admin.id);
 
+        const accessMaxAge = process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 24 * 60 * 60 * 1000;
+
         res.cookie('adminAccessToken', token, {
             ...COOKIE_OPTIONS,
-            maxAge: 15 * 60 * 1000 // 15 mins (Consistent with other tokens)
+            maxAge: accessMaxAge
         });
 
         console.log('✅ Login successful');

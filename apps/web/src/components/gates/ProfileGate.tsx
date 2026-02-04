@@ -54,15 +54,15 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
 
     if (profile && profile.completionPercentage < 100) {
         return (
-            <div className="flex items-center justify-center min-h-screen p-4">
-                <div className="premium-card max-w-md w-full p-8 text-center space-y-6">
-                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-                        <ExclamationTriangleIcon className="w-8 h-8 text-primary" />
+            <div className="flex items-center justify-center min-h-screen p-6">
+                <div className="premium-card max-w-sm w-full p-6 md:p-8 text-center space-y-4 md:space-y-6">
+                    <div className="w-12 h-12 md:w-16 md:h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                        <ExclamationTriangleIcon className="w-6 h-6 md:w-8 md:h-8 text-primary" />
                     </div>
-                    <div className="space-y-2">
-                        <h2 className="text-2xl font-black tracking-tight">Profile Not Complete!</h2>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                            Please complete your profile to access this feature. We need a few more details to personalize your experience.
+                    <div className="space-y-1 md:space-y-2">
+                        <h2 className="text-xl md:text-2xl font-black tracking-tight leading-tight">Profile Incomplete</h2>
+                        <p className="text-xs md:text-sm text-muted-foreground leading-relaxed px-2">
+                            Please complete your profile details to unlock all verified features.
                         </p>
                     </div>
                     <div className="space-y-3">

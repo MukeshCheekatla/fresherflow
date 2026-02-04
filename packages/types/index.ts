@@ -29,6 +29,11 @@ export enum WorkMode {
     REMOTE = 'REMOTE'
 }
 
+export enum SalaryPeriod {
+    MONTHLY = 'MONTHLY',
+    YEARLY = 'YEARLY'
+}
+
 export enum Availability {
     IMMEDIATE = 'IMMEDIATE',
     WITHIN_MONTH = 'WITHIN_MONTH',
@@ -115,11 +120,16 @@ export interface Opportunity {
     // Location
     locations: string[];
     workMode?: WorkMode;
+    experienceMin?: number;
+    experienceMax?: number;
 
     // Compensation
     salaryMin?: number;
     salaryMax?: number;
     salaryRange?: string;
+    salaryPeriod?: SalaryPeriod;
+    incentives?: string;
+    jobFunction?: string;
     stipend?: string;
     employmentType?: string;
 
@@ -256,8 +266,13 @@ export interface CreateOpportunityRequest {
     requiredSkills: string[];
     locations: string[];
     workMode?: WorkMode;
+    experienceMin?: number;
+    experienceMax?: number;
     salaryMin?: number;
     salaryMax?: number;
+    salaryPeriod?: SalaryPeriod;
+    incentives?: string;
+    jobFunction?: string;
     applyLink?: string;
     expiresAt?: string;
     walkInDetails?: {

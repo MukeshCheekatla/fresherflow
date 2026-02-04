@@ -8,19 +8,16 @@ import toast from 'react-hot-toast';
 import { adminApi } from '@/lib/api/admin';
 import {
     ArrowLeftIcon,
-    PlusCircleIcon,
-    BriefcaseIcon,
-    MapPinIcon,
-    CurrencyRupeeIcon,
-    AcademicCapIcon,
-    CalendarIcon,
-    LinkIcon,
-    XMarkIcon,
-    PaperAirplaneIcon,
-    TrashIcon,
     InformationCircleIcon,
     BoltIcon,
-    CheckCircleIcon
+    CheckCircleIcon,
+    DocumentTextIcon,
+    BriefcaseIcon,
+    AcademicCapIcon,
+    MapPinIcon,
+    LinkIcon,
+    PaperAirplaneIcon,
+    XMarkIcon
 } from '@heroicons/react/24/outline';
 
 export default function CreateOpportunityPage() {
@@ -28,6 +25,9 @@ export default function CreateOpportunityPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState(false);
+    const [isParsing, setIsParsing] = useState(false);
+    const [pastedText, setPastedText] = useState('');
+    const [showParser, setShowParser] = useState(false);
 
     // Form state
     const [type, setType] = useState<'JOB' | 'INTERNSHIP' | 'WALKIN'>('JOB');
@@ -44,6 +44,11 @@ export default function CreateOpportunityPage() {
     const [salaryMax, setSalaryMax] = useState('');
     const [applyLink, setApplyLink] = useState('');
     const [expiresAt, setExpiresAt] = useState('');
+    const [jobFunction, setJobFunction] = useState('');
+    const [incentives, setIncentives] = useState('');
+    const [salaryPeriod, setSalaryPeriod] = useState<'YEARLY' | 'MONTHLY'>('YEARLY');
+    const [experienceMin, setExperienceMin] = useState('');
+    const [experienceMax, setExperienceMax] = useState('');
 
     // Walk-in specific
     const [walkInDates, setWalkInDates] = useState<string>('');
@@ -52,6 +57,45 @@ export default function CreateOpportunityPage() {
     const [requiredDocuments, setRequiredDocuments] = useState<string>('');
     const [contactPerson, setContactPerson] = useState('');
     const [contactPhone, setContactPhone] = useState('');
+    const [walkInDateRange, setWalkInDateRange] = useState('');
+    const [walkInTimeRange, setWalkInTimeRange] = useState('');
+    const [venueLink, setVenueLink] = useState('');
+
+    // Picker states for simpler UI
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [startTime, setStartTime] = useState('10:00');
+    const [endTime, setEndTime] = useState('13:00');
+
+    // Simple formatting utilities
+    const getOrdinalNum = (n: number) => {
+        return n + (n > 0 ? ['th', 'st', 'nd', 'rd'][(n > 10 && n < 14) ? 0 : (n % 10 < 4 ? n % 10 : 0)] : '');
+    };
+
+    const formatDateRange = (start: string, end: string) => {
+        if (!start) return '';
+        const d1 = new Date(start);
+        const m1 = d1.toLocaleString('en-IN', { month: 'short' });
+        const day1 = getOrdinalNum(d1.getDate());
+
+        if (!end || start === end) return `${day1} ${m1}`;
+
+        const d2 = new Date(end);
+        const m2 = d2.toLocaleString('en-IN', { month: 'short' });
+        const day2 = getOrdinalNum(d2.getDate());
+
+        if (m1 === m2) return `${day1} - ${day2} ${m1}`;
+        return `${day1} ${m1} - ${day2} ${m2}`;
+    };
+
+    const formatTime = (time: string) => {
+        if (!time) return '';
+        const [h, m] = time.split(':');
+        let hours = parseInt(h);
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        return `${hours}:${m} ${ampm}`;
+    };
 
     const typeParamToEnum = (value: string) => {
         const v = value.toLowerCase();
@@ -86,10 +130,90 @@ export default function CreateOpportunityPage() {
 
     const handleCourseToggle = (course: string) => {
         setAllowedCourses(prev =>
-            prev.includes(course)
-                ? prev.filter(c => c !== course)
-                : [...prev, course]
+            prev.includes(course) ? prev.filter(c => c !== course) : [...prev, course]
         );
+    };
+
+    const handleQuickLocation = (loc: string) => {
+        if (locations.toLowerCase().includes(loc.toLowerCase())) return;
+        setLocations(prev => prev ? `${prev}, ${loc}` : loc);
+    };
+
+    const handleAutoFill = async () => {
+        if (!pastedText.trim()) {
+            toast.error('Please paste some job content first');
+            return;
+        }
+
+        setIsParsing(true);
+        const toastId = toast.loading('🔍 Auto-filling...');
+
+        try {
+            const { parsed } = await adminApi.parseJobText(pastedText);
+
+            if (parsed.title) setTitle(parsed.title);
+            if (parsed.company) setCompany(parsed.company);
+            if (parsed.type) setType(parsed.type);
+            if (parsed.locations?.length) setLocations(parsed.locations.join(', '));
+            if (parsed.skills?.length) setRequiredSkills(parsed.skills.join(', '));
+            if (parsed.experienceMin !== undefined) setExperienceMin(String(parsed.experienceMin));
+            if (parsed.experienceMax !== undefined) setExperienceMax(String(parsed.experienceMax));
+            if (parsed.salaryMin !== undefined) setSalaryMin(String(parsed.salaryMin));
+            if (parsed.salaryMax !== undefined) setSalaryMax(String(parsed.salaryMax));
+            if (parsed.salaryPeriod) setSalaryPeriod(parsed.salaryPeriod);
+            if (parsed.jobFunction) setJobFunction(parsed.jobFunction);
+            if (parsed.incentives) setIncentives(parsed.incentives);
+            if (parsed.allowedDegrees?.length) setAllowedDegrees(parsed.allowedDegrees);
+            if (parsed.allowedPassoutYears?.length) setPassoutYears(parsed.allowedPassoutYears);
+
+            // Set description to the raw text for reference
+            setDescription(pastedText);
+
+            if (parsed.type === 'WALKIN') {
+                if (parsed.venueAddress) setVenueAddress(parsed.venueAddress);
+                if (parsed.venueLink) setVenueLink(parsed.venueLink);
+                if (parsed.dateRange) setWalkInDateRange(parsed.dateRange);
+                if (parsed.timeRange) setWalkInTimeRange(parsed.timeRange);
+            }
+
+            toast.success('Successfully auto-filled from content!', { id: toastId });
+            setShowParser(false);
+        } catch (error) {
+            toast.error('Failed to parse text. Please fill manually.', { id: toastId });
+        } finally {
+            setIsParsing(false);
+        }
+    };
+
+    const toggleAmPm = (target: 'AM' | 'PM') => {
+        if (!expiresAt) return;
+        const [date, time] = expiresAt.split('T');
+        if (!time) return;
+        let [hours, minutes] = time.split(':');
+        let h = parseInt(hours);
+
+        if (target === 'PM' && h < 12) h += 12;
+        else if (target === 'AM' && h >= 12) h -= 12;
+
+        const newTime = `${String(h).padStart(2, '0')}:${minutes}`;
+        setExpiresAt(`${date}T${newTime}`);
+    };
+
+    const getFriendlyExpiry = () => {
+        if (!expiresAt) return null;
+        try {
+            const d = new Date(expiresAt);
+            return d.toLocaleDateString('en-IN', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        } catch {
+            return null;
+        }
     };
 
     const COMMON_COURSES = [
@@ -97,53 +221,7 @@ export default function CreateOpportunityPage() {
         'M.Tech / M.E.', 'M.Sc.', 'MCA', 'MBA', 'M.Com', 'M.A.'
     ];
 
-    // Auto-fill parser
-    const [showParser, setShowParser] = useState(false);
-    const [pastedText, setPastedText] = useState('');
 
-    const parseJobPosting = async () => {
-        if (!pastedText.trim()) return;
-
-        const text = pastedText;
-        const loadingToast = toast.loading('✨ Analyzing text...');
-
-        try {
-            const { parsed } = await adminApi.parseJobText(text);
-
-            if (parsed.title) setTitle(parsed.title);
-            if (parsed.company) setCompany(parsed.company);
-            if (parsed.locations?.length > 0) setLocations(parsed.locations.join(', '));
-            if (parsed.skills?.length > 0) setRequiredSkills(parsed.skills.join(', '));
-            if (parsed.type) setType(parsed.type);
-
-            // Handle Passout Years & Fresher Status
-            if (parsed.allowedPassoutYears?.length > 0) {
-                setPassoutYears(parsed.allowedPassoutYears);
-            } else if (parsed.isFresherOnly) {
-                // If it's a fresher-only role without specific years, 
-                // we leave years empty (which means 'All Freshers' in our logic)
-                setPassoutYears([]);
-            }
-
-            if (parsed.allowedDegrees?.length > 0) {
-                setAllowedDegrees(parsed.allowedDegrees);
-            } else {
-                setAllowedDegrees([]);
-            }
-
-            if (parsed.isRemote) setWorkMode('REMOTE');
-            setDescription(text.trim());
-
-            toast.success('AI Analysis Complete. Form auto-filled.', {
-                id: loadingToast,
-                icon: <CheckCircleIcon className="w-5 h-5 text-emerald-500" />
-            });
-            setShowParser(false);
-            setPastedText('');
-        } catch (err: any) {
-            toast.error('Could not parse text automatically.', { id: loadingToast });
-        }
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -162,18 +240,29 @@ export default function CreateOpportunityPage() {
                 requiredSkills: requiredSkills.split(',').map(s => s.trim()).filter(Boolean),
                 locations: locations.split(',').map(s => s.trim()).filter(Boolean),
                 workMode: type === 'WALKIN' ? undefined : workMode,
-                salaryMin: salaryMin ? parseInt(salaryMin) : undefined,
-                salaryMax: salaryMax ? parseInt(salaryMax) : undefined,
+                salaryMin: salaryMin ? parseInt(String(salaryMin).replace(/[^0-9]/g, '')) : undefined,
+                salaryMax: salaryMax ? parseInt(String(salaryMax).replace(/[^0-9]/g, '')) : undefined,
+                salaryPeriod,
+                incentives: incentives || undefined,
+                jobFunction: jobFunction || undefined,
+                experienceMin: experienceMin ? parseInt(String(experienceMin).replace(/[^0-9]/g, '')) : undefined,
+                experienceMax: experienceMax ? parseInt(String(experienceMax).replace(/[^0-9]/g, '')) : undefined,
                 applyLink: type === 'WALKIN' ? undefined : applyLink,
                 expiresAt: expiresAt || undefined,
             };
 
 
             if (type === 'WALKIN') {
+                const autoDateRange = formatDateRange(startDate, endDate);
+                const autoTimeRange = `${formatTime(startTime)} - ${formatTime(endTime)}`;
+
                 payload.walkInDetails = {
                     dates: walkInDates.split(',').map(d => d.trim()).filter(Boolean),
+                    dateRange: autoDateRange || walkInDateRange || undefined,
+                    timeRange: autoTimeRange || walkInTimeRange || undefined,
                     venueAddress,
-                    reportingTime,
+                    venueLink: venueLink || undefined,
+                    reportingTime: reportingTime || autoTimeRange || undefined,
                     requiredDocuments: requiredDocuments.split(',').map(s => s.trim()).filter(Boolean),
                     contactPerson: contactPerson || undefined,
                     contactPhone: contactPhone || undefined,
@@ -194,7 +283,7 @@ export default function CreateOpportunityPage() {
     if (!isAuthenticated) return null;
 
     return (
-        <div className="max-w-5xl mx-auto space-y-4 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-2 md:pb-24">
+        <div className="max-w-5xl mx-auto space-y-4 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header */}
             <div className="space-y-3 md:space-y-4">
                 <Link href="/admin/opportunities" className="hidden md:inline-flex items-center gap-2 text-xs md:text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -218,37 +307,41 @@ export default function CreateOpportunityPage() {
                 </div>
             </div>
 
-            {/* AI Parser Overlay */}
+            {/* Auto-Fill Section */}
             {showParser && (
-                <div className="bg-muted/30 border border-border/50 rounded-xl p-4 md:p-6 relative overflow-hidden">
-                    <div className="relative z-10 space-y-3 md:space-y-4">
+                <div className="bg-muted/30 border border-border rounded-xl p-4 md:p-6 shadow-sm animate-in slide-in-from-top-2 duration-300">
+                    <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-sm md:text-base font-medium flex items-center gap-2">
-                                <BoltIcon className="w-4 h-4" />
+                            <h3 className="text-sm font-bold flex items-center gap-2">
+                                <BoltIcon className="w-4 h-4 text-primary" />
                                 Paste Content
                             </h3>
-                            <button onClick={() => setShowParser(false)} className="text-muted-foreground hover:text-foreground">
-                                <XMarkIcon className="w-5 h-5" />
+                            <button onClick={() => setShowParser(false)} className="text-muted-foreground hover:text-foreground text-xs uppercase font-bold">
+                                Close
                             </button>
                         </div>
                         <textarea
                             value={pastedText}
                             onChange={(e) => setPastedText(e.target.value)}
-                            rows={6}
-                            className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs md:text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            placeholder="Paste job description here..."
+                            placeholder="Paste the job description here..."
+                            className="w-full min-h-[150px] p-4 text-sm rounded-xl border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                         />
                         <button
-                            onClick={parseJobPosting}
-                            disabled={!pastedText.trim()}
-                            className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 disabled:opacity-50 w-full md:w-auto"
+                            onClick={handleAutoFill}
+                            disabled={isParsing || !pastedText.trim()}
+                            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-2.5 rounded-xl transition-all shadow-sm active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
                         >
-                            <BoltIcon className="w-4 h-4 mr-2" />
-                            Parse
+                            {isParsing ? (
+                                <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                            ) : (
+                                <BoltIcon className="w-4 h-4" />
+                            )}
+                            {isParsing ? 'Processing...' : 'Parse & Update Form'}
                         </button>
                     </div>
                 </div>
             )}
+
 
             <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
                 {/* Type Selection */}
@@ -307,6 +400,27 @@ export default function CreateOpportunityPage() {
                         </div>
                     </div>
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                        <div className="space-y-1.5 md:space-y-2">
+                            <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide uppercase">Job Function</label>
+                            <input
+                                value={jobFunction}
+                                onChange={(e) => setJobFunction(e.target.value)}
+                                className="flex h-10 md:h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                placeholder="e.g. Sales, Banking, IT"
+                            />
+                        </div>
+                        <div className="space-y-1.5 md:space-y-2">
+                            <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide uppercase">Incentives / Variable</label>
+                            <input
+                                value={incentives}
+                                onChange={(e) => setIncentives(e.target.value)}
+                                className="flex h-10 md:h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                placeholder="e.g. Rs. 20,000 to 1,00,000"
+                            />
+                        </div>
+                    </div>
+
                     <div className="space-y-1.5 md:space-y-2">
                         <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide">FULL DESCRIPTION</label>
                         <textarea
@@ -316,6 +430,25 @@ export default function CreateOpportunityPage() {
                             className="flex min-h-[250px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-y"
                             placeholder="Roles and responsibilities..."
                         />
+                    </div>
+
+                    <div className="space-y-3">
+                        <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide uppercase">Salary Structure</label>
+                        <div className="flex gap-2">
+                            {(['YEARLY', 'MONTHLY'] as const).map((p) => (
+                                <button
+                                    key={p}
+                                    type="button"
+                                    onClick={() => setSalaryPeriod(p)}
+                                    className={`px-3 py-1 rounded text-[10px] font-bold transition-all border ${salaryPeriod === p
+                                        ? 'bg-primary text-primary-foreground border-primary'
+                                        : 'bg-muted/50 border-transparent text-muted-foreground hover:bg-muted'
+                                        }`}
+                                >
+                                    {p}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
@@ -339,14 +472,43 @@ export default function CreateOpportunityPage() {
                                 placeholder="12,00,000"
                             />
                         </div>
-                        <div className="space-y-1.5 md:space-y-2">
-                            <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide">EXPIRY DATE</label>
+                        <div className="space-y-1.5 md:space-y-2 relative group">
+                            <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide uppercase flex items-center gap-1.5">
+                                Expiry Date
+                                <span className="inline-flex items-center justify-center w-3 h-3 rounded-full bg-muted text-[8px] font-bold cursor-help">?</span>
+                            </label>
                             <input
                                 type="datetime-local"
                                 value={expiresAt}
                                 onChange={(e) => setExpiresAt(e.target.value)}
+                                min={new Date().toISOString().split('T')[0] + "T00:00"}
+                                max="2099-12-31T23:59"
                                 className="flex h-10 md:h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             />
+                            <div className="absolute left-0 -top-8 hidden group-hover:flex items-center gap-2 bg-foreground text-background px-2 py-1 rounded text-[9px] font-bold animate-in fade-in slide-in-from-bottom-1 uppercase tracking-tighter shadow-xl z-50">
+                                <span>Tip: Click buttons below or type A/P</span>
+                            </div>
+                            <div className="flex gap-1.5 mt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => toggleAmPm('AM')}
+                                    className="px-2 py-1 rounded bg-muted hover:bg-muted/80 text-[9px] font-black uppercase tracking-widest transition-colors"
+                                >
+                                    Force AM
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => toggleAmPm('PM')}
+                                    className="px-2 py-1 rounded bg-muted hover:bg-muted/80 text-[9px] font-black uppercase tracking-widest transition-colors"
+                                >
+                                    Force PM
+                                </button>
+                            </div>
+                            {getFriendlyExpiry() && (
+                                <div className="mt-2 text-[11px] font-black text-primary italic bg-primary/5 px-2 py-1 rounded border border-primary/20 animate-in fade-in zoom-in-95">
+                                    Selected: {getFriendlyExpiry()}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -374,11 +536,34 @@ export default function CreateOpportunityPage() {
                                         : 'bg-background border-input text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                                         }`}
                                 >
-                                    <span>{deg}</span>
-                                    {deg === 'DEGREE' && <span className="text-[8px] opacity-60">Any UG</span>}
-                                    {deg === 'PG' && <span className="text-[8px] opacity-60">Any PG</span>}
+                                    <span>{deg === 'DEGREE' ? 'UG' : deg}</span>
+                                    {deg === 'DEGREE' && <span className="text-[8px] opacity-60">Any Graduate</span>}
+                                    {deg === 'PG' && <span className="text-[8px] opacity-60">Any Postgrad</span>}
                                 </button>
                             ))}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                        <div className="space-y-1.5 md:space-y-2">
+                            <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide uppercase">Experience Required (Min Years)</label>
+                            <input
+                                type="number"
+                                value={experienceMin}
+                                onChange={(e) => setExperienceMin(e.target.value)}
+                                className="flex h-10 md:h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                placeholder="e.g. 0"
+                            />
+                        </div>
+                        <div className="space-y-1.5 md:space-y-2">
+                            <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide uppercase">Experience Required (Max Years)</label>
+                            <input
+                                type="number"
+                                value={experienceMax}
+                                onChange={(e) => setExperienceMax(e.target.value)}
+                                className="flex h-10 md:h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                placeholder="e.g. 3"
+                            />
                         </div>
                     </div>
 
@@ -445,6 +630,18 @@ export default function CreateOpportunityPage() {
                             className="flex h-10 md:h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             placeholder="Mumbai, Bangalore, Remote"
                         />
+                        <div className="flex flex-wrap gap-2 pt-1">
+                            {['Pan India', 'Bangalore', 'Mumbai', 'Delhi', 'Hyderabad', 'Remote'].map(loc => (
+                                <button
+                                    key={loc}
+                                    type="button"
+                                    onClick={() => handleQuickLocation(loc)}
+                                    className="px-2 py-1 rounded-md bg-muted/50 hover:bg-primary/10 hover:text-primary text-[9px] font-bold uppercase transition-all border border-transparent hover:border-primary/20"
+                                >
+                                    + {loc}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     {type !== 'WALKIN' && (
@@ -480,51 +677,83 @@ export default function CreateOpportunityPage() {
                         <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                                 <div className="space-y-1.5 md:space-y-2">
-                                    <label className="text-[10px] md:text-xs font-medium text-amber-700 dark:text-amber-400 tracking-wide">WALK-IN DATES *</label>
-                                    <input
+                                    <label className="text-[10px] md:text-xs font-medium text-amber-700 dark:text-amber-400 tracking-wide uppercase">Drive Dates *</label>
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                        <input
+                                            type="date"
+                                            required
+                                            value={startDate}
+                                            onChange={(e) => setStartDate(e.target.value)}
+                                            className="flex h-10 w-full sm:w-auto rounded-md border border-amber-500/30 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                                        />
+                                        <span className="text-amber-700/50 text-center text-xs">to</span>
+                                        <input
+                                            type="date"
+                                            value={endDate}
+                                            onChange={(e) => setEndDate(e.target.value)}
+                                            className="flex h-10 w-full sm:w-auto rounded-md border border-amber-500/30 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                                        />
+                                    </div>
+                                    <p className="text-[9px] font-black text-amber-600/60 uppercase">Preview: {formatDateRange(startDate, endDate)}</p>
+                                </div>
+                                <div className="space-y-1.5 md:space-y-2">
+                                    <label className="text-[10px] md:text-xs font-medium text-amber-700 dark:text-amber-400 tracking-wide uppercase">Reporting Window *</label>
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                        <input
+                                            type="time"
+                                            required
+                                            value={startTime}
+                                            onChange={(e) => setStartTime(e.target.value)}
+                                            className="flex h-10 w-full sm:w-auto rounded-md border border-amber-500/30 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                                        />
+                                        <span className="text-amber-700/50 text-center text-xs">to</span>
+                                        <input
+                                            type="time"
+                                            value={endTime}
+                                            onChange={(e) => setEndTime(e.target.value)}
+                                            className="flex h-10 w-full sm:w-auto rounded-md border border-amber-500/30 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                                        />
+                                    </div>
+                                    <p className="text-[9px] font-black text-amber-600/60 uppercase">Preview: {formatTime(startTime)} - {formatTime(endTime)}</p>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                                <div className="space-y-1.5 md:space-y-2">
+                                    <label className="text-[10px] md:text-xs font-medium text-amber-700 dark:text-amber-400 tracking-wide uppercase">Venue Address *</label>
+                                    <textarea
                                         required
-                                        value={walkInDates}
-                                        onChange={(e) => setWalkInDates(e.target.value)}
-                                        className="flex h-10 md:h-11 w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
-                                        placeholder="2024-05-10, 2024-05-11"
+                                        value={venueAddress}
+                                        onChange={(e) => setVenueAddress(e.target.value)}
+                                        rows={2}
+                                        className="flex min-h-[44px] w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 resize-none"
+                                        placeholder="Complete street address..."
                                     />
                                 </div>
                                 <div className="space-y-1.5 md:space-y-2">
-                                    <label className="text-[10px] md:text-xs font-medium text-amber-700 dark:text-amber-400 tracking-wide">REPORTING TIME *</label>
+                                    <label className="text-[10px] md:text-xs font-medium text-amber-700 dark:text-amber-400 tracking-wide uppercase">Venue Link (Maps URL)</label>
                                     <input
-                                        required
-                                        value={reportingTime}
-                                        onChange={(e) => setReportingTime(e.target.value)}
-                                        className="flex h-10 md:h-11 w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
-                                        placeholder="09:00 AM - 12:00 PM"
+                                        value={venueLink}
+                                        onChange={(e) => setVenueLink(e.target.value)}
+                                        className="flex h-10 w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                                        placeholder="Google Maps or location link..."
                                     />
                                 </div>
                             </div>
+                        </div>
+                    )
+                        : (
                             <div className="space-y-1.5 md:space-y-2">
-                                <label className="text-[10px] md:text-xs font-medium text-amber-700 dark:text-amber-400 tracking-wide">VENUE ADDRESS *</label>
-                                <textarea
+                                <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide">OFFICIAL APPLY URL *</label>
+                                <input
+                                    type="url"
                                     required
-                                    value={venueAddress}
-                                    onChange={(e) => setVenueAddress(e.target.value)}
-                                    rows={3}
-                                    className="flex min-h-[60px] w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
-                                    placeholder="Complete street address..."
+                                    value={applyLink}
+                                    onChange={(e) => setApplyLink(e.target.value)}
+                                    className="flex h-10 md:h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    placeholder="https://careers.company.com/..."
                                 />
                             </div>
-                        </div>
-                    ) : (
-                        <div className="space-y-1.5 md:space-y-2">
-                            <label className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide">OFFICIAL APPLY URL *</label>
-                            <input
-                                type="url"
-                                required
-                                value={applyLink}
-                                onChange={(e) => setApplyLink(e.target.value)}
-                                className="flex h-10 md:h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                placeholder="https://careers.company.com/..."
-                            />
-                        </div>
-                    )}
+                        )}
                 </div>
 
                 {/* Footer Actions */}

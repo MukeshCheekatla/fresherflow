@@ -72,6 +72,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     /* Dark Mode - Warm Bone-Gray Accents */
     --background: 220 15% 7%; /* Deep Charcoal-Black */
     --foreground: 35 10% 76%; /* Warmer #C8C3BC */
@@ -93,6 +94,15 @@
     --success: 142 60% 45%;
     --warning: 38 80% 50%;
     --error: 0 75% 60%;
+  }
+
+  /* Theme-aware native form controls */
+  input, textarea, select {
+    color-scheme: light;
+  }
+
+  .dark input, .dark textarea, .dark select {
+    color-scheme: dark;
   }
 
   @media (min-width: 1024px) {
@@ -159,16 +169,30 @@
     max-width: 1280px;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .max-content {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
   }
 
   .container-app {
     max-width: 1440px;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .container-app {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
   }
 
   /* Buttons - Production Grade */

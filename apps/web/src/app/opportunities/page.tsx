@@ -143,68 +143,66 @@ function OpportunitiesContent() {
     return (
         <AuthGate>
             <ProfileGate>
-                <div className="max-w-7xl mx-auto px-4 pb-12 md:pb-20 space-y-4 md:space-y-8">
-                    {/* Page Header - Ultra Compact */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4">
-                        <div className="flex items-center gap-3">
-                            <div className="px-3 py-1.5 bg-muted rounded-full border border-border flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-success" />
-                                <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-                                    {filteredOpps.length} of {totalCount} {selectedType ? selectedType.replace('JOB', 'Jobs').replace('WALKIN', 'Walk-ins').replace('INTERNSHIP', 'Internships') : 'Opportunities'} Found
-                                </p>
+                <div className="max-w-7xl mx-auto px-2 md:px-4 pb-12 md:pb-20 space-y-6 md:space-y-8">
+                    {/* Page Header - Clean & Compact */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border py-6">
+                        <div className="space-y-1">
+                            <h1 className="text-2xl font-bold tracking-tight text-foreground">Opportunities</h1>
+                            <div className="flex items-center gap-3">
+                                <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border">
+                                    {filteredOpps.length} Results
+                                </span>
+                                {selectedType && (
+                                    <button
+                                        onClick={() => updateType(null)}
+                                        className="text-xs font-medium text-primary hover:underline"
+                                    >
+                                        Reset Filter
+                                    </button>
+                                )}
                             </div>
-                            {selectedType && (
-                                <button
-                                    onClick={() => updateType(null)}
-                                    className="text-xs font-black text-primary uppercase hover:underline"
-                                >
-                                    Clear Category
-                                </button>
-                            )}
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="relative w-full md:w-64">
-                                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                 <Input
                                     type="text"
-                                    placeholder="Search feed..."
+                                    placeholder="Search by role or company..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    className="pl-9 !h-9 text-xs italic"
+                                    className="pl-10 h-10 text-sm"
                                 />
                             </div>
                             <Button
                                 variant={isFilterOpen ? "default" : "outline"}
                                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                                className="!h-9 px-4 text-xs font-black uppercase tracking-widest"
+                                className="h-10 px-4 text-sm font-medium"
                             >
-                                <FunnelIcon className="w-3.5 h-3.5" />
-                                {isFilterOpen ? 'Close' : 'Filters'}
+                                <FunnelIcon className="w-4 h-4 mr-2" />
+                                Filters
                             </Button>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8 items-start">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start">
                         {/* Control Panel (Sticky) */}
                         <aside className={cn(
-                            "lg:col-span-3 space-y-6 lg:sticky lg:top-24 transition-all duration-300",
+                            "lg:col-span-3 space-y-6 lg:sticky lg:top-24 transition-all duration-300 animate-in fade-in",
                             isFilterOpen ? "block" : "hidden"
                         )}>
-                            <div className="p-6 rounded-2xl border border-border bg-card space-y-8 shadow-sm">
+                            <div className="bg-card rounded-xl border border-border p-5 md:p-6 space-y-8">
                                 <div>
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">Job Type</h3>
-                                    </div>
+                                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Category</h3>
                                     <div className="space-y-2">
                                         {FILTERS.type.map(type => (
                                             <button
                                                 key={type.value}
                                                 onClick={() => updateType(selectedType === type.value ? null : type.value)}
                                                 className={cn(
-                                                    "w-full flex items-center justify-between p-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all",
+                                                    "w-full flex items-center justify-between px-3 py-2.5 rounded-lg border text-sm font-medium transition-all text-left",
                                                     selectedType === type.value
-                                                        ? "bg-primary/5 border-primary text-primary"
-                                                        : "bg-background border-border text-muted-foreground hover:border-primary/30"
+                                                        ? "bg-primary/5 border-primary text-primary shadow-sm"
+                                                        : "bg-background border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                                                 )}
                                             >
                                                 {type.label}
@@ -216,9 +214,9 @@ function OpportunitiesContent() {
 
                                 <div>
                                     <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">Location</h3>
+                                        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Location</h3>
                                         {selectedLoc && (
-                                            <button onClick={() => setSelectedLoc(null)} className="text-xs font-black text-primary uppercase">Reset</button>
+                                            <button onClick={() => setSelectedLoc(null)} className="text-xs font-medium text-primary">Clear</button>
                                         )}
                                     </div>
                                     <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
@@ -227,24 +225,16 @@ function OpportunitiesContent() {
                                                 key={loc}
                                                 onClick={() => setSelectedLoc(selectedLoc === loc ? null : loc)}
                                                 className={cn(
-                                                    "flex items-center gap-3 p-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all",
+                                                    "flex items-center gap-3 px-3 py-2.5 rounded-lg border text-sm font-medium transition-all",
                                                     selectedLoc === loc
                                                         ? "bg-primary/5 border-primary text-primary shadow-sm"
-                                                        : "bg-background border-border text-muted-foreground hover:border-primary/30"
+                                                        : "bg-background border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                                                 )}
                                             >
-                                                <MapPinIcon className="w-3.5 h-3.5" />
+                                                <MapPinIcon className="w-4 h-4 opacity-70" />
                                                 {loc}
                                             </button>
                                         ))}
-                                    </div>
-                                </div>
-
-                                <div className="pt-4 border-t border-border/50">
-                                    <div className="p-4 bg-muted/30 rounded-xl border border-border">
-                                        <p className="text-xs font-bold text-muted-foreground italic leading-relaxed">
-                                            Platform ensures 100% verification for all listed opportunities.
-                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -255,71 +245,71 @@ function OpportunitiesContent() {
                             "transition-all duration-300",
                             isFilterOpen ? "lg:col-span-9" : "lg:col-span-12"
                         )}>
-                            {/* Profile Incomplete Error */}
+                            {/* Feed Display */}
                             {profileIncomplete ? (
-                                <div className="p-12 md:p-20 text-center rounded-3xl border-2 border-primary/20 bg-primary/5">
-                                    <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-primary/20">
-                                        <ShieldCheckIcon className="w-10 h-10 text-primary" />
+                                <div className="p-12 md:p-20 text-center rounded-2xl border border-border bg-card">
+                                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <ShieldCheckIcon className="w-8 h-8 text-primary" />
                                     </div>
-                                    <h3 className="text-2xl md:text-3xl font-black text-foreground uppercase italic tracking-tight mb-3">
+                                    <h3 className="text-2xl font-bold text-foreground tracking-tight mb-2">
                                         Profile Completion Required
                                     </h3>
-                                    <div className="max-w-md mx-auto space-y-4">
-                                        <p className="text-sm md:text-base text-muted-foreground font-medium leading-relaxed">
+                                    <div className="max-w-md mx-auto space-y-6">
+                                        <p className="text-sm text-muted-foreground leading-relaxed">
                                             {profileIncomplete.message}
                                         </p>
-                                        <div className="flex items-center justify-center gap-3 py-4">
-                                            <div className="text-center">
-                                                <div className="text-4xl font-black text-primary">{profileIncomplete.percentage}%</div>
-                                                <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider mt-1">Complete</div>
-                                            </div>
-                                            <div className="text-2xl text-muted-foreground">→</div>
-                                            <div className="text-center">
-                                                <div className="text-4xl font-black text-success">100%</div>
-                                                <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider mt-1">Required</div>
+                                        <div className="bg-muted/50 p-6 rounded-xl border border-border">
+                                            <div className="flex items-center justify-center gap-6">
+                                                <div className="text-center">
+                                                    <div className="text-3xl font-bold text-primary">{profileIncomplete.percentage}%</div>
+                                                    <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mt-1">Current</div>
+                                                </div>
+                                                <div className="w-px h-10 bg-border" />
+                                                <div className="text-center">
+                                                    <div className="text-3xl font-bold text-foreground">100%</div>
+                                                    <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mt-1">Goal</div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <p className="text-xs text-muted-foreground italic">
-                                            Add missing education details and preferences to unlock job listings
-                                        </p>
-                                        <Button
-                                            asChild
-                                            className="inline-flex items-center gap-2 mt-6 !h-12 !px-8 text-sm font-black uppercase tracking-widest"
-                                        >
+                                        <Button asChild className="h-11 px-8 text-sm font-semibold">
                                             <Link href="/profile/edit">
-                                                Complete Your Profile
-                                                <ChevronRightIcon className="w-4 h-4" />
+                                                Complete Profile
+                                                <ChevronRightIcon className="w-4 h-4 ml-2" />
                                             </Link>
                                         </Button>
                                     </div>
                                 </div>
                             ) : isLoading ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {[1, 2, 3, 4, 5, 6].map(i => <SkeletonJobCard key={i} />)}
+                                <div className={cn(
+                                    "grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6",
+                                    isFilterOpen ? "lg:grid-cols-2 xl:grid-cols-3" : "lg:grid-cols-3 xl:grid-cols-4"
+                                )}>
+                                    {[1, 2, 3, 4, 5, 6, 7, 8].map(i => <SkeletonJobCard key={i} />)}
                                 </div>
                             ) : filteredOpps.length === 0 ? (
-                                <div className="p-20 text-center rounded-3xl border-2 border-dashed border-border bg-muted/10">
-                                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-6 text-muted-foreground">
-                                        <MagnifyingGlassIcon className="w-8 h-8" />
+                                <div className="p-20 text-center rounded-2xl border border-dashed border-border bg-card">
+                                    <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-4 text-muted-foreground">
+                                        <MagnifyingGlassIcon className="w-6 h-6" />
                                     </div>
-                                    <h3 className="text-xl font-black text-foreground uppercase italic tracking-tight">Null ResultSet</h3>
-                                    <p className="text-sm text-muted-foreground mt-2 font-medium max-w-sm mx-auto">
-                                        No opportunities currently match your defined parameters in the {selectedType || 'global'} feed.
+                                    <h3 className="text-lg font-semibold text-foreground tracking-tight">System: No results found</h3>
+                                    <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto">
+                                        Try adjusting your filters or search keywords to find matching opportunities.
                                     </p>
                                     <Button
+                                        variant="outline"
                                         onClick={() => {
                                             setSearch('');
                                             updateType(null);
                                             setSelectedLoc(null);
                                         }}
-                                        className="mt-8 mx-auto"
+                                        className="mt-6 h-9 px-4 text-xs font-medium"
                                     >
-                                        Flush All Filters
+                                        Clear All Filters
                                     </Button>
                                 </div>
                             ) : (
                                 <div className={cn(
-                                    "grid grid-cols-1 md:grid-cols-2 gap-6",
+                                    "grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 animate-in fade-in duration-500",
                                     isFilterOpen ? "lg:grid-cols-2 xl:grid-cols-3" : "lg:grid-cols-3 xl:grid-cols-4"
                                 )}>
                                     {filteredOpps.map((opp) => (
@@ -338,11 +328,11 @@ function OpportunitiesContent() {
                                 </div>
                             )}
 
-                            {/* Feed Metadata Footer */}
-                            {!isLoading && (
+                            {/* Feed Footer */}
+                            {!isLoading && !profileIncomplete && (
                                 <div className="mt-12 text-center pb-8 border-t border-border pt-8">
-                                    <p className="text-xs font-black text-muted-foreground uppercase tracking-[0.4em]">
-                                        Total opportunities synchronized: {totalCount}.
+                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest opacity-60">
+                                        {totalCount} Opportunities Synced With Career Grid
                                     </p>
                                 </div>
                             )}

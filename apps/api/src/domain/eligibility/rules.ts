@@ -148,6 +148,7 @@ export const workModeRule: EligibilityRule = {
 export const HARD_RULES: EligibilityRule[] = [
     degreeRule,
     passoutYearRule,
+    skillsRule,
 ];
 
 /**
@@ -155,7 +156,6 @@ export const HARD_RULES: EligibilityRule[] = [
  * These are preferences but not blockers
  */
 export const SOFT_RULES: EligibilityRule[] = [
-    skillsRule,
     locationRule,
     workModeRule,
 ];

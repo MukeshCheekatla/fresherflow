@@ -69,7 +69,7 @@ export default function LoginPage() {
             </div>
 
             {/* Right Side: Login Form */}
-            <div className="flex-1 flex flex-col justify-center px-6 py-4 md:px-20 bg-background relative overflow-hidden">
+            <div className="flex-1 flex flex-col justify-center px-4 py-4 md:px-20 bg-background relative overflow-hidden">
                 <div className="max-w-[400px] mx-auto w-full space-y-6">
                     <div className="space-y-1 text-center md:text-left">
                         <h1 className="text-2xl font-black tracking-tight text-foreground uppercase italic leading-none">

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { OpportunityType, OpportunityStatus, WorkMode, EducationLevel, Availability, ActionType, FeedbackReason } from '@prisma/client';
+import { OpportunityType, OpportunityStatus, WorkMode, EducationLevel, Availability, ActionType, FeedbackReason, SalaryPeriod } from '@prisma/client';
 
 // Auth Schemas
 export const registerSchema = z.object({
@@ -72,8 +72,13 @@ export const opportunitySchema = z.object({
     salaryMax: z.number().optional(), // Legacy
     salaryRange: z.string().optional(), // New
     stipend: z.string().optional(),     // New
+    salaryPeriod: z.nativeEnum(SalaryPeriod).optional(),
+    incentives: z.string().optional(),
+    jobFunction: z.string().optional(),
+    experienceMin: z.number().int().optional(),
+    experienceMax: z.number().int().optional(),
     employmentType: z.string().optional(), // New
-    applyLink: z.string().url().optional(),
+    applyLink: z.string().url().optional().or(z.string().length(0)),
 
     expiresAt: z.string().optional(),
 
@@ -81,8 +86,11 @@ export const opportunitySchema = z.object({
     walkInDetails: z.object({
         date: z.string().optional(), // Frontend sends singular date often
         dates: z.array(z.string()).optional(), // Backend expects array
+        dateRange: z.string().optional(), // New: "2nd Feb - 6th Feb"
+        timeRange: z.string().optional(), // New: "11:00 AM - 1:00 PM"
         venueAddress: z.string().optional(),
         venue: z.string().optional(), // Frontend alias
+        venueLink: z.string().optional(), // New: Google Maps URL
         reportingTime: z.string().optional(),
         startTime: z.string().optional(), // Frontend alias for reportingTime
         endTime: z.string().optional(),

@@ -63,45 +63,48 @@ export default function FeedbackPage() {
     if (!isAuthenticated) return null;
 
     return (
-        <div className="space-y-4 md:space-y-8 animate-in fade-in duration-500 pb-2 md:pb-12">
-            {/* Header */}
-            <div className="flex items-center justify-between gap-4">
-                <div className="space-y-0.5 md:space-y-1">
-                    <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground">User Feedback</h1>
-                    <p className="text-[10px] md:text-sm text-muted-foreground">Monitoring reports and community issues.</p>
-                </div>
-                <button
-                    onClick={loadFeedback}
-                    className="inline-flex h-8 md:h-9 items-center justify-center rounded-md border border-input bg-background px-3 md:px-4 text-xs md:text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                    <ArrowPathIcon className="w-3.5 h-3.5 md:w-4 md:h-4 md:mr-2" />
-                    <span className="hidden md:inline">Sync Log</span>
-                </button>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-                {[
-                    { label: 'Total Reports', value: feedback.length, icon: ChatBubbleBottomCenterTextIcon, color: 'text-blue-500' },
-                    { label: 'Issue Hotspots', value: Object.keys(groupedFeedback).length, icon: ExclamationTriangleIcon, color: 'text-amber-500' },
-                    { label: 'Resolved Rate', value: '0%', icon: CheckCircleIcon, color: 'text-emerald-500' }
-                ].map((stat, i) => (
-                    <div key={i} className={cn(
-                        "bg-card p-3 md:p-5 rounded-lg border border-border shadow-sm flex items-center justify-between",
-                        i === 2 && "col-span-2 md:col-span-1" // Make last one span 2 cols on mobile
-                    )}>
-                        <div className="space-y-0.5 md:space-y-1">
-                            <p className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide uppercase">{stat.label}</p>
-                            <p className="text-lg md:text-2xl font-semibold text-foreground tracking-tight">{stat.value}</p>
-                        </div>
-                        <div className={cn(
-                            "p-1.5 md:p-2 rounded-full bg-muted/50",
-                            stat.color
-                        )}>
-                            <stat.icon className="w-3.5 h-3.5 md:w-5 md:h-5" />
-                        </div>
+        <div className="space-y-4 md:space-y-8 animate-in fade-in duration-500">
+            {/* Sticky Header Section for Mobile Content focus */}
+            <div className="sticky top-0 z-20 -mx-4 px-4 py-2 bg-background/95 backdrop-blur-md md:relative md:top-auto md:z-auto md:mx-0 md:px-0 md:py-0 md:bg-transparent space-y-4">
+                {/* Header */}
+                <div className="flex items-center justify-between gap-4">
+                    <div className="space-y-0.5 md:space-y-1">
+                        <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground">User Feedback</h1>
+                        <p className="text-[10px] md:text-sm text-muted-foreground">Monitoring reports and community issues.</p>
                     </div>
-                ))}
+                    <button
+                        onClick={loadFeedback}
+                        className="inline-flex h-8 md:h-9 items-center justify-center rounded-md border border-input bg-background px-3 md:px-4 text-xs md:text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    >
+                        <ArrowPathIcon className="w-3.5 h-3.5 md:w-4 md:h-4 md:mr-2" />
+                        <span className="hidden md:inline">Sync Log</span>
+                    </button>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+                    {[
+                        { label: 'Total Reports', value: feedback.length, icon: ChatBubbleBottomCenterTextIcon, color: 'text-blue-500' },
+                        { label: 'Issue Hotspots', value: Object.keys(groupedFeedback).length, icon: ExclamationTriangleIcon, color: 'text-amber-500' },
+                        { label: 'Resolved Rate', value: '0%', icon: CheckCircleIcon, color: 'text-emerald-500' }
+                    ].map((stat, i) => (
+                        <div key={i} className={cn(
+                            "bg-card p-2 md:p-5 rounded-lg border border-border shadow-sm flex items-center justify-between",
+                            i === 2 && "col-span-2 md:col-span-1" // Make last one span 2 cols on mobile
+                        )}>
+                            <div className="space-y-0.5 md:space-y-1">
+                                <p className="text-[9px] md:text-xs font-medium text-muted-foreground tracking-wide uppercase">{stat.label}</p>
+                                <p className="text-sm md:text-2xl font-semibold text-foreground tracking-tight">{stat.value}</p>
+                            </div>
+                            <div className={cn(
+                                "p-1 md:p-2 rounded-full bg-muted/50",
+                                stat.color
+                            )}>
+                                <stat.icon className="w-3 h-3 md:w-5 md:h-5" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
 
             {/* List */}

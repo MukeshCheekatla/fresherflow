@@ -95,12 +95,15 @@ router.post(
                 const venueAddress = data.walkInDetails.venueAddress || data.walkInDetails.venue;
                 const reportingTime = data.walkInDetails.reportingTime || data.walkInDetails.startTime;
 
-                if (dates.length && venueAddress && reportingTime) {
+                if (venueAddress) {
                     walkInCreate = {
                         create: {
                             dates: dates.map((d: string) => new Date(d)),
+                            dateRange: data.walkInDetails.dateRange,
+                            timeRange: data.walkInDetails.timeRange,
                             venueAddress,
-                            reportingTime,
+                            venueLink: data.walkInDetails.venueLink,
+                            reportingTime: reportingTime || 'Contact for timing',
                             requiredDocuments: data.walkInDetails.requiredDocuments || [],
                             contactPerson: data.walkInDetails.contactPerson,
                             contactPhone: data.walkInDetails.contactPhone
@@ -130,6 +133,11 @@ router.post(
                     // Legacy Mapping
                     salaryMin: data.salaryMin || (data.salaryRange ? parseInt(data.salaryRange) : undefined), // Fallback
                     salaryMax: data.salaryMax,
+                    salaryPeriod: data.salaryPeriod,
+                    incentives: data.incentives,
+                    jobFunction: data.jobFunction,
+                    experienceMin: data.experienceMin,
+                    experienceMax: data.experienceMax,
 
                     applyLink: data.applyLink,
                     expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
@@ -276,19 +284,28 @@ router.put(
             // Prepare nested walk-in details update if applicable
             const walkInUpdate: any = {};
             if (data.type === OpportunityType.WALKIN && data.walkInDetails) {
+                const venueAddress = data.walkInDetails.venueAddress || data.walkInDetails.venue;
+                const reportingTime = data.walkInDetails.reportingTime || data.walkInDetails.startTime;
+
                 walkInUpdate.upsert = {
                     create: {
                         dates: data.walkInDetails.dates?.map((d: string) => new Date(d)) || [],
-                        venueAddress: data.walkInDetails.venueAddress!,
-                        reportingTime: data.walkInDetails.reportingTime!,
+                        dateRange: data.walkInDetails.dateRange,
+                        timeRange: data.walkInDetails.timeRange,
+                        venueAddress: venueAddress!,
+                        venueLink: data.walkInDetails.venueLink,
+                        reportingTime: reportingTime || 'Contact for timing',
                         requiredDocuments: data.walkInDetails.requiredDocuments || [],
                         contactPerson: data.walkInDetails.contactPerson,
                         contactPhone: data.walkInDetails.contactPhone
                     },
                     update: {
                         dates: data.walkInDetails.dates?.map((d: string) => new Date(d)) || [],
-                        venueAddress: data.walkInDetails.venueAddress!,
-                        reportingTime: data.walkInDetails.reportingTime!,
+                        dateRange: data.walkInDetails.dateRange,
+                        timeRange: data.walkInDetails.timeRange,
+                        venueAddress: venueAddress!,
+                        venueLink: data.walkInDetails.venueLink,
+                        reportingTime: reportingTime || 'Contact for timing',
                         requiredDocuments: data.walkInDetails.requiredDocuments || [],
                         contactPerson: data.walkInDetails.contactPerson,
                         contactPhone: data.walkInDetails.contactPhone
@@ -312,6 +329,11 @@ router.put(
                     workMode: data.workMode,
                     salaryMin: data.salaryMin,
                     salaryMax: data.salaryMax,
+                    salaryPeriod: data.salaryPeriod,
+                    incentives: data.incentives,
+                    jobFunction: data.jobFunction,
+                    experienceMin: data.experienceMin,
+                    experienceMax: data.experienceMax,
                     salaryRange: data.salaryRange,
                     stipend: data.stipend,
                     employmentType: data.employmentType,

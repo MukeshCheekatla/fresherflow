@@ -110,7 +110,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <button onClick={logout} className="p-2 text-muted-foreground"><ArrowRightOnRectangleIcon className="w-5 h-5" /></button>
                 </header>
 
-                <main className="flex-1 overflow-y-auto pt-20 pb-20 md:pb-8 p-4 md:p-8 md:pt-8 w-full">
+                <main className="flex-1 overflow-y-auto pt-16 pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-8 p-4 md:p-8 md:pt-8 w-full">
                     <div className="max-w-7xl mx-auto w-full">
                         {children}
                     </div>

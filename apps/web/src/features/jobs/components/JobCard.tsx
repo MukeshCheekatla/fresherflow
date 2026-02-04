@@ -42,51 +42,66 @@ export default function JobCard({ job, jobId, onClick, isSaved = false, isApplie
         if (job.salaryRange) return job.salaryRange;
         if (job.stipend) return job.stipend;
 
-        if (!job.salary) return 'Not disclosed';
-        const { min, max } = job.salary;
+        const period = job.salaryPeriod === 'MONTHLY' ? '/mo' : ' LPA';
+        const isMonthly = job.salaryPeriod === 'MONTHLY';
 
-        if (min === 0 && max === 0 && job.type === 'INTERNSHIP') return 'Unpaid';
-        if (min && max) {
-            return `₹${(min / 100000).toFixed(0)}-${(max / 100000).toFixed(0)}L`;
+        // Check top-level min/max first (preferred)
+        const sMin = job.salaryMin !== undefined ? job.salaryMin : job.salary?.min;
+        const sMax = job.salaryMax !== undefined ? job.salaryMax : job.salary?.max;
+
+        if (sMin !== undefined && sMax !== undefined) {
+            if (sMin === 0 && sMax === 0 && job.type === 'INTERNSHIP') return 'Unpaid';
+
+            const formatMin = isMonthly ? sMin.toLocaleString() : (sMin / 100000).toFixed(1);
+            const formatMax = isMonthly ? sMax.toLocaleString() : (sMax / 100000).toFixed(1);
+
+            // Clean up .0 from LPA
+            const finalMin = formatMin.endsWith('.0') ? formatMin.slice(0, -2) : formatMin;
+            const finalMax = formatMax.endsWith('.0') ? formatMax.slice(0, -2) : formatMax;
+
+            return `₹${finalMin}-${finalMax}${period}`;
         }
+
         return 'Not disclosed';
     };
 
     const formatExperience = () => {
-        const { min, max } = job.experienceRange || { min: 0, max: 0 };
-        if (min === 0 && max === 0) return 'Fresher';
+        const min = job.experienceMin ?? 0;
+        const max = job.experienceMax;
+
+        if (min === 0 && (max === 0 || max === undefined)) return 'Fresher';
+        if (max === undefined) return `${min}+ years`;
         return `${min}-${max} years`;
     };
 
     const handleSaveClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!user) return;
-        if (onToggleSave) onToggleSave();
+        import('react-hot-toast').then(t => t.default.success('Save feature coming soon! ✨'));
     };
 
     const getJobTypeBadge = () => {
-        const type = job.employmentType as string;
+        const type = (job.employmentType || job.type) as string;
 
-        if (type === 'WALKIN') {
+        if (type === 'WALKIN' || job.type === 'WALKIN') {
             return (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-500/10 border border-orange-500/20 text-orange-600 text-xs font-bold uppercase tracking-wider rounded">
-                    <div className="w-1.5 h-1.5 rounded-full bg-orange-600" />
-                    Walk-in
+                <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-600 text-[10px] font-bold uppercase tracking-wider rounded">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse" />
+                    Walk-in Drive
                 </span>
             );
         }
 
-        if (type === 'INTERNSHIP') {
+        if (type === 'INTERNSHIP' || job.type === 'INTERNSHIP') {
             return (
-                <span className="inline-flex items-center px-2 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-600 text-xs font-bold uppercase tracking-wider rounded">
+                <span className="inline-flex items-center px-2 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-600 text-[10px] font-bold uppercase tracking-wider rounded">
                     Internship
                 </span>
             );
         }
 
         return (
-            <span className="inline-flex items-center px-2 py-1 bg-primary/5 border border-primary/10 text-primary text-xs font-bold uppercase tracking-wider rounded">
-                Full-time
+            <span className="inline-flex items-center px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-[10px] font-bold uppercase tracking-wider rounded">
+                Full-time Job
             </span>
         );
     };
@@ -95,7 +110,7 @@ export default function JobCard({ job, jobId, onClick, isSaved = false, isApplie
         <div
             onClick={onClick}
             className={cn(
-                "group relative bg-card border border-border rounded-lg p-4 transition-all hover:border-primary/40 hover:shadow-sm flex flex-col gap-3",
+                "group relative bg-card border border-border rounded-xl p-3 md:p-4 transition-all hover:border-primary/40 hover:shadow-sm flex flex-col gap-2 md:gap-3",
                 onClick && "cursor-pointer"
             )}
         >
@@ -137,11 +152,40 @@ export default function JobCard({ job, jobId, onClick, isSaved = false, isApplie
                 <div className="flex flex-wrap gap-2">
                     {getJobTypeBadge()}
                 </div>
-                <div className="flex items-center gap-1 text-xs font-bold text-muted-foreground/60">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary/40" />
-                    <span>VERIFIED</span>
-                </div>
             </div>
+
+            {/* Walk-in Specific Details Block */}
+            {job.type === 'WALKIN' && (job as any).walkInDetails && (
+                <div className="bg-amber-500/5 border border-amber-500/10 rounded-lg p-2.5 space-y-2">
+                    <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-0.5">
+                            <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest leading-none">Drive Schedule</p>
+                            <p className="text-xs font-bold text-foreground">
+                                {(job as any).walkInDetails.dateRange || 'Multiple Dates'}
+                            </p>
+                        </div>
+                        <div className="text-right space-y-0.5">
+                            <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest leading-none">Timing Window</p>
+                            <p className="text-xs font-bold text-foreground">
+                                {(job as any).walkInDetails.timeRange || (job as any).walkInDetails.reportingTime}
+                            </p>
+                        </div>
+                    </div>
+                    {(job as any).walkInDetails.venueLink && (
+                        <a
+                            href={(job as any).walkInDetails.venueLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center gap-1.5 text-[10px] font-black text-primary hover:text-primary/80 transition-colors uppercase tracking-tight w-fit pt-0.5"
+                        >
+                            <MapPinIcon className="w-3 h-3" />
+                            View Venue Map
+                            <ChevronRightIcon className="w-2.5 h-2.5" />
+                        </a>
+                    )}
+                </div>
+            )}
 
             {/* Job Details Grid */}
             <div className="grid grid-cols-3 gap-3 pt-3 border-t border-border/50">

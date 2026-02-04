@@ -1,0 +1,42 @@
+name: Monorepo CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Lint, Test, and Build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install Dependencies
+        run: npm install
+      
+      - name: Lint Check
+        run: npm run lint
+      
+      - name: Type Check
+        run: npm run typecheck
+      
+      - name: Run Tests (Parser Logic)
+        run: npm test
+      
+      - name: Build Application
+        run: npm run build
+
+      # Note: Vercel auto-deploys via its own GitHub integration 
+      # once this CI pipeline is healthy.

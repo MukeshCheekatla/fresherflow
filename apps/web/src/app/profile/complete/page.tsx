@@ -209,12 +209,12 @@ export default function ProfileCompletePage() {
 
     return (
         <AuthGate>
-            <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
+            <div className="max-w-6xl mx-auto px-2 md:px-4 py-8 md:py-12">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
                     {/* Sticky Sidebar */}
-                    <aside className="lg:col-span-4 space-y-6 lg:sticky lg:top-24">
-                        <div className="premium-card !p-8 space-y-8 shadow-xl border-primary/5">
+                    <aside className="lg:col-span-4 space-y-5 lg:sticky lg:top-24">
+                        <div className="premium-card !p-6 space-y-6 shadow-xl border-primary/5">
                             <div>
                                 <h1 className="text-2xl font-black tracking-tighter mb-2 italic">Complete Profile</h1>
                                 <p className="text-xs text-muted-foreground font-medium uppercase tracking-[0.05em]">Setup your account for job matching.</p>
@@ -278,19 +278,19 @@ export default function ProfileCompletePage() {
 
                     {/* Main Form Content */}
                     <main className="lg:col-span-8">
-                        <div className="premium-card !p-8 md:!p-10 shadow-2xl border-border/50 min-h-[600px] flex flex-col">
+                        <div className="premium-card !p-6 md:!p-8 shadow-2xl border-border/50 min-h-[500px] flex flex-col">
 
                             {/* Header Intro */}
-                            <div className="flex items-center gap-3 mb-10">
-                                <div className="w-1.5 h-10 bg-primary rounded-full" />
+                            <div className="flex items-center gap-3 mb-8">
+                                <div className="w-1 h-8 bg-primary rounded-full" />
                                 <div>
-                                    <h2 className="text-2xl font-black tracking-tight flex items-center gap-2 italic">
+                                    <h2 className="text-xl font-black tracking-tight flex items-center gap-2 italic">
                                         {currentStep === 'education' && "Academic Foundation"}
                                         {currentStep === 'preferences' && "Match Parameters"}
                                         {currentStep === 'readiness' && "Talent Showcase"}
-                                        <SparklesIcon className="w-5 h-5 text-primary animate-pulse" />
+                                        <SparklesIcon className="w-4 h-4 text-primary animate-pulse" />
                                     </h2>
-                                    <p className="text-sm text-muted-foreground font-medium">
+                                    <p className="text-[11px] text-muted-foreground font-medium">
                                         {currentStep === 'education' && "Define your complete education history for strict eligibility matching."}
                                         {currentStep === 'preferences' && "Tell us what excites you to personalize your job feed."}
                                         {currentStep === 'readiness' && "Finalize your technical skills and job hunting status."}
@@ -337,17 +337,22 @@ export default function ProfileCompletePage() {
 
                                             <div className="space-y-3">
                                                 <p className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Education Level</p>
-                                                <div className="grid grid-cols-3 gap-3">
+                                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                                     {EDUCATION_LEVELS.map(level => (
                                                         <button
                                                             key={level}
                                                             onClick={() => setEducationLevel(level)}
                                                             className={cn(
-                                                                "h-12 rounded-xl font-bold border-2 transition-all text-xs uppercase tracking-widest",
+                                                                "h-10 rounded-xl font-bold border-2 transition-all text-[10px] uppercase tracking-widest flex flex-col items-center justify-center gap-0.5",
                                                                 educationLevel === level ? "bg-primary border-primary text-white shadow-lg" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/40"
                                                             )}
                                                         >
-                                                            {level}
+                                                            <span>{level === 'DEGREE' ? 'UG' : level}</span>
+                                                            <span className="text-[7px] font-medium opacity-70 uppercase tracking-tighter">
+                                                                {level === 'DIPLOMA' && 'Technical'}
+                                                                {level === 'DEGREE' && 'Undergrad'}
+                                                                {level === 'PG' && 'Postgrad'}
+                                                            </span>
                                                         </button>
                                                     ))}
                                                 </div>
@@ -419,12 +424,16 @@ export default function ProfileCompletePage() {
                                         <div className="space-y-4">
                                             <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Stream Selection</p>
                                             <div className="flex flex-wrap gap-2">
-                                                {OPPORTUNITY_TYPES.map(t => (
+                                                {OPPORTUNITY_TYPES.map(type => (
                                                     <button
-                                                        key={t} onClick={() => toggleArrayItem(interestedIn, setInterestedIn, t)}
-                                                        className={cn("px-6 h-12 rounded-xl font-black text-xs uppercase tracking-widest transition-all border", interestedIn.includes(t) ? "bg-foreground text-background border-foreground shadow-lg" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/50")}
+                                                        key={type}
+                                                        onClick={() => toggleArrayItem(interestedIn, setInterestedIn, type)}
+                                                        className={cn(
+                                                            "h-10 rounded-xl font-bold border-2 transition-all text-[10px] uppercase tracking-widest",
+                                                            interestedIn.includes(type) ? "bg-primary border-primary text-white shadow-lg" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/40"
+                                                        )}
                                                     >
-                                                        {t}
+                                                        {type}
                                                     </button>
                                                 ))}
                                             </div>
@@ -436,7 +445,7 @@ export default function ProfileCompletePage() {
                                                 {WORK_MODES.map(t => (
                                                     <button
                                                         key={t} onClick={() => toggleArrayItem(workModes, setWorkModes, t)}
-                                                        className={cn("px-6 h-12 rounded-xl font-black text-xs uppercase tracking-widest transition-all border", workModes.includes(t) ? "bg-foreground text-background border-foreground shadow-lg" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/50")}
+                                                        className={cn("px-6 h-10 rounded-xl font-black text-xs uppercase tracking-widest transition-all border", workModes.includes(t) ? "bg-foreground text-background border-foreground shadow-lg" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/50")}
                                                     >
                                                         {t}
                                                     </button>
@@ -455,14 +464,14 @@ export default function ProfileCompletePage() {
                                                             if (val) { toggleArrayItem(preferredCities, setPreferredCities, val); (e.target as HTMLInputElement).value = ''; }
                                                         }
                                                     }}
-                                                    className="premium-input !h-12"
+                                                    className="premium-input !h-10 text-[11px]"
                                                 />
                                             </div>
                                             <div className="flex flex-wrap gap-2 min-h-6">
                                                 {preferredCities.map(c => (
-                                                    <span key={c} className="bg-primary text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-primary/20">
+                                                    <span key={c} className="bg-primary text-white px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1 shadow-lg shadow-primary/20">
                                                         {c}
-                                                        <XMarkIcon onClick={() => toggleArrayItem(preferredCities, setPreferredCities, c)} className="w-3.5 h-3.5 cursor-pointer opacity-70 hover:opacity-100" />
+                                                        <XMarkIcon onClick={() => toggleArrayItem(preferredCities, setPreferredCities, c)} className="w-3 h-3 cursor-pointer opacity-70 hover:opacity-100" />
                                                     </span>
                                                 ))}
                                             </div>
@@ -478,14 +487,14 @@ export default function ProfileCompletePage() {
                                     <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
                                         <div className="space-y-4">
                                             <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Availability Window</p>
-                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                                 {AVAILABILITY_OPTIONS.map(val => (
                                                     <button
                                                         key={val} onClick={() => setAvailability(val)}
-                                                        className={cn("h-20 rounded-2xl flex flex-col items-center justify-center border-2 transition-all gap-1", availability === val ? "border-primary bg-primary text-white shadow-xl shadow-primary/20" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/40")}
+                                                        className={cn("h-14 rounded-xl flex flex-col items-center justify-center border-2 transition-all gap-0.5", availability === val ? "border-primary bg-primary text-white shadow-xl shadow-primary/20" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/40")}
                                                     >
-                                                        <span className="font-black text-sm uppercase tracking-tighter italic">{val.replace('_', ' ')}</span>
-                                                        <span className="text-[9px] opacity-60 font-medium uppercase tracking-[0.2em]">Horizon</span>
+                                                        <span className="font-black text-xs uppercase tracking-tighter italic">{val.replace('_', ' ')}</span>
+                                                        <span className="text-[8px] opacity-60 font-medium uppercase tracking-widest">Horizon</span>
                                                     </button>
                                                 ))}
                                             </div>
@@ -494,21 +503,21 @@ export default function ProfileCompletePage() {
                                         <div className="space-y-4">
                                             <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Skill Catalog</p>
                                             <div className="flex gap-2">
-                                                <input value={skillInput} onChange={(e) => setSkillInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && addSkill()} className="premium-input !h-12" placeholder="e.g. React, Node.js, Python" />
-                                                <button onClick={addSkill} className="premium-button shrink-0 px-6 !h-12"><PlusIcon className="w-5 h-5" /></button>
+                                                <input value={skillInput} onChange={(e) => setSkillInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && addSkill()} className="premium-input !h-10 text-[11px]" placeholder="e.g. React, Node.js" />
+                                                <button onClick={addSkill} className="premium-button shrink-0 px-4 !h-10"><PlusIcon className="w-4 h-4" /></button>
                                             </div>
                                             <div className="flex flex-wrap gap-2 min-h-6">
                                                 {skills.map(s => (
-                                                    <span key={s} className="bg-success/10 text-success border border-success/20 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                                                    <span key={s} className="bg-success/10 text-success border border-success/20 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5">
                                                         {s}
-                                                        <XMarkIcon onClick={() => removeSkill(s)} className="w-3.5 h-3.5 cursor-pointer opacity-50 hover:opacity-100" />
+                                                        <XMarkIcon onClick={() => removeSkill(s)} className="w-3 h-3 cursor-pointer opacity-50 hover:opacity-100" />
                                                     </span>
                                                 ))}
                                             </div>
                                         </div>
 
-                                        <Button onClick={handleReadinessSubmit} disabled={isLoading} className="w-full !h-16 text-lg bg-foreground !text-background hover:bg-foreground/90 shadow-2xl italic font-black">
-                                            {isLoading ? <ArrowPathIcon className="w-6 h-6 animate-spin" /> : <div className="flex items-center gap-2"><span>Finish Entire Setup</span><CheckCircleIcon className="w-6 h-6" /></div>}
+                                        <Button onClick={handleReadinessSubmit} disabled={isLoading} className="w-full h-12 text-sm bg-foreground text-background hover:bg-foreground/90 shadow-xl italic font-black">
+                                            {isLoading ? <ArrowPathIcon className="w-5 h-5 animate-spin" /> : <div className="flex items-center gap-2"><span>Finish Entire Setup</span><CheckCircleIcon className="w-5 h-5" /></div>}
                                         </Button>
                                     </div>
                                 )}

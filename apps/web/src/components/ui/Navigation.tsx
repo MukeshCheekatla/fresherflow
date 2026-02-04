@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { AuthContext } from '@/contexts/AuthContext';
+import { cn } from '@/lib/utils';
 import { useContext, useState, useEffect } from 'react';
 import {
     HomeIcon,
@@ -58,7 +59,7 @@ export function Navbar() {
                 : 'bg-background/50 border-transparent py-4'
                 }`}
         >
-            <div className="max-content w-full flex items-center justify-between">
+            <div className="w-full px-2 md:px-4 max-w-7xl mx-auto flex items-center justify-between">
                 {/* Brand */}
                 <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2 group shrink-0">
                     <div className="w-9 h-9 bg-foreground text-background rounded flex items-center justify-center transition-all duration-300">
@@ -155,8 +156,8 @@ export function MobileNav() {
     ];
 
     return (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-xl border-t border-border z-50 pb-[env(safe-area-inset-bottom)]">
-            <div className={`flex items-center justify-around ${user ? 'h-[56px]' : 'h-[50px]'}`}>
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border z-50 pb-safe animate-in slide-in-from-bottom duration-500">
+            <div className="flex justify-around items-center h-14 px-1">
                 {tabs.map((tab) => {
                     const currentSearchParams = searchParams.toString();
                     const fullPath = pathname + (currentSearchParams ? `?${currentSearchParams}` : '');
@@ -166,15 +167,21 @@ export function MobileNav() {
                         <Link
                             key={tab.href}
                             href={tab.href}
-                            className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-all duration-300 ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
+                            className={cn(
+                                "flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-300",
+                                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                            )}
                         >
-                            <div className="relative">
-                                <tab.icon className={`w-4 h-4 ${isActive ? 'stroke-[2.5px]' : 'stroke-[2]'}`} />
-                                {isActive && (
-                                    <div className="absolute -top-0.5 -right-0.5 w-1 h-1 rounded-full bg-primary" />
-                                )}
+                            <div className={cn(
+                                "p-1 rounded-lg transition-all",
+                                isActive && "bg-primary/10"
+                            )}>
+                                <tab.icon className={cn("w-5 h-5", isActive && "fill-primary/20")} strokeWidth={isActive ? 2 : 1.5} />
                             </div>
-                            <span className={`text-[8px] font-black uppercase tracking-widest ${isActive ? 'opacity-100' : 'opacity-60'}`}>
+                            <span className={cn(
+                                "text-[9px] transition-all uppercase tracking-tight",
+                                isActive ? "font-bold" : "font-medium"
+                            )}>
                                 {tab.label}
                             </span>
                         </Link>

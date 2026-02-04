@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { Button } from '@/components/ui/Button';
 import toast from 'react-hot-toast';
 import {
     ArrowLeftIcon,
@@ -102,6 +103,7 @@ export default function EditProfilePage() {
     const [availability, setAvailability] = useState('');
     const [skills, setSkills] = useState<string[]>([]);
     const [skillInput, setSkillInput] = useState('');
+    const [cityInput, setCityInput] = useState('');
 
     useEffect(() => {
         if (profile) {
@@ -214,239 +216,405 @@ export default function EditProfilePage() {
         setArray(array.includes(item) ? array.filter(i => i !== item) : [...array, item]);
     };
 
+    const addCity = () => {
+        if (cityInput.trim() && !preferredCities.includes(cityInput.trim())) {
+            if (preferredCities.length >= 5) {
+                toast.error('Maximum 5 cities allowed');
+                return;
+            }
+            setPreferredCities([...preferredCities, cityInput.trim()]);
+            setCityInput('');
+        }
+    };
+
+    const removeCity = (city: string) => {
+        setPreferredCities(preferredCities.filter(c => c !== city));
+    };
+
     const getSpecializations = (course: string) => {
         return DEGREE_SPECIALIZATIONS[course] || DEGREE_SPECIALIZATIONS['default'];
     };
 
+    const [editingSection, setEditingSection] = useState<string | null>(null);
+
     return (
         <AuthGate>
             <ProfileGate>
-                <div className="max-w-6xl mx-auto px-4 py-8 md:py-12 pb-24">
+                <div className="max-w-6xl mx-auto px-2 md:px-4 py-2 md:py-4 pb-24 space-y-6">
                     {/* Header */}
-                    <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-border">
-                        <div className="space-y-1">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Link href="/dashboard" className="p-2 hover:bg-muted rounded-xl transition-colors">
-                                    <ArrowLeftIcon className="w-5 h-5 text-muted-foreground" />
-                                </Link>
-                                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Settings</span>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border">
+                        <div className="flex items-center gap-4">
+                            <Link href="/dashboard" className="p-2 hover:bg-muted rounded-lg transition-colors group">
+                                <ArrowLeftIcon className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
+                            </Link>
+                            <div>
+                                <h1 className="text-2xl font-bold tracking-tight text-foreground">Profile Settings</h1>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <div className="h-1.5 w-24 bg-muted rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-primary transition-all duration-500"
+                                            style={{ width: `${profile?.completionPercentage}%` }}
+                                        />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                                        {profile?.completionPercentage}% Complete
+                                    </span>
+                                </div>
                             </div>
-                            <h1 className="text-3xl md:text-5xl font-black tracking-tighter italic">Profile Settings</h1>
-                            <p className="text-muted-foreground font-medium">Update your academic and professional parameters.</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted px-2 py-1 rounded">
+                                ID: {profile?.id?.slice(-8)}
+                            </span>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                         {/* Main Content */}
-                        <div className="lg:col-span-8 space-y-8">
+                        <div className="lg:col-span-8 space-y-6">
 
                             {/* Academic Section */}
-                            <section className="premium-card !p-8 space-y-8">
-                                <div className="flex items-center gap-3 pb-4 border-b border-border">
-                                    <AcademicCapIcon className="w-6 h-6 text-primary" />
-                                    <h2 className="text-xl font-black tracking-tight italic uppercase">Academic Foundation</h2>
+                            <section className="bg-card rounded-xl border border-border overflow-hidden transition-all">
+                                <div className="flex items-center justify-between p-5 border-b border-border bg-muted/30">
+                                    <div className="flex items-center gap-3">
+                                        <AcademicCapIcon className="w-5 h-5 text-primary" />
+                                        <h2 className="text-sm font-bold uppercase tracking-wider">Academic Foundation</h2>
+                                    </div>
+                                    <button
+                                        onClick={() => setEditingSection(editingSection === 'academic' ? null : 'academic')}
+                                        className="text-xs font-bold text-primary hover:underline uppercase tracking-tighter"
+                                    >
+                                        {editingSection === 'academic' ? 'Cancel' : 'Edit'}
+                                    </button>
                                 </div>
 
-                                <div className="space-y-10">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">10th Passout Year</label>
-                                            <input type="text" maxLength={4} value={tenthYear} onChange={(e) => setTenthYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-12" placeholder="2018" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">12th Passout Year</label>
-                                            <input type="text" maxLength={4} value={twelfthYear} onChange={(e) => setTwelfthYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-12" placeholder="2020" />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-6 pt-4 border-t border-border/50">
-                                        <div className="space-y-3">
-                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Highest Education Level</p>
-                                            <div className="grid grid-cols-3 gap-3">
-                                                {EDUCATION_LEVELS.map(level => (
-                                                    <button
-                                                        key={level} onClick={() => setEducationLevel(level)}
-                                                        className={cn("h-11 rounded-xl font-bold border transition-all text-xs uppercase tracking-widest", educationLevel === level ? "bg-primary border-primary text-white shadow-lg" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/40")}
-                                                    >
-                                                        {level}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">UG Course</label>
-                                                <select value={gradCourse} onChange={(e) => { setGradCourse(e.target.value); setGradSpecialization(''); }} className="premium-input !h-12">
-                                                    <option value="">Select UG</option>
-                                                    {(educationLevel === 'DIPLOMA' ? DIPLOMA_DEGREES : educationLevel === 'DEGREE' ? UG_DEGREES : educationLevel === 'PG' ? PG_DEGREES : []).map(d => <option key={d}>{d}</option>)}
-                                                </select>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Specialization</label>
-                                                <select value={gradSpecialization} onChange={(e) => setGradSpecialization(e.target.value)} className="premium-input !h-12" disabled={!gradCourse}>
-                                                    <option value="">Select Field</option>
-                                                    {getSpecializations(gradCourse).map(s => <option key={s}>{s}</option>)}
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">UG Passout Year</label>
-                                            <input type="text" maxLength={4} value={gradYear} onChange={(e) => setGradYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-12" placeholder="2024" />
-                                        </div>
-                                    </div>
-
-                                    <div className="pt-4 border-t border-border">
-                                        <label className="flex items-center gap-3 p-4 bg-muted/30 rounded-2xl cursor-pointer hover:bg-muted/50 transition-colors">
-                                            <input type="checkbox" checked={hasPG} onChange={(e) => setHasPG(e.target.checked)} className="w-5 h-5 rounded-md border-border text-primary" />
-                                            <span className="text-sm font-bold text-foreground italic">Update Postgraduate (PG) Details</span>
-                                        </label>
-                                    </div>
-
-                                    {hasPG && (
-                                        <div className="space-y-6 animate-in slide-in-from-top-4 duration-500 pt-2 pb-6 border-b border-border/50">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">PG Course</label>
-                                                    <select value={pgCourse} onChange={(e) => setPgCourse(e.target.value)} className="premium-input !h-11">
-                                                        <option value="">Select PG</option>
-                                                        {PG_DEGREES.map(d => <option key={d}>{d}</option>)}
-                                                    </select>
+                                <div className="p-5">
+                                    {editingSection === 'academic' ? (
+                                        <div className="space-y-5">
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">10th Year</label>
+                                                    <input type="text" maxLength={4} value={tenthYear} onChange={(e) => setTenthYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-10 text-sm" placeholder="2018" />
                                                 </div>
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">PG Specialization</label>
-                                                    <select value={pgSpecialization} onChange={(e) => setPgSpecialization(e.target.value)} className="premium-input !h-11">
-                                                        <option value="">Select Field</option>
-                                                        {getSpecializations(pgCourse).map(s => <option key={s}>{s}</option>)}
-                                                    </select>
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">12th Year</label>
+                                                    <input type="text" maxLength={4} value={twelfthYear} onChange={(e) => setTwelfthYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-10 text-sm" placeholder="2020" />
                                                 </div>
                                             </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">PG Passout Year</label>
-                                                <input type="text" maxLength={4} value={pgYear} onChange={(e) => setPgYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-11" placeholder="2026" />
+
+                                            <div className="space-y-4 pt-4 border-t border-border">
+                                                <div className="space-y-2">
+                                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Highest Level</p>
+                                                    <div className="grid grid-cols-3 gap-2">
+                                                        {EDUCATION_LEVELS.map(level => (
+                                                            <button
+                                                                key={level}
+                                                                type="button"
+                                                                onClick={() => setEducationLevel(level)}
+                                                                className={cn(
+                                                                    "flex-1 py-3 rounded-lg border-2 transition-all flex flex-col items-center gap-1",
+                                                                    educationLevel === level ? "bg-primary/5 border-primary text-primary shadow-sm" : "bg-background border-border text-muted-foreground hover:bg-muted"
+                                                                )}
+                                                            >
+                                                                <span className="text-[10px] font-bold uppercase tracking-widest">{level === 'DEGREE' ? 'UG' : level}</span>
+                                                                <span className="text-[8px] font-medium opacity-60">
+                                                                    {level === 'DIPLOMA' && 'Technical'}
+                                                                    {level === 'DEGREE' && 'Undergrad'}
+                                                                    {level === 'PG' && 'Postgrad'}
+                                                                </span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">UG Course</label>
+                                                        <select value={gradCourse} onChange={(e) => { setGradCourse(e.target.value); setGradSpecialization(''); }} className="premium-input !h-10 text-sm">
+                                                            <option value="">Select</option>
+                                                            {(educationLevel === 'DIPLOMA' ? DIPLOMA_DEGREES : educationLevel === 'DEGREE' ? UG_DEGREES : educationLevel === 'PG' ? PG_DEGREES : []).map(d => <option key={d}>{d}</option>)}
+                                                        </select>
+                                                    </div>
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Field</label>
+                                                        <select value={gradSpecialization} onChange={(e) => setGradSpecialization(e.target.value)} className="premium-input !h-10 text-sm" disabled={!gradCourse}>
+                                                            <option value="">Select</option>
+                                                            {getSpecializations(gradCourse).map(s => <option key={s}>{s}</option>)}
+                                                        </select>
+                                                    </div>
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">UG Year</label>
+                                                        <input type="text" maxLength={4} value={gradYear} onChange={(e) => setGradYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-10 text-sm" placeholder="2024" />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="pt-4 border-t border-border">
+                                                <label className="flex items-center gap-3 p-3 bg-muted/40 rounded-lg cursor-pointer hover:bg-muted/60 transition-colors border border-border/50">
+                                                    <input type="checkbox" checked={hasPG} onChange={(e) => setHasPG(e.target.checked)} className="w-4 h-4 rounded border-border text-primary" />
+                                                    <span className="text-xs font-bold text-foreground">Add Postgraduate (PG) Details</span>
+                                                </label>
+                                            </div>
+
+                                            {hasPG && (
+                                                <div className="space-y-4 pt-4 animate-in slide-in-from-top-2 duration-300">
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">PG Course</label>
+                                                            <select value={pgCourse} onChange={(e) => setPgCourse(e.target.value)} className="premium-input !h-10 text-sm">
+                                                                <option value="">Select</option>
+                                                                {PG_DEGREES.map(d => <option key={d}>{d}</option>)}
+                                                            </select>
+                                                        </div>
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Specialization</label>
+                                                            <select value={pgSpecialization} onChange={(e) => setPgSpecialization(e.target.value)} className="premium-input !h-10 text-sm">
+                                                                <option value="">Select</option>
+                                                                {getSpecializations(pgCourse).map(s => <option key={s}>{s}</option>)}
+                                                            </select>
+                                                        </div>
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">PG Year</label>
+                                                            <input type="text" maxLength={4} value={pgYear} onChange={(e) => setPgYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-10 text-sm" placeholder="2026" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <Button onClick={async () => { await handleEducationUpdate(); setEditingSection(null); }} disabled={saving} className="w-full h-10 text-xs font-bold uppercase tracking-wider">
+                                                {saving ? <ArrowPathIcon className="w-4 h-4 animate-spin mr-2" /> : null}
+                                                Save Academic Records
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12">
+                                            <div className="space-y-6">
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 opacity-60">Highest Academic Level</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={cn("px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide", profile?.educationLevel ? "bg-primary/10 text-primary border border-primary/20" : "bg-muted text-muted-foreground border border-border")}>
+                                                            {profile?.educationLevel === 'DEGREE' ? 'UG' : (profile?.educationLevel || 'Not Specified')}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 opacity-60">Undergraduate Records</p>
+                                                    {profile?.gradCourse || profile?.gradYear ? (
+                                                        <div className="space-y-1">
+                                                            <p className="text-sm font-semibold text-foreground leading-tight">
+                                                                {profile.gradCourse}
+                                                            </p>
+                                                            <p className="text-[11px] text-muted-foreground font-medium">
+                                                                {profile.gradSpecialization ? `${profile.gradSpecialization} • ` : ''}
+                                                                {profile.gradYear ? `Class of ${profile.gradYear}` : <span className="italic opacity-60">Year missing</span>}
+                                                            </p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center gap-2 text-muted-foreground/50">
+                                                            <div className="w-1 h-1 rounded-full bg-current" />
+                                                            <p className="text-xs italic">Awaiting undergraduate data...</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="space-y-6">
+                                                <div className="grid grid-cols-2 gap-6">
+                                                    <div>
+                                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 opacity-60">10th Standard</p>
+                                                        <p className={cn("text-sm font-semibold", !profile?.tenthYear && "text-muted-foreground font-normal italic text-xs opacity-50")}>
+                                                            {profile?.tenthYear ? `Batch of ${profile.tenthYear}` : 'Not added'}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 opacity-60">12th Standard</p>
+                                                        <p className={cn("text-sm font-semibold", !profile?.twelfthYear && "text-muted-foreground font-normal italic text-xs opacity-50")}>
+                                                            {profile?.twelfthYear ? `Batch of ${profile.twelfthYear}` : 'Not added'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                {profile?.pgCourse || profile?.educationLevel === 'PG' ? (
+                                                    <div className="pt-4 border-t border-border/40">
+                                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 opacity-60">Postgraduate Records</p>
+                                                        {profile.pgCourse ? (
+                                                            <div className="space-y-1">
+                                                                <p className="text-sm font-semibold text-foreground leading-tight">
+                                                                    {profile.pgCourse}
+                                                                </p>
+                                                                <p className="text-[11px] text-muted-foreground font-medium">
+                                                                    {profile.pgSpecialization ? `${profile.pgSpecialization} • ` : ''}
+                                                                    {profile.pgYear ? `Class of ${profile.pgYear}` : <span className="italic opacity-60">Year missing</span>}
+                                                                </p>
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-xs text-muted-foreground/50 italic">PG details required for your selected level.</p>
+                                                        )}
+                                                    </div>
+                                                ) : null}
                                             </div>
                                         </div>
                                     )}
-
-                                    <button onClick={handleEducationUpdate} disabled={saving} className="w-full premium-button !h-14">
-                                        {saving ? <ArrowPathIcon className="w-5 h-5 animate-spin" /> : <span>Update Academic Matrix</span>}
-                                    </button>
                                 </div>
                             </section>
 
                             {/* Talent Matrix Section */}
-                            <section className="premium-card !p-8 space-y-8">
-                                <div className="flex items-center gap-3 pb-4 border-b border-border">
-                                    <BoltIcon className="w-6 h-6 text-primary" />
-                                    <h2 className="text-xl font-black tracking-tight italic uppercase">Talent Catalog</h2>
+                            <section className="bg-card rounded-xl border border-border overflow-hidden transition-all">
+                                <div className="flex items-center justify-between p-5 border-b border-border bg-muted/30">
+                                    <div className="flex items-center gap-3">
+                                        <BoltIcon className="w-5 h-5 text-primary" />
+                                        <h2 className="text-sm font-bold uppercase tracking-wider">Professional Matrix</h2>
+                                    </div>
+                                    <button
+                                        onClick={() => setEditingSection(editingSection === 'talent' ? null : 'talent')}
+                                        className="text-xs font-bold text-primary hover:underline uppercase tracking-tighter"
+                                    >
+                                        {editingSection === 'talent' ? 'Cancel' : 'Edit'}
+                                    </button>
                                 </div>
 
-                                <div className="space-y-8">
-                                    <div className="space-y-4">
-                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1 italic">Availability Horizon</p>
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                            {AVAILABILITY_OPTIONS.map(opt => (
-                                                <button
-                                                    key={opt.value} onClick={() => setAvailability(opt.value)}
-                                                    className={cn("h-20 rounded-2xl flex flex-col items-center justify-center border-2 transition-all gap-1", availability === opt.value ? "border-primary bg-primary text-white shadow-xl shadow-primary/20" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/40")}
-                                                >
-                                                    <span className="font-black text-sm uppercase tracking-tighter italic">{opt.label}</span>
-                                                    <span className="text-[9px] opacity-60 font-medium uppercase tracking-[0.2em]">Switch</span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
+                                <div className="p-5">
+                                    {editingSection === 'talent' ? (
+                                        <div className="space-y-5">
+                                            <div className="space-y-3">
+                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Availability</p>
+                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                                    {AVAILABILITY_OPTIONS.map(opt => (
+                                                        <button
+                                                            key={opt.value} onClick={() => setAvailability(opt.value)}
+                                                            className={cn("h-12 rounded-lg flex flex-col items-center justify-center border-2 transition-all", availability === opt.value ? "border-primary bg-primary/5 text-primary" : "bg-muted/30 border-border text-muted-foreground hover:border-primary/30")}
+                                                        >
+                                                            <span className="font-bold text-xs">{opt.label}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
 
-                                    <div className="space-y-4 pt-4 border-t border-border/50">
-                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1 italic">Professional Skills</p>
-                                        <div className="flex gap-2">
-                                            <input value={skillInput} onChange={(e) => setSkillInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && addSkill()} className="premium-input !h-12" placeholder="e.g. React, Python" />
-                                            <button onClick={addSkill} className="premium-button shrink-0 px-6 !h-12"><PlusIcon className="w-5 h-5" /></button>
-                                        </div>
-                                        <div className="flex flex-wrap gap-2 min-h-6">
-                                            {skills.map(s => (
-                                                <span key={s} className="bg-success/10 text-success border border-success/20 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-                                                    {s}
-                                                    <XMarkIcon onClick={() => removeSkill(s)} className="w-3.5 h-3.5 cursor-pointer opacity-50 hover:opacity-100" />
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
+                                            <div className="space-y-3 pt-4 border-t border-border">
+                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Technical Skills</p>
+                                                <div className="flex gap-2">
+                                                    <input value={skillInput} onChange={(e) => setSkillInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && addSkill()} className="premium-input !h-10 text-sm" placeholder="e.g. React" />
+                                                    <Button onClick={addSkill} variant="outline" className="shrink-0 px-3 h-10"><PlusIcon className="w-4 h-4" /></Button>
+                                                </div>
+                                                <div className="flex flex-wrap gap-1.5 min-h-6">
+                                                    {skills.map(s => (
+                                                        <span key={s} className="bg-primary/5 text-primary border border-primary/10 px-2.5 py-1 rounded-md text-[10px] font-bold flex items-center gap-1.5 uppercase tracking-wide">
+                                                            {s}
+                                                            <XMarkIcon onClick={() => removeSkill(s)} className="w-3 h-3 cursor-pointer opacity-70 hover:opacity-100" />
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
 
-                                    <button onClick={handleReadinessUpdate} disabled={saving} className="w-full premium-button !h-14">
-                                        {saving ? <ArrowPathIcon className="w-5 h-5 animate-spin" /> : <span>Update Readiness Matrix</span>}
-                                    </button>
+                                            <Button onClick={async () => { await handleReadinessUpdate(); setEditingSection(null); }} disabled={saving} className="w-full h-10 text-xs font-bold uppercase tracking-wider">
+                                                {saving ? <ArrowPathIcon className="w-4 h-4 animate-spin mr-2" /> : null}
+                                                Sync Technical Profile
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-6">
+                                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                                <div>
+                                                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Availability Horizon</p>
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 uppercase">
+                                                        {AVAILABILITY_OPTIONS.find(o => o.value === availability)?.label || 'Not specified'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex-1 md:max-w-[60%]">
+                                                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Validated Skills</p>
+                                                    <div className="flex flex-wrap gap-1.5">
+                                                        {skills.length > 0 ? skills.map(s => (
+                                                            <span key={s} className="px-2 py-0.5 bg-muted rounded text-[10px] font-bold text-foreground">
+                                                                {s}
+                                                            </span>
+                                                        )) : <p className="text-xs text-muted-foreground">No skills added yet.</p>}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </section>
                         </div>
 
                         {/* Sidebar Preferences */}
-                        <aside className="lg:col-span-4 space-y-6 lg:sticky lg:top-24">
-                            <div className="premium-card !p-8 space-y-8 shadow-xl">
-                                <div className="space-y-8">
-                                    <div className="space-y-4">
-                                        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Career Stream</label>
-                                        <div className="flex flex-wrap gap-2">
-                                            {OPPORTUNITY_TYPES.map(t => (
-                                                <button
-                                                    key={t} onClick={() => toggleArrayItem(interestedIn, setInterestedIn, t)}
-                                                    className={cn("px-4 h-11 rounded-xl font-black text-[10px] uppercase tracking-widest border transition-all", interestedIn.includes(t) ? "bg-foreground text-background border-foreground shadow-lg" : "bg-card border-border text-muted-foreground hover:border-primary/50")}
-                                                >
-                                                    {t}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Work Ecosystem</label>
-                                        <div className="flex flex-wrap gap-2">
-                                            {WORK_MODES.map(t => (
-                                                <button
-                                                    key={t} onClick={() => toggleArrayItem(workModes, setWorkModes, t)}
-                                                    className={cn("px-4 h-11 rounded-xl font-black text-[10px] uppercase tracking-widest border transition-all", workModes.includes(t) ? "bg-foreground text-background border-foreground shadow-lg" : "bg-card border-border text-muted-foreground hover:border-primary/50")}
-                                                >
-                                                    {t}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Target Locations</label>
-                                        <div className="flex gap-2">
-                                            <input
-                                                placeholder="Type city + Enter"
-                                                onKeyPress={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        const val = (e.target as HTMLInputElement).value;
-                                                        if (val) { toggleArrayItem(preferredCities, setPreferredCities, val); (e.target as HTMLInputElement).value = ''; }
-                                                    }
-                                                }}
-                                                className="premium-input !h-11 !text-xs"
-                                            />
-                                        </div>
-                                        <div className="flex flex-wrap gap-2">
-                                            {preferredCities.map(c => (
-                                                <span key={c} className="bg-primary text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-                                                    {c}
-                                                    <XMarkIcon onClick={() => toggleArrayItem(preferredCities, setPreferredCities, c)} className="w-3 h-3 cursor-pointer opacity-70 hover:opacity-100" />
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
+                        <aside className="lg:col-span-4 space-y-5 lg:sticky lg:top-24">
+                            <section className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+                                <div className="p-4 border-b border-border bg-muted/20">
+                                    <h2 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">Targeting Strategy</h2>
                                 </div>
+                                <div className="p-5 space-y-5">
+                                    <div className="space-y-1.5">
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Career Goal</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {OPPORTUNITY_TYPES.map(type => (
+                                                <button
+                                                    key={type}
+                                                    onClick={() => toggleArrayItem(interestedIn, setInterestedIn, type)}
+                                                    className={cn(
+                                                        "px-3 h-8 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all",
+                                                        interestedIn.includes(type) ? "bg-primary border-primary text-white shadow-sm" : "bg-muted/30 border-border text-muted-foreground hover:border-primary/40"
+                                                    )}
+                                                >
+                                                    {type}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
 
-                                <button onClick={handlePreferencesUpdate} disabled={saving} className="w-full premium-button !h-14">
-                                    {saving ? <ArrowPathIcon className="w-5 h-5 animate-spin" /> : <div className="flex items-center gap-2"><span>Sync Preferences</span><CheckIcon className="w-5 h-5" /></div>}
-                                </button>
-                            </div>
+                                    <div className="space-y-1.5">
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Work Mode</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {WORK_MODES.map(mode => (
+                                                <button
+                                                    key={mode}
+                                                    onClick={() => toggleArrayItem(workModes, setWorkModes, mode)}
+                                                    className={cn(
+                                                        "px-3 h-8 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all",
+                                                        workModes.includes(mode) ? "bg-primary border-primary text-white shadow-sm" : "bg-muted/30 border-border text-muted-foreground hover:border-primary/40"
+                                                    )}
+                                                >
+                                                    {mode}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
 
-                            <div className="premium-card !bg-muted/30 !p-6 flex items-start gap-3 border-none">
-                                <IdentificationIcon className="w-6 h-6 text-primary shrink-0" />
-                                <p className="text-[11px] font-medium text-muted-foreground italic leading-relaxed">
-                                    Strategic profile updates increase match visibility by up to 300%. Ensure all criteria are current.
+                                    <div className="space-y-1.5">
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Preferred Cities</p>
+                                        <div className="space-y-2">
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={cityInput}
+                                                    onChange={(e) => setCityInput(e.target.value)}
+                                                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCity())}
+                                                    className="premium-input !h-9 text-[11px] flex-1"
+                                                    placeholder="Add city..."
+                                                />
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                {preferredCities.map(city => (
+                                                    <span key={city} className="flex items-center gap-1.5 px-2 py-1 bg-muted rounded-md border border-border text-[10px] font-bold uppercase tracking-tight">
+                                                        {city}
+                                                        <button onClick={() => removeCity(city)} className="hover:text-destructive transition-colors">
+                                                            <XMarkIcon className="w-3 h-3" />
+                                                        </button>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <Button onClick={handlePreferencesUpdate} disabled={saving} className="w-full h-9 text-[10px] font-bold uppercase tracking-wider mt-2">
+                                        {saving ? <ArrowPathIcon className="w-3.5 h-3.5 animate-spin mr-2" /> : <CheckIcon className="w-3 h-3 mr-2" />}
+                                        Save Targets
+                                    </Button>
+                                </div>
+                            </section>
+
+                            <div className="bg-muted/30 p-4 rounded-xl flex items-start gap-3 border border-border/50">
+                                <IdentificationIcon className="w-5 h-5 text-primary shrink-0" />
+                                <p className="text-[10px] font-medium text-muted-foreground leading-relaxed italic">
+                                    Strategic profile updates increase match visibility by up to 300%. Ensure all criteria reflect your current career targets.
                                 </p>
                             </div>
                         </aside>

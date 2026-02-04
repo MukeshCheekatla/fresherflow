@@ -67,14 +67,17 @@ router.post('/register', validate(registerSchema), async (req: Request, res: Res
         });
 
         // Set Cookies
+        const accessMaxAge = process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 24 * 60 * 60 * 1000;
+        const refreshMaxAge = 30 * 24 * 60 * 60 * 1000;
+
         res.cookie('accessToken', accessToken, {
             ...COOKIE_OPTIONS,
-            maxAge: 15 * 60 * 1000 // 15 mins
+            maxAge: accessMaxAge
         });
 
         res.cookie('refreshToken', refreshToken, {
             ...COOKIE_OPTIONS,
-            maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+            maxAge: refreshMaxAge
         });
 
         res.status(201).json({
@@ -128,14 +131,17 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response,
         });
 
         // Set Cookies
+        const accessMaxAge = process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 24 * 60 * 60 * 1000;
+        const refreshMaxAge = 30 * 24 * 60 * 60 * 1000;
+
         res.cookie('accessToken', accessToken, {
             ...COOKIE_OPTIONS,
-            maxAge: 15 * 60 * 1000 // 15 mins
+            maxAge: accessMaxAge
         });
 
         res.cookie('refreshToken', refreshToken, {
             ...COOKIE_OPTIONS,
-            maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+            maxAge: refreshMaxAge
         });
 
         res.json({
@@ -188,9 +194,10 @@ router.post('/refresh', async (req: Request, res: Response, next: NextFunction) 
         const newAccessToken = generateAccessToken(userId);
 
         // Set New Access Token Cookie
+        const accessMaxAge = process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 24 * 60 * 60 * 1000;
         res.cookie('accessToken', newAccessToken, {
             ...COOKIE_OPTIONS,
-            maxAge: 15 * 60 * 1000 // 15 mins
+            maxAge: accessMaxAge
         });
 
         res.json({ success: true });
@@ -243,16 +250,9 @@ router.get('/me', requireAuth, async (req: Request, res: Response, next: NextFun
                 fullName: user.fullName
             },
             profile: user.profile ? {
-                completionPercentage: user.profile.completionPercentage,
-                educationLevel: user.profile.educationLevel,
-                courseName: user.profile.gradCourse,
-                specialization: user.profile.gradSpecialization,
-                passoutYear: user.profile.gradYear,
-                interestedIn: user.profile.interestedIn,
-                preferredCities: user.profile.preferredCities,
-                workModes: user.profile.workModes,
-                availability: user.profile.availability,
-                skills: user.profile.skills
+                ...user.profile,
+                // Ensure sensitivity/computed fields are handled if needed, 
+                // but for now, we need all fields for the frontend profile edit page.
             } : null
         });
     } catch (error) {

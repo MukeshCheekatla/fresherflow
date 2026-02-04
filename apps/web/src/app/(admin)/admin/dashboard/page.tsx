@@ -71,24 +71,26 @@ export default function AdminDashboardPage() {
     ];
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-semibold tracking-tight text-foreground">Overview</h1>
-                    <p className="text-sm text-muted-foreground">Platform performance and listing status.</p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => fetchStats()}
-                        className="p-2.5 text-muted-foreground bg-card border border-border rounded-xl hover:bg-muted/50 transition-all active:scale-95"
-                    >
-                        <ClockIcon className="w-5 h-5" />
-                    </button>
-                    <Link href="/admin/opportunities/create" className="premium-button flex items-center gap-2">
-                        <PlusIcon className="w-5 h-5" />
-                        New Opportunity
-                    </Link>
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-4">
+            {/* Header - Sticky on Mobile */}
+            <div className="sticky top-0 z-20 -mx-4 px-4 py-2 bg-background/95 backdrop-blur-md md:relative md:top-auto md:z-auto md:mx-0 md:px-0 md:py-0 md:bg-transparent mb-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Overview</h1>
+                        <p className="text-sm text-muted-foreground">Platform performance and listing status.</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => fetchStats()}
+                            className="p-2.5 text-muted-foreground bg-card border border-border rounded-xl hover:bg-muted/50 transition-all active:scale-95"
+                        >
+                            <ClockIcon className="w-5 h-5" />
+                        </button>
+                        <Link href="/admin/opportunities/create" className="premium-button flex items-center gap-2">
+                            <PlusIcon className="w-5 h-5" />
+                            New Opportunity
+                        </Link>
+                    </div>
                 </div>
             </div>
 
@@ -97,21 +99,21 @@ export default function AdminDashboardPage() {
                 {cards.map((card, idx) => {
                     const Icon = card.icon;
                     return (
-                        <div key={idx} className="bg-card p-5 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all duration-300 group">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className={`p-3 rounded-xl ${card.bg} ${card.color} group-hover:scale-110 transition-transform duration-300`}>
-                                    <Icon className="w-6 h-6" />
+                        <div key={idx} className="bg-card p-3.5 md:p-5 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all duration-300 group">
+                            <div className="flex items-center justify-between mb-3 md:mb-4">
+                                <div className={`p-2.5 md:p-3 rounded-xl ${card.bg} ${card.color} group-hover:scale-110 transition-transform duration-300`}>
+                                    <Icon className="w-5 h-5 md:w-6 md:h-6" />
                                 </div>
-                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-[0.12em]">{card.label}</span>
+                                <span className="text-[10px] md:text-xs font-bold text-muted-foreground uppercase tracking-[0.12em]">{card.label}</span>
                             </div>
                             <div className="flex items-baseline gap-2">
-                                <h2 className="text-3xl font-bold text-foreground">
+                                <h2 className="text-2xl md:text-3xl font-bold text-foreground leading-none">
                                     {stats.loading ? (
-                                        <div className="h-8 w-12 bg-muted animate-pulse rounded" />
+                                        <div className="h-7 w-10 md:h-8 md:w-12 bg-muted animate-pulse rounded" />
                                     ) : card.value}
                                 </h2>
-                                <div className="text-xs font-semibold text-emerald-500 flex items-center gap-0.5">
-                                    <ArrowUpRightIcon className="w-3 h-3" />
+                                <div className="text-[10px] md:text-xs font-semibold text-emerald-500 flex items-center gap-0.5">
+                                    <ArrowUpRightIcon className="w-2.5 h-2.5 md:w-3 md:h-3" />
                                 </div>
                             </div>
                         </div>

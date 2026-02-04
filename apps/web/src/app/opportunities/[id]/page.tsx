@@ -118,7 +118,7 @@ export default function OpportunityDetailPage() {
 
     return (
         <div className="min-h-screen bg-background pb-24 md:pb-24">
-            <main className="max-w-6xl mx-auto px-4 py-4 md:py-12 space-y-6 md:space-y-10">
+            <main className="max-w-6xl mx-auto px-2 md:px-4 py-4 md:py-12 space-y-6 md:space-y-10">
 
                 {/* Hero Header */}
                 <div className="premium-card !p-5 md:!p-8 relative overflow-hidden group">
@@ -199,7 +199,12 @@ export default function OpportunityDetailPage() {
                                             <BuildingOfficeIcon className="w-5 h-5 md:w-6 md:h-6 text-primary" />
                                         </div>
                                         <div>
-                                            <p className="text-base md:text-lg font-black text-foreground tracking-tight leading-none mb-0.5">{opp.company}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-base md:text-lg font-black text-foreground tracking-tight leading-none mb-0.5">{opp.company}</p>
+                                                {opp.jobFunction && (
+                                                    <span className="px-1.5 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded text-[9px] font-black uppercase tracking-widest">{opp.jobFunction}</span>
+                                                )}
+                                            </div>
                                             <div className="flex items-center gap-1.5 text-muted-foreground">
                                                 <MapPinIcon className="w-3.5 h-3.5" />
                                                 <p className="font-bold text-xs tracking-tight">{(opp.locations || []).join(' • ')}</p>
@@ -258,6 +263,15 @@ export default function OpportunityDetailPage() {
                                     <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">Eligible Batches</p>
                                     <p className="text-foreground font-black text-xs">{(opp.allowedPassoutYears || []).join(', ') || 'Open for All Batches'}</p>
                                 </div>
+                                <div className="space-y-1 p-3 bg-muted/30 rounded-xl border border-border/50">
+                                    <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">Experience Required</p>
+                                    <p className="text-foreground font-black text-xs">
+                                        {opp.experienceMin !== undefined || opp.experienceMax !== undefined ?
+                                            `${opp.experienceMin ?? 0}-${opp.experienceMax ?? 'Any'} years` :
+                                            'Fresher / Any'
+                                        }
+                                    </p>
+                                </div>
                                 <div className="col-span-full space-y-2.5">
                                     <p className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Required Skills</p>
                                     <div className="flex flex-wrap gap-1.5">
@@ -273,21 +287,45 @@ export default function OpportunityDetailPage() {
 
                         {/* Special Walk-In Section */}
                         {opp.type === 'WALKIN' && (
-                            <section className="premium-card !p-6 md:!p-8 !bg-orange-500/5 !border-orange-500/20 space-y-4">
-                                <div className="flex items-center gap-2.5">
-                                    <div className="p-1.5 bg-orange-500/20 rounded-lg text-orange-600"><MapPinIcon className="w-5 h-5" /></div>
-                                    <h2 className="text-sm md:text-base font-black tracking-tight text-orange-900 uppercase italic">On-Site Logistics (Walk-In)</h2>
+                            <section className="premium-card !p-6 md:!p-8 !bg-amber-500/5 !border-amber-500/20 space-y-6">
+                                <div className="flex items-center gap-2.5 border-b border-amber-500/10 pb-4">
+                                    <div className="p-1.5 bg-amber-500/20 rounded-lg text-amber-600"><MapPinIcon className="w-5 h-5" /></div>
+                                    <h2 className="text-sm md:text-base font-black tracking-tight text-amber-900 uppercase italic">Recruitment Drive Logistics</h2>
                                 </div>
-                                <div className="space-y-3">
-                                    <p className="text-orange-800 font-bold leading-relaxed text-[11px] md:text-xs">
-                                        This listing is a direct physical recruitment event. Ensure all academic credentials and identification documents are ready.
-                                    </p>
-                                    {opp.expiresAt && (
-                                        <div className="inline-flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-orange-500/20">
-                                            <CalendarDaysIcon className="w-4 h-4" />
-                                            <span>Event Active: {new Date(opp.expiresAt).toLocaleDateString(undefined, { dateStyle: 'long' })}</span>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-1.5">
+                                        <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Walk-in Schedule</p>
+                                        <p className="text-sm font-black text-foreground italic">{(opp as any).walkInDetails?.dateRange || 'Check Description'}</p>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Reporting Window</p>
+                                        <p className="text-sm font-black text-foreground italic">{(opp as any).walkInDetails?.timeRange || (opp as any).walkInDetails?.reportingTime}</p>
+                                    </div>
+                                    <div className="col-span-full space-y-3">
+                                        <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Venue Location</p>
+                                        <div className="bg-background/50 border border-amber-500/10 rounded-xl p-4 space-y-3">
+                                            <p className="text-xs font-bold leading-relaxed text-foreground">{(opp as any).walkInDetails?.venueAddress}</p>
+                                            {(opp as any).walkInDetails?.venueLink && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => window.open((opp as any).walkInDetails.venueLink, '_blank')}
+                                                    className="h-9 border-amber-500/20 text-amber-700 hover:bg-amber-500/10 font-black text-[10px] uppercase tracking-wider"
+                                                >
+                                                    <MapPinIcon className="w-3.5 h-3.5 mr-2" />
+                                                    Open in Google Maps
+                                                </Button>
+                                            )}
                                         </div>
-                                    )}
+                                    </div>
+                                </div>
+
+                                <div className="bg-amber-500/10 rounded-lg p-3 flex items-center gap-3">
+                                    <InformationCircleIcon className="w-4 h-4 text-amber-600" />
+                                    <p className="text-[10px] font-bold text-amber-800 italic">
+                                        Original documents & multiple copies of resume are usually required for walk-ins.
+                                    </p>
                                 </div>
                             </section>
                         )}
@@ -312,13 +350,22 @@ export default function OpportunityDetailPage() {
                                         <div className="flex items-center gap-1 text-base font-black italic leading-none text-white">
                                             <CurrencyRupeeIcon className="w-4 h-4 text-primary" />
                                             <span>
-                                                {opp.salaryRange || opp.stipend ||
-                                                    (opp.salaryMin !== undefined && opp.salaryMax !== undefined && opp.salaryMin > 0 ?
-                                                        `${(opp.salaryMin / 100000).toFixed(1)}L - ${(opp.salaryMax / 100000).toFixed(1)}L` :
-                                                        'Standard for Role')}
+                                                {opp.salaryRange || opp.stipend || (
+                                                    (opp.salaryMin !== undefined && opp.salaryMax !== undefined && opp.salaryMin > 0) ? (
+                                                        opp.salaryPeriod === 'MONTHLY' ?
+                                                            `₹${opp.salaryMin.toLocaleString()} - ${opp.salaryMax.toLocaleString()} /mo` :
+                                                            `${(opp.salaryMin / 100000).toFixed(1)}L - ${(opp.salaryMax / 100000).toFixed(1)}L`
+                                                    ) : 'Standard for Role'
+                                                )}
                                             </span>
                                         </div>
                                     </div>
+                                    {opp.incentives && (
+                                        <div>
+                                            <p className="text-xs font-black opacity-40 uppercase mb-0.5">Incentives / Variable</p>
+                                            <p className="text-base font-black text-success italic leading-none">{opp.incentives}</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
