@@ -1,26 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { WifiIcon, CloudIcon } from '@heroicons/react/24/outline';
+import { useSyncExternalStore } from 'react';
+import { WifiIcon } from '@heroicons/react/24/outline';
 
 export default function OfflineNotification() {
-    const [isOffline, setIsOffline] = useState(false);
-
-    useEffect(() => {
-        // Initial state
-        setIsOffline(!navigator.onLine);
-
-        const handleOnline = () => setIsOffline(false);
-        const handleOffline = () => setIsOffline(true);
-
-        window.addEventListener('online', handleOnline);
-        window.addEventListener('offline', handleOffline);
-
-        return () => {
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
-        };
-    }, []);
+    const isOffline = useSyncExternalStore(
+        (callback) => {
+            window.addEventListener('online', callback);
+            window.addEventListener('offline', callback);
+            return () => {
+                window.removeEventListener('online', callback);
+                window.removeEventListener('offline', callback);
+            };
+        },
+        () => !navigator.onLine,
+        () => false // Server-side assume online
+    );
 
     if (!isOffline) return null;
 
@@ -31,7 +26,7 @@ export default function OfflineNotification() {
                     <WifiIcon className="w-5 h-5" />
                 </div>
                 <div className="flex-1">
-                    <p className="text-sm font-semibold">You're Offline</p>
+                    <p className="text-sm font-semibold">You&apos;re Offline</p>
                     <p className="text-[10px] opacity-90 leading-tight">Viewing cached listings. Connect to see new updates.</p>
                 </div>
             </div>

@@ -28,8 +28,6 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests and browser extensions
   if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) return;
 
-  const requestUrl = new URL(event.request.url);
-
   // Strategy: Stale-While-Revalidate
   // 1. Check cache
   // 2. Return cached response if exists
