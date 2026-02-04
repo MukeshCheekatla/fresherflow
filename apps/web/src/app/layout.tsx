@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { NavigationWrapper } from "@/components/providers/NavigationWrapper";
 import ServiceWorkerRegister from "@/components/providers/ServiceWorkerRegister";
 import { ThemeScript } from "@/components/providers/ThemeScript";
+import OfflineNotification from "@/components/ui/OfflineNotification";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -69,6 +70,7 @@ export default function RootLayout({
         </ThemeProvider>
         <ServiceWorkerRegister />
         <SmartToaster />
+        <OfflineNotification />
       </body>
     </html>
   );
