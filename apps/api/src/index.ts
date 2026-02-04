@@ -29,6 +29,11 @@ if (process.env.NODE_ENV !== 'production') {
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust proxy for Render/Vercel/Load Balancers
+if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1);
+}
+
 // ============================================================================
 // Sentry Error Monitoring (Disabled for first run)
 // ============================================================================
