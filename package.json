@@ -21,7 +21,6 @@
         "start:web": "cd apps/web && npm start",
         "db:generate": "cd apps/api && npm run db:generate",
         "db:push": "cd apps/api && npm run db:push",
-        "db:seed": "cd apps/api && npm run db:seed",
         "db:studio": "cd apps/api && npm run db:studio",
         "lint": "npm run lint --workspaces --if-present",
         "clean": "rimraf apps/*/node_modules apps/*/dist packages/*/node_modules packages/*/dist node_modules",
@@ -38,7 +37,7 @@
     },
     "packageManager": "npm@9.8.0",
     "engines": {
-        "node": ">=18.0.0",
+        "node": ">=20.0.0",
         "npm": ">=9.0.0"
     },
     "keywords": [
