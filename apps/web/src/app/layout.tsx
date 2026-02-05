@@ -33,11 +33,9 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: [
-      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icon-512x512.png", sizes: "512x512", type: "image/png" }
-    ],
-    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }]
+    icon: "/main.png",
+    shortcut: "/main.png",
+    apple: "/main.png",
   },
   appleWebApp: {
     capable: true,
@@ -57,6 +55,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <ThemeScript />
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
       </head>
       <body className={`${inter.variable} antialiased bg-background text-foreground selection:bg-primary/20`} suppressHydrationWarning>
         <ThemeProvider>
