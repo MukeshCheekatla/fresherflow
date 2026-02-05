@@ -32,11 +32,11 @@ jobs:
       - name: Type Check
         run: npm run typecheck
       
-      - name: Run Tests (Parser Logic)
-        run: npm test
-      
       - name: Build Application
         run: npm run build
+      
+      - name: Run Tests (Parser Logic)
+        run: npm test
 
       # Note: Vercel auto-deploys via its own GitHub integration 
       # once this CI pipeline is healthy.

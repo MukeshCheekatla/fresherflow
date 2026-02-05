@@ -26,7 +26,13 @@
         },
         "typecheck": {
             "dependsOn": [
-                "^typecheck"
+                "^build"
+            ]
+        },
+        "test": {
+            "dependsOn": [
+                "^build",
+                "db:generate"
             ]
         },
         "db:generate": {
