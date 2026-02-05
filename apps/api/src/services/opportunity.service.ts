@@ -1,4 +1,5 @@
-import { PrismaClient, OpportunityStatus, OpportunityType } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import { OpportunityStatus, OpportunityType } from '@fresherflow/types';
 import { EligibilityService } from './eligibility.service';
 
 const prisma = new PrismaClient();
@@ -187,26 +188,26 @@ export class OpportunityService {
 
         // Filter by eligibility
         const eligibleOpportunities = opportunities
-            .map((opp) => {
+            .map((opp: any) => {
                 const eligibility = EligibilityService.checkEligibility(
                     {
-                        educationLevel: profile.educationLevel,
+                        educationLevel: profile.educationLevel as any,
                         passoutYear: profile.gradYear || 0,
-                        interestedIn: profile.interestedIn,
+                        interestedIn: profile.interestedIn as any,
                         preferredCities: profile.preferredCities,
-                        workModes: profile.workModes,
-                        availability: profile.availability,
+                        workModes: profile.workModes as any,
+                        availability: profile.availability as any,
                         skills: profile.skills,
                     },
                     {
-                        type: opp.type,
-                        allowedDegrees: opp.allowedDegrees,
+                        type: opp.type as any,
+                        allowedDegrees: opp.allowedDegrees as any,
                         allowedCourses: (opp as any).allowedCourses || [],
                         allowedPassoutYears: opp.allowedPassoutYears,
-                        allowedAvailability: opp.allowedAvailability,
+                        allowedAvailability: opp.allowedAvailability as any,
                         requiredSkills: opp.requiredSkills,
                         locations: opp.locations,
-                        workMode: opp.workMode,
+                        workMode: opp.workMode as any,
                     }
                 );
 
@@ -216,30 +217,30 @@ export class OpportunityService {
                     matchScore: eligibility.eligible
                         ? EligibilityService.getMatchScore(
                             {
-                                educationLevel: profile.educationLevel,
+                                educationLevel: profile.educationLevel as any,
                                 passoutYear: profile.gradYear || 0,
-                                interestedIn: profile.interestedIn,
+                                interestedIn: profile.interestedIn as any,
                                 preferredCities: profile.preferredCities,
-                                workModes: profile.workModes,
-                                availability: profile.availability,
+                                workModes: profile.workModes as any,
+                                availability: profile.availability as any,
                                 skills: profile.skills,
                             },
                             {
-                                type: opp.type,
-                                allowedDegrees: opp.allowedDegrees,
+                                type: opp.type as any,
+                                allowedDegrees: opp.allowedDegrees as any,
                                 allowedCourses: (opp as any).allowedCourses || [],
                                 allowedPassoutYears: opp.allowedPassoutYears,
-                                allowedAvailability: opp.allowedAvailability,
+                                allowedAvailability: opp.allowedAvailability as any,
                                 requiredSkills: opp.requiredSkills,
                                 locations: opp.locations,
-                                workMode: opp.workMode,
+                                workMode: opp.workMode as any,
                             }
                         )
                         : 0,
                 };
             })
-            .filter((opp) => opp.eligible)
-            .sort((a, b) => {
+            .filter((opp: any) => opp.eligible)
+            .sort((a: any, b: any) => {
                 // Walk-ins first
                 if (a.type === OpportunityType.WALKIN && b.type !== OpportunityType.WALKIN) return -1;
                 if (b.type === OpportunityType.WALKIN && a.type !== OpportunityType.WALKIN) return 1;

@@ -1,4 +1,5 @@
-import { PrismaClient, OpportunityType, OpportunityStatus } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import { OpportunityType, OpportunityStatus, Opportunity } from '@fresherflow/types';
 
 const prisma = new PrismaClient();
 
@@ -39,7 +40,7 @@ export class WalkinService {
         });
 
         // Filter by date match in code
-        const filtered = walkins.filter(w =>
+        const filtered = walkins.filter((w: any) =>
             w.walkInDetails?.dates.some((d: Date) => {
                 const date = new Date(d);
                 return date >= now && date <= futureDate;
@@ -47,7 +48,7 @@ export class WalkinService {
         );
 
         // Sort by nearest date
-        return filtered.sort((a, b) => {
+        return filtered.sort((a: any, b: any) => {
             const aNextDate = a.walkInDetails?.dates.map((d: Date) => new Date(d)).find((d: Date) => d >= now) || now;
             const bNextDate = b.walkInDetails?.dates.map((d: Date) => new Date(d)).find((d: Date) => d >= now) || now;
             return aNextDate.getTime() - bNextDate.getTime();
@@ -78,7 +79,7 @@ export class WalkinService {
             },
         });
 
-        return walkins.filter(w =>
+        return walkins.filter((w: any) =>
             w.walkInDetails?.dates.some((d: Date) => {
                 const date = new Date(d);
                 return date >= today && date < tomorrow;
@@ -141,7 +142,7 @@ export class WalkinService {
             },
         });
 
-        return actions.map((action) => action.opportunity);
+        return actions.map((action: any) => action.opportunity);
     }
 }
 

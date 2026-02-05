@@ -1,4 +1,4 @@
-import { Profile, EducationLevel, OpportunityType, WorkMode, Availability } from '@prisma/client';
+import { Profile, EducationLevel, OpportunityType, WorkMode, Availability } from '@fresherflow/types';
 
 export function calculateCompletion(profile: Profile): number {
     let completion = 0;
@@ -28,7 +28,7 @@ export function calculateCompletion(profile: Profile): number {
     const preferencesComplete =
         profile.interestedIn.length > 0 &&
         profile.preferredCities.length > 0 &&
-        profile.workModes.length > 0;
+        profile.workModes && profile.workModes.length > 0;
 
     if (preferencesComplete) {
         completion += 40;

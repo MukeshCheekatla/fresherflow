@@ -36,11 +36,11 @@ export enum SalaryPeriod {
 
 export enum Availability {
     IMMEDIATE = 'IMMEDIATE',
-    WITHIN_MONTH = 'WITHIN_MONTH',
-    AFTER_2_MONTHS = 'AFTER_2_MONTHS'
+    DAYS_15 = 'DAYS_15',
+    MONTH_1 = 'MONTH_1'
 }
 
-export enum UserActionStatus {
+export enum ActionType {
     APPLIED = 'APPLIED',
     PLANNING = 'PLANNING',
     ATTENDED = 'ATTENDED',
@@ -48,10 +48,10 @@ export enum UserActionStatus {
 }
 
 export enum FeedbackReason {
-    LINK_BROKEN = 'LINK_BROKEN',
     EXPIRED = 'EXPIRED',
+    LINK_BROKEN = 'LINK_BROKEN',
     DUPLICATE = 'DUPLICATE',
-    MISLEADING = 'MISLEADING'
+    INACCURATE = 'INACCURATE'
 }
 
 // ========================================
@@ -72,24 +72,23 @@ export interface Profile {
     completionPercentage: number;
 
     // Education (40% weight)
-    educationLevel?: EducationLevel;
-    tenthYear?: number;
-    twelfthYear?: number;
-    gradCourse?: string;
-    gradSpecialization?: string;
-    gradYear?: number;
-    pgCourse?: string;
-    pgSpecialization?: string;
-    pgYear?: number;
+    educationLevel: EducationLevel | null;
+    tenthYear: number | null;
+    twelfthYear: number | null;
+    gradCourse: string | null;
+    gradSpecialization: string | null;
+    gradYear: number | null;
+    pgCourse: string | null;
+    pgSpecialization: string | null;
+    pgYear: number | null;
 
     // Preferences (40% weight)
     interestedIn: OpportunityType[];
     preferredCities: string[];
-    preferredWorkModes: WorkMode[];
-    workModes?: WorkMode[]; // UI Mapping alias
+    workModes: WorkMode[];
 
     // Readiness (20% weight)
-    availability?: Availability;
+    availability: Availability | null;
     skills: string[];
     skillTags?: string[]; // UI Mapping alias
 }
@@ -175,7 +174,7 @@ export interface UserAction {
     id: string;
     userId: string;
     opportunityId: string;
-    status: UserActionStatus;
+    actionType: ActionType;
     createdAt: Date;
     opportunity?: Opportunity;
 }
@@ -247,7 +246,7 @@ export interface UpdateEducationRequest {
 export interface UpdatePreferencesRequest {
     interestedIn: OpportunityType[];
     preferredCities: string[];
-    preferredWorkModes: WorkMode[];
+    workModes: WorkMode[];
 }
 
 export interface UpdateReadinessRequest {
@@ -286,7 +285,7 @@ export interface CreateOpportunityRequest {
 }
 
 export interface TrackActionRequest {
-    status: UserActionStatus;
+    status: ActionType;
 }
 
 export interface SubmitFeedbackRequest {

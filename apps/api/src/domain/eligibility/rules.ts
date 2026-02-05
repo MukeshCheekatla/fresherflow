@@ -130,14 +130,14 @@ export const locationRule: EligibilityRule = {
 export const workModeRule: EligibilityRule = {
     name: 'WORK_MODE_MATCH',
     check: (opp, profile) => {
-        if (!opp.workMode || !profile.preferredWorkModes || profile.preferredWorkModes.length === 0) {
+        if (!opp.workMode || !profile.workModes || profile.workModes.length === 0) {
             return true; // No restriction
         }
 
-        return profile.preferredWorkModes.includes(opp.workMode);
+        return profile.workModes.includes(opp.workMode);
     },
     getReason: (opp, profile) => {
-        return `Work mode (${opp.workMode}) doesn't match your preferences: ${profile.preferredWorkModes?.join(', ') || 'None'}`;
+        return `Work mode (${opp.workMode}) doesn't match your preferences: ${profile.workModes?.join(', ') || 'None'}`;
     }
 };
 

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { OpportunityType, OpportunityStatus, WorkMode, EducationLevel, Availability, ActionType, FeedbackReason, SalaryPeriod } from '@prisma/client';
+import { OpportunityType, OpportunityStatus, WorkMode, EducationLevel, Availability, ActionType, FeedbackReason, SalaryPeriod } from '@fresherflow/types';
 
 // Auth Schemas
 export const registerSchema = z.object({

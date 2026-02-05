@@ -49,12 +49,7 @@ router.post('/:id/action', requireAuth, validate(userActionSchema), async (req: 
             adminId: opportunity.postedByUserId
         };
 
-        const profileForCheck = {
-            ...profile,
-            preferredWorkModes: profile.workModes,
-            passoutYear: profile.gradYear || 0 // Assuming gradYear is the passoutYear, defaulting to 0 if null
-        };
-        const eligibilityResult = checkEligibility(opportunityForCheck as any, profileForCheck as any, req.userId);
+        const eligibilityResult = checkEligibility(opportunityForCheck as any, profile as any, req.userId);
 
         if (!eligibilityResult.eligible) {
             return next(new AppError(

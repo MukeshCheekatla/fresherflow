@@ -23,7 +23,7 @@ export async function profileGate(req: Request, res: Response, next: NextFunctio
             return next(new AppError('Profile not found. Please complete your profile.', 403));
         }
 
-        if (!isProfileComplete(profile)) {
+        if (!isProfileComplete(profile as any)) {
             return res.status(403).json({
                 error: 'Complete your profile to access this feature',
                 completionPercentage: profile.completionPercentage,

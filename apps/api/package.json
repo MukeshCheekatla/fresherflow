@@ -25,6 +25,9 @@
     "license": "MIT",
     "dependencies": {
         "@fresherflow/auth": "^0.0.0",
+        "@fresherflow/types": "^1.0.0",
+        "@fresherflow/schemas": "^1.0.0",
+        "@fresherflow/constants": "^1.0.0",
         "@prisma/client": "^6.2.0",
         "@sentry/node": "^10.38.0",
         "@types/bcrypt": "^5.0.2",

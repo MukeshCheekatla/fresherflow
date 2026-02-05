@@ -53,7 +53,7 @@ router.put('/', requireAuth, async (req: Request, res: Response, next: NextFunct
         });
 
         // Recalculate completion percentage
-        const newCompletion = calculateCompletion(profile);
+        const newCompletion = calculateCompletion(profile as any);
         profile = await prisma.profile.update({
             where: { userId: req.userId },
             data: { completionPercentage: newCompletion }
@@ -96,7 +96,7 @@ router.put('/education', requireAuth, validate(educationSchema), async (req: Req
         });
 
         // Recalculate completion percentage (DERIVED FIELD)
-        const newCompletion = calculateCompletion(profile);
+        const newCompletion = calculateCompletion(profile as any);
         profile = await prisma.profile.update({
             where: { userId: req.userId },
             data: { completionPercentage: newCompletion }
@@ -131,7 +131,7 @@ router.put('/preferences', requireAuth, validate(preferencesSchema), async (req:
         });
 
         // Recalculate completion
-        const newCompletion = calculateCompletion(profile);
+        const newCompletion = calculateCompletion(profile as any);
         profile = await prisma.profile.update({
             where: { userId: req.userId },
             data: { completionPercentage: newCompletion }
@@ -160,7 +160,7 @@ router.put('/readiness', requireAuth, validate(readinessSchema), async (req: Req
         });
 
         // Recalculate completion
-        const newCompletion = calculateCompletion(profile);
+        const newCompletion = calculateCompletion(profile as any);
         profile = await prisma.profile.update({
             where: { userId: req.userId },
             data: { completionPercentage: newCompletion }

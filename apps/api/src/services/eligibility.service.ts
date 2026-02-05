@@ -1,4 +1,4 @@
-import { EducationLevel, WorkMode, Availability, OpportunityType } from '@prisma/client';
+import { EducationLevel, WorkMode, Availability, OpportunityType } from '@fresherflow/types';
 import Fuse from 'fuse.js';
 
 /**
