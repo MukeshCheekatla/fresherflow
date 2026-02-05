@@ -1,161 +1,252 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import toast from 'react-hot-toast';
 import {
     EnvelopeIcon,
-    LockClosedIcon,
     ArrowPathIcon,
     ShieldCheckIcon,
-    EyeIcon,
-    EyeSlashIcon
+    ChevronLeftIcon,
+    KeyIcon
 } from '@heroicons/react/24/outline';
 import { useAuthFormData } from '@/contexts/AuthFormDataContext';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+
+declare global {
+    interface Window {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        google: any;
+    }
+}
+
+import LoadingScreen from '@/components/ui/LoadingScreen';
+
+type LoginStep = 'email' | 'otp';
 
 export default function LoginPage() {
     const { email, setEmail } = useAuthFormData();
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+    const [otp, setOtp] = useState('');
+    const [step, setStep] = useState<LoginStep>('email');
+    const [isProcessing, setIsProcessing] = useState(false);
 
-    const { login, user } = useAuth();
+    const { sendOtp, verifyOtp, loginWithGoogle, user, isLoading } = useAuth();
     const router = useRouter();
 
     useEffect(() => {
-        if (user) {
+        // Don't redirect if:
+        // 1. Auth is still loading
+        // 2. Logout is in progress (global flag)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const isLoggingOut = typeof window !== 'undefined' && (window as any).__isLoggingOut;
+
+        if (user && !isLoading && !isLoggingOut) {
             router.push('/dashboard');
         }
-    }, [user, router]);
+    }, [user, isLoading, router]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
-        const loadingToast = toast.loading('Securing session...');
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleGoogleCallback = useCallback(async (response: any) => {
+        setIsProcessing(true);
         try {
-            await login(email, password);
-            toast.success('Welcome back!', { id: loadingToast });
+            await loginWithGoogle(response.credential);
             router.push('/dashboard');
         } catch (err: unknown) {
-            toast.error((err as Error).message || 'Authentication failed.', { id: loadingToast });
-        } finally {
-            setIsLoading(false);
+            setIsProcessing(false);
+            toast.error((err as Error).message || 'Google login failed.');
+        }
+    }, [loginWithGoogle, router]);
+
+    // Initialize Google Login
+    useEffect(() => {
+        if (typeof window !== 'undefined' && window.google) {
+            window.google.accounts.id.initialize({
+                client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+                callback: handleGoogleCallback,
+            });
+            const googleBtn = document.getElementById("google-login-btn");
+            if (googleBtn) {
+                window.google.accounts.id.renderButton(
+                    googleBtn,
+                    {
+                        theme: "outline",
+                        size: "large",
+                        width: "100%",
+                        text: "continue_with",
+                        logo_alignment: "center"
+                    }
+                );
+            }
+        }
+    }, [handleGoogleCallback, step]);
+
+    const handleSendOtp = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!email) return;
+
+        const loadingToast = toast.loading('Sending verification code...');
+        try {
+            await sendOtp(email);
+            toast.success('Code sent to your email!', { id: loadingToast });
+            setStep('otp');
+        } catch (err: unknown) {
+            toast.error((err as Error).message || 'Failed to send code.', { id: loadingToast });
         }
     };
 
+    const handleVerifyOtp = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsProcessing(true);
+        try {
+            await verifyOtp(email, otp);
+            router.push('/dashboard');
+        } catch (err: unknown) {
+            setIsProcessing(false);
+            toast.error((err as Error).message || 'Invalid or expired code.');
+        }
+    };
+
+    if (isProcessing) return <LoadingScreen />;
+
     return (
-        <div className="flex-1 flex flex-col md:flex-row bg-background overflow-hidden relative min-h-[calc(100vh-120px)] md:min-h-[calc(100vh-80px)]">
+        <div className="flex-1 flex flex-col md:flex-row bg-background overflow-hidden relative min-h-[calc(100vh-80px)] md:min-h-[calc(100vh-80px)]">
             {/* Left Side: Hero (Desktop Only) */}
             <div className="hidden md:flex md:w-[45%] lg:w-[50%] bg-muted/30 border-r border-border relative overflow-hidden flex-col items-center justify-center p-12 text-center">
-                <div className="space-y-6 max-w-sm animate-in fade-in slide-in-from-left-6 duration-1000">
-                    <h2 className="text-5xl lg:text-6xl font-black tracking-tighter leading-none uppercase italic text-foreground">
-                        Simplify.
-                        <br />
-                        <span className="text-primary">Deploy.</span>
-                        <br />
-                        Succeed.
+                <div className="space-y-6 max-w-sm animate-in fade-in slide-in-from-left-6 duration-500">
+                    <h2 className="text-4xl font-bold tracking-tight text-foreground">
+                        The definitive career protocol.
                     </h2>
-                    <p className="text-base font-medium text-muted-foreground leading-relaxed italic uppercase tracking-wider opacity-80">
-                        Hand-verified opportunities for the next generation of engineers.
+                    <p className="text-base text-muted-foreground leading-relaxed">
+                        Access a verified feed of off-campus jobs, internships, and walk-ins. Built for the modern engineer.
                     </p>
-
-                    <div className="pt-8 flex justify-center opacity-30">
-                        <div className="h-[1px] w-20 bg-foreground" />
-                    </div>
                 </div>
+                {/* Decorative Element */}
+                <div className="absolute -bottom-24 -left-24 h-64 w-64 bg-primary/5 rounded-full blur-3xl" />
             </div>
 
             {/* Right Side: Login Form */}
-            <div className="flex-1 flex flex-col justify-center px-4 py-4 md:px-20 bg-background relative overflow-hidden">
-                <div className="max-w-[400px] mx-auto w-full space-y-6">
-                    <div className="space-y-1 text-center md:text-left">
-                        <h1 className="text-2xl font-black tracking-tight text-foreground uppercase italic leading-none">
-                            Sign In
+            <div className="flex-1 flex flex-col justify-center px-6 py-6 md:px-20 bg-background relative overflow-hidden">
+                <div className="max-w-[400px] mx-auto w-full space-y-6 md:space-y-10">
+
+                    {/* Form Header */}
+                    <div className="space-y-2 text-center md:text-left">
+                        {step !== 'email' && (
+                            <button
+                                onClick={() => setStep('email')}
+                                className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground hover:text-primary uppercase tracking-wider mb-4 transition-colors"
+                            >
+                                <ChevronLeftIcon className="w-3 h-3" />
+                                Back to login
+                            </button>
+                        )}
+                        <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                            {step === 'otp' ? 'Verify identity' : 'Sign in'}
                         </h1>
-                        <p className="text-muted-foreground font-medium uppercase text-[10px] tracking-widest text-foreground/60">
-                            Access your personalized career feed.
+                        <p className="text-muted-foreground text-sm">
+                            {step === 'otp' ? `We sent a code to ${email}` : 'Enter your email to access your feed'}
                         </p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="space-y-2">
-                            <label className="text-[11px] font-black text-muted-foreground uppercase tracking-widest ml-1">
-                                Email Address
-                            </label>
-                            <div className="relative group">
-                                <EnvelopeIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                                <input
-                                    type="email"
-                                    required
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="premium-input !h-12 pl-12"
-                                    placeholder="your@email.com"
-                                />
-                            </div>
-                        </div>
+                    <div className="space-y-6">
+                        {/* Step 1: Email Input */}
+                        {step === 'email' && (
+                            <form onSubmit={handleSendOtp} className="space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium text-foreground ml-1">
+                                        Email Address
+                                    </label>
+                                    <div className="relative group">
+                                        <EnvelopeIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/40 group-focus-within:text-primary transition-colors z-10" />
+                                        <Input
+                                            type="email"
+                                            required
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            className="pl-12 !h-12 text-sm"
+                                            placeholder="name@company.com"
+                                        />
+                                    </div>
+                                </div>
 
-                        <div className="space-y-2">
-                            <div className="flex justify-between items-center px-1">
-                                <label className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">
-                                    Password
-                                </label>
-                            </div>
-                            <div className="relative group">
-                                <LockClosedIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    required
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="premium-input !h-12 pl-12 pr-12"
-                                    placeholder="••••••••"
-                                />
-                                <button
-                                    type="button"
-                                    tabIndex={-1}
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+                                <Button
+                                    type="submit"
+                                    disabled={isLoading || !email}
+                                    className="w-full !h-12 text-sm font-semibold !rounded-lg"
                                 >
-                                    {showPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
-                                </button>
-                            </div>
-                            <div className="flex justify-end px-1">
-                                <Link href="#" className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
-                                    Forgot Password?
-                                </Link>
-                            </div>
-                        </div>
+                                    {isLoading ? (
+                                        <ArrowPathIcon className="w-5 h-5 animate-spin mx-auto" />
+                                    ) : (
+                                        "Continue"
+                                    )}
+                                </Button>
 
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="w-full premium-button !h-12 text-sm font-black uppercase tracking-widest active:scale-[0.98] transition-all"
-                        >
-                            {isLoading ? (
-                                <ArrowPathIcon className="w-5 h-5 animate-spin mx-auto" />
-                            ) : (
-                                "Execute Login"
-                            )}
-                        </button>
-                    </form>
+                                <div className="relative py-2">
+                                    <div className="absolute inset-0 flex items-center">
+                                        <span className="w-full border-t border-border"></span>
+                                    </div>
+                                    <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-semibold">
+                                        <span className="bg-background px-4 text-muted-foreground/40">or</span>
+                                    </div>
+                                </div>
 
-                    <div className="text-center pt-2">
-                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                            New here?{' '}
-                            <Link href="/register" className="text-primary hover:underline font-black">
-                                Join Now
-                            </Link>
-                        </p>
+                                <div id="google-login-btn" className="w-full min-h-[48px] overflow-hidden rounded-lg"></div>
+                            </form>
+                        )}
+
+                        {/* Step 2: OTP Verification */}
+                        {step === 'otp' && (
+                            <form onSubmit={handleVerifyOtp} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium text-foreground ml-1">
+                                        Verification Code
+                                    </label>
+                                    <div className="relative group">
+                                        <KeyIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/40 group-focus-within:text-primary transition-colors z-10" />
+                                        <Input
+                                            type="text"
+                                            required
+                                            maxLength={6}
+                                            value={otp}
+                                            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                                            className="pl-12 !h-12 text-center text-xl font-bold tracking-[0.4em]"
+                                            placeholder="000000"
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <div className="flex justify-between items-center px-1">
+                                        <p className="text-[11px] text-muted-foreground">
+                                            Didn&apos;t receive it?
+                                        </p>
+                                        <button type="button" onClick={handleSendOtp} className="text-[11px] font-semibold text-primary hover:underline">
+                                            Resend code
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <Button
+                                    type="submit"
+                                    disabled={isLoading || otp.length !== 6}
+                                    className="w-full !h-12 text-sm font-semibold !rounded-lg"
+                                >
+                                    {isLoading ? (
+                                        <ArrowPathIcon className="w-5 h-5 animate-spin mx-auto" />
+                                    ) : (
+                                        "Verify code"
+                                    )}
+                                </Button>
+                            </form>
+                        )}
                     </div>
 
-                    <div className="flex justify-center pt-4">
-                        <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest">
-                            <ShieldCheckIcon className="w-4 h-4 text-primary/50" />
-                            <span>Verified Session</span>
+                    {/* Footer Info */}
+                    <div className="pt-12 border-t border-border/50">
+                        <div className="flex flex-col items-center gap-4 text-center">
+                            <div className="flex items-center gap-2 text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
+                                <ShieldCheckIcon className="w-4 h-4 text-success/60" />
+                                <span>Verified Infrastructure</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -163,4 +254,3 @@ export default function LoginPage() {
         </div>
     );
 }
-
