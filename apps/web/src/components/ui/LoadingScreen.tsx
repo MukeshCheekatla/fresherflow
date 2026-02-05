@@ -2,6 +2,8 @@
 
 import { cn } from '@/lib/utils';
 
+import Image from 'next/image';
+
 interface LoadingScreenProps {
     message?: string;
     fullScreen?: boolean;
@@ -15,22 +17,42 @@ export default function LoadingScreen({
 }: LoadingScreenProps) {
     return (
         <div className={cn(
-            "flex flex-col items-center justify-center bg-neutral-50/80 backdrop-blur-sm z-50",
+            "flex flex-col items-center justify-center bg-background/95 backdrop-blur-sm z-50 transition-colors duration-300",
             fullScreen ? "fixed inset-0" : "absolute inset-0 min-h-[400px]",
             className
         )}>
-            <div className="relative flex items-center justify-center">
+            <div className="relative flex items-center justify-center mb-6">
                 {/* Brand Pulsate Effect */}
-                <div className="absolute w-20 h-20 bg-primary/20 rounded-full animate-ping" />
+                <div className="absolute w-24 h-24 bg-primary/10 rounded-full animate-ping opacity-20" />
+                <div className="absolute w-16 h-16 bg-primary/20 rounded-full animate-pulse opacity-30" />
 
-                {/* Spinner */}
-                <div className="w-12 h-12 border-4 border-neutral-200 border-t-primary rounded-full animate-spin relative" />
+                {/* Logo - Light Mode */}
+                <div className="relative w-12 h-12 z-10 dark:hidden">
+                    <Image
+                        src="/logo.png"
+                        alt="Loading..."
+                        fill
+                        className="object-contain"
+                        priority
+                    />
+                </div>
+
+                {/* Logo - Dark Mode */}
+                <div className="relative w-12 h-12 z-10 hidden dark:block">
+                    <Image
+                        src="/logo-white.png"
+                        alt="Loading..."
+                        fill
+                        className="object-contain"
+                        priority
+                    />
+                </div>
             </div>
 
             {message && (
-                <div className="mt-6 text-center animate-pulse">
-                    <p className="text-lg font-bold text-neutral-900">{message}</p>
-                    <p className="text-xs text-neutral-500 mt-1 uppercase tracking-widest font-semibold">FresherFlow</p>
+                <div className="text-center animate-pulse space-y-2">
+                    <p className="text-lg font-bold text-foreground tracking-tight">{message}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-bold">FresherFlow</p>
                 </div>
             )}
         </div>

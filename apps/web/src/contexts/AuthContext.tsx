@@ -9,7 +9,10 @@ interface AuthContextType {
     profile: Profile | null;
     isLoading: boolean;
     login: (email: string, password: string) => Promise<void>;
-    register: (email: string, password: string, fullName: string) => Promise<void>;
+    sendOtp: (email: string) => Promise<void>;
+    verifyOtp: (email: string, code: string) => Promise<void>;
+    loginWithGoogle: (token: string) => Promise<void>;
+
     logout: () => Promise<void>;
     refreshUser: () => Promise<void>;
     refreshProfile: () => Promise<void>;
@@ -28,7 +31,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     async function loadUser() {
+        setIsLoading(true);
         try {
+            // DEFENSIVE: Check if session marker cookie exists
+            if (typeof document !== 'undefined') {
+                const hasSession = document.cookie.includes('ff_logged_in=true');
+                if (!hasSession) {
+                    setUser(null);
+                    setProfile(null);
+                    setIsLoading(false);
+                    return;
+                }
+            }
+
             // Attempt to fetch current user
             // If we have valid cookies, this will succeed.
             // If not, it will throw 401, and we'll catch it.
@@ -49,42 +64,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     async function login(email: string, password: string) {
-        const response = await authApi.login(email, password);
-        // Cookies are set by server
-        setUser(response.user);
-
-        // Response might contain partial profile or full.
-        // If partial, maybe we fetch full?
-        // But /login returns completionPercentage.
-        // Let's assume we might want to fetch full profile or just use what we have.
-        // For consistency, let's call loadUser or set what we have.
-        // But authApi.me() is the single source of truth for "session restored".
-
-        // Ideally response from login has same shape as me, so we can use it.
-        // If not, fetch me.
+        await authApi.login(email, password);
         const meResponse = await authApi.me();
         setUser(meResponse.user);
         setProfile(meResponse.profile as Profile);
     }
 
-    async function register(email: string, password: string, fullName: string) {
-        // Register also sets cookies
-        const response = await authApi.register(email, password, fullName);
-        setUser(response.user);
-        // Ensure we load full profile state
+    async function sendOtp(email: string) {
+        await authApi.sendOtp(email);
+    }
+
+    async function verifyOtp(email: string, code: string) {
+        await authApi.verifyOtp(email, code);
         const meResponse = await authApi.me();
         setUser(meResponse.user);
         setProfile(meResponse.profile as Profile);
     }
+
+    async function loginWithGoogle(token: string) {
+        await authApi.googleLogin(token);
+        const meResponse = await authApi.me();
+        setUser(meResponse.user);
+        setProfile(meResponse.profile as Profile);
+    }
+
+
+
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     async function logout() {
+        if (isLoggingOut) return;
+        setIsLoggingOut(true);
+        if (typeof window !== 'undefined') {
+            (window as Window & { __isLoggingOut?: boolean }).__isLoggingOut = true;
+        }
+
         try {
+            const win = window as Window & { google?: { accounts: { id: { disableAutoSelect: () => void } } } };
+            if (typeof window !== 'undefined' && win.google?.accounts?.id) {
+                win.google.accounts.id.disableAutoSelect();
+            }
+
+            setUser(null);
+            setProfile(null);
             await authApi.logout();
         } catch {
             // Ignore logout errors
+        } finally {
+            // Manually nuke cookies on client side as a failsafe
+            if (typeof document !== 'undefined') {
+                const cookiesToClear = ['accessToken', 'refreshToken', 'ff_logged_in'];
+                cookiesToClear.forEach(name => {
+                    // Try multiple patterns to ensure clearing
+                    document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+                    document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; domain=${window.location.hostname};`;
+                    document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax;`;
+                    document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; domain=${window.location.hostname}; SameSite=Lax;`;
+                });
+            }
+            // Use replace() instead of href to force full page reload and clear React state
+            window.location.replace('/login');
         }
-        setUser(null);
-        setProfile(null);
     }
 
     async function refreshUser() {
@@ -97,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return (
         <AuthContext.Provider
-            value={{ user, profile, isLoading, login, register, logout, refreshUser, refreshProfile }}
+            value={{ user, profile, isLoading, login, sendOtp, verifyOtp, loginWithGoogle, logout, refreshUser, refreshProfile }}
         >
             {children}
         </AuthContext.Provider>

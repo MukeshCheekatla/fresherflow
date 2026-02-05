@@ -70,6 +70,12 @@ enum Availability {
   MONTH_1
 }
 
+enum LinkHealth {
+  HEALTHY
+  BROKEN
+  RETRYING
+}
+
 // ============================================================================
 // USER MODELS
 // ============================================================================
@@ -78,8 +84,10 @@ model User {
   id           String   @id @default(uuid())
   email        String   @unique
   passwordHash String?
-  fullName     String
+  fullName     String?
   role         Role     @default(USER)
+  provider     String?  @default("credentials") // credentials, google, email
+  providerId   String?  // e.g. Google sub id
   createdAt    DateTime @default(now())
 
   // Relations
@@ -87,10 +95,26 @@ model User {
   refreshTokens RefreshToken[]
   actions       UserAction[]
   feedback      ListingFeedback[]
+  savedOpportunities SavedOpportunity[]
   
   // Admin Relations (only for role=ADMIN)
   postedOpportunities Opportunity[]
   auditLogs           AdminAudit[]
+  authenticators     Authenticator[]
+}
+
+model Authenticator {
+  credentialID         String  @id
+  userId               String
+  publicKey            Bytes
+  counter              Int
+  deviceType           String
+  backedUp             Boolean
+  transports           String? // Stored as comma-separated string
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model RefreshToken {
@@ -169,6 +193,7 @@ model AdminAudit {
 
 model Opportunity {
   id   String          @id @default(uuid())
+  slug String          @unique // SEO-friendly URL slug
   type OpportunityType // Enum for type safety
 
   // Core Fields
@@ -216,11 +241,17 @@ model Opportunity {
   postedByUserId String
   user           User    @relation(fields: [postedByUserId], references: [id])
   postedAt        DateTime @default(now())
-  lastVerified    DateTime @default(now())
+  
+  // Health Tracking (Verification Bot)
+  linkHealth           LinkHealth @default(HEALTHY)
+  verificationFailures Int        @default(0)
+  lastVerifiedAt       DateTime   @default(now())
+  lastVerified         DateTime   @default(now())
 
   // Relations
   actions  UserAction[]
   feedback ListingFeedback[]
+  savedBy  SavedOpportunity[]
 
   // DB-level filtering indexes
   @@index([status])
@@ -228,6 +259,8 @@ model Opportunity {
   @@index([locations])
   @@index([expiresAt]) // Performance for expiry cron
   @@index([deletedAt]) // Exclude soft-deleted in queries
+  @@index([linkHealth]) // Focus for verification bot
+  @@index([lastVerifiedAt]) // Sort by oldest verification
 }
 
 model WalkInDetails {
@@ -245,6 +278,19 @@ model WalkInDetails {
   contactPhone      String?
 
   opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+}
+
+model SavedOpportunity {
+  id            String      @id @default(uuid())
+  userId        String
+  opportunityId String
+  createdAt     DateTime    @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, opportunityId])
+  @@index([userId])
 }
 
 // ============================================================================

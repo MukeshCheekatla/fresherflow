@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import {
@@ -10,26 +10,16 @@ import {
     LockClosedIcon,
     ArrowPathIcon,
     ShieldCheckIcon,
-    UserIcon,
     GlobeAltIcon,
     SparklesIcon
 } from '@heroicons/react/24/outline';
-import { cn } from '@/lib/utils';
 
-type AuthMode = 'login' | 'register';
-
-function AuthContent() {
-    const searchParams = useSearchParams();
-    const initialMode = searchParams.get('mode') === 'register' ? 'register' : 'login';
-
-    const [mode, setMode] = useState<AuthMode>(initialMode);
+const AuthContent = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [fullName, setFullName] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    const { login, register, user } = useAuth();
+    const { login, user } = useAuth();
     const router = useRouter();
 
     useEffect(() => {
@@ -38,36 +28,17 @@ function AuthContent() {
         }
     }, [user, router]);
 
-    const handleSwitch = (newMode: AuthMode) => {
-        setMode(newMode);
-        // Clear errors/state if needed
-    };
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        const loadingToast = toast.loading(mode === 'login' ? '🚀 Verifying credentials...' : '🛰️ Initializing profile...');
+        const loadingToast = toast.loading('🚀 Verifying credentials...');
 
         try {
-            if (mode === 'login') {
-                await login(email, password);
-                toast.success('Welcome back to FresherFlow!', { id: loadingToast });
-                router.push('/dashboard');
-            } else {
-                if (password !== confirmPassword) {
-                    toast.error('❌ Passwords do not match', { id: loadingToast });
-                    setIsLoading(false);
-                    return;
-                }
-                if (password.length < 6) {
-                    toast.error('❌ Password security threshold not met (min 6 chars)', { id: loadingToast });
-                    setIsLoading(false);
-                    return;
-                }
-                await register(email, password, fullName);
-                toast.success('Welcome to the flow!', { id: loadingToast });
-                router.push('/profile/complete');
-            }
+            await login(email, password);
+            toast.success('Welcome back to FresherFlow!', { id: loadingToast });
+            router.push('/dashboard');
         } catch (err: unknown) {
             toast.error((err as Error).message || 'Authentication protocol failed.', { id: loadingToast });
         } finally {
@@ -124,54 +95,17 @@ function AuthContent() {
                 <div className="max-w-[400px] mx-auto w-full space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
                     <div className="space-y-1">
                         <h2 className="text-2xl font-black tracking-tight text-foreground uppercase italic leading-none">
-                            {mode === 'login' ? 'System Login' : 'Initialize Protocol'}
+                            System Login
                         </h2>
                         <p className="text-muted-foreground font-medium uppercase text-[10px] tracking-widest">
-                            {mode === 'login' ? 'Execute session authentication.' : 'Create new authenticated identity.'}
+                            Execute session authentication.
                         </p>
                     </div>
 
-                    {/* Mode Switcher */}
-                    <div className="flex p-1 bg-muted rounded-xl border border-border">
-                        <button
-                            onClick={() => handleSwitch('login')}
-                            className={cn(
-                                "flex-1 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded-lg",
-                                mode === 'login' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                            )}
-                        >
-                            Sign In
-                        </button>
-                        <button
-                            onClick={() => handleSwitch('register')}
-                            className={cn(
-                                "flex-1 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded-lg",
-                                mode === 'register' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                            )}
-                        >
-                            Register
-                        </button>
-                    </div>
+
 
                     <form onSubmit={handleSubmit} className="space-y-3.5">
-                        {mode === 'register' && (
-                            <div className="space-y-2 animate-in fade-in duration-300">
-                                <label className="text-[11px] font-black text-muted-foreground uppercase tracking-widest ml-1">
-                                    Full Identity Name
-                                </label>
-                                <div className="relative group">
-                                    <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                                    <input
-                                        type="text"
-                                        required
-                                        value={fullName}
-                                        onChange={(e) => setFullName(e.target.value)}
-                                        className="premium-input !h-12 pl-12"
-                                        placeholder="EX: JOHN DOE"
-                                    />
-                                </div>
-                            </div>
-                        )}
+
 
                         <div className="space-y-2">
                             <label className="text-[11px] font-black text-muted-foreground uppercase tracking-widest ml-1">
@@ -205,33 +139,14 @@ function AuthContent() {
                                     placeholder="••••••••"
                                 />
                             </div>
-                            {mode === 'login' && (
-                                <div className="flex justify-end pr-1">
-                                    <Link href="#" className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
-                                        Forgot access password?
-                                    </Link>
-                                </div>
-                            )}
+                            <div className="flex justify-end pr-1">
+                                <Link href="#" className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
+                                    Forgot access password?
+                                </Link>
+                            </div>
                         </div>
 
-                        {mode === 'register' && (
-                            <div className="space-y-2 animate-in fade-in duration-300">
-                                <label className="text-[11px] font-black text-muted-foreground uppercase tracking-widest ml-1">
-                                    Confirm Security Key
-                                </label>
-                                <div className="relative group">
-                                    <LockClosedIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                                    <input
-                                        type="password"
-                                        required
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        className="premium-input !h-12 pl-12"
-                                        placeholder="••••••••"
-                                    />
-                                </div>
-                            </div>
-                        )}
+
 
                         <button
                             type="submit"
@@ -242,7 +157,7 @@ function AuthContent() {
                                 <ArrowPathIcon className="w-5 h-5 animate-spin" />
                             ) : (
                                 <div className="flex items-center justify-center">
-                                    <span>{mode === 'login' ? 'Execute Auth' : 'Initialize Identity'}</span>
+                                    <span>Execute Auth</span>
                                 </div>
                             )}
                         </button>

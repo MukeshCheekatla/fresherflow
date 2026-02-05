@@ -19,7 +19,8 @@ import {
     PencilSquareIcon,
     XMarkIcon,
     DocumentTextIcon,
-    CheckCircleIcon
+    CheckCircleIcon,
+    ArrowPathIcon
 } from '@heroicons/react/24/outline';
 
 export default function OpportunitiesListPage() {
@@ -275,10 +276,20 @@ export default function OpportunitiesListPage() {
                     <h1 className="text-2xl font-semibold tracking-tight text-foreground">Stream Management</h1>
                     <p className="text-sm text-muted-foreground">Monitor and curate the FresherFlow active stream.</p>
                 </div>
-                <Link href="/admin/opportunities/create" className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">
-                    <PlusCircleIcon className="w-4 h-4 mr-2" />
-                    New Listing
-                </Link>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => loadOpportunities()}
+                        className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+                        title="Refresh List"
+                    >
+                        <ArrowPathIcon className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                        Refresh
+                    </button>
+                    <Link href="/admin/opportunities/create" className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">
+                        <PlusCircleIcon className="w-4 h-4 mr-2" />
+                        New Listing
+                    </Link>
+                </div>
             </div>
 
             {/* Bulk Actions Bar */}
@@ -451,8 +462,8 @@ export default function OpportunitiesListPage() {
                                         <div
                                             onClick={() => toggleSelect(opp.id)}
                                             className={`w-4 h-4 mt-1 rounded border transition-colors cursor-pointer flex-shrink-0 flex items-center justify-center ${selectedIds.includes(opp.id)
-                                                    ? 'bg-primary border-primary'
-                                                    : 'border-muted-foreground/30 hover:border-primary'
+                                                ? 'bg-primary border-primary'
+                                                : 'border-muted-foreground/30 hover:border-primary'
                                                 }`}
                                         >
                                             {selectedIds.includes(opp.id) && (
@@ -473,11 +484,14 @@ export default function OpportunitiesListPage() {
                                             </div>
                                         </div>
                                     </div>
-                                    <span className={`inline-flex items-center rounded-md px-2 py-1 text-[10px] font-bold ring-1 ring-inset ${opp.status === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' :
-                                        opp.status === 'ARCHIVED' ? 'bg-rose-50 text-rose-700 ring-rose-600/10' :
-                                            'bg-slate-50 text-slate-600 ring-slate-500/10'
+                                    <span className={`inline-flex items-center rounded-md px-2 py-1 text-[10px] font-bold ring-1 ring-inset ${opp.status === 'ARCHIVED' ? 'bg-rose-50 text-rose-700 ring-rose-600/10' :
+                                        (opp.status === 'PUBLISHED' && opp.expiresAt && new Date(opp.expiresAt) < new Date()) ? 'bg-orange-50 text-orange-700 ring-orange-600/10' :
+                                            opp.status === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' :
+                                                'bg-slate-50 text-slate-600 ring-slate-500/10'
                                         }`}>
-                                        {opp.status === 'PUBLISHED' ? 'LIVE' : opp.status}
+                                        {opp.status === 'ARCHIVED' ? 'ARCHIVED' :
+                                            (opp.status === 'PUBLISHED' && opp.expiresAt && new Date(opp.expiresAt) < new Date()) ? 'EXPIRED' :
+                                                opp.status === 'PUBLISHED' ? 'LIVE' : opp.status}
                                     </span>
                                 </div>
 
@@ -494,7 +508,7 @@ export default function OpportunitiesListPage() {
 
                                 <div className="mt-4 flex items-center justify-end gap-2">
                                     <Link
-                                        href={`/admin/opportunities/edit/${opp.id}`}
+                                        href={`/admin/opportunities/edit/${opp.slug || opp.id}`}
                                         className="h-9 px-3 inline-flex items-center justify-center rounded-md border border-input bg-background text-xs font-medium text-foreground hover:bg-accent hover:text-accent-foreground"
                                         title="Edit"
                                     >
@@ -565,8 +579,8 @@ export default function OpportunitiesListPage() {
                                             <div
                                                 onClick={() => toggleSelect(opp.id)}
                                                 className={`w-4 h-4 rounded border transition-colors cursor-pointer flex items-center justify-center ${selectedIds.includes(opp.id)
-                                                        ? 'bg-primary border-primary'
-                                                        : 'border-muted-foreground/30 hover:border-primary'
+                                                    ? 'bg-primary border-primary'
+                                                    : 'border-muted-foreground/30 hover:border-primary'
                                                     }`}
                                             >
                                                 {selectedIds.includes(opp.id) && (
@@ -604,17 +618,20 @@ export default function OpportunitiesListPage() {
                                             </div>
                                         </td>
                                         <td className="px-5 py-4">
-                                            <span className={`inline-flex items-center rounded-md px-2 py-1 text-[10px] font-bold ring-1 ring-inset ${opp.status === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' :
-                                                opp.status === 'ARCHIVED' ? 'bg-rose-50 text-rose-700 ring-rose-600/10' :
-                                                    'bg-slate-50 text-slate-600 ring-slate-500/10'
+                                            <span className={`inline-flex items-center rounded-md px-2 py-1 text-[10px] font-bold ring-1 ring-inset ${opp.status === 'ARCHIVED' ? 'bg-rose-50 text-rose-700 ring-rose-600/10' :
+                                                    (opp.status === 'PUBLISHED' && opp.expiresAt && new Date(opp.expiresAt) < new Date()) ? 'bg-orange-50 text-orange-700 ring-orange-600/10' :
+                                                        opp.status === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' :
+                                                            'bg-slate-50 text-slate-600 ring-slate-500/10'
                                                 }`}>
-                                                {opp.status === 'PUBLISHED' ? 'LIVE' : opp.status}
+                                                {opp.status === 'ARCHIVED' ? 'ARCHIVED' :
+                                                    (opp.status === 'PUBLISHED' && opp.expiresAt && new Date(opp.expiresAt) < new Date()) ? 'EXPIRED' :
+                                                        opp.status === 'PUBLISHED' ? 'LIVE' : opp.status}
                                             </span>
                                         </td>
                                         <td className="px-5 py-4 text-right">
                                             <div className="flex items-center justify-end gap-1">
                                                 <Link
-                                                    href={`/admin/opportunities/edit/${opp.id}`}
+                                                    href={`/admin/opportunities/edit/${opp.slug || opp.id}`}
                                                     className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-all"
                                                     title="Edit"
                                                 >

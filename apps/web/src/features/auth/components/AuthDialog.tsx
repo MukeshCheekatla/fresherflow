@@ -13,13 +13,13 @@ export default function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
     // Use AuthContext directly to work on both admin and user pages
     const authContext = useContext(AuthContext);
     const login = authContext?.login || (async () => { });
-    const register = authContext?.register || (async () => { });
+
     const router = useRouter();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [fullName, setFullName] = useState('');
-    const [mode, setMode] = useState<'login' | 'register'>('login');
+    // Only support login mode now
+    const mode = 'login';
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -32,8 +32,6 @@ export default function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
             setLoading(true);
             if (mode === 'login') {
                 await login(email, password);
-            } else {
-                await register(email, password, fullName);
             }
             router.push('/dashboard');
             onClose();
@@ -45,61 +43,52 @@ export default function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative selection:bg-primary/20">
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-900 transition-colors"
+                    className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors p-2 hover:bg-muted rounded-full"
                 >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
 
                 <div className="p-8">
-                    <div className="text-center mb-8">
-                        <h2 className="text-2xl font-bold text-neutral-900 mb-2">
-                            Welcome to FresherFlow
+                    <div className="text-center mb-10">
+                        <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mx-auto mb-4 text-primary-foreground shadow-lg shadow-primary/20">
+                            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M20 7h-4V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zM9 5a1 1 0 011-1h4a1 1 0 011 1v2H9V5zm7 14H4V9h16v10z" />
+                            </svg>
+                        </div>
+                        <h2 className="text-2xl font-black text-foreground tracking-tighter uppercase italic">
+                            Welcome to Flow
                         </h2>
-                        <p className="text-neutral-600">
-                            {mode === 'login' ? 'Sign in to your account' : 'Create a new account'}
+                        <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mt-1 opacity-60">
+                            {mode === 'login' ? 'Execute Session Authentication' : 'Initialize Performance Profile'}
                         </p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        {mode === 'register' && (
-                            <div>
-                                <label className="block text-sm font-medium text-neutral-900 mb-2">
-                                    Full Name
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={fullName}
-                                    onChange={(e) => setFullName(e.target.value)}
-                                    placeholder="John Doe"
-                                    className="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-                        )}
+                    <form onSubmit={handleSubmit} className="space-y-5">
 
-                        <div>
-                            <label className="block text-sm font-medium text-neutral-900 mb-2">
-                                Email address
+
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">
+                                Email Address
                             </label>
                             <input
                                 type="email"
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="you@example.com"
-                                className="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="IDENTITY@DOMAIN.COM"
+                                className="premium-input !h-12"
                             />
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-neutral-900 mb-2">
-                                Password
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">
+                                Access Password
                             </label>
                             <input
                                 type="password"
@@ -107,30 +96,29 @@ export default function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="••••••••"
-                                className="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="premium-input !h-12"
                             />
                         </div>
 
                         {error && (
-                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                                {error}
+                            <div className="bg-error/10 border border-error/20 text-error px-4 py-3 rounded-lg text-[11px] font-bold uppercase tracking-tight italic">
+                                ❌ {error}
                             </div>
                         )}
 
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                            className="w-full premium-button !h-12 text-sm uppercase font-black tracking-widest transition-all shadow-lg shadow-primary/20"
                         >
-                            {loading ? 'Please wait...' : mode === 'login' ? 'Sign In' : 'Create Account'}
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-                            className="w-full py-2 text-sm text-neutral-600 hover:text-neutral-900 font-medium transition-colors"
-                        >
-                            {mode === 'login' ? "Don't have an account? Register" : 'Already have an account? Sign in'}
+                            {loading ? (
+                                <div className="flex items-center gap-2">
+                                    <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                                    <span>Processing...</span>
+                                </div>
+                            ) : (
+                                'Authenticate'
+                            )}
                         </button>
                     </form>
                 </div>

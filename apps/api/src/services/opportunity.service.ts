@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { OpportunityStatus, OpportunityType } from '@fresherflow/types';
 import { EligibilityService } from './eligibility.service';
+import { generateSlug } from '../utils/slugify';
 
 const prisma = new PrismaClient();
 
@@ -19,9 +20,15 @@ export class OpportunityService {
      * Create new opportunity (starts as DRAFT)
      */
     static async createOpportunity(data: any, adminId: string) {
+        // Generate unique slug
+        const tempId = crypto.randomUUID();
+        const slug = generateSlug(data.title, data.company, tempId);
+
         return await prisma.opportunity.create({
             data: {
                 ...data,
+                id: tempId,
+                slug,
                 postedByUserId: adminId,
                 status: OpportunityStatus.PUBLISHED, // Default to published for admin ease
             },
@@ -76,12 +83,21 @@ export class OpportunityService {
             throw new Error('Unauthorized');
         }
 
+        // Regenerate slug if title or company changed
+        const updateData: any = {
+            ...data,
+            lastVerified: new Date(),
+        };
+
+        if (data.title || data.company) {
+            const newTitle = data.title || existing.title;
+            const newCompany = data.company || existing.company;
+            updateData.slug = generateSlug(newTitle, newCompany, existing.id);
+        }
+
         return await prisma.opportunity.update({
             where: { id },
-            data: {
-                ...data,
-                lastVerified: new Date(),
-            },
+            data: updateData,
             include: {
                 walkInDetails: true,
             },
@@ -268,6 +284,30 @@ export class OpportunityService {
                 },
             },
         });
+    }
+
+    /**
+     * Get single opportunity by slug or ID (backward compatible)
+     */
+    static async getBySlugOrId(slugOrId: string) {
+        // Try by slug first (more common for SEO URLs)
+        const bySlug = await prisma.opportunity.findUnique({
+            where: { slug: slugOrId },
+            include: {
+                walkInDetails: true,
+                user: {
+                    select: {
+                        fullName: true,
+                        email: true,
+                    },
+                },
+            },
+        });
+
+        if (bySlug) return bySlug;
+
+        // Fallback to ID for backward compatibility
+        return await this.getOpportunityById(slugOrId);
     }
 }
 

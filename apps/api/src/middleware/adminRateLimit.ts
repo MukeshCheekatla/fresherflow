@@ -32,10 +32,10 @@ export function adminRateLimit(req: Request, res: Response, next: NextFunction) 
     }
 
     // Check limit
-    if (entry.count >= 10) {
+    if (entry.count >= 100) {
         const resetIn = Math.ceil((entry.resetAt - nowMs) / (1000 * 60));
         return next(new AppError(
-            `Rate limit exceeded. Maximum 10 operations per hour. Try again in ${resetIn} minutes.`,
+            `Rate limit exceeded. Maximum 100 operations per hour. Try again in ${resetIn} minutes.`,
             429
         ));
     }

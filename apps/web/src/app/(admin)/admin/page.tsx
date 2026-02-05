@@ -75,8 +75,8 @@ export default function AdminDashboardHome() {
     }
 
     return (
-        <div className="space-y-4 md:space-y-8 animate-in fade-in duration-700 pb-4 md:pb-12 text-foreground">
-            <header className="space-y-1">
+        <div className="space-y-4 md:space-y-6 animate-in fade-in duration-700 pb-8 text-foreground">
+            <header className="space-y-0.5">
                 <h1 className="text-xl md:text-2xl font-semibold tracking-tight">Command Center</h1>
                 <p className="text-xs md:text-sm text-muted-foreground">Platform overview and management hub.</p>
             </header>
@@ -84,14 +84,14 @@ export default function AdminDashboardHome() {
             {/* Stats Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                 {statsCards.map((stat) => (
-                    <div key={stat.label} className="bg-card p-3 md:p-5 rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-center justify-between mb-1.5 md:mb-2">
-                            <span className="text-[10px] md:text-xs font-medium text-muted-foreground tracking-wide truncate pr-2">
+                    <div key={stat.label} className="bg-card p-4 md:p-5 rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-medium text-muted-foreground tracking-wide truncate pr-2">
                                 {stat.label}
                             </span>
                             <stat.icon className={cn("w-3.5 h-3.5 md:w-4 md:h-4 shrink-0", stat.color)} />
                         </div>
-                        <p className="text-lg md:text-2xl font-semibold tracking-tight">{stat.value}</p>
+                        <p className="text-xl font-semibold tracking-tight">{stat.value}</p>
                     </div>
                 ))}
             </div>
@@ -102,16 +102,16 @@ export default function AdminDashboardHome() {
                     href="/admin/opportunities/create"
                     className="group bg-card p-4 md:p-5 rounded-lg border border-border shadow-sm flex items-center justify-between transition-all hover:border-primary/50 hover:shadow-md"
                 >
-                    <div className="space-y-0.5 md:space-y-1">
+                    <div className="space-y-0.5">
                         <div className="flex items-center gap-2 text-primary">
                             <PlusCircleIcon className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                            <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wider">Global Stream</span>
+                            <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider">Global Stream</span>
                         </div>
                         <h3 className="text-sm md:text-base font-semibold">Post New Listing</h3>
                         <p className="text-[11px] md:text-xs text-muted-foreground font-medium">Add jobs, internships or walk-ins.</p>
                     </div>
-                    <div className="w-8 h-8 md:w-10 md:h-10 bg-primary/10 rounded-md flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                        <ArrowRightIcon className="w-3.5 h-3.5 md:w-4 md:h-4 text-primary" />
+                    <div className="w-9 h-9 md:w-10 md:h-10 bg-primary/10 rounded-md flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                        <ArrowRightIcon className="w-4 h-4 text-primary" />
                     </div>
                 </Link>
 
@@ -119,16 +119,16 @@ export default function AdminDashboardHome() {
                     href="/admin/feedback"
                     className="group bg-card p-4 md:p-5 rounded-lg border border-border shadow-sm flex items-center justify-between transition-all hover:border-primary/50 hover:shadow-md"
                 >
-                    <div className="space-y-0.5 md:space-y-1">
+                    <div className="space-y-0.5">
                         <div className="flex items-center gap-2 text-emerald-500">
                             <ChartBarIcon className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                            <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wider">Platform Pulse</span>
+                            <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider">Platform Pulse</span>
                         </div>
                         <h3 className="text-sm md:text-base font-semibold">Review Feedback</h3>
                         <p className="text-[11px] md:text-xs text-muted-foreground font-medium">Analyze user reports and logs.</p>
                     </div>
-                    <div className="w-8 h-8 md:w-10 md:h-10 bg-muted rounded-md flex items-center justify-center group-hover:bg-muted/80 transition-colors">
-                        <ArrowRightIcon className="w-3.5 h-3.5 md:w-4 md:h-4 text-foreground/70" />
+                    <div className="w-9 h-9 md:w-10 md:h-10 bg-muted rounded-md flex items-center justify-center group-hover:bg-muted/80 transition-colors">
+                        <ArrowRightIcon className="w-4 h-4 text-foreground/70" />
                     </div>
                 </Link>
             </div>
@@ -144,7 +144,7 @@ export default function AdminDashboardHome() {
                         const isWalkin = item.type === 'WALKIN';
                         return (
                             <div key={item.id} className="px-4 py-2.5 md:px-5 md:py-3 flex items-center justify-between hover:bg-muted/50 transition-colors">
-                                <div className="min-w-0 flex-1 pr-3">
+                                <div className="min-w-0 flex-1 pr-2">
                                     <p className="text-xs md:text-sm font-medium truncate">
                                         {item.company}
                                     </p>
@@ -153,11 +153,11 @@ export default function AdminDashboardHome() {
                                     </p>
                                 </div>
                                 <div className="flex-shrink-0 text-right space-y-0.5 md:space-y-1">
-                                    <span className="text-[9px] md:text-[10px] text-muted-foreground font-medium block">
+                                    <span className="text-[9px] md:text-xs text-muted-foreground font-medium block">
                                         {new Date(item.postedAt).toLocaleDateString()}
                                     </span>
                                     <span className={cn(
-                                        "inline-flex items-center rounded-md px-1 py-0.5 md:px-1.5 text-[9px] md:text-[10px] font-medium ring-1 ring-inset",
+                                        "inline-flex items-center rounded-md px-1 py-0.5 md:px-1.5 md:py-0.5 text-[9px] md:text-xs font-medium ring-1 ring-inset",
                                         isWalkin ? "bg-amber-500/10 text-amber-500 ring-amber-500/20" : "bg-blue-500/10 text-blue-500 ring-blue-500/20"
                                     )}>
                                         {item.type}
@@ -167,7 +167,7 @@ export default function AdminDashboardHome() {
                         );
                     })}
                     {recent.length === 0 && (
-                        <div className="px-4 py-6 md:px-5 md:py-8 text-center text-xs md:text-sm text-muted-foreground">
+                        <div className="px-5 py-6 text-center text-xs md:text-sm text-muted-foreground">
                             No recent activity found.
                         </div>
                     )}

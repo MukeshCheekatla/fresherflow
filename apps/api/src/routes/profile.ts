@@ -1,5 +1,6 @@
 import express, { Router, Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { z } from 'zod';
 import { requireAuth } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { educationSchema, preferencesSchema, readinessSchema } from '../utils/validation';
@@ -29,7 +30,15 @@ router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunct
 // PUT /api/profile - Comprehensive update
 router.put('/', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const data = req.body;
+        const { fullName, ...data } = req.body;
+
+        // Update user if fullName is provided
+        if (fullName) {
+            await prisma.user.update({
+                where: { id: req.userId },
+                data: { fullName }
+            });
+        }
 
         // Update profile
         let profile = await prisma.profile.update({
@@ -69,15 +78,24 @@ router.put('/', requireAuth, async (req: Request, res: Response, next: NextFunct
 });
 
 // PUT /api/profile/education (40% weight)
-router.put('/education', requireAuth, validate(educationSchema), async (req: Request, res: Response, next: NextFunction) => {
+router.put('/education', requireAuth, validate(educationSchema.extend({ fullName: z.string().min(1, 'Full name is required').optional() })), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const {
+            fullName,
             educationLevel,
             tenthYear,
             twelfthYear,
             gradCourse, gradSpecialization, gradYear,
             pgCourse, pgSpecialization, pgYear
         } = req.body;
+
+        // Update user if fullName is provided
+        if (fullName) {
+            await prisma.user.update({
+                where: { id: req.userId },
+                data: { fullName }
+            });
+        }
 
         // Update profile
         let profile = await prisma.profile.update({

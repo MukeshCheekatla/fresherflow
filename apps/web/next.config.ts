@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  transpilePackages: ["@fresherflow/types", "@fresherflow/schemas", "@fresherflow/constants"],
 };
 
 export default nextConfig;

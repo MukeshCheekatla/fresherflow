@@ -29,35 +29,40 @@
 
 @layer base {
   :root {
-    /* Light Mode - Neutral Monochrome Professional */
-    --primary: 220 10% 35%; /* Soft Charcoal */
+    /* Light Mode - Clean Vercel-like Monochrome */
+    --primary: 0 0% 0%; /* Pure Black (#000000) for CTAs */
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 13% 91%;
-    --secondary-foreground: 220 10% 35%;
-    --accent: 220 10% 45%; 
-    --accent-foreground: 0 0% 100%;
-    --background: 220 15% 96%; /* Even Softer Light Gray/White */
-    --foreground: 220 10% 28%; /* Softer Black */
-    --card: 220 15% 97%;
-    --card-foreground: 220 10% 28%;
-    --border: 220 13% 88%; /* Slightly darker border for the softer background */
-    --input: 220 13% 94%;
-    --muted: 220 13% 92%;
-    --muted-foreground: 220 8% 50%;
-    --ring: 220 10% 35%;
+    --secondary: 0 0% 96%; /* Very light gray */
+    --secondary-foreground: 0 0% 10%;
+    --accent: 0 0% 96%; 
+    --accent-foreground: 0 0% 10%;
+    
+    --background: 0 0% 100%; /* Pure White (#FFFFFF) */
+    --foreground: 0 0% 10%; /* Almost Black text */
+    
+    --card: 0 0% 100%; /* White cards */
+    --card-foreground: 0 0% 10%;
+    
+    --border: 0 0% 88%; /* Darker border (#E0E0E0) for better card definition */
+    --input: 0 0% 96%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%; /* #737373 secondary text */
+    
+    --ring: 0 0% 0%;
+    --icon: 0 0% 10%; 
     --radius: 6px;
     
-    /* Success/Warning/Error States */
-    --success: 142 76% 36%; /* Green */
-    --warning: 38 92% 50%; /* Amber */
-    --error: 0 84% 60%; /* Red */
+    /* Success/Warning/Error States (Refined) */
+    --success: 150 100% 28%; /* Brighter Green */
+    --warning: 35 100% 50%;
+    --error: 0 100% 55%; /* Brighter Red */
     
     /* Typography Scale */
-    --fs-h1: 24px;
-    --fs-h2: 20px;
-    --fs-h3: 18px;
+    --fs-h1: 32px;
+    --fs-h2: 24px;
+    --fs-h3: 20px;
     --fs-body: 16px;
-    --fs-small: 12px;
+    --fs-small: 13px;
     --fs-button: 14px;
     
     /* Spacing System */
@@ -69,31 +74,44 @@
     --space-8: 32px;
     --space-10: 40px;
     --space-12: 48px;
+
+    /* Base Logo */
+    --logo-image: url('/logo.png');
   }
 
   .dark {
     color-scheme: dark;
-    /* Dark Mode - Warm Bone-Gray Accents */
-    --background: 220 15% 7%; /* Deep Charcoal-Black */
-    --foreground: 35 10% 76%; /* Warmer #C8C3BC */
-    --card: 220 15% 10%; /* Slightly lighter than background */
-    --card-foreground: 35 10% 76%;
-    --primary: 35 10% 76%; 
-    --primary-foreground: 220 15% 7%;
-    --secondary: 220 15% 15%; /* Muted base layer */
-    --secondary-foreground: 35 10% 76%;
-    --accent: 35 10% 76%;
-    --accent-foreground: 220 15% 7%;
-    --border: 220 12% 18%; /* Subtle structure */
-    --input: 220 12% 15%;
-    --muted: 220 12% 15%;
-    --muted-foreground: 220 5% 55%;
-    --ring: 35 10% 76%;
+    /* Dark Mode - Vercel-like Charcoal Theme */
+    --background: 0 0% 3%; /* #080808 - Almost Pure Black */
+    --foreground: 0 0% 93%; /* #EDEDED */
+    
+    --card: 0 0% 7%; /* #121212 - Deep Charcoal */
+    --card-foreground: 0 0% 93%;
+    
+    --primary: 0 0% 98%; /* Stark White for high contrast CTAs against dark bg */
+    --primary-foreground: 0 0% 0%;
+    
+    --secondary: 0 0% 12%; 
+    --secondary-foreground: 0 0% 93%;
+    
+    --accent: 0 0% 16%;
+    --accent-foreground: 0 0% 100%;
+    
+    --border: 0 0% 12.5%; /* Subtle crisp borders */
+    --input: 0 0% 10%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 55%; /* #888888 */
+    
+    --ring: 0 0% 80%;
+    --icon: 0 0% 100%;
     
     /* Success/Warning/Error in Dark */
-    --success: 142 60% 45%;
-    --warning: 38 80% 50%;
-    --error: 0 75% 60%;
+    --success: 142 70% 50%;
+    --warning: 45 90% 60%;
+    --error: 0 85% 65%;
+
+    /* Dark Mode Logo override */
+    --logo-image: url('/logo-white.png');
   }
 
   /* Theme-aware native form controls */
@@ -119,6 +137,7 @@
   html {
     margin: 0;
     padding: 0;
+    overflow-y: auto;
   }
 
   html, body {
@@ -247,13 +266,39 @@
     gap: 0.5rem;
   }
   
+  /* Secondary CTA (Sign In) - Muted Outline */
+  .btn-secondary-cta {
+    @apply h-[40px] px-[1.5rem] bg-transparent border-[1.5px] rounded-[6px] transition-all cursor-pointer flex items-center justify-center gap-[0.5rem];
+    color: hsl(var(--muted-foreground));
+    border-color: hsl(var(--border));
+    font-weight: 500;
+  }
+  
+  .btn-secondary-cta:hover {
+    color: hsl(var(--foreground));
+    border-color: hsl(var(--muted-foreground));
+    background-color: hsl(var(--muted) / 0.5);
+  }
+
   .premium-button-outline:hover, .btn-outline:hover {
     border-color: hsl(var(--primary));
     color: hsl(var(--primary));
     background-color: hsl(var(--primary) / 0.05);
   }
   
-  .premium-button-outline:active, .btn-outline:active {
+  /* Global Icon Standards */
+  svg.icon {
+    color: hsl(var(--icon));
+  }
+  
+  /* Ensure Heroicons in common containers follow the rule */
+  .premium-card svg, 
+  .job-card svg,
+  .feature-icon svg {
+    color: hsl(var(--icon));
+  }
+  
+  .premium-button:active, .btn-primary:active {
     transform: scale(0.98);
   }
   
@@ -460,49 +505,12 @@
   }
 }
 
-/* Custom Scrollbar - Production Grade */
+/* Hidden Scrollbar - Scroll functionality preserved */
 ::-webkit-scrollbar { 
-  width: 8px; 
-  height: 8px;
+  display: none; 
 }
 
-::-webkit-scrollbar-track { 
-  background-color: hsl(var(--background)); 
-}
-
-
-
-@layer utilities {
-  .tap-highlight-none {
-    -webkit-tap-highlight-color: transparent;
-  }
-  
-  .text-balance {
-    text-wrap: balance;
-  }
-}
-
-/* Custom Scrollbar - Production Grade */
-::-webkit-scrollbar { 
-  width: 8px; 
-  height: 8px;
-}
-
-::-webkit-scrollbar-track { 
-  background-color: hsl(var(--background)); 
-}
-
-::-webkit-scrollbar-thumb { 
-  background-color: hsl(var(--muted-foreground) / 0.3); 
-  border-radius: 9999px; 
-}
-
-::-webkit-scrollbar-thumb:hover { 
-  background-color: hsl(var(--muted-foreground) / 0.5); 
-}
-
-@media (max-width: 768px) {
-  ::-webkit-scrollbar {
-    display: none;
-  }
+html {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
 }

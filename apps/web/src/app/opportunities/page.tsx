@@ -1,7 +1,7 @@
 'use client';
 
 import { AuthGate, ProfileGate } from '@/components/gates/ProfileGate';
-import { opportunitiesApi } from '@/lib/api/client';
+import { opportunitiesApi, savedApi } from '@/lib/api/client';
 import { cn } from '@/lib/utils';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useMemo, useCallback, Suspense } from 'react';
@@ -9,23 +9,26 @@ import Link from 'next/link';
 import { Opportunity } from '@fresherflow/types';
 import toast from 'react-hot-toast';
 import { useDebounce } from '@/lib/hooks/useDebounce';
-import { SkeletonJobCard } from '@/components/ui/Skeleton';
 import JobCard from '@/features/jobs/components/JobCard';
 import {
     MagnifyingGlassIcon,
     MapPinIcon,
     ChevronRightIcon,
     FunnelIcon,
-    ShieldCheckIcon
+    ShieldCheckIcon,
+    ClockIcon,
+    BookmarkIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { useAuth } from '@/contexts/AuthContext';
+import LoadingScreen from '@/components/ui/LoadingScreen';
 
 const FILTERS = {
     type: [
-        { label: 'Full-time', value: 'JOB' },
-        { label: 'Internship', value: 'INTERNSHIP' },
-        { label: 'Walk-ins', value: 'WALKIN' },
+        { value: 'JOB', label: 'Jobs' },
+        { value: 'INTERNSHIP', label: 'Internships' },
+        { value: 'WALKIN', label: 'Walk-ins' }
     ],
     location: ['Bangalore', 'Mumbai', 'Delhi', 'Hyderabad', 'Pune', 'Remote'],
 };
@@ -49,6 +52,7 @@ function OpportunitiesContent() {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
+    const { user, isLoading: authLoading } = useAuth();
 
     const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
     const [totalCount, setTotalCount] = useState(0);
@@ -56,6 +60,8 @@ function OpportunitiesContent() {
     const [search, setSearch] = useState('');
     const [selectedType, setSelectedType] = useState<string | null>(null);
     const [selectedLoc, setSelectedLoc] = useState<string | null>(null);
+    const [closingSoon, setClosingSoon] = useState(false);
+    const [showOnlySaved, setShowOnlySaved] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [profileIncomplete, setProfileIncomplete] = useState<{ percentage: number; message: string } | null>(null);
 
@@ -76,15 +82,21 @@ function OpportunitiesContent() {
     }, [searchParams]);
 
     const loadOpportunities = useCallback(async () => {
+        if (!user || authLoading) return; // Don't load if not authenticated or still loading
         setIsLoading(true);
         setProfileIncomplete(null); // Reset error state
         try {
-            const data = await opportunitiesApi.list({
-                type: selectedType || undefined,
-                city: selectedLoc || undefined
-            });
+            let data;
+            if (showOnlySaved) {
+                data = await savedApi.list();
+            } else {
+                data = await opportunitiesApi.list({
+                    type: selectedType || undefined,
+                    city: selectedLoc || undefined
+                });
+            }
             setOpportunities(data.opportunities || []);
-            setTotalCount(data.count || 0);
+            setTotalCount(data.count || data.opportunities?.length || 0);
         } catch (err: unknown) {
             const error = err as { code?: string; completionPercentage?: number; message?: string };
             // Check if this is a profile incomplete error
@@ -99,11 +111,14 @@ function OpportunitiesContent() {
         } finally {
             setIsLoading(false);
         }
-    }, [selectedType, selectedLoc]);
+    }, [selectedType, selectedLoc, user, authLoading, showOnlySaved]);
 
     useEffect(() => {
-        loadOpportunities();
-    }, [loadOpportunities]);
+        // Only call if user is authenticated and auth is done loading
+        if (!authLoading && user) {
+            loadOpportunities();
+        }
+    }, [loadOpportunities, authLoading, user, showOnlySaved]);
 
     const filteredOpps = useMemo(() => {
         return opportunities.filter(opp => {
@@ -118,9 +133,40 @@ function OpportunitiesContent() {
             // Location filter
             const matchesLoc = !selectedLoc || opp.locations.includes(selectedLoc);
 
-            return matchesSearch && matchesType && matchesLoc;
+            // Closing soon filter - expires within 3 days
+            const matchesClosingSoon = !closingSoon || (() => {
+                if (!opp.expiresAt) return false;
+                const expiryDate = new Date(opp.expiresAt);
+                const now = new Date();
+                const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+                return expiryDate >= now && expiryDate <= threeDaysFromNow;
+            })();
+
+            return matchesSearch && matchesType && matchesLoc && matchesClosingSoon;
         });
-    }, [opportunities, debouncedSearch, selectedType, selectedLoc]);
+    }, [opportunities, debouncedSearch, selectedType, selectedLoc, closingSoon]);
+
+    const isJobSaved = (opp: Opportunity) => {
+        return opp.isSaved || false;
+    };
+
+    const isJobApplied = (opp: Opportunity) => {
+        return opp.actions && opp.actions.length > 0;
+    };
+
+    const toggleSave = async (opportunityId: string) => {
+        try {
+            const result = await savedApi.toggle(opportunityId);
+            setOpportunities(prev => prev.map(opp =>
+                opp.id === opportunityId
+                    ? { ...opp, isSaved: result.saved }
+                    : opp
+            ));
+            // toast.success(result.message);
+        } catch {
+            toast.error('Failed to update bookmark');
+        }
+    };
 
     const updateType = (type: string | null) => {
         setSelectedType(type);
@@ -137,7 +183,7 @@ function OpportunitiesContent() {
     return (
         <AuthGate>
             <ProfileGate>
-                <div className="max-w-7xl mx-auto px-2 md:px-4 pb-12 md:pb-20 space-y-6 md:space-y-8">
+                <div className="w-full max-w-7xl mx-auto px-4 md:px-6 pb-12 md:pb-20 space-y-6 md:space-y-8">
                     {/* Page Header - Clean & Compact */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border py-6">
                         <div className="space-y-1">
@@ -228,8 +274,52 @@ function OpportunitiesContent() {
                                                 <MapPinIcon className="w-4 h-4 opacity-70" />
                                                 {loc}
                                             </button>
-                                        ))}
+                                        ))
+                                        }
                                     </div>
+                                </div>
+
+                                {/* Closing Soon Filter */}
+                                <div>
+                                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Urgency</h3>
+                                    <button
+                                        onClick={() => setClosingSoon(!closingSoon)}
+                                        className={cn(
+                                            "w-full flex items-center justify-between px-3 py-2.5 rounded-lg border text-sm font-medium transition-all text-left",
+                                            closingSoon
+                                                ? "bg-amber-500/10 border-amber-500/50 text-amber-700 dark:text-amber-400 shadow-sm"
+                                                : "bg-background border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                                        )}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <ClockIcon className="w-4 h-4" />
+                                            <span>Closing Soon</span>
+                                        </div>
+                                        {closingSoon && <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />}
+                                    </button>
+                                    {closingSoon && (
+                                        <p className="text-[10px] text-muted-foreground mt-2 ml-1">Showing opportunities expiring within 3 days</p>
+                                    )}
+                                </div>
+
+                                {/* Saved Filter */}
+                                <div>
+                                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Saved</h3>
+                                    <button
+                                        onClick={() => setShowOnlySaved(!showOnlySaved)}
+                                        className={cn(
+                                            "w-full flex items-center justify-between px-3 py-2.5 rounded-lg border text-sm font-medium transition-all text-left",
+                                            showOnlySaved
+                                                ? "bg-primary/5 border-primary text-primary shadow-sm"
+                                                : "bg-background border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                                        )}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <BookmarkIcon className="w-4 h-4" />
+                                            <span>My Bookmarks</span>
+                                        </div>
+                                        {showOnlySaved && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                                    </button>
                                 </div>
                             </div>
                         </aside>
@@ -274,11 +364,8 @@ function OpportunitiesContent() {
                                     </div>
                                 </div>
                             ) : isLoading ? (
-                                <div className={cn(
-                                    "grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6",
-                                    isFilterOpen ? "lg:grid-cols-2 xl:grid-cols-3" : "lg:grid-cols-3 xl:grid-cols-4"
-                                )}>
-                                    {[1, 2, 3, 4, 5, 6, 7, 8].map(i => <SkeletonJobCard key={i} />)}
+                                <div className="h-[400px] relative">
+                                    <LoadingScreen message="Syncing Feed..." fullScreen={false} />
                                 </div>
                             ) : filteredOpps.length === 0 ? (
                                 <div className="p-20 text-center rounded-2xl border border-dashed border-border bg-card">
@@ -315,8 +402,11 @@ function OpportunitiesContent() {
                                                 salary: (opp.salaryMin !== undefined && opp.salaryMax !== undefined) ? { min: opp.salaryMin, max: opp.salaryMax } : undefined,
                                             }}
                                             jobId={opp.id}
-                                            isApplied={false}
-                                            onClick={() => router.push(`/opportunities/${opp.id}`)}
+                                            isSaved={isJobSaved(opp)}
+                                            isApplied={isJobApplied(opp)}
+                                            onToggleSave={() => toggleSave(opp.id)}
+                                            onClick={() => router.push(`/opportunities/${opp.slug}`)}
+                                            isAdmin={user?.role === 'ADMIN'}
                                         />
                                     ))}
                                 </div>
@@ -340,15 +430,7 @@ function OpportunitiesContent() {
 
 export default function OpportunitiesPage() {
     return (
-        <Suspense fallback={
-            <div className="max-w-7xl mx-auto px-4 py-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[1, 2, 3, 4, 5, 6].map(i => (
-                        <div key={i} className="h-64 bg-muted/20 animate-pulse rounded-2xl" />
-                    ))}
-                </div>
-            </div>
-        }>
+        <Suspense fallback={<LoadingScreen />}>
             <OpportunitiesContent />
         </Suspense>
     );

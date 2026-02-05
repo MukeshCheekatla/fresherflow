@@ -1,4 +1,10 @@
 import { AuthResponse, Profile, Admin } from '@fresherflow/types';
+import type {
+    PublicKeyCredentialCreationOptionsJSON,
+    RegistrationResponseJSON,
+    PublicKeyCredentialRequestOptionsJSON,
+    AuthenticationResponseJSON
+} from '@simplewebauthn/browser';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -17,7 +23,9 @@ export async function apiClient<T = any>(
     const fetchOptions: RequestInit = {
         ...options,
         headers,
-        credentials: 'include' // CRITICAL: This sends/receives cookies
+        credentials: 'include', // CRITICAL: This sends/receives cookies
+        cache: 'no-store', // CRITICAL: Prevent caching of API responses to ensure fresh data (fixes stale 'Live' status)
+        next: { revalidate: 0 } // Next.js specific: disable Data Cache
     };
 
     try {
@@ -25,7 +33,9 @@ export async function apiClient<T = any>(
 
         // If 401, trying to auto-refresh is handled by the browser sending the refresh cookie to the /refresh endpoint.
         // But we need to CALL that endpoint.
-        if (response.status === 401 && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register') && !endpoint.includes('/auth/refresh')) {
+        const isLoggingOut = typeof window !== 'undefined' && (window as unknown as { __isLoggingOut?: boolean }).__isLoggingOut;
+        if (response.status === 401 && !isLoggingOut && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register') && !endpoint.includes('/auth/refresh')) {
+            console.log(`[Auth] 401 detected on ${endpoint}, attempting token refresh...`);
             // Attempt refresh
             try {
                 const refreshResponse = await fetch(`${API_URL}/api/auth/refresh`, {
@@ -35,16 +45,17 @@ export async function apiClient<T = any>(
                 });
 
                 if (refreshResponse.ok) {
+                    console.log('[Auth] Token refresh successful, retrying request...');
                     // Refresh succeeded (new access cookie set)
                     // Retry original request
                     response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
                 } else {
-                    // Refresh failed (refresh cookie expired or invalid)
-                    // Throw 401 to let caller handle redirect/logout
+                    console.error('[Auth] Token refresh failed, session expired.');
+                    throw new Error('Session expired');
                 }
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            } catch (_e) {
-                // Network error on refresh, throw original error or new one
+            } catch (err) {
+                console.error('[Auth] Error during token refresh:', err);
+                // If refresh fails, throw original 401
             }
         }
 
@@ -84,23 +95,36 @@ export async function apiClient<T = any>(
 
 // Auth API calls
 export const authApi = {
-    register: (email: string, password: string, fullName: string) =>
-        apiClient<AuthResponse>('/api/auth/register', {
-            method: 'POST',
-            body: JSON.stringify({ email, password, fullName })
-        }),
-
     login: (email: string, password: string) =>
         apiClient<AuthResponse>('/api/auth/login', {
             method: 'POST',
             body: JSON.stringify({ email, password })
         }),
 
+
+
+    sendOtp: (email: string) =>
+        apiClient('/api/auth/otp/send', {
+            method: 'POST',
+            body: JSON.stringify({ email })
+        }),
+
+    verifyOtp: (email: string, code: string) =>
+        apiClient<AuthResponse>('/api/auth/otp/verify', {
+            method: 'POST',
+            body: JSON.stringify({ email, code })
+        }),
+
+    googleLogin: (token: string) =>
+        apiClient<AuthResponse>('/api/auth/google', {
+            method: 'POST',
+            body: JSON.stringify({ token })
+        }),
+
     logout: async () => {
         await apiClient('/api/auth/logout', {
             method: 'POST'
         });
-        // reload or clear state handled by context
     },
 
     me: () => apiClient('/api/auth/me')
@@ -108,16 +132,28 @@ export const authApi = {
 
 // Admin Auth API calls
 export const adminAuthApi = {
-    login: (email: string, password: string) =>
-        apiClient<{ admin: Admin; setupRequired?: boolean }>('/api/admin/auth/login', {
+    getRegistrationOptions: (email: string) =>
+        apiClient<PublicKeyCredentialCreationOptionsJSON>('/api/admin/auth/register/options', {
             method: 'POST',
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email })
         }),
 
-    setupPassword: (email: string, password: string) =>
-        apiClient<{ admin: Admin; success: boolean }>('/api/admin/auth/setup-password', {
+    verifyRegistration: (email: string, body: RegistrationResponseJSON) =>
+        apiClient<{ verified: boolean }>('/api/admin/auth/register/verify', {
             method: 'POST',
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email, body })
+        }),
+
+    getLoginOptions: (email: string) =>
+        apiClient<PublicKeyCredentialRequestOptionsJSON | { registrationRequired: boolean }>('/api/admin/auth/login/options', {
+            method: 'POST',
+            body: JSON.stringify({ email })
+        }),
+
+    verifyLogin: (email: string, body: AuthenticationResponseJSON) =>
+        apiClient<{ verified: boolean }>('/api/admin/auth/login/verify', {
+            method: 'POST',
+            body: JSON.stringify({ email, body })
         }),
 
     logout: async () => {
@@ -133,13 +169,14 @@ export const adminAuthApi = {
 export const profileApi = {
     get: () => apiClient('/api/profile'),
 
-    updateProfile: (data: Partial<Profile>) =>
+    updateProfile: (data: Partial<Profile> & { fullName?: string }) =>
         apiClient('/api/profile', {
             method: 'PUT',
             body: JSON.stringify(data)
         }),
 
     updateEducation: (data: {
+        fullName?: string;
         educationLevel: string;
         tenthYear: number;
         twelfthYear: number;
@@ -209,6 +246,20 @@ export const feedbackApi = {
             method: 'POST',
             body: JSON.stringify({ reason })
         })
+};
+
+// Saved API calls
+export const savedApi = {
+    list: () => apiClient('/api/saved'),
+    toggle: (opportunityId: string) =>
+        apiClient(`/api/saved/${opportunityId}`, {
+            method: 'POST'
+        })
+};
+
+// Dashboard API calls
+export const dashboardApi = {
+    getHighlights: () => apiClient('/api/dashboard/highlights')
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

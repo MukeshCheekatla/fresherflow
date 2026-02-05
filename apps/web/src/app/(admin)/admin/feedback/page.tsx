@@ -30,6 +30,7 @@ interface FeedbackItem {
     opportunity?: {
         title: string;
         company: string;
+        slug?: string;
     };
 }
 
@@ -153,7 +154,7 @@ export default function FeedbackPage() {
                                 </div>
                                 <div className="flex gap-2">
                                     <Link
-                                        href={`/admin/opportunities/edit/${oppId}`}
+                                        href={`/admin/opportunities/edit/${data.opportunity?.slug || oppId}`}
                                         className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-2 md:px-3 text-[10px] md:text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground flex-1 md:flex-none"
                                     >
                                         <PencilSquareIcon className="w-3 h-3 md:w-3.5 md:h-3.5 mr-1.5" />

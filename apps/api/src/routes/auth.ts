@@ -8,11 +8,11 @@ import {
     hashRefreshToken
 } from '@fresherflow/auth';
 import { validate } from '../middleware/validate';
-import { registerSchema, loginSchema, refreshTokenSchema } from '../utils/validation';
+import { loginSchema, refreshTokenSchema, sendOtpSchema, verifyOtpSchema } from '../utils/validation';
 import { AppError } from '../middleware/errorHandler';
-// import { requireAuth } from '../middleware/auth'; // Need to update this too
 import { requireAuth } from '../middleware/auth';
-// import { calculateCompletion } from '../utils/profileCompletion'; 
+import { AuthService } from '../services/auth.service';
+import { EmailService } from '../services/email.service';
 
 const router: Router = express.Router();
 const prisma = new PrismaClient();
@@ -24,84 +24,93 @@ const COOKIE_OPTIONS = {
     path: '/'
 };
 
-// POST /api/auth/register
-router.post('/register', validate(registerSchema), async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const { email, password, fullName } = req.body;
+/**
+ * Shared logic to set auth tokens in cookies
+ */
+async function setAuthCookies(user: any, res: Response) {
+    const accessToken = generateAccessToken(user.id);
+    const { token: refreshToken, hash: tokenHash } = generateRefreshToken(user.id);
 
-        // Check if user already exists
-        const existingUser = await prisma.user.findUnique({ where: { email } });
-        if (existingUser) {
-            return next(new AppError('Email already registered', 400));
+    await prisma.refreshToken.create({
+        data: {
+            userId: user.id,
+            tokenHash,
+            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
         }
+    });
 
-        // Hash password
-        const passwordHash = await bcrypt.hash(password, 10);
+    const accessMaxAge = process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 24 * 60 * 60 * 1000;
+    const refreshMaxAge = 30 * 24 * 60 * 60 * 1000;
 
-        // Create user with empty profile
-        const user = await prisma.user.create({
-            data: {
-                email,
-                passwordHash,
-                fullName,
-                profile: {
-                    create: {
-                        completionPercentage: 0
-                    }
-                }
-            },
-            include: { profile: true }
-        });
+    res.cookie('accessToken', accessToken, { ...COOKIE_OPTIONS, maxAge: accessMaxAge });
+    res.cookie('refreshToken', refreshToken, { ...COOKIE_OPTIONS, maxAge: refreshMaxAge });
 
-        // Generate tokens
-        const accessToken = generateAccessToken(user.id);
-        const { token: refreshToken, hash: tokenHash } = generateRefreshToken(user.id);
+    // Add a non-httpOnly cookie so frontend knows we have a session
+    // (Actual httpOnly cookies are invisible to JS for security)
+    res.cookie('ff_logged_in', 'true', {
+        ...COOKIE_OPTIONS,
+        httpOnly: false,
+        maxAge: refreshMaxAge
+    });
+}
 
-        // Store refresh token
-        await prisma.refreshToken.create({
-            data: {
-                userId: user.id,
-                tokenHash,
-                expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
-            }
-        });
+// POST /api/auth/otp/send
+router.post('/otp/send', validate(sendOtpSchema), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { email } = req.body;
+        const code = AuthService.generateOtp(email);
 
-        // Set Cookies
-        const accessMaxAge = process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 24 * 60 * 60 * 1000;
-        const refreshMaxAge = 30 * 24 * 60 * 60 * 1000;
+        await EmailService.sendOtp(email, code);
 
-        res.cookie('accessToken', accessToken, {
-            ...COOKIE_OPTIONS,
-            maxAge: accessMaxAge
-        });
-
-        res.cookie('refreshToken', refreshToken, {
-            ...COOKIE_OPTIONS,
-            maxAge: refreshMaxAge
-        });
-
-        res.status(201).json({
-            user: {
-                id: user.id,
-                email: user.email,
-                fullName: user.fullName
-            },
-            profile: {
-                completionPercentage: user.profile?.completionPercentage || 0
-            },
-            // tokens removed - cookies only
-        });
+        res.json({ message: 'Verification code sent successfully' });
     } catch (error) {
         next(error);
     }
 });
 
-// POST /api/auth/login
+// POST /api/auth/otp/verify
+router.post('/otp/verify', validate(verifyOtpSchema), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { email, code } = req.body;
+        const user = await AuthService.verifyOtp(email, code);
+
+        await setAuthCookies(user, res);
+
+        res.json({
+            user: { id: user.id, email: user.email, fullName: user.fullName },
+            profile: { completionPercentage: (user as any).profile?.completionPercentage || 0 }
+        });
+    } catch (error: any) {
+        next(new AppError(error.message, 401));
+    }
+});
+
+// POST /api/auth/google
+router.post('/google', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { token } = req.body;
+        if (!token) return next(new AppError('Google token is required', 400));
+
+        const user = await AuthService.verifyGoogleIdToken(token);
+
+        await setAuthCookies(user, res);
+
+        res.json({
+            user: { id: user.id, email: user.email, fullName: user.fullName },
+            profile: { completionPercentage: (user as any).profile?.completionPercentage || 0 }
+        });
+    } catch (error: any) {
+        next(new AppError(error.message, 401));
+    }
+});
+
+
+
+// POST /api/auth/login (Legacy/Admin Support)
 router.post('/login', validate(loginSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { email, password } = req.body;
 
-        // Find user
         const user = await prisma.user.findUnique({
             where: { email },
             include: { profile: true }
@@ -111,53 +120,20 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response,
             return next(new AppError('Invalid email or password', 401));
         }
 
-        // Verify password exists (admins might not have one yet)
         if (!user.passwordHash) {
-            return next(new AppError('Account setup incomplete. If you are an admin, please visit the admin portal.', 401));
+            return next(new AppError('Account setup incomplete. Use Google or Email OTP to login.', 401));
         }
 
-        // Verify password
         const isValid = await bcrypt.compare(password, user.passwordHash);
         if (!isValid) {
             return next(new AppError('Invalid email or password', 401));
         }
 
-        // Generate tokens
-        const accessToken = generateAccessToken(user.id);
-        const { token: refreshToken, hash: tokenHash } = generateRefreshToken(user.id);
-
-        // Store refresh token
-        await prisma.refreshToken.create({
-            data: {
-                userId: user.id,
-                tokenHash,
-                expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-            }
-        });
-
-        // Set Cookies
-        const accessMaxAge = process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 24 * 60 * 60 * 1000;
-        const refreshMaxAge = 30 * 24 * 60 * 60 * 1000;
-
-        res.cookie('accessToken', accessToken, {
-            ...COOKIE_OPTIONS,
-            maxAge: accessMaxAge
-        });
-
-        res.cookie('refreshToken', refreshToken, {
-            ...COOKIE_OPTIONS,
-            maxAge: refreshMaxAge
-        });
+        await setAuthCookies(user, res);
 
         res.json({
-            user: {
-                id: user.id,
-                email: user.email,
-                fullName: user.fullName
-            },
-            profile: {
-                completionPercentage: user.profile?.completionPercentage || 0
-            }
+            user: { id: user.id, email: user.email, fullName: user.fullName },
+            profile: { completionPercentage: user.profile?.completionPercentage || 0 }
         });
     } catch (error) {
         next(error);
@@ -165,7 +141,6 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response,
 });
 
 // POST /api/auth/refresh
-// No validation schema needed for body since we read from cookie
 router.post('/refresh', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const refreshToken = req.cookies.refreshToken;
@@ -174,13 +149,11 @@ router.post('/refresh', async (req: Request, res: Response, next: NextFunction) 
             return next(new AppError('No refresh token provided', 401));
         }
 
-        // Verify token
         const userId = verifyRefreshToken(refreshToken);
         if (!userId) {
             return next(new AppError('Invalid refresh token', 401));
         }
 
-        // Check if token exists in DB and not revoked
         const tokenHash = hashRefreshToken(refreshToken);
         const storedToken = await prisma.refreshToken.findFirst({
             where: {
@@ -195,10 +168,8 @@ router.post('/refresh', async (req: Request, res: Response, next: NextFunction) 
             return next(new AppError('Refresh token expired or revoked', 401));
         }
 
-        // Generate new access token
         const newAccessToken = generateAccessToken(userId);
 
-        // Set New Access Token Cookie
         const accessMaxAge = process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 24 * 60 * 60 * 1000;
         res.cookie('accessToken', newAccessToken, {
             ...COOKIE_OPTIONS,
@@ -218,17 +189,23 @@ router.post('/logout', async (req: Request, res: Response, next: NextFunction) =
 
         if (refreshToken) {
             const tokenHash = hashRefreshToken(refreshToken);
-
-            // Revoke refresh token
+            // Revoke in database immediately
             await prisma.refreshToken.updateMany({
                 where: { tokenHash },
                 data: { revokedAt: new Date() }
             });
         }
 
-        // Clear cookies
+        // CRITICAL: Use res.clearCookie with EXACT options used when setting
+        // The options MUST match the original cookie options for clearing to work
         res.clearCookie('accessToken', COOKIE_OPTIONS);
         res.clearCookie('refreshToken', COOKIE_OPTIONS);
+        res.clearCookie('ff_logged_in', { ...COOKIE_OPTIONS, httpOnly: false });
+
+        // Security headers to prevent browser caching the previous authenticated state
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
 
         res.json({ message: 'Logged out successfully' });
     } catch (error) {
@@ -254,11 +231,7 @@ router.get('/me', requireAuth, async (req: Request, res: Response, next: NextFun
                 email: user.email,
                 fullName: user.fullName
             },
-            profile: user.profile ? {
-                ...user.profile,
-                // Ensure sensitivity/computed fields are handled if needed, 
-                // but for now, we need all fields for the frontend profile edit page.
-            } : null
+            profile: user.profile || null
         });
     } catch (error) {
         next(error);

@@ -35,7 +35,7 @@ export function SkeletonJobCard() {
             </div>
 
             {/* Grid Mirror */}
-            <div className="grid grid-cols-3 gap-3 pt-3 border-t border-border/50">
+            <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border/50">
                 <div className="space-y-2">
                     <Skeleton className="h-3 w-3/4" />
                     <Skeleton className="h-4 w-full" />
@@ -51,7 +51,7 @@ export function SkeletonJobCard() {
             </div>
 
             {/* Footer Mirror */}
-            <div className="pt-2 border-t border-border/30 flex justify-between items-center">
+            <div className="pt-4 border-t border-border/30 flex justify-between items-center">
                 <Skeleton className="h-4 w-20" />
                 <Skeleton className="h-4 w-24" />
             </div>

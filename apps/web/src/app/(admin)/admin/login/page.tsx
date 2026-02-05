@@ -1,186 +1,219 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import { adminAuthApi } from '@/lib/api/client';
+import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
 import toast from 'react-hot-toast';
-import { useAdmin } from '@/contexts/AdminContext';
+import { Button } from '@/components/ui/Button';
 import {
-    LockClosedIcon,
     ShieldCheckIcon,
-    ArrowLeftIcon,
-    ArrowPathIcon
+    FingerPrintIcon
 } from '@heroicons/react/24/outline';
 
 export default function AdminLoginPage() {
-    const [email, setEmailState] = useState(() => (typeof window !== 'undefined' ? sessionStorage.getItem('adminSetupEmail') || '' : ''));
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
+    const ADMIN_EMAIL = 'cheekatlamukesh+admin@gmail.com'; // Must match ADMIN_EMAIL in apps/api/.env
+    const [email, setEmail] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [isRegistering, setIsRegistering] = useState(false);
 
-    const setEmail = (val: string) => {
-        if (typeof window !== 'undefined') sessionStorage.setItem('adminSetupEmail', val);
-        setEmailState(val);
-    };
-
-    // PERSIST setup state across context re-renders
-    const [isFirstTimeSetup, setIsFirstTimeSetupState] = useState(
-        () => sessionStorage.getItem('adminSetupMode') === 'true'
-    );
-
-    const setIsFirstTimeSetup = (value: boolean) => {
-        console.log('[DEBUG] Setting isFirstTimeSetup to:', value);
-        if (typeof window !== 'undefined') {
-            sessionStorage.setItem('adminSetupMode', value.toString());
-            if (value) sessionStorage.setItem('adminSetupEmail', email);
-            else sessionStorage.removeItem('adminSetupEmail');
-        }
-        setIsFirstTimeSetupState(value);
-    };
-
-    // Use Context
-    const { login, setupPassword, isLoading } = useAdmin();
-
-    // DEBUG: Track state changes
-    console.log('[RENDER] isFirstTimeSetup:', isFirstTimeSetup);
-
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent, useAdminEmail = false) => {
         e.preventDefault();
+        setIsLoading(true);
 
-        // Validation
-        if (!email || !password) {
-            toast.error('Please fill in all fields');
+        const loginEmail = useAdminEmail ? ADMIN_EMAIL : email;
+
+        // Validate email only for manual form submit
+        if (!useAdminEmail && !loginEmail) {
+            toast.error('Please enter your admin email');
+            setIsLoading(false);
             return;
         }
 
-        const loadingToast = toast.loading(isFirstTimeSetup ? '⚡ Setting up admin account...' : '🔒 Verifying credentials...');
+        try {
+            // 1. Get options from backend
+            const options = await adminAuthApi.getLoginOptions(loginEmail);
+
+            if ('registrationRequired' in options && options.registrationRequired) {
+                toast.success('Admin email recognized. Starting first-time passkey registration...');
+                setIsRegistering(true);
+                await handleRegistration(loginEmail);
+                return;
+            }
+
+            // 2. Start WebAuthn authentication
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const asseResp = await startAuthentication({ optionsJSON: options as any });
+
+            // 3. Verify on backend
+            const verification = await adminAuthApi.verifyLogin(loginEmail, asseResp);
+
+            if (verification.verified) {
+                toast.success('Authenticated successfully!');
+                setTimeout(() => {
+                    window.location.href = '/admin/dashboard';
+                }, 500);
+            } else {
+                toast.error('Authentication failed.');
+            }
+        } catch (err: unknown) {
+            console.error('[Admin Login Error]', err);
+            const message = err instanceof Error ? err.message : 'Login failed. Please try again.';
+            toast.error(message);
+            setIsLoading(false);
+        }
+    };
+
+    const handleQuickLogin = async () => {
+        setIsLoading(true);
 
         try {
-            if (isFirstTimeSetup) {
-                if (password !== confirmPassword) {
-                    toast.error('Passwords do not match', { id: loadingToast });
-                    return;
-                }
-                console.log('[DEBUG] Calling setupPassword with:', email);
-                await setupPassword(email, password);
-                if (typeof window !== 'undefined') {
-                    sessionStorage.removeItem('adminSetupMode');
-                    sessionStorage.removeItem('adminSetupEmail');
-                }
-                toast.success('🚀 Setup complete! Welcome, Admin.', { id: loadingToast });
-            } else {
-                const response = await login(email, password);
-                console.log('[DEBUG] Login response:', response);
-                if (response.setupRequired) {
-                    console.log('[DEBUG] BEFORE - isFirstTimeSetup:', isFirstTimeSetup);
-                    setIsFirstTimeSetup(true);
-                    console.log('[DEBUG] setState(true) called');
-                    setPassword(''); // CLEAR password so they can enter the new one
-                    toast.success('🎯 Identity verified. Please set your secure password.', { id: loadingToast });
-                } else {
-                    toast.success('✅ Welcome back, Admin.', { id: loadingToast });
-                }
+            // 1. Get options from backend
+            const options = await adminAuthApi.getLoginOptions(ADMIN_EMAIL);
+
+            if ('registrationRequired' in options && options.registrationRequired) {
+                toast.success('Starting first-time passkey registration...');
+                setIsRegistering(true);
+                await handleRegistration(ADMIN_EMAIL);
+                return;
             }
-            // Redirect handled by Context (router.push)
-        } catch (err) {
-            console.error('[DEBUG] Error in handleSubmit:', err);
-            const error = err as Error;
-            toast.error(error.message || 'Action failed', { id: loadingToast });
+
+            // 2. Start WebAuthn authentication
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const asseResp = await startAuthentication({ optionsJSON: options as any });
+
+            // 3. Verify on backend
+            const verification = await adminAuthApi.verifyLogin(ADMIN_EMAIL, asseResp);
+
+            if (verification.verified) {
+                toast.success('Authenticated successfully!');
+                setTimeout(() => {
+                    window.location.href = '/admin/dashboard';
+                }, 500);
+            } else {
+                toast.error('Authentication failed.');
+            }
+        } catch (err: unknown) {
+            console.error('[Quick Login Error]', err);
+            const message = err instanceof Error ? err.message : 'Login failed. Please try again.';
+            toast.error(message);
+            setIsLoading(false);
+        }
+    };
+
+    const handleRegistration = async (registrationEmail: string) => {
+        try {
+            console.log('[Registration] Starting for:', registrationEmail);
+
+            // 1. Get registration options
+            const options = await adminAuthApi.getRegistrationOptions(registrationEmail);
+
+            // 2. Start WebAuthn registration
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const regResp = await startRegistration({ optionsJSON: options as any });
+
+            // 3. Verify on backend
+            const verification = await adminAuthApi.verifyRegistration(registrationEmail, regResp);
+
+            if (verification.verified) {
+                toast.success('Passkey registered successfully!');
+                setIsRegistering(false);
+
+                // Auto-login after successful registration
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                console.log('[Registration] Auto-login starting...');
+                const loginOptions = await adminAuthApi.getLoginOptions(registrationEmail);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const loginAsseResp = await startAuthentication({ optionsJSON: loginOptions as any });
+                const loginVerification = await adminAuthApi.verifyLogin(registrationEmail, loginAsseResp);
+
+                if (loginVerification.verified) {
+                    toast.success('Logged in successfully!');
+                    setTimeout(() => {
+                        window.location.href = '/admin/dashboard';
+                    }, 500);
+                } else {
+                    toast.error('Auto-login failed. Please login manually.');
+                    setIsLoading(false);
+                }
+            } else {
+                throw new Error('Registration verification failed');
+            }
+        } catch (err: unknown) {
+            console.error('[Registration Error]', err);
+            const message = err instanceof Error ? err.message : 'Registration failed.';
+            toast.error(message);
+            setIsLoading(false);
+            setIsRegistering(false);
         }
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-background px-4 animate-in fade-in duration-700">
-            <div className="max-w-[440px] w-full">
-                {/* Brand */}
-                <div className="text-center mb-10 space-y-4">
-                    <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 shadow-2xl rotate-3 transform hover:rotate-0 transition-all duration-500 ${isFirstTimeSetup ? 'bg-emerald-600 shadow-emerald-600/20' : 'bg-primary shadow-primary/20'}`}>
-                        <LockClosedIcon className="w-8 h-8 text-primary-foreground" />
+        <div className="min-h-screen bg-black flex items-center justify-center p-4">
+            <div className="max-w-md w-full space-y-8 bg-card/10 backdrop-blur-xl border border-border/50 p-8 rounded-2xl shadow-2xl">
+                <div className="text-center space-y-2">
+                    <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center border border-primary/20">
+                        <ShieldCheckIcon className="w-10 h-10 text-primary" />
                     </div>
-                    <h1 className="tracking-tighter text-2xl font-bold text-foreground">
-                        {isFirstTimeSetup ? 'Initialize Admin' : 'Admin Portal'}
-                    </h1>
-                    <p className="text-muted-foreground font-medium tracking-tight">
-                        {isFirstTimeSetup ? '🚨 Action Required: Set your permanent admin password' : 'Executive Management Interface'}
-                    </p>
+                    <h1 className="text-2xl font-black italic tracking-tight uppercase text-foreground">Admin Access</h1>
+                    <p className="text-sm text-muted-foreground/80">Passkey-only hardware authentication</p>
                 </div>
 
-                {/* Card */}
-                <div className={`rounded-[2.5rem] p-10 border shadow-2xl shadow-black/5 transition-all duration-500 ${isFirstTimeSetup ? 'bg-emerald-950/20 border-emerald-600' : 'bg-card border-border'}`}>
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="space-y-2">
-                            <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">
-                                Email Identity
-                            </label>
-                            <input
-                                type="email"
-                                required
-                                readOnly={isFirstTimeSetup && email.length > 0}
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className={`premium-input bg-background w-full p-3 border rounded-xl ${isFirstTimeSetup && email.length > 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                placeholder="admin@fresherflow.com"
-                            />
-                        </div>
+                <form onSubmit={handleLogin} className="space-y-6">
+                    <div className="space-y-2">
+                        <label htmlFor="email" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+                            Admin Email
+                        </label>
+                        <input
+                            id="email"
+                            type="email"
+                            placeholder="admin@fresherflow.in"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full bg-black/50 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-muted-foreground/30"
+                        />
+                    </div>
 
-                        <div className="space-y-2">
-                            <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">
-                                {isFirstTimeSetup ? 'Set New Password' : 'Secure Key'}
-                            </label>
-                            <input
-                                type="password"
-                                required
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="premium-input bg-background w-full p-3 border rounded-xl"
-                                placeholder="••••••••"
-                            />
-                        </div>
-
-                        {isFirstTimeSetup && (
-                            <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
-                                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">
-                                    Confirm Password
-                                </label>
-                                <input
-                                    type="password"
-                                    required
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="premium-input bg-background w-full p-3 border rounded-xl"
-                                    placeholder="••••••••"
-                                />
-                            </div>
-                        )}
-
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className={`w-full premium-button h-[56px] flex items-center justify-center gap-2 ${isFirstTimeSetup ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-primary hover:bg-primary/90'} text-primary-foreground rounded-xl transition-colors`}
-                        >
+                    <Button
+                        type="submit"
+                        disabled={isLoading}
+                        className="w-full h-12 text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2 group relative overflow-hidden"
+                    >
+                        <span className="relative z-10 flex items-center gap-2">
                             {isLoading ? (
-                                <ArrowPathIcon className="w-5 h-5 animate-spin" />
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                             ) : (
-                                <ShieldCheckIcon className="w-5 h-5" />
+                                <>
+                                    <FingerPrintIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                                    {isRegistering ? 'Registering...' : 'Authenticate'}
+                                </>
                             )}
-                            {isLoading ? (isFirstTimeSetup ? 'Initializing...' : 'Decrypting...') : (isFirstTimeSetup ? 'Set Password & Authorize' : 'Authorize Login')}
-                        </button>
-                    </form>
+                        </span>
+                    </Button>
+                </form>
 
-                    <div className="mt-8 text-center pt-6 border-t border-border">
-                        <Link href="/" className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-2">
-                            <ArrowLeftIcon className="w-4 h-4" />
-                            Back to community site
-                        </Link>
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-border/30"></div>
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-card/10 px-2 text-muted-foreground/60 font-bold tracking-wider">OR</span>
                     </div>
                 </div>
 
-                {/* Footer */}
-                <div className="text-center mt-10">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-card rounded-full border border-border shadow-sm">
-                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                            Encrypted Session Active
-                        </span>
-                    </div>
+                <button
+                    onClick={handleQuickLogin}
+                    disabled={isLoading}
+                    className="w-full h-12 bg-primary/5 hover:bg-primary/10 border-2 border-primary/20 hover:border-primary/40 rounded-xl text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+                >
+                    <ShieldCheckIcon className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
+                    <span className="text-primary">Quick Login as Admin</span>
+                </button>
+
+                <div className="pt-6 border-t border-border/50 text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold opacity-60">
+                        Securely stored on your device hardware (Touch ID / Face ID / USB)
+                    </p>
                 </div>
             </div>
         </div>

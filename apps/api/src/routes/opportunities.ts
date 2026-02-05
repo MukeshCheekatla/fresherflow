@@ -18,27 +18,36 @@ function normalizeTypeParam(raw?: string) {
     return raw.toUpperCase();
 }
 
-// GET /api/opportunities - Get filtered feed (DB + Code filtering)
+// GET /api/opportunities - Get filtered// Reading file to check filter logicng)
 router.get('/', requireAuth, profileGate, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { type, category, city, closingSoon } = req.query;
         const filterType = normalizeTypeParam((type || category) as string | undefined);
 
-        // Get user profile for filtering
-        const profile = await prisma.profile.findUnique({
-            where: { userId: req.userId }
+        // Get user for role check
+        const user = await prisma.user.findUnique({
+            where: { id: req.userId },
+            include: { profile: true }
         });
 
-        if (!profile || !profile.gradYear) {
+        if (!user) return next(new AppError('User not found', 404));
+
+        const isAdmin = user.role === 'ADMIN';
+        const profile = user.profile;
+
+        // Candidate Validation: Must have complete profile
+        if (!isAdmin && (!profile || !profile.gradYear)) {
             return next(new AppError('Profile incomplete', 400));
         }
 
         // Stage 1: DB-Level Filtering (Coarse)
-        // We only filter by status and type here. 
-        // Strict matching for years/degrees is handled by the Eligibility Engine in Stage 2.
         const dbFiltered = await prisma.opportunity.findMany({
             where: {
                 status: OpportunityStatus.PUBLISHED,
+                OR: [
+                    { expiresAt: null },
+                    { expiresAt: { gt: new Date() } }
+                ],
                 ...(filterType ? { type: filterType.toUpperCase() as any } : {}),
                 ...(city ? {
                     locations: { has: city as string }
@@ -53,15 +62,33 @@ router.get('/', requireAuth, profileGate, async (req: Request, res: Response, ne
                 },
                 actions: {
                     where: { userId: req.userId }
+                },
+                savedBy: {
+                    where: { userId: req.userId }
                 }
+            },
+            orderBy: {
+                postedAt: 'desc'
             }
         });
 
+        // Map results to include isSaved flag
+        const mappedResults = dbFiltered.map(opp => ({
+            ...opp,
+            isSaved: Boolean(opp.savedBy && opp.savedBy.length > 0)
+        }));
+
         // Stage 2: Code-Level Filtering (Fine)
-        const codeFiltered = filterOpportunitiesForUser(dbFiltered as any, profile as any);
+        // Admins see EVERYTHING returned by DB filter. Candidates see eligible only.
+        let finalResults: any[] = mappedResults;
+
+        if (!isAdmin && profile) {
+            // Apply eligibility rules for candidates
+            finalResults = filterOpportunitiesForUser(mappedResults as any, profile as any);
+        }
 
         // Sort with walk-ins first
-        const sorted = sortOpportunitiesWithWalkinsFirst(codeFiltered);
+        const sorted = sortOpportunitiesWithWalkinsFirst(finalResults);
 
         res.json({
             opportunities: sorted,
@@ -72,7 +99,7 @@ router.get('/', requireAuth, profileGate, async (req: Request, res: Response, ne
     }
 });
 
-// GET /api/opportunities/:id
+// GET /api/opportunities/:id (supports both slug and ID)
 // Publicly accessible route
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -82,8 +109,14 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
         const token = req.cookies.accessToken;
         const userId = token ? verifyAccessToken(token) : null;
 
-        const opportunity = await prisma.opportunity.findUnique({
-            where: { id },
+        // Try finding by slug first, then by ID
+        let opportunity = await prisma.opportunity.findFirst({
+            where: {
+                OR: [
+                    { slug: id },
+                    { id: id }
+                ]
+            },
             include: {
                 walkInDetails: true,
                 user: {
@@ -94,6 +127,9 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
                 ...(userId ? {
                     actions: {
                         where: { userId }
+                    },
+                    savedBy: {
+                        where: { userId }
                     }
                 } : {})
             }
@@ -102,6 +138,12 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
         if (!opportunity) {
             return next(new AppError('Opportunity not found', 404));
         }
+
+        // Add isSaved flag
+        const opportunityWithSaved = {
+            ...opportunity,
+            isSaved: Boolean((opportunity as any).savedBy && (opportunity as any).savedBy.length > 0)
+        };
 
         // 2. Logic for Logged-in vs Guest
         let isEligible = true;
@@ -120,7 +162,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
         }
 
         res.json({
-            opportunity,
+            opportunity: opportunityWithSaved,
             isEligible,
             eligibilityReason
         });

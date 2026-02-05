@@ -17,6 +17,15 @@ export const refreshTokenSchema = z.object({
     refreshToken: z.string().min(1, 'Refresh token is required')
 });
 
+export const sendOtpSchema = z.object({
+    email: z.string().email('Invalid email format')
+});
+
+export const verifyOtpSchema = z.object({
+    email: z.string().email('Invalid email format'),
+    code: z.string().length(6, 'Verification code must be 6 digits')
+});
+
 // Profile Schemas
 export const educationSchema = z.object({
     educationLevel: z.nativeEnum(EducationLevel),

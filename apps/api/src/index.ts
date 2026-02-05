@@ -17,9 +17,13 @@ import profileRoutes from './routes/profile';
 import opportunitiesRoutes from './routes/opportunities';
 import actionsRoutes from './routes/actions';
 import feedbackRoutes from './routes/feedback';
+import savedRoutes from './routes/saved';
+import dashboardRoutes from './routes/dashboard';
 import adminAuthRoutes from './routes/admin/auth';
 import adminOpportunitiesRoutes from './routes/admin/opportunities';
 import adminFeedbackRoutes from './routes/admin/feedback';
+import adminSystemRoutes from './routes/admin/system';
+import adminAnalyticsRoutes from './routes/admin/analytics';
 
 // Load environment variables (Local only)
 if (process.env.NODE_ENV !== 'production') {
@@ -128,6 +132,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/opportunities', opportunitiesRoutes);
 app.use('/api/actions', actionsRoutes);
+app.use('/api/saved', savedRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/opportunities', feedbackRoutes);
 
 // Admin routes (isolated)
@@ -135,6 +141,8 @@ app.use('/api/admin/auth/login', authLimiter);
 app.use('/api/admin/auth', adminAuthRoutes);
 app.use('/api/admin/opportunities', adminOpportunitiesRoutes);
 app.use('/api/admin/feedback', adminFeedbackRoutes);
+app.use('/api/admin/system', adminSystemRoutes);
+app.use('/api/admin/analytics', adminAnalyticsRoutes);
 
 // ============================================================================
 // Error Handling

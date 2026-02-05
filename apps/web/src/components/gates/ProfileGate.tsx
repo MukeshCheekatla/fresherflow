@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
@@ -14,31 +14,24 @@ import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 export function ProfileGate({ children }: { children: React.ReactNode }) {
     const { profile, isLoading } = useAuth();
     const router = useRouter();
-    const [countdown, setCountdown] = useState(3);
+    const pathname = usePathname();
 
-    // Compute if we should redirect
-    const shouldRedirect = !isLoading && profile && profile.completionPercentage < 100;
+    // Don't redirect if already on profile pages
+    const isOnProfilePage = pathname?.startsWith('/profile/');
 
-    // Handle countdown timer
     useEffect(() => {
-        if (shouldRedirect && countdown > 0) {
-            const timer = setTimeout(() => {
-                setCountdown(prev => prev - 1);
-            }, 1000);
-            return () => clearTimeout(timer);
+        if (!isLoading && profile) {
+            console.log(`[ProfileGate] Completion: ${profile.completionPercentage}% | Path: ${pathname}`);
+            if (profile.completionPercentage < 100 && !isOnProfilePage) {
+                console.log('[ProfileGate] Redirecting to completion page...');
+                router.push('/profile/complete');
+            }
         }
-    }, [shouldRedirect, countdown]);
-
-    // Handle redirect when countdown reaches 0
-    useEffect(() => {
-        if (shouldRedirect && countdown === 0) {
-            router.push('/profile/complete');
-        }
-    }, [shouldRedirect, countdown, router]);
+    }, [profile, isLoading, pathname, router, isOnProfilePage]);
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div className="flex items-center justify-center min-h-[60vh] py-12">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
                     <p className="mt-4 text-muted-foreground font-medium">Loading...</p>
@@ -47,7 +40,7 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
         );
     }
 
-    if (profile && profile.completionPercentage < 100) {
+    if (profile && profile.completionPercentage < 100 && !isOnProfilePage) {
         return (
             <div className="flex items-center justify-center min-h-screen p-6">
                 <div className="premium-card max-w-sm w-full p-6 md:p-8 text-center space-y-4 md:space-y-6">
@@ -64,9 +57,6 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
                         <Link href="/profile/complete" className="premium-button w-full">
                             Complete Profile Now
                         </Link>
-                        <p className="text-xs text-muted-foreground">
-                            Auto-redirecting in {countdown} second{countdown !== 1 ? 's' : ''}...
-                        </p>
                     </div>
                 </div>
             </div>
@@ -91,7 +81,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div className="flex items-center justify-center min-h-[60vh] py-12">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
                     <p className="mt-4 text-gray-600">Loading...</p>

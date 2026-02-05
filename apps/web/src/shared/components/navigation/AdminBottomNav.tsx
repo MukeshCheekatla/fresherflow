@@ -37,7 +37,10 @@ export default function AdminBottomNav() {
     const pathname = usePathname();
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border z-50 md:hidden animate-in slide-in-from-bottom duration-500 pb-safe">
+        <nav className={cn(
+            "fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 md:hidden transition-all duration-300 pb-safe shadow-2xl",
+            "translate-y-0 opacity-100"
+        )}>
             <div className="flex justify-around items-center h-16 px-2">
                 {NAV_ITEMS.map((item) => {
                     let isActive = false;

@@ -10,9 +10,8 @@ interface AdminContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
     admin: Admin | null;
-    login: (email: string, password: string) => Promise<{ setupRequired?: boolean }>;
-    setupPassword: (email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
+    refresh: () => Promise<void>;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
@@ -30,43 +29,13 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     async function checkAdminSession() {
         try {
             const response = await adminAuthApi.me();
-            setAdmin(response.admin);
+            if (response.admin) {
+                setAdmin(response.admin);
+            } else {
+                setAdmin(null);
+            }
         } catch {
             setAdmin(null);
-        } finally {
-            setIsLoading(false);
-        }
-    }
-
-    async function login(email: string, password: string) {
-        setIsLoading(true);
-        try {
-            const response = await adminAuthApi.login(email, password);
-            if (response.setupRequired) {
-                return { setupRequired: true };
-            }
-            setAdmin(response.admin);
-            router.push('/admin/dashboard');
-            return { setupRequired: false };
-        } catch (error) {
-            throw error;
-        } finally {
-            setIsLoading(false);
-        }
-    }
-
-    async function setupPassword(email: string, password: string) {
-        setIsLoading(true);
-        try {
-            console.log('[AdminContext] setupPassword called with:', email);
-            const response = await adminAuthApi.setupPassword(email, password);
-            console.log('[AdminContext] setupPassword response:', response);
-            setAdmin(response.admin);
-            console.log('[AdminContext] Admin set, navigating to dashboard...');
-            router.push('/admin/dashboard');
-        } catch (error) {
-            console.error('[AdminContext] setupPassword error:', error);
-            throw error;
         } finally {
             setIsLoading(false);
         }
@@ -82,15 +51,18 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         router.push('/admin/login');
     }
 
+    async function refresh() {
+        await checkAdminSession();
+    }
+
     return (
         <AdminContext.Provider
             value={{
                 isAuthenticated: !!admin,
                 isLoading,
                 admin,
-                login,
-                setupPassword,
-                logout
+                logout,
+                refresh
             }}
         >
             {children}

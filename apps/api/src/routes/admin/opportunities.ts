@@ -8,6 +8,7 @@ import { opportunitySchema } from '../../utils/validation';
 import { AppError } from '../../middleware/errorHandler';
 import { OpportunityService } from '../../services/opportunity.service';
 import { ParserService } from '../../services/parser.service';
+import { generateSlug } from '../../utils/slugify';
 
 const router: Router = express.Router();
 const prisma = new PrismaClient();
@@ -169,8 +170,14 @@ router.post(
                 }
             }
 
+            // Generate unique slug
+            const tempId = crypto.randomUUID();
+            const slug = generateSlug(data.title, data.company, tempId);
+
             const opportunity = await prisma.opportunity.create({
                 data: {
+                    id: tempId,
+                    slug,
                     type: type as OpportunityType,
                     title: data.title,
                     company: data.company,
@@ -302,9 +309,15 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id = req.params.id as string;
-        if (!id) throw new AppError('Opportunity ID is required', 400);
-        const opportunity = await prisma.opportunity.findUnique({
-            where: { id },
+        if (!id) throw new AppError('Opportunity ID or Slug is required', 400);
+
+        const opportunity = await prisma.opportunity.findFirst({
+            where: {
+                OR: [
+                    { id: id },
+                    { slug: id }
+                ]
+            },
             include: {
                 walkInDetails: true,
                 _count: {
@@ -334,9 +347,25 @@ router.put(
     validate(opportunitySchema as any),
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const id = req.params.id as string;
-            if (!id) throw new AppError('Opportunity ID is required', 400);
+            const idParam = req.params.id as string;
+            if (!idParam) throw new AppError('Opportunity ID is required', 400);
             const data = req.body;
+
+            // Find existing first to resolve ID/Slug
+            const existing = await prisma.opportunity.findFirst({
+                where: {
+                    OR: [
+                        { id: idParam },
+                        { slug: idParam }
+                    ]
+                }
+            });
+
+            if (!existing) {
+                throw new AppError('Opportunity not found', 404);
+            }
+
+            const id = existing.id; // Use resolved UUID
 
             // Prepare nested walk-in details update if applicable
             const walkInUpdate: any = {};
@@ -370,35 +399,43 @@ router.put(
                 };
             }
 
+            // Regenerate slug if title or company changed
+            const updateData: any = {
+                type: data.type,
+                status: data.status,
+                title: data.title,
+                company: data.company,
+                description: data.description,
+                allowedDegrees: data.allowedDegrees,
+                allowedCourses: data.allowedCourses || [],
+                allowedPassoutYears: data.allowedPassoutYears,
+                requiredSkills: data.requiredSkills || [],
+                locations: data.locations,
+                workMode: data.workMode,
+                salaryMin: data.salaryMin,
+                salaryMax: data.salaryMax,
+                salaryPeriod: data.salaryPeriod,
+                incentives: data.incentives,
+                jobFunction: data.jobFunction,
+                experienceMin: data.experienceMin,
+                experienceMax: data.experienceMax,
+                salaryRange: data.salaryRange,
+                stipend: data.stipend,
+                employmentType: data.employmentType,
+                applyLink: data.applyLink,
+                expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
+                lastVerified: new Date(),
+                ...(data.type === OpportunityType.WALKIN && { walkInDetails: walkInUpdate })
+            };
+
+            // Update slug if title or company changed
+            if (data.title !== existing.title || data.company !== existing.company) {
+                updateData.slug = generateSlug(data.title, data.company, existing.id);
+            }
+
             const opportunity = await prisma.opportunity.update({
                 where: { id },
-                data: {
-                    type: data.type,
-                    status: data.status,
-                    title: data.title,
-                    company: data.company,
-                    description: data.description,
-                    allowedDegrees: data.allowedDegrees,
-                    allowedCourses: data.allowedCourses || [],
-                    allowedPassoutYears: data.allowedPassoutYears,
-                    requiredSkills: data.requiredSkills || [],
-                    locations: data.locations,
-                    workMode: data.workMode,
-                    salaryMin: data.salaryMin,
-                    salaryMax: data.salaryMax,
-                    salaryPeriod: data.salaryPeriod,
-                    incentives: data.incentives,
-                    jobFunction: data.jobFunction,
-                    experienceMin: data.experienceMin,
-                    experienceMax: data.experienceMax,
-                    salaryRange: data.salaryRange,
-                    stipend: data.stipend,
-                    employmentType: data.employmentType,
-                    applyLink: data.applyLink,
-                    expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
-                    lastVerified: new Date(),
-                    ...(data.type === OpportunityType.WALKIN && { walkInDetails: walkInUpdate })
-                },
+                data: updateData,
                 include: {
                     walkInDetails: true
                 }
@@ -421,13 +458,26 @@ router.post(
     withAdminAudit('EXPIRE'),
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const id = req.params.id as string;
-            if (!id) throw new AppError('Opportunity ID is required', 400);
+            const idParam = req.params.id as string;
+            if (!idParam) throw new AppError('Opportunity ID is required', 400);
+
+            // Find existing first to resolve ID/Slug
+            const existing = await prisma.opportunity.findFirst({
+                where: {
+                    OR: [
+                        { id: idParam },
+                        { slug: idParam }
+                    ]
+                }
+            });
+
+            if (!existing) throw new AppError('Opportunity not found', 404);
 
             const opportunity = await prisma.opportunity.update({
-                where: { id },
+                where: { id: existing.id },
                 data: {
-                    expiredAt: new Date()
+                    expiresAt: new Date(Date.now() - 60 * 60 * 1000), // Update LOGIC field (backdated)
+                    expiredAt: new Date() // Update AUDIT field (now)
                 }
             });
 
@@ -449,13 +499,25 @@ router.delete(
     withAdminAudit('DELETE'),
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const id = req.params.id as string;
-            if (!id) throw new AppError('Opportunity ID is required', 400);
+            const idParam = req.params.id as string;
+            if (!idParam) throw new AppError('Opportunity ID is required', 400);
             const { reason } = req.body;
+
+            // Find existing first to resolve ID/Slug
+            const existing = await prisma.opportunity.findFirst({
+                where: {
+                    OR: [
+                        { id: idParam },
+                        { slug: idParam }
+                    ]
+                }
+            });
+
+            if (!existing) throw new AppError('Opportunity not found', 404);
 
             // Soft delete - mark as ARCHIVED
             const opportunity = await prisma.opportunity.update({
-                where: { id },
+                where: { id: existing.id },
                 data: {
                     status: OpportunityStatus.ARCHIVED,
                     deletedAt: new Date(),

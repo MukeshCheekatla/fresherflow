@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { actionsApi } from '@/lib/api/client';
+import { useState, useEffect, useCallback, useContext } from 'react';
+import { AuthContext } from '@/contexts/AuthContext';
+import { savedApi } from '@/lib/api/client';
 import { Opportunity } from '@fresherflow/types';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -10,7 +10,9 @@ import { MapPinIcon, TrashIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
 export default function SavedJobsPage() {
-    const { user, isLoading: authLoading } = useAuth();
+    const context = useContext(AuthContext);
+    const user = context?.user;
+    const authLoading = context?.isLoading;
     const [savedJobs, setSavedJobs] = useState<Opportunity[]>([]);
     const [fetchingJobs, setFetchingJobs] = useState(true);
     const router = useRouter();
@@ -18,16 +20,11 @@ export default function SavedJobsPage() {
     const loadSavedJobs = useCallback(async () => {
         setFetchingJobs(true);
         try {
-            const actions = await actionsApi.list();
-            // Assuming actions returns [{ opportunity: Opportunity, actionType: string }]
-            const saved = actions
-                .filter((a: { actionType: string }) => a.actionType === 'PLANNING')
-                .map((a: { opportunity: Opportunity }) => a.opportunity);
-            setSavedJobs(saved);
-        } catch (err: unknown) {
-            const error = err as Error;
-            console.error('Error loading saved jobs:', error);
-            toast.error('Failed to sync saved stream');
+            const data = await savedApi.list();
+            setSavedJobs(data.opportunities || []);
+        } catch (err) {
+            console.error('Error loading saved jobs:', err);
+            toast.error('Failed to sync saved jobs');
         } finally {
             setFetchingJobs(false);
         }
@@ -41,14 +38,9 @@ export default function SavedJobsPage() {
 
     const handleRemove = async (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
-        const loading = toast.loading('Removing from stream...');
+        const loading = toast.loading('Removing from saved...');
         try {
-            // In a real app, we might have an 'UNSAVE' or just delete the action.
-            // For now, tracking as 'REMOVED' or similar if supported, or just omit.
-            // Assuming toggle is not yet implemented in backend, we just track a different state or ignore.
-            // If the backend doesn't support 'UNSAVE', we might just filter locally for demo if needed.
-            // But let's assume we can track it as something else.
-            await actionsApi.track(id, 'IGNORED');
+            await savedApi.toggle(id);
             setSavedJobs(prev => prev.filter(j => j.id !== id));
             toast.success('Opportunity removed', { id: loading });
         } catch {
@@ -56,90 +48,98 @@ export default function SavedJobsPage() {
         }
     };
 
-    const loading = authLoading;
 
-    if (loading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="w-10 h-10 border-4 border-slate-900 border-t-transparent rounded-full animate-spin" /></div>;
+
+    if (authLoading) return (
+        <div className="min-h-screen bg-background flex items-center justify-center">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+    );
 
     if (!user) {
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
-                <div className="text-center space-y-6">
-                    <h1 className="tracking-tighter">Please sign in</h1>
-                    <p className="text-slate-500 font-medium tracking-tight">You need to be signed in to view saved jobs.</p>
-                    <Link href="/login" className="premium-button bg-slate-900 text-white mx-auto">Go to Sign In</Link>
+            <div className="min-h-screen bg-background flex items-center justify-center p-6">
+                <div className="text-center space-y-6 max-w-md w-full bg-card p-8 rounded-xl border border-border shadow-lg">
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground">Sign In Required</h1>
+                    <p className="text-muted-foreground font-medium">Please sign in to access your saved opportunities.</p>
+                    <Link href="/login" className="w-full h-11 bg-primary text-primary-foreground font-bold uppercase tracking-widest text-xs rounded-lg flex items-center justify-center hover:bg-primary/90 transition-all">Go to Sign In</Link>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 animate-in fade-in duration-700 pb-[64px] md:pb-0">
-            <main className="max-content py-10 space-y-12">
+        <div className="min-h-screen bg-background animate-in fade-in duration-500 pb-[64px] md:pb-0">
+            <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 space-y-6">
                 <div className="flex items-center gap-4">
                     <Link
-                        href="/account"
-                        className="p-2 -ml-2 text-slate-400 hover:text-slate-900 transition-colors"
+                        href="/dashboard"
+                        className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                         </svg>
                     </Link>
-                    <h1 className="tracking-tighter">Saved Stream</h1>
+                    <div className="space-y-0.5">
+                        <h1 className="text-2xl font-bold tracking-tight text-foreground">Saved Stream</h1>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Your Curated Collection</p>
+                    </div>
                 </div>
 
                 {fetchingJobs ? (
-                    <div className="job-card text-center py-12 text-slate-400 font-bold">
+                    <div className="bg-card border border-border rounded-xl p-12 text-center text-muted-foreground font-medium">
                         Synchronizing your prioritized opportunities...
                     </div>
                 ) : savedJobs.length === 0 ? (
-                    <div className="job-card text-center py-16 space-y-6">
-                        <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto text-slate-300">
+                    <div className="bg-card border border-border rounded-xl p-12 text-center space-y-6 max-w-2xl mx-auto shadow-sm">
+                        <div className="w-16 h-16 bg-muted/40 rounded-2xl flex items-center justify-center mx-auto text-muted-foreground/50">
                             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                             </svg>
                         </div>
-                        <div>
-                            <h2 className="tracking-tight">No saved matches yet</h2>
-                            <p className="text-slate-500 font-medium">Opportunities you bookmark will appear here for high-speed access.</p>
+                        <div className="space-y-2">
+                            <h2 className="text-xl font-bold tracking-tight text-foreground">No saved matches yet</h2>
+                            <p className="text-muted-foreground text-sm font-medium max-w-sm mx-auto">Opportunities you bookmark from the global stream will appear here for high-speed access.</p>
                         </div>
                         <Link
                             href="/opportunities"
-                            className="premium-button bg-slate-900 text-white inline-flex"
+                            className="inline-flex h-11 items-center justify-center px-8 bg-primary text-primary-foreground font-bold uppercase tracking-widest text-xs rounded-lg hover:bg-primary/90 transition-all shadow-md"
                         >
                             Browse Stream
                         </Link>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {savedJobs.map((job) => (
                             <div
                                 key={job.id}
-                                className="job-card group cursor-pointer relative"
-                                onClick={() => router.push(`/opportunities/${job.id}`)}
+                                className="bg-card group cursor-pointer relative p-5 rounded-xl border border-border shadow-sm hover:border-primary/50 hover:shadow-md transition-all space-y-4"
+                                onClick={() => router.push(`/opportunities/${job.slug || job.id}`)}
                             >
-                                <div className="flex justify-between items-start">
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{job.company}</p>
-                                        <h3 className="group-hover:text-blue-600 transition-colors">{job.title}</h3>
+                                <div className="flex justify-between items-start gap-4">
+                                    <div className="space-y-1.5 flex-1 min-w-0">
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest truncate">{job.company}</p>
+                                        <h3 className="font-bold text-foreground text-lg leading-tight truncate pr-2 group-hover:text-primary transition-colors">{job.title}</h3>
                                     </div>
                                     <button
                                         onClick={(e) => handleRemove(e, job.id)}
-                                        className="p-2.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                                        className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all shrink-0"
                                         title="Remove from saved"
                                     >
                                         <TrashIcon className="w-5 h-5" />
                                     </button>
                                 </div>
-                                <div className="flex items-center gap-4 text-xs font-bold text-slate-400 pt-4 border-t border-slate-50">
-                                    <span className="flex items-center gap-1">
-                                        <MapPinIcon className="w-4 h-4" />
-                                        {job.locations?.[0] || 'Multiple Locations'}
-                                    </span>
-                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${job.type === 'WALKIN' ? 'bg-orange-50 text-orange-600' :
-                                        job.type === 'INTERNSHIP' ? 'bg-purple-50 text-purple-600' :
-                                            'bg-blue-50 text-blue-600'
+
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${job.type === 'WALKIN' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
+                                        job.type === 'INTERNSHIP' ? 'bg-purple-500/10 text-purple-600 border-purple-500/20' :
+                                            'bg-blue-500/10 text-blue-600 border-blue-500/20'
                                         }`}>
                                         {job.type}
+                                    </span>
+                                    <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground/80">
+                                        <MapPinIcon className="w-3.5 h-3.5" />
+                                        <span className="truncate max-w-[150px]">{job.locations?.[0] || 'Remote'}</span>
                                     </span>
                                 </div>
                             </div>

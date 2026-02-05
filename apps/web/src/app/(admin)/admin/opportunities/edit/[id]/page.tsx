@@ -68,6 +68,14 @@ export default function EditOpportunityPage() {
     const [endTime, setEndTime] = useState('13:00');
 
     // Simple formatting utilities
+    // Helper to format Date to 'YYYY-MM-DDTHH:mm' using Local Time
+    const toLocalISOString = (dateInput: Date | string) => {
+        const date = new Date(dateInput);
+        const tzOffset = date.getTimezoneOffset() * 60000; // offset in milliseconds
+        const localTime = new Date(date.getTime() - tzOffset);
+        return localTime.toISOString().slice(0, 16);
+    };
+
     const getOrdinalNum = (n: number) => {
         return n + (n > 0 ? ['th', 'st', 'nd', 'rd'][(n > 10 && n < 14) ? 0 : (n % 10 < 4 ? n % 10 : 0)] : '');
     };
@@ -122,7 +130,7 @@ export default function EditOpportunityPage() {
             setExperienceMin(opp.experienceMin?.toString() || '');
             setExperienceMax(opp.experienceMax?.toString() || '');
             setApplyLink(opp.applyLink || '');
-            setExpiresAt(opp.expiresAt ? new Date(opp.expiresAt).toISOString().slice(0, 16) : '');
+            setExpiresAt(opp.expiresAt ? toLocalISOString(opp.expiresAt) : '');
 
             if (opp.walkInDetails) {
                 setWalkInDates(opp.walkInDetails.dates?.join(', ') || '');
@@ -239,6 +247,23 @@ export default function EditOpportunityPage() {
         'B.Tech / B.E.', 'B.Sc.', 'BCA', 'BBA', 'B.Com', 'B.A.',
         'M.Tech / M.E.', 'M.Sc.', 'MCA', 'MBA', 'M.Com', 'M.A.'
     ];
+
+    const handleExpire = async () => {
+        if (!confirm('Are you sure you want to expire this opportunity immediately?')) return;
+        const loadingToast = toast.loading('Expiring opportunity...');
+        try {
+            const { opportunity } = await adminApi.expireOpportunity(params.id as string);
+            // Use the returned time, or fallback to current local time
+            const newExpiry = opportunity.expiresAt ? toLocalISOString(opportunity.expiresAt) : toLocalISOString(new Date());
+            setExpiresAt(newExpiry);
+            toast.success('Opportunity expired', { id: loadingToast });
+            // Force reload to ensure all states (including backend timestamps) are perfectly synced and visible
+            setTimeout(() => window.location.reload(), 1000);
+        } catch (err) {
+            const error = err as Error;
+            toast.error(`Failed: ${error.message}`, { id: loadingToast });
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -362,7 +387,7 @@ export default function EditOpportunityPage() {
                         <ClockIcon className="w-4 h-4 text-muted-foreground" />
                         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status:</span>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
                         {(['DRAFT', 'PUBLISHED', 'ARCHIVED'] as const).map((s) => (
                             <button
                                 key={s}
@@ -378,6 +403,28 @@ export default function EditOpportunityPage() {
                                 {s}
                             </button>
                         ))}
+                        <div className="w-px h-6 bg-border mx-1" />
+                        {expiresAt && new Date(expiresAt) < new Date() ? (
+                            <button
+                                type="button"
+                                disabled
+                                className="px-3 py-1 rounded-full border border-destructive/50 bg-destructive/10 text-[10px] font-bold text-destructive cursor-not-allowed flex items-center gap-1"
+                                title="This opportunity has expired"
+                            >
+                                <ClockIcon className="w-3 h-3" />
+                                EXPIRED
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={handleExpire}
+                                className="px-3 py-1 rounded-full border border-orange-500/50 text-[10px] font-bold text-orange-600 hover:bg-orange-500/10 transition-all flex items-center gap-1"
+                                title="Mark as expired immediately"
+                            >
+                                <ClockIcon className="w-3 h-3" />
+                                EXPIRE NOW
+                            </button>
+                        )}
                     </div>
                 </div>
 

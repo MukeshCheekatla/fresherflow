@@ -76,6 +76,9 @@ export default function ProfileCompletePage() {
     const [currentStep, setCurrentStep] = useState<Step>('education');
     const [isLoading, setIsLoading] = useState(false);
 
+    // Basic Info
+    const [fullName, setFullName] = useState('');
+
     // Education state
     const [tenthYear, setTenthYear] = useState('');
     const [twelfthYear, setTwelfthYear] = useState('');
@@ -102,6 +105,8 @@ export default function ProfileCompletePage() {
 
     const [completion, setCompletion] = useState(0);
 
+    const { user } = useAuth();
+
     useEffect(() => {
         if (profile) {
             setCompletion(profile.completionPercentage);
@@ -109,11 +114,14 @@ export default function ProfileCompletePage() {
                 router.push('/dashboard');
             }
         }
-    }, [profile, router]);
+        if (user && user.fullName && !fullName) {
+            setFullName(user.fullName);
+        }
+    }, [profile, router, user, fullName]);
 
     const handleEducationSubmit = async () => {
-        if (!tenthYear || !twelfthYear || !educationLevel || !gradCourse || !gradSpecialization || !gradYear) {
-            toast.error('❌ Please fill all required education fields');
+        if (!fullName || !tenthYear || !twelfthYear || !educationLevel || !gradCourse || !gradSpecialization || !gradYear) {
+            toast.error('❌ Please fill all required fields, including your name');
             return;
         }
 
@@ -126,6 +134,7 @@ export default function ProfileCompletePage() {
         const loadingToast = toast.loading('🛰️ Syncing academic foundation...');
         try {
             await profileApi.updateEducation({
+                fullName,
                 educationLevel,
                 tenthYear: parseInt(tenthYear),
                 twelfthYear: parseInt(twelfthYear),
@@ -209,15 +218,20 @@ export default function ProfileCompletePage() {
 
     return (
         <AuthGate>
-            <div className="max-w-6xl mx-auto px-2 md:px-4 py-8 md:py-12">
+            <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
                     {/* Sticky Sidebar */}
                     <aside className="lg:col-span-4 space-y-5 lg:sticky lg:top-24">
                         <div className="premium-card !p-6 space-y-6 shadow-xl border-primary/5">
-                            <div>
-                                <h1 className="text-2xl font-black tracking-tighter mb-2 italic">Complete Profile</h1>
-                                <p className="text-xs text-muted-foreground font-medium uppercase tracking-[0.05em]">Setup your account for job matching.</p>
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <h1 className="text-2xl font-black tracking-tighter mb-2 italic">Complete Profile</h1>
+                                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-[0.05em]">Setup your account for job matching.</p>
+                                </div>
+                                <a href="/logout" className="text-xs text-muted-foreground hover:text-error underline-offset-2 hover:underline shrink-0" title="Logout">
+                                    Logout
+                                </a>
                             </div>
 
                             {/* Circular Progress */}
@@ -302,7 +316,38 @@ export default function ProfileCompletePage() {
                             <div className="flex-1">
                                 {currentStep === 'education' && (
                                     <div className="space-y-12 animate-in fade-in slide-in-from-right-4 duration-500">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+                                        {/* Basic Identity */}
+                                        <div className="space-y-6">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-8 h-8 rounded bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">ID</div>
+                                                <h3 className="text-sm font-black italic uppercase tracking-wider">Personal Bio-Metric</h3>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Identity Name</label>
+                                                    <Input
+                                                        type="text"
+                                                        value={fullName}
+                                                        onChange={(e) => setFullName(e.target.value)}
+                                                        placeholder="e.g. Rahul Sharma"
+                                                        className="premium-input"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2 opacity-60">
+                                                    <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Verified Email</label>
+                                                    <Input
+                                                        type="email"
+                                                        value={user?.email || ''}
+                                                        disabled
+                                                        className="bg-muted cursor-not-allowed"
+                                                    />
+                                                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight ml-1 italic">Email is non-mutable for security protocols.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-border/50">
                                             {/* 10th Standard */}
                                             <div className="space-y-6">
                                                 <div className="flex items-center gap-2">

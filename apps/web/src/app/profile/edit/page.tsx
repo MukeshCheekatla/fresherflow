@@ -102,6 +102,10 @@ export default function EditProfilePage() {
     const [skillInput, setSkillInput] = useState('');
     const [cityInput, setCityInput] = useState('');
 
+    // Personal Info
+    const [fullName, setFullName] = useState('');
+    const { user } = useAuth();
+
     useEffect(() => {
         if (profile) {
             setEducationLevel(profile.educationLevel || '');
@@ -124,7 +128,30 @@ export default function EditProfilePage() {
             setAvailability(profile.availability || '');
             setSkills(profile.skills || []);
         }
-    }, [profile]);
+        if (user && user.fullName && !fullName) {
+            setFullName(user.fullName);
+        }
+    }, [profile, user, fullName]);
+
+    const handleIdentityUpdate = async () => {
+        if (!fullName) {
+            toast.error('❌ Full name is required');
+            return;
+        }
+
+        setSaving(true);
+        const loadingToast = toast.loading('🛰️ Updating identity...');
+        try {
+            await profileApi.updateProfile({ fullName });
+            await refreshUser();
+            toast.success('Identity locked!', { id: loadingToast });
+            setEditingSection(null);
+        } catch (err: unknown) {
+            toast.error((err as Error).message || 'Update failed', { id: loadingToast });
+        } finally {
+            setSaving(false);
+        }
+    };
 
     const handleEducationUpdate = async () => {
         if (!tenthYear || !twelfthYear || !educationLevel || !gradCourse || !gradSpecialization || !gradYear) {
@@ -237,7 +264,7 @@ export default function EditProfilePage() {
     return (
         <AuthGate>
             <ProfileGate>
-                <div className="max-w-6xl mx-auto px-2 md:px-4 py-2 md:py-4 pb-24 space-y-6">
+                <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 pb-24 space-y-6">
                     {/* Header */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border">
                         <div className="flex items-center gap-4">
@@ -269,6 +296,66 @@ export default function EditProfilePage() {
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                         {/* Main Content */}
                         <div className="lg:col-span-8 space-y-6">
+
+                            {/* Personal Identity Section */}
+                            <section className="bg-card rounded-xl border border-border overflow-hidden transition-all shadow-sm">
+                                <div className="flex items-center justify-between p-5 border-b border-border bg-muted/30">
+                                    <div className="flex items-center gap-3">
+                                        <IdentificationIcon className="w-5 h-5 text-primary" />
+                                        <h2 className="text-sm font-bold uppercase tracking-wider">Personal Identity</h2>
+                                    </div>
+                                    <button
+                                        onClick={() => setEditingSection(editingSection === 'identity' ? null : 'identity')}
+                                        className="text-xs font-bold text-primary hover:underline uppercase tracking-tighter"
+                                    >
+                                        {editingSection === 'identity' ? 'Cancel' : 'Edit'}
+                                    </button>
+                                </div>
+
+                                <div className="p-5">
+                                    {editingSection === 'identity' ? (
+                                        <div className="space-y-5">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Identity Name</label>
+                                                    <input
+                                                        type="text"
+                                                        value={fullName}
+                                                        onChange={(e) => setFullName(e.target.value)}
+                                                        className="premium-input !h-10 text-sm"
+                                                        placeholder="Rahul Sharma"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1.5 opacity-60">
+                                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Verified Email</label>
+                                                    <input
+                                                        type="email"
+                                                        value={user?.email || ''}
+                                                        disabled
+                                                        className="premium-input !h-10 text-sm bg-muted cursor-not-allowed"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <Button onClick={handleIdentityUpdate} disabled={saving} className="w-full h-10 text-xs font-bold uppercase tracking-wider">
+                                                {saving ? <ArrowPathIcon className="w-4 h-4 animate-spin mr-2" /> : null}
+                                                Update Personal Identity
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <div>
+                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5 opacity-60">Professional Name</p>
+                                                <h3 className="text-base font-black tracking-tight">{user?.fullName || 'Not set'}</h3>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5 opacity-60">Registered System Email</p>
+                                                <h3 className="text-base font-black tracking-tight opacity-50">{user?.email || 'Not set'}</h3>
+                                                <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-tighter mt-1 italic">Email cannot be modified for security.</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </section>
 
                             {/* Academic Section */}
                             <section className="bg-card rounded-xl border border-border overflow-hidden transition-all">
@@ -548,7 +635,7 @@ export default function EditProfilePage() {
                                                     onClick={() => toggleArrayItem(interestedIn, setInterestedIn, type)}
                                                     className={cn(
                                                         "px-3 h-8 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all",
-                                                        interestedIn.includes(type) ? "bg-primary border-primary text-white shadow-sm" : "bg-muted/30 border-border text-muted-foreground hover:border-primary/40"
+                                                        interestedIn.includes(type) ? "bg-primary/10 border-primary text-primary shadow-sm" : "bg-muted/30 border-border text-muted-foreground hover:border-primary/40"
                                                     )}
                                                 >
                                                     {type}
@@ -566,7 +653,7 @@ export default function EditProfilePage() {
                                                     onClick={() => toggleArrayItem(workModes, setWorkModes, mode)}
                                                     className={cn(
                                                         "px-3 h-8 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all",
-                                                        workModes.includes(mode) ? "bg-primary border-primary text-white shadow-sm" : "bg-muted/30 border-border text-muted-foreground hover:border-primary/40"
+                                                        workModes.includes(mode) ? "bg-primary/10 border-primary text-primary shadow-sm" : "bg-muted/30 border-border text-muted-foreground hover:border-primary/40"
                                                     )}
                                                 >
                                                     {mode}

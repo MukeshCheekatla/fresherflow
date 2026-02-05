@@ -15,9 +15,21 @@ export async function profileGate(req: Request, res: Response, next: NextFunctio
     }
 
     try {
-        const profile = await prisma.profile.findUnique({
-            where: { userId: req.userId }
+        const user = await prisma.user.findUnique({
+            where: { id: req.userId },
+            include: { profile: true }
         });
+
+        if (!user) {
+            return next(new AppError('User not found', 404));
+        }
+
+        // Admins bypass profile gates
+        if (user.role === 'ADMIN') {
+            return next();
+        }
+
+        const profile = user.profile;
 
         if (!profile) {
             return next(new AppError('Profile not found. Please complete your profile.', 403));
