@@ -8,7 +8,7 @@ import {
     EducationLevel,
     WorkMode,
     Availability,
-    UserActionStatus,
+    ActionType,
     FeedbackReason
 } from '@fresherflow/types';
 
@@ -136,7 +136,7 @@ export const opportunitySchema = z.object({
 // ========================================
 
 export const trackActionSchema = z.object({
-    status: z.nativeEnum(UserActionStatus)
+    status: z.nativeEnum(ActionType)
 });
 
 export const submitFeedbackSchema = z.object({

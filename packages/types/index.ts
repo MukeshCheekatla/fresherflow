@@ -11,6 +11,11 @@ export enum OpportunityType {
     WALKIN = 'WALKIN'
 }
 
+export enum Role {
+    USER = 'USER',
+    ADMIN = 'ADMIN'
+}
+
 export enum OpportunityStatus {
     DRAFT = 'DRAFT',
     PUBLISHED = 'PUBLISHED',
@@ -54,6 +59,12 @@ export enum FeedbackReason {
     INACCURATE = 'INACCURATE'
 }
 
+export enum LinkHealth {
+    HEALTHY = 'HEALTHY',
+    BROKEN = 'BROKEN',
+    RETRYING = 'RETRYING'
+}
+
 // ========================================
 // CORE ENTITY TYPES
 // ========================================
@@ -62,6 +73,7 @@ export interface User {
     id: string;
     email: string;
     fullName: string;
+    role: Role;
     createdAt: Date;
     profile?: Profile;
 }
@@ -102,6 +114,7 @@ export interface Admin {
 
 export interface Opportunity {
     id: string;
+    slug: string; // SEO-friendly URL slug
     type: OpportunityType;
     status: OpportunityStatus;
 
@@ -149,6 +162,15 @@ export interface Opportunity {
     // Application
     applyLink?: string;
 
+    // Health Tracking (Verification Bot)
+    linkHealth: LinkHealth;
+    verificationFailures: number;
+    lastVerifiedAt: Date;
+
+    // User State (Dynamic)
+    isSaved?: boolean;
+    actions?: UserAction[];
+
     // Administrative
     postedAt: Date;
     expiresAt?: Date | string;
@@ -163,7 +185,10 @@ export interface WalkInDetails {
     id: string;
     opportunityId: string;
     dates: string[];
+    dateRange?: string;
+    timeRange?: string;
     venueAddress: string;
+    venueLink?: string;
     reportingTime: string;
     requiredDocuments: string[];
     contactPerson?: string;
