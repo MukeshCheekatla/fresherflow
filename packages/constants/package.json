@@ -2,9 +2,11 @@
     "name": "@fresherflow/constants",
     "version": "1.0.0",
     "description": "Shared constants for Job Platform",
-    "main": "index.ts",
-    "types": "index.ts",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
     "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch",
         "typecheck": "tsc --noEmit"
     },
     "keywords": [
