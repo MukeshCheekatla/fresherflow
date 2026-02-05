@@ -7,11 +7,14 @@ import { cn } from '@/lib/utils';
 
 export function NavigationWrapper({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const isAuthRoute = pathname === '/login' || pathname === '/register';
-    const isAdminRoute = pathname?.startsWith('/admin');
+    const normalizedPathname = pathname?.toLowerCase() || '';
+    const isAuthRoute = normalizedPathname === '/login' || normalizedPathname === '/register';
+    const isAdminRoute = normalizedPathname.startsWith('/admin');
 
-    // Completely hide navigation and padding on auth/admin routes
-    const hideNav = isAuthRoute || isAdminRoute;
+    // Navigation is now constant/fixed and does not hide on scroll per user request
+
+    // Hide navigation and padding on admin routes, but keep on auth (login/register)
+    const hideNav = isAdminRoute;
     const isHomePage = pathname === '/';
 
     return (
@@ -24,12 +27,12 @@ export function NavigationWrapper({ children }: { children: React.ReactNode }) {
             <main className={cn(
                 "animate-in fade-in duration-300 relative",
                 !isAuthRoute && !isAdminRoute && "pt-20 md:pt-24",
-                !isAuthRoute && !isAdminRoute && !isHomePage && "container-app pb-4 md:pb-10",
+                !isAuthRoute && !isAdminRoute && !isHomePage && "pb-4 md:pb-10",
                 (isAuthRoute || isAdminRoute) && "min-h-screen flex flex-col"
             )}>
                 <div className={cn(
                     "flex-1 flex flex-col",
-                    !isHomePage && !isAuthRoute && "pb-16 md:pb-0"
+                    (!isAuthRoute && !isAdminRoute) && "pb-20 md:pb-0"
                 )}>
                     {children}
                 </div>
