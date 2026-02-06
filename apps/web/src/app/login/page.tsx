@@ -68,16 +68,21 @@ export default function LoginPage() {
             });
             const googleBtn = document.getElementById("google-login-btn");
             if (googleBtn) {
-                window.google.accounts.id.renderButton(
-                    googleBtn,
-                    {
-                        theme: "outline",
-                        size: "large",
-                        width: "100%",
-                        text: "continue_with",
-                        logo_alignment: "center"
-                    }
-                );
+                // Small delay to ensure container is fully ready
+                setTimeout(() => {
+                    window.google.accounts.id.renderButton(
+                        googleBtn,
+                        {
+                            type: 'standard', // Force standard button, not icon
+                            theme: "outline",
+                            size: "large",
+                            text: "continue_with",
+                            shape: "rectangular",
+                            logo_alignment: "center",
+                            width: "400" // Explicit pixel width often works better than 100% for Google script
+                        }
+                    );
+                }, 100);
             }
         }
     }, [handleGoogleCallback, step]);
