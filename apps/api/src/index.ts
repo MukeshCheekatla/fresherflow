@@ -24,6 +24,7 @@ import adminOpportunitiesRoutes from './routes/admin/opportunities';
 import adminFeedbackRoutes from './routes/admin/feedback';
 import adminSystemRoutes from './routes/admin/system';
 import adminAnalyticsRoutes from './routes/admin/analytics';
+import healthRoutes from './routes/public/health';
 
 // Load environment variables (Local only)
 if (process.env.NODE_ENV !== 'production') {
@@ -32,6 +33,9 @@ if (process.env.NODE_ENV !== 'production') {
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
+
+// Lightweight Health Check (Zero-DB, Zero-Auth)
+app.use('/api', healthRoutes);
 
 // Trust proxy for Render/Vercel/Load Balancers
 if (process.env.NODE_ENV === 'production') {

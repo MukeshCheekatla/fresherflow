@@ -39,7 +39,7 @@ async function setAuthCookies(user: any, res: Response) {
         }
     });
 
-    const accessMaxAge = process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 24 * 60 * 60 * 1000;
+    const accessMaxAge = 24 * 60 * 60 * 1000; // 24 hours for both dev and prod for stability
     const refreshMaxAge = 30 * 24 * 60 * 60 * 1000;
 
     res.cookie('accessToken', accessToken, { ...COOKIE_OPTIONS, maxAge: accessMaxAge });
@@ -170,7 +170,7 @@ router.post('/refresh', async (req: Request, res: Response, next: NextFunction) 
 
         const newAccessToken = generateAccessToken(userId);
 
-        const accessMaxAge = process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 24 * 60 * 60 * 1000;
+        const accessMaxAge = 24 * 60 * 60 * 1000; // 24 hours
         res.cookie('accessToken', newAccessToken, {
             ...COOKIE_OPTIONS,
             maxAge: accessMaxAge
