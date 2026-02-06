@@ -31,11 +31,10 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "./",
   },
-  manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/main.png",
-    shortcut: "/main.png",
-    apple: "/main.png",
+    icon: "/favicon-32x32.png",
+    shortcut: "/favicon-32x32.png",
+    apple: "/apple-touch-icon.png",
   },
   appleWebApp: {
     capable: true,
@@ -56,6 +55,24 @@ export default function RootLayout({
       <head>
         <ThemeScript />
         <script src="https://accounts.google.com/gsi/client" async defer></script>
+        {/* Dynamic Manifest Loader for Admin PWA */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if (window.location.pathname.startsWith('/admin')) {
+                var link = document.createElement('link');
+                link.rel = 'manifest';
+                link.href = '/admin-manifest.json';
+                document.head.appendChild(link);
+              } else {
+                var link = document.createElement('link');
+                link.rel = 'manifest';
+                link.href = '/manifest.webmanifest';
+                document.head.appendChild(link);
+              }
+            `,
+          }}
+        />
       </head>
       <body className={`${inter.variable} antialiased bg-background text-foreground selection:bg-primary/20`} suppressHydrationWarning>
         <ThemeProvider>
