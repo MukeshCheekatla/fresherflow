@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import logger, { log } from '../utils/logger';
 import chalk from 'chalk';
+import TelegramService from '../services/telegram.service';
 
 export function errorHandler(
     err: any,
@@ -8,13 +9,23 @@ export function errorHandler(
     res: Response,
     next: NextFunction
 ) {
+    // ... (existing logging code)
+
+    const statusCode = err.statusCode || 500;
+
+    // Alert Admin on Critical 500 Errors (excluding 404/401/403)
+    if (statusCode >= 500) {
+        // Fire and forget (don't await to avoid slowing response)
+        TelegramService.notifyError(`${req.method} ${req.path}`, err).catch(() => { });
+    }
+
     // Clean error logging (no messy stack traces in terminal)
     const errorMsg = err.message || 'Unknown error';
     const location = `${req.method} ${req.path}`;
 
     // Detect Prisma database errors and show clean message
     const isPrismaError = errorMsg.includes('Prisma') || errorMsg.includes('does not exist in the current database');
-    const statusCode = err.statusCode || 500;
+    // statusCode is already defined above
 
     if (isPrismaError) {
         console.log(chalk.red(`✖ Database Error`));
