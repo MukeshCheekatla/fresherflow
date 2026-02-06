@@ -2,7 +2,7 @@
     "name": "FresherFlow",
     "short_name": "FresherFlow",
     "description": "Premium job platform for freshers.",
-    "start_url": "/",
+    "start_url": "/dashboard",
     "scope": "/",
     "display": "standalone",
     "display_override": [
