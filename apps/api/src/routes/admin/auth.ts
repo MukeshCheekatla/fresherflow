@@ -13,7 +13,7 @@ import type {
     VerifyAuthenticationResponseOpts,
     AuthenticatorTransportFuture,
 } from '@simplewebauthn/server';
-import { generateAdminToken } from '@fresherflow/auth';
+import { generateAdminToken, verifyAdminToken } from '@fresherflow/auth';
 import { AppError } from '../../middleware/errorHandler';
 // import { requireAdmin } from '../../middleware/auth'; // Not used in login flow
 import rateLimit from 'express-rate-limit';
@@ -90,9 +90,19 @@ router.post('/register/options', adminAuthLimiter, async (req: Request, res: Res
         const user = await getAdminUser(email);
         if (!user) return next(new AppError('Unauthorized', 401));
 
-        // Security: In bootstrap mode, we only allow this if NO authenticators exist.
-        // If they exist, the user MUST be logged in to add more (omitted for now for simplicity of bootstrap).
+        // Security: 
+        // 1. If NO authenticators exist, allow bootstrap registration.
+        // 2. If authenticators exist, the user MUST be already logged in as admin to add another.
         const authenticators = await prisma.authenticator.findMany({ where: { userId: user.id } });
+
+        if (authenticators.length > 0) {
+            const adminToken = req.cookies.adminAccessToken;
+            const authenticatedAdminId = adminToken ? verifyAdminToken(adminToken) : null;
+
+            if (authenticatedAdminId !== user.id) {
+                return next(new AppError('Forbidden: Must be logged in as admin to add more passkeys', 403));
+            }
+        }
 
         const options: GenerateRegistrationOptionsOpts = {
             rpName: 'FresherFlow Admin',

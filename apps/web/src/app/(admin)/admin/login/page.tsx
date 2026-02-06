@@ -16,51 +16,18 @@ export default function AdminLoginPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [isRegistering, setIsRegistering] = useState(false);
 
-    const handleLogin = async (e: React.FormEvent, useAdminEmail = false) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
 
-        const loginEmail = useAdminEmail ? ADMIN_EMAIL : email;
-
-        // Validate email only for manual form submit
-        if (!useAdminEmail && !loginEmail) {
-            toast.error('Please enter your admin email');
+        if (!email) {
+            toast.error('Please enter your admin email to sync device');
             setIsLoading(false);
             return;
         }
 
-        try {
-            // 1. Get options from backend
-            const options = await adminAuthApi.getLoginOptions(loginEmail);
-
-            if ('registrationRequired' in options && options.registrationRequired) {
-                toast.success('Admin email recognized. Starting first-time passkey registration...');
-                setIsRegistering(true);
-                await handleRegistration(loginEmail);
-                return;
-            }
-
-            // 2. Start WebAuthn authentication
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const asseResp = await startAuthentication({ optionsJSON: options as any });
-
-            // 3. Verify on backend
-            const verification = await adminAuthApi.verifyLogin(loginEmail, asseResp);
-
-            if (verification.verified) {
-                toast.success('Authenticated successfully!');
-                setTimeout(() => {
-                    window.location.href = '/admin/dashboard';
-                }, 500);
-            } else {
-                toast.error('Authentication failed.');
-            }
-        } catch (err: unknown) {
-            console.error('[Admin Login Error]', err);
-            const message = err instanceof Error ? err.message : 'Login failed. Please try again.';
-            toast.error(message);
-            setIsLoading(false);
-        }
+        // User requested: "Authenticate" form should work as adding another passkey
+        await handleRegistration(email);
     };
 
     const handleQuickLogin = async () => {
@@ -185,7 +152,7 @@ export default function AdminLoginPage() {
                             ) : (
                                 <>
                                     <FingerPrintIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                                    {isRegistering ? 'Registering...' : 'Authenticate'}
+                                    {isRegistering ? 'Syncing...' : 'Add Passkey'}
                                 </>
                             )}
                         </span>
