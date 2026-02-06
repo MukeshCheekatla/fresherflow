@@ -42,7 +42,7 @@ export function generateAccessToken(userId: string): string {
 }
 
 export function generateRefreshToken(userId: string): { token: string; hash: string } {
-    const expiry = process.env.REFRESH_TOKEN_EXPIRY || '30d';
+    const expiry = process.env.REFRESH_TOKEN_EXPIRY || '90d';
     // @ts-ignore - JWT type issue
     const token = jwt.sign({ userId, type: 'refresh' }, getRefreshSecret(), { expiresIn: expiry });
 

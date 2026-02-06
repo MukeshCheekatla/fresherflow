@@ -35,12 +35,12 @@ async function setAuthCookies(user: any, res: Response) {
         data: {
             userId: user.id,
             tokenHash,
-            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+            expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // 90 days
         }
     });
 
-    const accessMaxAge = 24 * 60 * 60 * 1000; // 24 hours for both dev and prod for stability
-    const refreshMaxAge = 30 * 24 * 60 * 60 * 1000;
+    const accessMaxAge = 24 * 60 * 60 * 1000; // 24 hours (Access Token)
+    const refreshMaxAge = 90 * 24 * 60 * 60 * 1000; // 90 days (Long-term session)
 
     res.cookie('accessToken', accessToken, { ...COOKIE_OPTIONS, maxAge: accessMaxAge });
     res.cookie('refreshToken', refreshToken, { ...COOKIE_OPTIONS, maxAge: refreshMaxAge });
