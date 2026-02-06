@@ -10,6 +10,8 @@ import { OpportunityService } from '../../services/opportunity.service';
 import { ParserService } from '../../services/parser.service';
 import { generateSlug } from '../../utils/slugify';
 
+import TelegramService from '../../services/telegram.service';
+
 const router: Router = express.Router();
 const prisma = new PrismaClient();
 
@@ -214,6 +216,14 @@ router.post(
                     walkInDetails: true
                 }
             });
+
+            // Notify Admin via Telegram (Async)
+            TelegramService.notifyNewJob(
+                opportunity.title,
+                opportunity.company,
+                opportunity.id,
+                opportunity.status === OpportunityStatus.PUBLISHED
+            ).catch(() => { });
 
             res.status(201).json({
                 opportunity,
