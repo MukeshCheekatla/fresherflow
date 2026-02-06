@@ -8,6 +8,9 @@ import type {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+// Singleton promise to handle concurrent refresh requests
+let isRefreshing: Promise<void> | null = null;
+
 // API Client with automatic cookie handling
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function apiClient<T = any>(
@@ -24,38 +27,58 @@ export async function apiClient<T = any>(
         ...options,
         headers,
         credentials: 'include', // CRITICAL: This sends/receives cookies
-        cache: 'no-store', // CRITICAL: Prevent caching of API responses to ensure fresh data (fixes stale 'Live' status)
-        next: { revalidate: 0 } // Next.js specific: disable Data Cache
+        cache: 'no-store', // CRITICAL: Prevent caching of API responses
+        next: { revalidate: 0 }
     };
 
     try {
         let response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
 
-        // If 401, trying to auto-refresh is handled by the browser sending the refresh cookie to the /refresh endpoint.
-        // But we need to CALL that endpoint.
+        // If 401, handle token refresh with a singleton lock (mutex)
         const isLoggingOut = typeof window !== 'undefined' && (window as unknown as { __isLoggingOut?: boolean }).__isLoggingOut;
-        if (response.status === 401 && !isLoggingOut && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register') && !endpoint.includes('/auth/refresh')) {
-            console.log(`[Auth] 401 detected on ${endpoint}, attempting token refresh...`);
-            // Attempt refresh
-            try {
-                const refreshResponse = await fetch(`${API_URL}/api/auth/refresh`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include' // Validate refresh cookie
-                });
 
-                if (refreshResponse.ok) {
-                    console.log('[Auth] Token refresh successful, retrying request...');
-                    // Refresh succeeded (new access cookie set)
-                    // Retry original request
-                    response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
-                } else {
-                    console.error('[Auth] Token refresh failed, session expired.');
-                    throw new Error('Session expired');
-                }
-            } catch (err) {
-                console.error('[Auth] Error during token refresh:', err);
-                // If refresh fails, throw original 401
+        if (response.status === 401 && !isLoggingOut &&
+            !endpoint.includes('/auth/login') &&
+            !endpoint.includes('/auth/register') &&
+            !endpoint.includes('/auth/refresh')) {
+
+            console.log(`[Auth] 401 on ${endpoint}. Checking refresh lock...`);
+
+            if (!isRefreshing) {
+                console.log('[Auth] No active refresh. Starting new refresh...');
+                isRefreshing = (async () => {
+                    try {
+                        const refreshResponse = await fetch(`${API_URL}/api/auth/refresh`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include'
+                        });
+
+                        if (!refreshResponse.ok) {
+                            throw new Error('Refresh failed');
+                        }
+                        console.log('[Auth] Refresh successful.');
+                    } catch (error) {
+                        console.error('[Auth] Refresh failed:', error);
+                        // Let the error propagate to the waiting requests so they can throw proper 401
+                        throw error;
+                    } finally {
+                        isRefreshing = null; // Release lock
+                    }
+                })();
+            } else {
+                console.log('[Auth] Refresh already in progress. Waiting...');
+            }
+
+            // Wait for the single refresh to complete (success or fail)
+            try {
+                await isRefreshing;
+                // Retry original request
+                console.log(`[Auth] Retrying original request to ${endpoint}`);
+                response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
+            } catch {
+                console.error('[Auth] Refresh failed, session expired.');
+                throw new Error('Session expired');
             }
         }
 
