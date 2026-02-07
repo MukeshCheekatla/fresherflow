@@ -226,7 +226,7 @@ router.post(
             ).catch(() => { });
 
             // Broadcast to Public Channel if Published (Async)
-            if (opportunity.status === OpportunityStatus.PUBLISHED) {
+            if (opportunity.status === OpportunityStatus.PUBLISHED && opportunity.applyLink) {
                 TelegramService.broadcastNewOpportunity(
                     opportunity.title,
                     opportunity.company,

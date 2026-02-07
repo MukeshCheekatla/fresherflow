@@ -75,17 +75,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     async function verifyOtp(email: string, code: string) {
-        await authApi.verifyOtp(email, code);
-        const meResponse = await authApi.me();
-        setUser(meResponse.user);
-        setProfile(meResponse.profile as Profile);
+        const response = await authApi.verifyOtp(email, code);
+        setUser(response.user);
+        setProfile(response.profile as Profile);
     }
 
     async function loginWithGoogle(token: string) {
-        await authApi.googleLogin(token);
-        const meResponse = await authApi.me();
-        setUser(meResponse.user);
-        setProfile(meResponse.profile as Profile);
+        const response = await authApi.googleLogin(token);
+        setUser(response.user);
+        setProfile(response.profile as Profile);
     }
 
 
