@@ -3,12 +3,10 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import {
-    Squares2X2Icon,
-    PlusCircleIcon,
-    MagnifyingGlassIcon,
-    ChatBubbleLeftRightIcon
-} from '@heroicons/react/24/outline';
+import Squares2X2Icon from '@heroicons/react/24/outline/Squares2X2Icon';
+import PlusCircleIcon from '@heroicons/react/24/outline/PlusCircleIcon';
+import MagnifyingGlassIcon from '@heroicons/react/24/outline/MagnifyingGlassIcon';
+import ChatBubbleLeftRightIcon from '@heroicons/react/24/outline/ChatBubbleLeftRightIcon';
 
 const NAV_ITEMS = [
     {

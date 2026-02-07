@@ -1,35 +1,26 @@
 'use client';
 
 import { AuthGate, ProfileGate } from '@/components/gates/ProfileGate';
-import { opportunitiesApi, savedApi } from '@/lib/api/client';
 import { cn } from '@/lib/utils';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState, useMemo, useCallback, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { Opportunity } from '@fresherflow/types';
-import toast from 'react-hot-toast';
-import { useDebounce } from '@/lib/hooks/useDebounce';
 import JobCard from '@/features/jobs/components/JobCard';
-import {
-    MagnifyingGlassIcon,
-    MapPinIcon,
-    ChevronRightIcon,
-    FunnelIcon,
-    ShieldCheckIcon,
-    ClockIcon,
-    BookmarkIcon
-} from '@heroicons/react/24/outline';
+import MagnifyingGlassIcon from '@heroicons/react/24/outline/MagnifyingGlassIcon';
+import MapPinIcon from '@heroicons/react/24/outline/MapPinIcon';
+import ChevronRightIcon from '@heroicons/react/24/outline/ChevronRightIcon';
+import FunnelIcon from '@heroicons/react/24/outline/FunnelIcon';
+import ShieldCheckIcon from '@heroicons/react/24/outline/ShieldCheckIcon';
+import ClockIcon from '@heroicons/react/24/outline/ClockIcon';
+import BookmarkIcon from '@heroicons/react/24/outline/BookmarkIcon';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { useAuth } from '@/contexts/AuthContext';
 import LoadingScreen from '@/components/ui/LoadingScreen';
+import { useOpportunitiesFeed } from '@/features/jobs/hooks/useOpportunitiesFeed';
+import { useAuth } from '@/contexts/AuthContext';
 
 const FILTERS = {
-    type: [
-        { value: 'JOB', label: 'Jobs' },
-        { value: 'INTERNSHIP', label: 'Internships' },
-        { value: 'WALKIN', label: 'Walk-ins' }
-    ],
     location: ['Bangalore', 'Mumbai', 'Delhi', 'Hyderabad', 'Pune', 'Remote'],
 };
 
@@ -52,92 +43,32 @@ function OpportunitiesContent() {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    const { user, isLoading: authLoading } = useAuth();
+    const { user } = useAuth();
 
-    const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-    const [totalCount, setTotalCount] = useState(0);
-    const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState('');
-    const [selectedType, setSelectedType] = useState<string | null>(null);
+    // Derived state from URL to avoid duplication and effect issues
+    const typeParam = searchParams.get('type');
+    const selectedType = typeParam ? typeParamToEnum(typeParam) : null;
+
     const [selectedLoc, setSelectedLoc] = useState<string | null>(null);
     const [closingSoon, setClosingSoon] = useState(false);
     const [showOnlySaved, setShowOnlySaved] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
-    const [profileIncomplete, setProfileIncomplete] = useState<{ percentage: number; message: string } | null>(null);
 
-    const debouncedSearch = useDebounce(search, 300);
-
-    // Sync state with URL params
-    useEffect(() => {
-        const typeParam = searchParams.get('type');
-        if (typeParam) {
-            const t = typeParamToEnum(typeParam);
-            if (t === 'JOB') setSelectedType('JOB');
-            else if (t === 'INTERNSHIP') setSelectedType('INTERNSHIP');
-            else if (t === 'WALKIN') setSelectedType('WALKIN');
-            else setSelectedType(t);
-        } else {
-            setSelectedType(null);
-        }
-    }, [searchParams]);
-
-    const loadOpportunities = useCallback(async () => {
-        if (!user || authLoading) return;
-        setIsLoading(true);
-        setProfileIncomplete(null);
-        try {
-            let data;
-            if (showOnlySaved) {
-                data = await savedApi.list();
-            } else {
-                data = await opportunitiesApi.list({
-                    type: selectedType || undefined,
-                    city: selectedLoc || undefined
-                });
-            }
-            setOpportunities(data.opportunities || []);
-            setTotalCount(data.count || data.opportunities?.length || 0);
-        } catch (err: unknown) {
-            const error = err as { code?: string; completionPercentage?: number; message?: string };
-            if (error.code === 'PROFILE_INCOMPLETE') {
-                setProfileIncomplete({
-                    percentage: error.completionPercentage || 0,
-                    message: error.message || 'Complete your profile to access job listings'
-                });
-            } else {
-                toast.error(error.message || 'Failed to load feed');
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    }, [selectedType, selectedLoc, user, authLoading, showOnlySaved]);
-
-    useEffect(() => {
-        if (!authLoading && user) {
-            loadOpportunities();
-        }
-    }, [loadOpportunities, authLoading, user, showOnlySaved]);
-
-    const filteredOpps = useMemo(() => {
-        return opportunities.filter(opp => {
-            const matchesSearch = !debouncedSearch ||
-                opp.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-                opp.company.toLowerCase().includes(debouncedSearch.toLowerCase());
-
-            const matchesType = !selectedType || opp.type === selectedType;
-            const matchesLoc = !selectedLoc || opp.locations.includes(selectedLoc);
-
-            const matchesClosingSoon = !closingSoon || (() => {
-                if (!opp.expiresAt) return false;
-                const expiryDate = new Date(opp.expiresAt);
-                const now = new Date();
-                const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-                return expiryDate >= now && expiryDate <= threeDaysFromNow;
-            })();
-
-            return matchesSearch && matchesType && matchesLoc && matchesClosingSoon;
-        });
-    }, [opportunities, debouncedSearch, selectedType, selectedLoc, closingSoon]);
+    // Filter Logic
+    const {
+        filteredOpps,
+        totalCount,
+        isLoading,
+        profileIncomplete,
+        toggleSave
+    } = useOpportunitiesFeed({
+        type: selectedType,
+        selectedLoc,
+        showOnlySaved,
+        closingSoon,
+        search
+    });
 
     const isJobSaved = (opp: Opportunity) => {
         return opp.isSaved || false;
@@ -147,21 +78,7 @@ function OpportunitiesContent() {
         return opp.actions && opp.actions.length > 0;
     };
 
-    const toggleSave = async (opportunityId: string) => {
-        try {
-            const result = await savedApi.toggle(opportunityId);
-            setOpportunities(prev => prev.map(opp =>
-                opp.id === opportunityId
-                    ? { ...opp, isSaved: result.saved }
-                    : opp
-            ));
-        } catch {
-            toast.error('Failed to update bookmark');
-        }
-    };
-
     const updateType = (type: string | null) => {
-        setSelectedType(type);
         const params = new URLSearchParams(searchParams.toString());
         if (type) {
             params.set('type', enumToTypeParam(type));
@@ -176,42 +93,70 @@ function OpportunitiesContent() {
             <ProfileGate>
                 <div className="w-full max-w-7xl mx-auto px-4 md:px-6 pb-12 md:pb-20 space-y-6 md:space-y-8">
                     {/* Page Header */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border py-6">
-                        <div className="space-y-2">
-                            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground italic uppercase">Search Feed</h1>
-                            <div className="flex items-center gap-3">
-                                <span className="text-xs font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border uppercase tracking-wider">
-                                    {filteredOpps.length} Results Found
+                    <div className="flex flex-col gap-3 border-b border-border/60 pb-4">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                            <div className="space-y-1">
+                                <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">Browse the live feed</h1>
+                                <p className="text-xs text-muted-foreground">Verified posts only.</p>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-1 rounded-full border border-border uppercase tracking-wider">
+                                    {filteredOpps.length} results
                                 </span>
                                 {selectedType && (
                                     <button
                                         onClick={() => updateType(null)}
-                                        className="text-xs font-bold text-primary hover:underline uppercase tracking-tight"
+                                        className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest"
                                     >
-                                        Reset Filter
+                                        Clear
                                     </button>
                                 )}
+                                <button
+                                    onClick={() => setIsFilterOpen(!isFilterOpen)}
+                                    className={cn(
+                                        "inline-flex h-8 items-center justify-center rounded-full border px-3 text-[10px] font-bold uppercase tracking-widest transition-all",
+                                        isFilterOpen ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border text-muted-foreground hover:bg-muted"
+                                    )}
+                                >
+                                    <FunnelIcon className="w-4 h-4 mr-2" />
+                                    {isFilterOpen ? 'Hide' : 'Filters'}
+                                </button>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <div className="relative w-full md:w-64">
+                        <div className="flex flex-col lg:flex-row gap-2 lg:items-center">
+                            <div className="relative w-full lg:w-80">
                                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                 <Input
                                     type="text"
-                                    placeholder="Search by role or company..."
+                                    placeholder="Search role or company..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    className="pl-10 h-12 text-sm"
+                                    className="pl-10 h-10 text-sm bg-background"
                                 />
                             </div>
-                            <Button
-                                variant={isFilterOpen ? "default" : "outline"}
-                                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                                className="h-12 px-6 text-sm font-bold uppercase tracking-wider"
-                            >
-                                <FunnelIcon className="w-4 h-4 mr-2" />
-                                Filters
-                            </Button>
+                            <div className="flex flex-wrap gap-2">
+                                <Button
+                                    variant={selectedType === 'JOB' ? "default" : "outline"}
+                                    onClick={() => updateType('JOB')}
+                                    className="h-9 px-3 text-[10px] font-bold uppercase tracking-widest"
+                                >
+                                    Jobs
+                                </Button>
+                                <Button
+                                    variant={selectedType === 'INTERNSHIP' ? "default" : "outline"}
+                                    onClick={() => updateType('INTERNSHIP')}
+                                    className="h-9 px-3 text-[10px] font-bold uppercase tracking-widest"
+                                >
+                                    Internships
+                                </Button>
+                                <Button
+                                    variant={selectedType === 'WALKIN' ? "default" : "outline"}
+                                    onClick={() => updateType('WALKIN')}
+                                    className="h-9 px-3 text-[10px] font-bold uppercase tracking-widest"
+                                >
+                                    Walk-ins
+                                </Button>
+                            </div>
                         </div>
                     </div>
 
@@ -221,27 +166,7 @@ function OpportunitiesContent() {
                             "lg:col-span-3 space-y-6 lg:sticky lg:top-24",
                             isFilterOpen ? "block" : "hidden"
                         )}>
-                            <div className="bg-card rounded-xl border border-border p-5 md:p-6 space-y-8">
-                                <div>
-                                    <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-4">Category</h3>
-                                    <div className="space-y-2">
-                                        {FILTERS.type.map(type => (
-                                            <button
-                                                key={type.value}
-                                                onClick={() => updateType(selectedType === type.value ? null : type.value)}
-                                                className={cn(
-                                                    "w-full flex items-center justify-between px-3 py-3 rounded-lg border text-xs font-semibold transition-all text-left uppercase tracking-wide",
-                                                    selectedType === type.value
-                                                        ? "bg-primary/5 border-primary text-primary shadow-sm"
-                                                        : "bg-background border-border text-muted-foreground hover:bg-muted hover:text-foreground"
-                                                )}
-                                            >
-                                                {type.label}
-                                                {selectedType === type.value && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
+                            <div className="bg-card/80 rounded-2xl border border-border p-4 md:p-5 space-y-6">
 
                                 <div>
                                     <div className="flex items-center justify-between mb-4">
@@ -256,9 +181,9 @@ function OpportunitiesContent() {
                                                 key={loc}
                                                 onClick={() => setSelectedLoc(selectedLoc === loc ? null : loc)}
                                                 className={cn(
-                                                    "flex items-center gap-3 px-3 py-3 rounded-lg border text-xs font-semibold transition-all uppercase tracking-wide",
+                                                    "flex items-center gap-3 px-3 py-3 rounded-xl border text-xs font-semibold transition-all uppercase tracking-wide",
                                                     selectedLoc === loc
-                                                        ? "bg-primary/5 border-primary text-primary shadow-sm"
+                                                        ? "bg-primary/10 border-primary text-primary shadow-sm"
                                                         : "bg-background border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                                                 )}
                                             >
@@ -276,7 +201,7 @@ function OpportunitiesContent() {
                                     <button
                                         onClick={() => setClosingSoon(!closingSoon)}
                                         className={cn(
-                                            "w-full flex items-center justify-between px-3 py-3 rounded-lg border text-xs font-semibold transition-all text-left uppercase tracking-wide",
+                                            "w-full flex items-center justify-between px-3 py-3 rounded-xl border text-xs font-semibold transition-all text-left uppercase tracking-wide",
                                             closingSoon
                                                 ? "bg-amber-500/10 border-amber-500/50 text-amber-700 dark:text-amber-400 shadow-sm"
                                                 : "bg-background border-border text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -292,19 +217,19 @@ function OpportunitiesContent() {
 
                                 {/* Saved Filter */}
                                 <div>
-                                    <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-4">Saved Content</h3>
+                                    <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-4">Saved</h3>
                                     <button
                                         onClick={() => setShowOnlySaved(!showOnlySaved)}
                                         className={cn(
-                                            "w-full flex items-center justify-between px-3 py-3 rounded-lg border text-xs font-semibold transition-all text-left uppercase tracking-wide",
+                                            "w-full flex items-center justify-between px-3 py-3 rounded-xl border text-xs font-semibold transition-all text-left uppercase tracking-wide",
                                             showOnlySaved
-                                                ? "bg-primary/5 border-primary text-primary shadow-sm"
+                                                ? "bg-primary/10 border-primary text-primary shadow-sm"
                                                 : "bg-background border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                                         )}
                                     >
                                         <div className="flex items-center gap-2">
                                             <BookmarkIcon className="w-4 h-4" />
-                                            <span>My Bookmarks</span>
+                                            <span>Saved only</span>
                                         </div>
                                         {showOnlySaved && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
                                     </button>
@@ -319,7 +244,7 @@ function OpportunitiesContent() {
                         )}>
                             {/* Feed Display */}
                             {profileIncomplete ? (
-                                <div className="p-12 md:p-20 text-center rounded-2xl border border-border bg-card">
+                                <div className="p-10 md:p-16 text-center rounded-3xl border border-border bg-card/80 shadow-2xl">
                                     <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
                                         <ShieldCheckIcon className="w-8 h-8 text-primary" />
                                     </div>
@@ -330,7 +255,7 @@ function OpportunitiesContent() {
                                         <p className="text-sm font-medium text-muted-foreground leading-relaxed">
                                             {profileIncomplete.message}
                                         </p>
-                                        <div className="bg-muted/50 p-6 rounded-xl border border-border">
+                                        <div className="bg-muted/40 p-6 rounded-2xl border border-border">
                                             <div className="flex items-center justify-center gap-6">
                                                 <div className="text-center">
                                                     <div className="text-3xl font-bold text-primary">{profileIncomplete.percentage}%</div>
@@ -352,15 +277,15 @@ function OpportunitiesContent() {
                                     </div>
                                 </div>
                             ) : isLoading ? (
-                                <div className="h-[400px] relative">
-                                    <LoadingScreen message="Syncing Live Feed..." fullScreen={false} />
+                                <div className="h-100 relative">
+                                    <LoadingScreen message="Loading listings..." fullScreen={false} />
                                 </div>
                             ) : filteredOpps.length === 0 ? (
-                                <div className="p-20 text-center rounded-2xl border border-dashed border-border bg-card">
+                                <div className="p-16 text-center rounded-3xl border border-dashed border-border bg-card/80">
                                     <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-4 text-muted-foreground">
                                         <MagnifyingGlassIcon className="w-6 h-6" />
                                     </div>
-                                    <h3 className="text-lg font-bold text-foreground tracking-tight">No Results Found</h3>
+                                    <h3 className="text-lg font-bold text-foreground tracking-tight">No results found</h3>
                                     <p className="text-sm font-medium text-muted-foreground mt-2 max-w-sm mx-auto">
                                         Try adjusting your filters or search keywords to find matching opportunities.
                                     </p>
@@ -373,18 +298,18 @@ function OpportunitiesContent() {
                                             setClosingSoon(false);
                                             setShowOnlySaved(false);
                                         }}
-                                        className="mt-6 h-12 px-6 text-sm font-bold uppercase tracking-widest"
+                                        className="mt-6 h-11 px-6 text-sm font-bold uppercase tracking-widest"
                                     >
-                                        Clear All Filters
+                                        Clear filters
                                     </Button>
                                 </div>
                             ) : (
                                 <div className="space-y-6">
                                     <div className="flex items-center justify-between pb-2 border-b border-border/50">
-                                        <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground/80">Search Results</h2>
+                                        <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground/80">Listings</h2>
                                         <div className="flex items-center gap-2">
                                             <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                                            <span className="text-[9px] font-bold uppercase tracking-widest text-primary">Live Stream</span>
+                                            <span className="text-[9px] font-bold uppercase tracking-widest text-primary">Live updates</span>
                                         </div>
                                     </div>
                                     <div className={cn(
@@ -403,7 +328,7 @@ function OpportunitiesContent() {
                                                 isSaved={isJobSaved(opp)}
                                                 isApplied={isJobApplied(opp)}
                                                 onToggleSave={() => toggleSave(opp.id)}
-                                                onClick={() => router.push(`/opportunities/${opp.slug}`)}
+                                                onClick={() => router.push(`/opportunities/${opp.slug || opp.id}`)}
                                                 isAdmin={user?.role === 'ADMIN'}
                                             />
                                         ))}
@@ -415,7 +340,7 @@ function OpportunitiesContent() {
                             {!isLoading && !profileIncomplete && filteredOpps.length > 0 && (
                                 <div className="mt-12 text-center pb-8 border-t border-border pt-8">
                                     <p className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em]">
-                                        Verified &bull; {totalCount} Listings Online
+                                        Verified &bull; {totalCount} listings active
                                     </p>
                                 </div>
                             )}

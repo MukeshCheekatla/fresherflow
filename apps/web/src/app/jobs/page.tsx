@@ -10,6 +10,20 @@ export const metadata: Metadata = {
         title: 'Jobs for Freshers | FresherFlow',
         description: 'Discover full-time job opportunities for freshers across India.',
         type: 'website',
+        images: [
+            {
+                url: '/main.png',
+                width: 1200,
+                height: 630,
+                alt: 'Verified fresher jobs on FresherFlow',
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Jobs for Freshers | FresherFlow',
+        description: 'Discover full-time job opportunities for freshers across India.',
+        images: ['/main.png'],
     },
 };
 

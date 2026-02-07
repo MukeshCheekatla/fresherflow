@@ -1,7 +1,7 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
-import { WifiIcon } from '@heroicons/react/24/outline';
+import WifiIcon from '@heroicons/react/24/outline/WifiIcon';
 
 export default function OfflineNotification() {
     const isOffline = useSyncExternalStore(
@@ -22,7 +22,7 @@ export default function OfflineNotification() {
     return (
         <div className="fixed bottom-20 left-4 right-4 z-50 animate-in slide-in-from-bottom-2 duration-300 md:bottom-8 md:right-8 md:left-auto md:max-w-xs">
             <div className="bg-amber-600/90 backdrop-blur-md text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-amber-500/50">
-                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
                     <WifiIcon className="w-5 h-5" />
                 </div>
                 <div className="flex-1">

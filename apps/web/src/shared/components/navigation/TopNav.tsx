@@ -10,7 +10,6 @@ import AuthDialog from '@/features/auth/components/AuthDialog';
 export default function TopNav() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    // Use AuthContext directly to avoid error on admin pages
     const authContext = useContext(AuthContext);
     const user = authContext?.user || null;
     const logout = authContext?.logout || (async () => { });
@@ -21,7 +20,7 @@ export default function TopNav() {
     const typeParamRaw = searchParams.get('type') || '';
     const typeParam = typeParamRaw.toLowerCase();
     const isOpportunitiesRoute = pathname === '/' || pathname.startsWith('/opportunities');
-    const isWalkinsMode = isOpportunitiesRoute && (typeParam === 'walkin' || typeParam === 'walk-in' || typeParam === 'walkins' || typeParam === 'walk-ins' || typeParam === 'walkin');
+    const isWalkinsMode = isOpportunitiesRoute && (typeParam === 'walkin' || typeParam === 'walk-in' || typeParam === 'walkins' || typeParam === 'walk-ins');
     const isJobsMode = isOpportunitiesRoute && !isWalkinsMode;
     const isAdminRoute = pathname.startsWith('/admin');
 
@@ -43,19 +42,19 @@ export default function TopNav() {
 
     return (
         <>
-            <nav className="border-b border-neutral-200 bg-white sticky top-0 z-40">
+            <nav className="border-b border-border bg-background sticky top-0 z-40">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6">
                     <div className="flex items-center justify-between h-16">
                         {/* Logo */}
                         <Link href="/" className="flex items-center space-x-2">
-                            <span className="text-xl font-semibold text-neutral-900">
+                            <span className="text-xl font-bold text-foreground">
                                 FresherFlow
                             </span>
                         </Link>
 
-                        {/* Mode Toggle (Center) - Hide on admin mobile */}
+                        {/* Mode Toggle (Center) - Hide on admin/landing */}
                         <div className={cn(
-                            "items-center gap-1 bg-neutral-100 rounded-lg p-1",
+                            "items-center gap-1 bg-muted rounded-lg p-1",
                             isAdminRoute ? "hidden" : "flex"
                         )}>
                             <Link
@@ -63,8 +62,8 @@ export default function TopNav() {
                                 className={cn(
                                     "px-4 py-2 text-sm font-medium rounded-md transition-colors",
                                     isJobsMode
-                                        ? "bg-white text-neutral-900 shadow-sm"
-                                        : "text-neutral-600 hover:text-neutral-900"
+                                        ? "bg-background text-foreground shadow-sm"
+                                        : "text-muted-foreground hover:text-foreground"
                                 )}
                             >
                                 Jobs
@@ -74,8 +73,8 @@ export default function TopNav() {
                                 className={cn(
                                     "px-4 py-2 text-sm font-medium rounded-md transition-colors",
                                     isWalkinsMode
-                                        ? "bg-white text-neutral-900 shadow-sm"
-                                        : "text-neutral-600 hover:text-neutral-900"
+                                        ? "bg-background text-foreground shadow-sm"
+                                        : "text-muted-foreground hover:text-foreground"
                                 )}
                             >
                                 Walk-ins
@@ -85,7 +84,7 @@ export default function TopNav() {
                         {isAdminRoute && (
                             <Link
                                 href="/"
-                                className="hidden md:flex items-center gap-2 text-xs font-bold text-neutral-500 hover:text-neutral-900 transition-colors uppercase tracking-wider"
+                                className="hidden md:flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors uppercase tracking-wider"
                             >
                                 <span>View Website</span>
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,26 +95,14 @@ export default function TopNav() {
 
                         {/* Right: Alerts + Account */}
                         <div className="flex items-center gap-4 relative">
-
-
                             <Link
                                 href="/alerts"
                                 onClick={handleAlertsClick}
-                                className="text-neutral-600 hover:text-neutral-900 transition-colors"
+                                className="text-muted-foreground hover:text-foreground transition-colors"
                                 aria-label="Alerts"
                             >
-                                <svg
-                                    className="w-5 h-5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                                    />
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                                 </svg>
                             </Link>
 
@@ -123,10 +110,10 @@ export default function TopNav() {
                                 <button
                                     onClick={handleAccountClick}
                                     className={cn(
-                                        "flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-95 shadow-sm",
+                                        "flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-95 shadow-sm overflow-hidden",
                                         user
-                                            ? "bg-neutral-900 text-white border border-white/10"
-                                            : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                                            ? "bg-primary text-primary-foreground"
+                                            : "bg-muted text-muted-foreground hover:bg-muted/80"
                                     )}
                                     aria-label="Account"
                                 >
@@ -135,44 +122,31 @@ export default function TopNav() {
                                             {user.email?.[0].toUpperCase()}
                                         </span>
                                     ) : (
-                                        <svg
-                                            className="w-5 h-5"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                                            />
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                         </svg>
                                     )}
                                 </button>
 
-                                {/* Dropdown Menu */}
                                 {isDropdownOpen && user && (
-                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-neutral-200 py-1 z-50">
-                                        <div className="px-4 py-2 border-b border-neutral-100 mb-1">
-                                            <p className="text-xs text-neutral-500 truncate">{user.email}</p>
+                                    <div className="absolute right-0 mt-2 w-48 bg-card rounded-lg shadow-lg border border-border py-1 z-50">
+                                        <div className="px-4 py-2 border-b border-border/50 mb-1">
+                                            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                                         </div>
                                         <Link
                                             href="/account"
                                             onClick={() => setIsDropdownOpen(false)}
-                                            className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                                            className="block px-4 py-2 text-sm text-foreground hover:bg-muted"
                                         >
                                             My Profile
                                         </Link>
                                         <Link
                                             href="/account/saved"
                                             onClick={() => setIsDropdownOpen(false)}
-                                            className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                                            className="block px-4 py-2 text-sm text-foreground hover:bg-muted"
                                         >
                                             Saved Jobs
                                         </Link>
-
-
                                         <button
                                             onClick={() => {
                                                 logout();
@@ -197,4 +171,3 @@ export default function TopNav() {
         </>
     );
 }
-

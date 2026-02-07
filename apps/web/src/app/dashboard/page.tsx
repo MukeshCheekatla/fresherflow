@@ -8,16 +8,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Opportunity, UserStatsResponse } from '@fresherflow/types';
 import toast from 'react-hot-toast';
-import {
-    BriefcaseIcon,
-    UserIcon,
-    DocumentTextIcon,
-    ChevronRightIcon,
-    MagnifyingGlassIcon,
-    ChartBarIcon,
-    ClockIcon,
-    CheckBadgeIcon,
-} from '@heroicons/react/24/outline';
+import UserIcon from '@heroicons/react/24/outline/UserIcon';
+import ChevronRightIcon from '@heroicons/react/24/outline/ChevronRightIcon';
+import MagnifyingGlassIcon from '@heroicons/react/24/outline/MagnifyingGlassIcon';
+import ChartBarIcon from '@heroicons/react/24/outline/ChartBarIcon';
+import ClockIcon from '@heroicons/react/24/outline/ClockIcon';
+import CheckBadgeIcon from '@heroicons/react/24/outline/CheckBadgeIcon';
 import { SkeletonJobCard } from '@/components/ui/Skeleton';
 import JobCard from '@/features/jobs/components/JobCard';
 import { Button } from '@/components/ui/Button';
@@ -99,7 +95,7 @@ export default function DashboardPage() {
             setActionsSummary(data.summary || null);
         } catch (err: unknown) {
             const error = err as Error;
-            toast.error(`❌ Session sync failed: ${error.message}`);
+            toast.error(`Couldn't load activity: ${error.message}`);
         } finally {
             setIsLoading(false);
         }
@@ -108,34 +104,53 @@ export default function DashboardPage() {
     return (
         <AuthGate>
             <ProfileGate>
-                <div className="w-full max-w-7xl mx-auto space-y-6 md:space-y-8 pb-12 md:pb-20 px-4 md:px-6">
-
-                    {/* Header Section */}
-                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 py-4 border-b border-border/50">
-                        <div className="space-y-0.5 text-left">
-                            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
-                                Dashboard &bull; {user?.fullName?.split(' ')[0]}
-                            </h1>
-                            <p className="text-[10px] md:text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                                Platform overview and application activity.
-                            </p>
+                <div className="w-full max-w-7xl mx-auto space-y-5 md:space-y-8 pb-12 md:pb-20 px-4 md:px-6">
+                    {/* Compact Header */}
+                    <div className="flex flex-col gap-3 border-b border-border/60 pb-4">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                            <div className="space-y-1">
+                                <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
+                                    Welcome back, {user?.fullName?.split(' ')[0] || 'candidate'}.
+                                </h1>
+                                <p className="text-xs text-muted-foreground">Move fast on verified listings.</p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                <Button asChild className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest">
+                                    <Link href="/opportunities">
+                                        <MagnifyingGlassIcon className="w-4 h-4 mr-2" />
+                                        Open feed
+                                    </Link>
+                                </Button>
+                                <Button asChild variant="outline" className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest">
+                                    <Link href="/profile/edit">
+                                        <UserIcon className="w-4 h-4 mr-2" />
+                                        Update profile
+                                    </Link>
+                                </Button>
+                            </div>
                         </div>
-                        <div className="hidden md:flex items-center gap-2">
-                            <Button asChild variant="outline" className="h-8 px-3 text-[10px] font-bold uppercase tracking-wider">
-                                <Link href="/opportunities">
-                                    <MagnifyingGlassIcon className="w-3.5 h-3.5 mr-2" />
-                                    Search Jobs
-                                </Link>
-                            </Button>
+                        <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-widest text-muted-foreground">
+                            <span className="px-2 py-1 rounded-full border border-border bg-muted/50">
+                                Readiness {profile?.completionPercentage ?? 0}%
+                            </span>
+                            <span className="px-2 py-1 rounded-full border border-border bg-muted/50">
+                                Applied {isLoading ? '-' : actionsSummary?.appliedCount || 0}
+                            </span>
+                            <span className="px-2 py-1 rounded-full border border-border bg-muted/50">
+                                Planned {isLoading ? '-' : actionsSummary?.planningCount || 0}
+                            </span>
+                            <span className="px-2 py-1 rounded-full border border-border bg-muted/50">
+                                Interviews {isLoading ? '-' : actionsSummary?.attendedCount || 0}
+                            </span>
                         </div>
                     </div>
 
                     {/* Highlights Loading State */}
                     {isLoadingHighlights ? (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="h-32 bg-muted/20 rounded-xl animate-pulse" />
-                            <div className="h-32 bg-muted/20 rounded-xl animate-pulse" />
-                            <div className="h-32 bg-muted/20 rounded-xl animate-pulse" />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <div className="h-24 bg-muted/20 rounded-xl animate-pulse" />
+                            <div className="h-24 bg-muted/20 rounded-xl animate-pulse" />
+                            <div className="h-24 bg-muted/20 rounded-xl animate-pulse" />
                         </div>
                     ) : highlights && (
                         /* Filter out expired items on the fly */
@@ -148,17 +163,22 @@ export default function DashboardPage() {
 
                             return (
                                 <div className="space-y-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                                        <h2 className="text-[10px] font-bold uppercase tracking-[0.15em] text-amber-600/80">Today&apos;s Important Updates</h2>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                            <h2 className="text-[10px] font-bold uppercase tracking-[0.15em] text-amber-600/80">Fresh & Urgent</h2>
+                                        </div>
+                                        <Link href="/opportunities" className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline">
+                                            View feed
+                                        </Link>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                         {/* Urgent Walkins */}
                                         {activeWalkins.length > 0 && activeWalkins.map(opp => (
                                             <div
                                                 key={opp.id}
-                                                onClick={() => router.push(`/opportunities/${opp.slug}`)}
-                                                className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 cursor-pointer hover:bg-amber-500/10 transition-all flex flex-col justify-between gap-3 group"
+                                                onClick={() => router.push(`/opportunities/${opp.slug || opp.id}`)}
+                                                className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 cursor-pointer hover:bg-amber-500/10 transition-all flex flex-col justify-between gap-2 group"
                                             >
                                                 <div className="space-y-1">
                                                     <div className="flex items-center justify-between">
@@ -182,8 +202,8 @@ export default function DashboardPage() {
                                         {activeNew.slice(0, activeWalkins.length > 0 ? 2 : 3).map(opp => (
                                             <div
                                                 key={opp.id}
-                                                onClick={() => router.push(`/opportunities/${opp.slug}`)}
-                                                className="bg-primary/5 border border-primary/20 rounded-xl p-4 cursor-pointer hover:bg-primary/10 transition-all flex flex-col justify-between gap-3 group"
+                                                onClick={() => router.push(`/opportunities/${opp.slug || opp.id}`)}
+                                                className="bg-primary/5 border border-primary/20 rounded-2xl p-4 cursor-pointer hover:bg-primary/10 transition-all flex flex-col justify-between gap-2 group"
                                             >
                                                 <div className="space-y-1">
                                                     <div className="flex items-center justify-between">
@@ -204,35 +224,6 @@ export default function DashboardPage() {
                             );
                         })()
                     )}
-
-                    {/* Stats Overview - Compact 4-Column */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {/* Profile Completion */}
-                        <div className="bg-card/50 rounded-xl border border-border/50 p-3 flex flex-col justify-between h-20 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
-                                <UserIcon className="w-8 h-8 text-primary transform rotate-12" />
-                            </div>
-                            <span className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-[0.1em] z-10">Readiness</span>
-                            <div className="flex items-baseline gap-1 z-10">
-                                <h4 className="text-xl font-bold text-primary leading-none">{profile?.completionPercentage}%</h4>
-                                <span className="text-[9px] font-medium text-muted-foreground/60">Complete</span>
-                            </div>
-                        </div>
-
-                        {[
-                            { label: 'Applied', value: actionsSummary?.appliedCount || 0, icon: DocumentTextIcon },
-                            { label: 'Planned', value: actionsSummary?.planningCount || 0, icon: ClockIcon },
-                            { label: 'Interviews', value: actionsSummary?.attendedCount || 0, icon: BriefcaseIcon }
-                        ].map((stat, i) => (
-                            <div key={i} className="bg-card/50 rounded-xl border border-border/50 p-3 flex flex-col justify-between h-20 relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
-                                    <stat.icon className="w-8 h-8 text-foreground transform rotate-12" />
-                                </div>
-                                <span className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-[0.1em] z-10 text-balance">{stat.label}</span>
-                                <h4 className="text-xl font-bold text-foreground leading-none z-10">{isLoading ? '-' : stat.value}</h4>
-                            </div>
-                        ))}
-                    </div>
 
                     {/* Main Content Layout */}
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
@@ -290,28 +281,36 @@ export default function DashboardPage() {
 
                         {/* Intelligence Feed */}
                         <div className="lg:col-span-4 space-y-4 md:space-y-6">
-                            <h2 className="text-sm md:text-base font-bold tracking-tight text-foreground/90">Pulse Feed</h2>
+                            <h2 className="text-sm md:text-base font-bold tracking-tight text-foreground/90">Next steps</h2>
                             <div className="space-y-3">
-                                <div className="p-4 rounded-xl border border-border/50 bg-card/30 space-y-2">
+                                <div className="p-5 rounded-2xl border border-border bg-card/70 space-y-3">
                                     <div className="flex items-center gap-2">
-                                        <ChartBarIcon className="w-3.5 h-3.5 text-primary" />
-                                        <h4 className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Snapshot</h4>
+                                        <ChartBarIcon className="w-4 h-4 text-primary" />
+                                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Snapshot</h4>
                                     </div>
-                                    <p className="text-[11px] text-muted-foreground leading-snug font-medium">
-                                        {actionsSummary?.appliedCount || 0} active tracks. Complete profiles get 3x higher visibility.
+                                    <p className="text-sm text-muted-foreground leading-snug">
+                                        {actionsSummary?.appliedCount || 0} applications tracked. Keep your profile sharp to unlock better matches.
                                     </p>
+                                    <div className="flex items-center gap-2">
+                                        <Button asChild className="h-9 px-3 text-[10px] font-bold uppercase tracking-widest">
+                                            <Link href="/opportunities">Open feed</Link>
+                                        </Button>
+                                        <Button asChild variant="outline" className="h-9 px-3 text-[10px] font-bold uppercase tracking-widest">
+                                            <Link href="/account/saved">Saved</Link>
+                                        </Button>
+                                    </div>
                                 </div>
 
-                                <div className="p-4 rounded-xl border border-border/50 bg-card/30 space-y-3 group hover:border-primary/20 transition-all">
+                                <div className="p-5 rounded-2xl border border-border bg-card/70 space-y-3">
                                     <div className="flex items-center gap-2">
-                                        <CheckBadgeIcon className="w-3.5 h-3.5 text-success" />
-                                        <h3 className="text-[10px] font-bold uppercase tracking-wider">Profile Status</h3>
+                                        <CheckBadgeIcon className="w-4 h-4 text-success" />
+                                        <h3 className="text-[10px] font-bold uppercase tracking-wider">Profile status</h3>
                                     </div>
-                                    <p className="text-[11px] text-muted-foreground leading-snug font-medium">
-                                        Ensure your academic records are locked for verified eligibility.
+                                    <p className="text-sm text-muted-foreground leading-snug">
+                                        Complete your profile to unlock every opportunity and faster shortlists.
                                     </p>
-                                    <Button asChild className="w-full h-8 text-[10px] font-bold uppercase tracking-widest">
-                                        <Link href="/profile/edit">Update Records</Link>
+                                    <Button asChild className="w-full h-9 text-[10px] font-bold uppercase tracking-widest">
+                                        <Link href="/profile/edit">Improve profile</Link>
                                     </Button>
                                 </div>
                             </div>

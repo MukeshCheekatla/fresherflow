@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
         let seoTitle = `${role} ${type} at ${company}`;
         if (batch) seoTitle += ` ${batch}`;
-        seoTitle += ` – ${location}`;
+        seoTitle += ` - ${location}`;
 
         // Generate description (max 155 chars)
         const eligibility = opportunity.allowedPassoutYears.length > 0
@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                 type: 'website',
                 images: [
                     {
-                        url: 'https://fresherflow.in/og-default.png',
+                        url: 'https://fresherflow.in/main.png',
                         width: 1200,
                         height: 630,
                         alt: `${opportunity.title} at ${opportunity.company}`,
@@ -60,7 +60,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                 card: 'summary_large_image',
                 title: seoTitle,
                 description,
-                images: ['https://fresherflow.in/og-default.png'],
+                images: ['https://fresherflow.in/main.png'],
             },
             alternates: {
                 canonical: url,

@@ -1,7 +1,8 @@
 'use client';
 
 import { useTheme } from '@/contexts/ThemeContext';
-import { SunIcon, MoonIcon } from '@heroicons/react/24/outline';
+import SunIcon from '@heroicons/react/24/outline/SunIcon';
+import MoonIcon from '@heroicons/react/24/outline/MoonIcon';
 import { useState, useEffect } from 'react';
 
 export function ThemeToggle() {
@@ -14,7 +15,7 @@ export function ThemeToggle() {
     }, []);
 
     if (!mounted) {
-        return <div className="w-[42px] h-[42px]" />; // Placeholder to prevent mismatch
+        return <div className="w-10.5 h-10.5" />; // Placeholder to prevent mismatch
     }
 
     return (
@@ -24,9 +25,9 @@ export function ThemeToggle() {
             aria-label="Toggle Theme"
         >
             {theme === 'light' ? (
-                <MoonIcon className="w-[22px] h-[22px]" />
+                <MoonIcon className="w-5.5 h-5.5" />
             ) : (
-                <SunIcon className="w-[22px] h-[22px]" />
+                <SunIcon className="w-5.5 h-5.5" />
             )}
         </button>
     );

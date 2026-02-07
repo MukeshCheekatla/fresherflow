@@ -121,17 +121,17 @@ export default function ProfileCompletePage() {
 
     const handleEducationSubmit = async () => {
         if (!fullName || !tenthYear || !twelfthYear || !educationLevel || !gradCourse || !gradSpecialization || !gradYear) {
-            toast.error('❌ Please fill all required fields, including your name');
+            toast.error('Error: Please fill all required fields, including your name');
             return;
         }
 
         if (tenthYear.length !== 4 || twelfthYear.length !== 4 || gradYear.length !== 4 || (hasPG && pgYear && pgYear.length !== 4)) {
-            toast.error('❌ Years must be exactly 4 digits');
+            toast.error('Error: Years must be exactly 4 digits');
             return;
         }
 
         setIsLoading(true);
-        const loadingToast = toast.loading('🛰️ Syncing academic foundation...');
+        const loadingToast = toast.loading('Saving education details...');
         try {
             await profileApi.updateEducation({
                 fullName,
@@ -148,7 +148,7 @@ export default function ProfileCompletePage() {
                 })
             });
             await refreshUser();
-            toast.success('Academy profile locked!', { id: loadingToast });
+            toast.success('Education saved.', { id: loadingToast });
             setCurrentStep('preferences');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (err: unknown) {
@@ -160,16 +160,16 @@ export default function ProfileCompletePage() {
 
     const handlePreferencesSubmit = async () => {
         if (interestedIn.length === 0 || preferredCities.length === 0 || workModes.length === 0) {
-            toast.error('❌ Preferences incomplete');
+            toast.error('Error: Preferences incomplete');
             return;
         }
 
         setIsLoading(true);
-        const loadingToast = toast.loading('🎯 Optimizing career stream...');
+        const loadingToast = toast.loading('Saving preferences...');
         try {
             await profileApi.updatePreferences({ interestedIn, preferredCities, workModes });
             await refreshUser();
-            toast.success('Interests mapped!', { id: loadingToast });
+            toast.success('Preferences saved.', { id: loadingToast });
             setCurrentStep('readiness');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (err: unknown) {
@@ -181,16 +181,16 @@ export default function ProfileCompletePage() {
 
     const handleReadinessSubmit = async () => {
         if (!availability || skills.length === 0) {
-            toast.error('❌ Skills & availability required');
+            toast.error('Error: Skills & availability required');
             return;
         }
 
         setIsLoading(true);
-        const loadingToast = toast.loading('🏆 Finalizing professional profile...');
+        const loadingToast = toast.loading('Finalizing your profile...');
         try {
             await profileApi.updateReadiness({ availability, skills });
             await refreshUser();
-            toast.success('Profile setup complete!', { id: loadingToast });
+            toast.success('Profile complete.', { id: loadingToast });
             router.push('/dashboard');
         } catch (err: unknown) {
             toast.error((err as Error).message || 'Update failed', { id: loadingToast });
@@ -218,16 +218,16 @@ export default function ProfileCompletePage() {
 
     return (
         <AuthGate>
-            <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="max-w-7xl mx-auto px-4 md:px-6 py-5 md:py-10">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start">
 
                     {/* Sticky Sidebar */}
-                    <aside className="lg:col-span-4 space-y-5 lg:sticky lg:top-24">
-                        <div className="premium-card !p-6 space-y-6 shadow-xl border-primary/5">
+                    <aside className="lg:col-span-4 space-y-3 lg:sticky lg:top-24">
+                        <div className="premium-card p-5! md:p-6! space-y-5 shadow-xl border-primary/5">
                             <div className="flex items-start justify-between">
                                 <div>
-                                    <h1 className="text-2xl font-bold tracking-tight mb-2">Complete Profile</h1>
-                                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-[0.05em]">Setup your account for job matching.</p>
+                                    <h1 className="text-2xl font-bold tracking-tight mb-1">Complete profile</h1>
+                                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-[0.05em]">Set up your account for better matches.</p>
                                 </div>
                                 <a href="/logout" className="text-xs text-muted-foreground hover:text-error underline-offset-2 hover:underline shrink-0" title="Logout">
                                     Logout
@@ -235,7 +235,7 @@ export default function ProfileCompletePage() {
                             </div>
 
                             {/* Circular Progress */}
-                            <div className="flex items-center gap-6 p-4 bg-muted/30 rounded-2xl border border-border/50">
+                            <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-2xl border border-border/50">
                                 <div className="relative w-16 h-16 shrink-0">
                                     <svg className="w-full h-full transform -rotate-90">
                                         <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="5" fill="none" className="text-muted" />
@@ -252,12 +252,12 @@ export default function ProfileCompletePage() {
                                 </div>
                                 <div className="space-y-0.5">
                                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Completion</p>
-                                    <p className="text-base font-bold text-foreground">{completion}% Finished</p>
+                                    <p className="text-base font-bold text-foreground">{completion}% complete</p>
                                 </div>
                             </div>
 
                             {/* Nav Steps */}
-                            <div className="space-y-3">
+                            <div className="space-y-2">
                                 {[
                                     { id: 'education', label: 'Academic Foundation', desc: 'Detailed History', icon: AcademicCapIcon },
                                     { id: 'preferences', label: 'Match Parameters', desc: 'Interests & Role types', icon: ViewfinderCircleIcon },
@@ -269,7 +269,7 @@ export default function ProfileCompletePage() {
                                         <div
                                             key={s.id}
                                             className={cn(
-                                                "p-4 rounded-2xl flex items-center gap-4 transition-all border",
+                                                "p-3 rounded-2xl flex items-center gap-3 transition-all border",
                                                 isActive ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-[1.02]" :
                                                     isDone ? "bg-primary/5 border-primary/20 text-primary" :
                                                         "bg-card border-border text-muted-foreground"
@@ -292,10 +292,10 @@ export default function ProfileCompletePage() {
 
                     {/* Main Form Content */}
                     <main className="lg:col-span-8">
-                        <div className="premium-card !p-6 md:!p-8 shadow-2xl border-border/50 min-h-[500px] flex flex-col">
+                        <div className="premium-card p-5! md:p-7! shadow-2xl border-border/50 min-h-125 flex flex-col">
 
                             {/* Header Intro */}
-                            <div className="flex items-center gap-3 mb-8">
+                            <div className="flex items-center gap-3 mb-5">
                                 <div className="w-1 h-8 bg-primary rounded-full" />
                                 <div>
                                     <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
@@ -305,9 +305,9 @@ export default function ProfileCompletePage() {
                                         <SparklesIcon className="w-4 h-4 text-primary animate-pulse" />
                                     </h2>
                                     <p className="text-[11px] text-muted-foreground font-medium">
-                                        {currentStep === 'education' && "Define your complete education history for strict eligibility matching."}
-                                        {currentStep === 'preferences' && "Tell us what excites you to personalize your job feed."}
-                                        {currentStep === 'readiness' && "Finalize your technical skills and job hunting status."}
+                                        {currentStep === 'education' && "Add your education so we can match eligibility correctly."}
+                                        {currentStep === 'preferences' && "Tell us what you want to see in your feed."}
+                                        {currentStep === 'readiness' && "Add skills and availability to complete your profile."}
                                     </p>
                                 </div>
                             </div>
@@ -315,17 +315,17 @@ export default function ProfileCompletePage() {
                             {/* Forms Rendering */}
                             <div className="flex-1">
                                 {currentStep === 'education' && (
-                                    <div className="space-y-12 animate-in fade-in slide-in-from-right-4 duration-500">
+                                    <div className="space-y-7 md:space-y-9 animate-in fade-in slide-in-from-right-4 duration-500">
 
                                         {/* Basic Identity */}
-                                        <div className="space-y-6">
+                                        <div className="space-y-4">
                                             <div className="flex items-center gap-2">
                                                 <div className="w-8 h-8 rounded bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">ID</div>
                                                 <h3 className="text-sm font-bold uppercase tracking-wider">Personal Identity</h3>
                                             </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                                                 <div className="space-y-2">
-                                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Identity Name</label>
+                                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Full Name</label>
                                                     <Input
                                                         type="text"
                                                         value={fullName}
@@ -342,14 +342,14 @@ export default function ProfileCompletePage() {
                                                         disabled
                                                         className="bg-muted cursor-not-allowed"
                                                     />
-                                                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight ml-1">Email is non-mutable for security protocols.</p>
+                                                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight ml-1">Email cannot be changed for security.</p>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-border/50">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-5 border-t border-border/50">
                                             {/* 10th Standard */}
-                                            <div className="space-y-6">
+                                            <div className="space-y-3">
                                                 <div className="flex items-center gap-2">
                                                     <h3 className="text-sm font-bold uppercase tracking-wider">Secondary</h3>
                                                 </div>
@@ -360,7 +360,7 @@ export default function ProfileCompletePage() {
                                             </div>
 
                                             {/* 12th / Diploma */}
-                                            <div className="space-y-6">
+                                            <div className="space-y-3">
                                                 <div className="flex items-center gap-2">
                                                     <h3 className="text-sm font-bold uppercase tracking-wider">Higher Secondary</h3>
                                                 </div>
@@ -372,7 +372,7 @@ export default function ProfileCompletePage() {
                                         </div>
 
                                         {/* Higher Education */}
-                                        <div className="space-y-6 pt-4 border-t border-border/50">
+                                        <div className="space-y-4 pt-4 border-t border-border/50">
                                             <div className="flex items-center gap-2">
                                                 <h3 className="text-sm font-bold uppercase tracking-wider">Graduation (Primary)</h3>
                                             </div>
@@ -400,7 +400,7 @@ export default function ProfileCompletePage() {
                                                 </div>
                                             </div>
 
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">UG Course</label>
                                                     <Select value={gradCourse} onChange={(e) => { setGradCourse(e.target.value); setGradSpecialization(''); }}>
@@ -424,15 +424,15 @@ export default function ProfileCompletePage() {
                                         </div>
 
                                         <div className="pt-4 border-t border-border mt-4">
-                                            <label className="flex items-center gap-3 p-4 bg-muted/30 rounded-2xl cursor-pointer hover:bg-muted/50 transition-colors border border-border/50">
+                                            <label className="flex items-center gap-3 p-3 bg-muted/30 rounded-2xl cursor-pointer hover:bg-muted/50 transition-colors border border-border/50">
                                                 <input type="checkbox" checked={hasPG} onChange={(e) => setHasPG(e.target.checked)} className="w-5 h-5 rounded-md border-border text-primary" />
-                                                <span className="text-sm font-bold text-foreground">Add Postgraduate (PG) Details</span>
+                                                <span className="text-sm font-bold text-foreground">Add PG details</span>
                                             </label>
                                         </div>
 
                                         {hasPG && (
-                                            <div className="space-y-6 animate-in slide-in-from-top-4 duration-500 pt-2 pb-6 border-b border-border/50">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-4 animate-in slide-in-from-top-4 duration-500 pt-2 pb-6 border-b border-border/50">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                                                     <div className="space-y-2">
                                                         <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">PG Course</label>
                                                         <Select value={pgCourse} onChange={(e) => setPgCourse(e.target.value)}>
@@ -455,14 +455,14 @@ export default function ProfileCompletePage() {
                                             </div>
                                         )}
 
-                                        <Button onClick={handleEducationSubmit} disabled={isLoading} className="w-full h-12 text-sm shadow-xl shadow-primary/20 font-bold uppercase tracking-widest">
-                                            {isLoading ? <ArrowPathIcon className="w-6 h-6 animate-spin" /> : <span>Step 1: Save Foundation</span>}
+                                        <Button onClick={handleEducationSubmit} disabled={isLoading} className="w-full h-11 text-sm shadow-xl shadow-primary/20 font-bold uppercase tracking-widest">
+                                            {isLoading ? <ArrowPathIcon className="w-6 h-6 animate-spin" /> : <span>Save Education</span>}
                                         </Button>
                                     </div>
                                 )}
 
                                 {currentStep === 'preferences' && (
-                                    <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
+                                    <div className="space-y-7 animate-in fade-in slide-in-from-right-4 duration-500">
                                         <div className="space-y-4">
                                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Stream Selection</p>
                                             <div className="flex flex-wrap gap-2">
@@ -471,7 +471,7 @@ export default function ProfileCompletePage() {
                                                         key={type}
                                                         onClick={() => toggleArrayItem(interestedIn, setInterestedIn, type)}
                                                         className={cn(
-                                                            "h-10 rounded-xl font-bold border-2 transition-all text-[10px] uppercase tracking-widest",
+                                                            "h-9 rounded-xl font-bold border-2 transition-all text-[10px] uppercase tracking-widest",
                                                             interestedIn.includes(type) ? "bg-primary border-primary text-primary-foreground shadow-lg" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/40"
                                                         )}
                                                     >
@@ -482,12 +482,12 @@ export default function ProfileCompletePage() {
                                         </div>
 
                                         <div className="space-y-4">
-                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Work Ecosystem</p>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Work Mode</p>
                                             <div className="flex flex-wrap gap-2">
                                                 {WORK_MODES.map(t => (
                                                     <button
                                                         key={t} onClick={() => toggleArrayItem(workModes, setWorkModes, t)}
-                                                        className={cn("px-6 h-10 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all border", workModes.includes(t) ? "bg-foreground text-background border-foreground shadow-lg" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/50")}
+                                                        className={cn("px-5 h-9 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all border", workModes.includes(t) ? "bg-foreground text-background border-foreground shadow-lg" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/50")}
                                                     >
                                                         {t}
                                                     </button>
@@ -496,7 +496,7 @@ export default function ProfileCompletePage() {
                                         </div>
 
                                         <div className="space-y-4">
-                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Primary Locations</p>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Preferred Locations</p>
                                             <div className="flex gap-2">
                                                 <input
                                                     placeholder="Type city and hit Enter"
@@ -506,7 +506,7 @@ export default function ProfileCompletePage() {
                                                             if (val) { toggleArrayItem(preferredCities, setPreferredCities, val); (e.target as HTMLInputElement).value = ''; }
                                                         }
                                                     }}
-                                                    className="premium-input !h-10 text-[11px]"
+                                                    className="premium-input !h-9 text-[11px]"
                                                 />
                                             </div>
                                             <div className="flex flex-wrap gap-2 min-h-6">
@@ -519,21 +519,21 @@ export default function ProfileCompletePage() {
                                             </div>
                                         </div>
 
-                                        <Button onClick={handlePreferencesSubmit} disabled={isLoading} className="w-full h-12 text-sm shadow-xl shadow-primary/20 font-bold uppercase tracking-widest">
-                                            {isLoading ? <ArrowPathIcon className="w-6 h-6 animate-spin" /> : <span>Step 2: Map Interests</span>}
+                                        <Button onClick={handlePreferencesSubmit} disabled={isLoading} className="w-full h-11 text-sm shadow-xl shadow-primary/20 font-bold uppercase tracking-widest">
+                                            {isLoading ? <ArrowPathIcon className="w-6 h-6 animate-spin" /> : <span>Save Preferences</span>}
                                         </Button>
                                     </div>
                                 )}
 
                                 {currentStep === 'readiness' && (
-                                    <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
+                                    <div className="space-y-7 animate-in fade-in slide-in-from-right-4 duration-500">
                                         <div className="space-y-4">
-                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Availability Window</p>
-                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Availability</p>
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                                                 {AVAILABILITY_OPTIONS.map(val => (
                                                     <button
                                                         key={val} onClick={() => setAvailability(val)}
-                                                        className={cn("h-14 rounded-xl flex flex-col items-center justify-center border-2 transition-all gap-0.5", availability === val ? "border-primary bg-primary text-primary-foreground shadow-xl shadow-primary/20" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/40")}
+                                                        className={cn("h-11 rounded-xl flex flex-col items-center justify-center border-2 transition-all gap-0.5", availability === val ? "border-primary bg-primary text-primary-foreground shadow-xl shadow-primary/20" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/40")}
                                                     >
                                                         <span className="font-bold text-[10px] uppercase tracking-widest">{val.replace('_', ' ')}</span>
                                                         <span className="text-[7px] opacity-60 font-medium uppercase tracking-[0.2em]">Horizon</span>
@@ -543,10 +543,10 @@ export default function ProfileCompletePage() {
                                         </div>
 
                                         <div className="space-y-4">
-                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Skill Catalog</p>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Skills</p>
                                             <div className="flex gap-2">
-                                                <input value={skillInput} onChange={(e) => setSkillInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && addSkill()} className="premium-input !h-10 text-[11px]" placeholder="e.g. React, Node.js" />
-                                                <button onClick={addSkill} className="premium-button shrink-0 px-4 !h-10"><PlusIcon className="w-4 h-4" /></button>
+                                                <input value={skillInput} onChange={(e) => setSkillInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && addSkill()} className="premium-input !h-9 text-[11px]" placeholder="e.g. React, Node.js" />
+                                                <button onClick={addSkill} className="premium-button shrink-0 px-4 !h-9"><PlusIcon className="w-4 h-4" /></button>
                                             </div>
                                             <div className="flex flex-wrap gap-2 min-h-6">
                                                 {skills.map(s => (
@@ -558,8 +558,8 @@ export default function ProfileCompletePage() {
                                             </div>
                                         </div>
 
-                                        <Button onClick={handleReadinessSubmit} disabled={isLoading} className="w-full h-12 text-sm bg-foreground text-background hover:bg-foreground/90 shadow-xl font-bold uppercase tracking-widest">
-                                            {isLoading ? <ArrowPathIcon className="w-5 h-5 animate-spin" /> : <div className="flex items-center gap-2"><span>Finish Entire Setup</span><CheckCircleIcon className="w-5 h-5" /></div>}
+                                        <Button onClick={handleReadinessSubmit} disabled={isLoading} className="w-full h-11 text-sm bg-foreground text-background hover:bg-foreground/90 shadow-xl font-bold uppercase tracking-widest">
+                                            {isLoading ? <ArrowPathIcon className="w-5 h-5 animate-spin" /> : <div className="flex items-center gap-2"><span>Finish Setup</span><CheckCircleIcon className="w-5 h-5" /></div>}
                                         </Button>
                                     </div>
                                 )}
@@ -571,4 +571,5 @@ export default function ProfileCompletePage() {
         </AuthGate>
     );
 }
+
 

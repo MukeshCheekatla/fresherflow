@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 interface FooterProps {
     className?: string;
@@ -13,6 +14,11 @@ export function Footer({ className }: FooterProps) {
                 <p className="text-xs text-muted-foreground">
                     &copy; {currentYear} FresherFlow. All rights reserved.
                 </p>
+                <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+                    <span className="text-muted-foreground/40">|</span>
+                    <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+                </div>
                 <div className="text-[10px] text-muted-foreground/60 max-w-md space-y-1">
                     <p>
                         Company names and logos are trademarks of their respective owners.

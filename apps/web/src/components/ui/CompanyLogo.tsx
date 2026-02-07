@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { BuildingOfficeIcon } from '@heroicons/react/24/outline';
+import BuildingOfficeIcon from '@heroicons/react/24/outline/BuildingOfficeIcon';
 import { cn } from '@/lib/utils';
 
 // Helper to extract root domain from URL
@@ -29,11 +29,49 @@ export default function CompanyLogo({ companyName, applyLink, className }: Compa
     // 2. Constructed domain from company name (heuristic)
 
     // Heuristic: "Tech Mahindra" -> "techmahindra.com"
+    const normalizeCompanyName = (name: string) => {
+        const suffixes = [
+            'ltd', 'limited', 'inc', 'llc', 'pvt', 'private', 'corp', 'corporation',
+            'co', 'company', 'group', 'international', 'technologies', 'technology',
+            'systems', 'solutions', 'software', 'labs', 'services', 'digital'
+        ];
+        const tokens = name
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]/g, ' ')
+            .split(/\s+/)
+            .filter(Boolean);
+
+        while (tokens.length > 1 && suffixes.includes(tokens[tokens.length - 1])) {
+            tokens.pop();
+        }
+
+        return tokens.join('');
+    };
+
     const constructedDomain = companyName
-        ? `${companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`
+        ? `${normalizeCompanyName(companyName)}.com`
         : null;
 
     const linkDomain = applyLink ? getDomainFromUrl(applyLink) : null;
+    const normalizedLinkDomain = linkDomain?.startsWith('www.') ? linkDomain.slice(4) : linkDomain;
+    const blockedDomains = new Set([
+        'boards.greenhouse.io',
+        'greenhouse.io',
+        'jobs.lever.co',
+        'lever.co',
+        'myworkdayjobs.com',
+        'workday.com',
+        'careers.microsoft.com',
+        'careers.google.com',
+        'linkedin.com',
+        'naukri.com',
+        'indeed.com',
+        'monster.com',
+        'wellfound.com',
+        'angel.co'
+    ]);
+
+    const isBlockedDomain = normalizedLinkDomain ? blockedDomains.has(normalizedLinkDomain) : false;
 
     // Prioritize link domain, fallback to constructed
     // Note: If linkDomain is something generic like "boards.greenhouse.io", this might fail to get the company logo.
@@ -52,8 +90,14 @@ export default function CompanyLogo({ companyName, applyLink, className }: Compa
     const [attemptIndex, setAttemptIndex] = useState(0);
 
     const candidates = [];
-    if (linkDomain) candidates.push(`https://logo.clearbit.com/${linkDomain}`);
-    if (constructedDomain) candidates.push(`https://logo.clearbit.com/${constructedDomain}`);
+    if (normalizedLinkDomain && !isBlockedDomain) {
+        candidates.push(`https://logo.clearbit.com/${normalizedLinkDomain}?size=80`);
+        candidates.push(`https://logo.clearbit.com/www.${normalizedLinkDomain}?size=80`);
+    }
+    if (constructedDomain) {
+        candidates.push(`https://logo.clearbit.com/${constructedDomain}?size=80`);
+        candidates.push(`https://logo.clearbit.com/www.${constructedDomain}?size=80`);
+    }
 
     const currentSrc = candidates[attemptIndex];
 

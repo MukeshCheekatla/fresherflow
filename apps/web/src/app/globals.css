@@ -29,33 +29,33 @@
 
 @layer base {
   :root {
-    /* Light Mode - Clean Vercel-like Monochrome */
-    --primary: 0 0% 0%; /* Pure Black (#000000) for CTAs */
+    /* Light Mode - High-Contrast Trust + Energy */
+    --primary: 222 47% 11%; /* Deep navy */
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 96%; /* Very light gray */
-    --secondary-foreground: 0 0% 10%;
-    --accent: 0 0% 96%; 
-    --accent-foreground: 0 0% 10%;
-    
-    --background: 0 0% 100%; /* Pure White (#FFFFFF) */
-    --foreground: 0 0% 10%; /* Almost Black text */
-    
-    --card: 0 0% 100%; /* White cards */
-    --card-foreground: 0 0% 10%;
-    
-    --border: 0 0% 88%; /* Darker border (#E0E0E0) for better card definition */
-    --input: 0 0% 96%;
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%; /* #737373 secondary text */
-    
-    --ring: 0 0% 0%;
-    --icon: 0 0% 10%; 
-    --radius: 6px;
-    
-    /* Success/Warning/Error States (Refined) */
-    --success: 150 100% 28%; /* Brighter Green */
-    --warning: 35 100% 50%;
-    --error: 0 100% 55%; /* Brighter Red */
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --accent: 190 90% 45%; /* Electric teal */
+    --accent-foreground: 222 47% 11%;
+
+    --background: 210 40% 98%; /* Cool off-white */
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --border: 214 20% 88%; /* Soft steel */
+    --input: 210 30% 96%;
+    --muted: 210 24% 94%;
+    --muted-foreground: 215 16% 40%;
+
+    --ring: 190 90% 45%;
+    --icon: 222 47% 11%;
+    --radius: 10px;
+
+    /* Success/Warning/Error States */
+    --success: 150 75% 35%;
+    --warning: 35 95% 50%;
+    --error: 0 85% 55%;
     
     /* Typography Scale */
     --fs-h1: 32px;
@@ -81,32 +81,31 @@
 
   .dark {
     color-scheme: dark;
-    /* Dark Mode - Vercel-like Charcoal Theme */
-    --background: 0 0% 3%; /* #080808 - Almost Pure Black */
-    --foreground: 0 0% 93%; /* #EDEDED */
-    
-    --card: 0 0% 7%; /* #121212 - Deep Charcoal */
-    --card-foreground: 0 0% 93%;
-    
-    --primary: 0 0% 98%; /* Stark White for high contrast CTAs against dark bg */
-    --primary-foreground: 0 0% 0%;
-    
-    --secondary: 0 0% 12%; 
-    --secondary-foreground: 0 0% 93%;
-    
-    --accent: 0 0% 16%;
-    --accent-foreground: 0 0% 100%;
-    
-    --border: 0 0% 12.5%; /* Subtle crisp borders */
-    --input: 0 0% 10%;
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 55%; /* #888888 */
-    
-    --ring: 0 0% 80%;
-    --icon: 0 0% 100%;
-    
-    /* Success/Warning/Error in Dark */
-    --success: 142 70% 50%;
+    /* Dark Mode - Premium Deep */
+    --background: 222 47% 6%;
+    --foreground: 210 20% 96%;
+
+    --card: 222 47% 9%;
+    --card-foreground: 210 20% 96%;
+
+    --primary: 210 20% 96%;
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 222 30% 14%;
+    --secondary-foreground: 210 20% 96%;
+
+    --accent: 190 90% 55%;
+    --accent-foreground: 222 47% 11%;
+
+    --border: 222 24% 18%;
+    --input: 222 24% 16%;
+    --muted: 222 24% 14%;
+    --muted-foreground: 215 20% 65%;
+
+    --ring: 190 90% 55%;
+    --icon: 210 20% 96%;
+
+    --success: 150 70% 50%;
     --warning: 45 90% 60%;
     --error: 0 85% 65%;
 
@@ -150,6 +149,7 @@
     margin: 0;
     padding: 0;
     background-color: hsl(var(--background));
+    background-image: none;
     color: hsl(var(--foreground));
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -216,18 +216,18 @@
 
   /* Buttons - Production Grade */
   .premium-button, .btn-primary {
-    height: 40px;
+    height: 44px;
     padding-left: 1.5rem;
     padding-right: 1.5rem;
     background-color: hsl(var(--primary));
     color: hsl(var(--primary-foreground));
-    border-radius: 6px;
+    border-radius: 12px;
     font-weight: 600;
     font-size: var(--fs-button);
-    box-shadow: 0 1px 1px 0 rgb(0 0 0 / 0.05);
-    transition: all 100ms ease;
+    box-shadow: 0 8px 20px -16px hsl(var(--primary) / 0.6);
+    transition: all 160ms ease;
     cursor: pointer;
-    border: none;
+    border: 1px solid hsl(var(--primary) / 0.35);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -235,8 +235,8 @@
   }
   
   .premium-button:hover, .btn-primary:hover {
-    background-color: hsl(var(--primary) / 0.95);
-    box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.05);
+    background-color: hsl(var(--primary) / 0.92);
+    box-shadow: 0 12px 24px -18px hsl(var(--primary) / 0.7);
   }
   
   .premium-button:active, .btn-primary:active {
@@ -249,13 +249,13 @@
   }
 
   .premium-button-outline, .btn-outline {
-    height: 40px;
+    height: 44px;
     padding-left: 1.5rem;
     padding-right: 1.5rem;
-    background-color: transparent;
+    background-color: hsl(var(--card));
     color: hsl(var(--foreground));
     border: 1.5px solid hsl(var(--border));
-    border-radius: 6px;
+    border-radius: 12px;
     font-weight: 600;
     font-size: var(--fs-button);
     transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -268,7 +268,7 @@
   
   /* Secondary CTA (Sign In) - Muted Outline */
   .btn-secondary-cta {
-    @apply h-[40px] px-[1.5rem] bg-transparent border-[1.5px] rounded-[6px] transition-all cursor-pointer flex items-center justify-center gap-[0.5rem];
+    @apply h-10 px-6 bg-transparent border-[1.5px] rounded-md transition-all cursor-pointer flex items-center justify-center gap-2;
     color: hsl(var(--muted-foreground));
     border-color: hsl(var(--border));
     font-weight: 500;
@@ -281,9 +281,9 @@
   }
 
   .premium-button-outline:hover, .btn-outline:hover {
-    border-color: hsl(var(--primary));
-    color: hsl(var(--primary));
-    background-color: hsl(var(--primary) / 0.05);
+    border-color: hsl(var(--primary) / 0.35);
+    color: hsl(var(--foreground));
+    background-color: hsl(var(--muted) / 0.5);
   }
   
   /* Global Icon Standards */
@@ -310,12 +310,12 @@
   /* Inputs & Selects - Production Grade */
   .premium-input, select.premium-input {
     width: 100%;
-    height: 44px;
+    height: 46px;
     padding-left: 0.875rem;
     padding-right: 0.875rem;
-    background-color: hsl(var(--card));
+    background-color: hsl(var(--card) / 0.8);
     border: 1.5px solid hsl(var(--border));
-    border-radius: 6px;
+    border-radius: 12px;
     color: hsl(var(--foreground));
     font-size: var(--fs-body);
     transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -405,8 +405,8 @@
   }
   
   .premium-input:focus, select.premium-input:focus {
-    border-color: hsl(var(--primary));
-    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+    border-color: hsl(var(--accent));
+    box-shadow: 0 0 0 4px hsl(var(--accent) / 0.18);
   }
   
   /* Select Dropdown */
@@ -429,25 +429,25 @@
 
   /* Cards - Production Grade */
   .premium-card, .card {
-    background-color: hsl(var(--card));
+    background: linear-gradient(180deg, hsl(var(--card) / 0.95), hsl(var(--card)));
     border: 1px solid hsl(var(--border));
-    border-radius: 8px;
+    border-radius: 14px;
     padding: 1.25rem;
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    box-shadow: 0 14px 30px -26px hsl(var(--primary) / 0.45);
     transition: all 200ms ease;
   }
   
   .premium-card:hover, .card:hover {
-    box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.05);
+    box-shadow: 0 18px 34px -24px hsl(var(--primary) / 0.55);
   }
 
   /* Job Card - Special Treatment for Listings */
   .job-card {
-    background-color: hsl(var(--card));
+    background: linear-gradient(180deg, hsl(var(--card) / 0.98), hsl(var(--card)));
     border: 1px solid hsl(var(--border));
-    border-radius: 8px;
+    border-radius: 14px;
     padding: 1rem;
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    box-shadow: 0 14px 30px -26px hsl(var(--primary) / 0.45);
     display: flex;
     flex-direction: column;
     gap: 0.875rem;
@@ -463,24 +463,24 @@
   }
   
   .job-card:hover {
-    box-shadow: 0 4px 8px -2px rgb(0 0 0 / 0.1);
-    border-color: hsl(var(--primary) / 0.4);
-    transform: none;
+    box-shadow: 0 22px 38px -28px hsl(var(--primary) / 0.65);
+    border-color: hsl(var(--accent) / 0.5);
+    transform: translateY(-1px);
   }
 
   /* Badges - For Job Types, Status, etc */
   .badge {
     display: inline-flex;
     align-items: center;
-    padding: 0.25rem 0.75rem;
-    border-radius: 4px;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
     font-size: 12px;
     font-weight: 600;
     line-height: 1;
   }
   
   .badge-primary {
-    background-color: hsl(var(--primary) / 0.1);
+    background-color: hsl(var(--accent) / 0.16);
     color: hsl(var(--primary));
   }
   

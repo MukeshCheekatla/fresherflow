@@ -9,16 +9,14 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import toast from 'react-hot-toast';
-import {
-    ArrowLeftIcon,
-    CheckIcon,
-    AcademicCapIcon,
-    BoltIcon,
-    ArrowPathIcon,
-    IdentificationIcon,
-    PlusIcon,
-    XMarkIcon
-} from '@heroicons/react/24/outline';
+import ArrowLeftIcon from '@heroicons/react/24/outline/ArrowLeftIcon';
+import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
+import AcademicCapIcon from '@heroicons/react/24/outline/AcademicCapIcon';
+import BoltIcon from '@heroicons/react/24/outline/BoltIcon';
+import ArrowPathIcon from '@heroicons/react/24/outline/ArrowPathIcon';
+import IdentificationIcon from '@heroicons/react/24/outline/IdentificationIcon';
+import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
+import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 
 const EDUCATION_LEVELS = ['DIPLOMA', 'DEGREE', 'PG'];
 const OPPORTUNITY_TYPES = ['JOB', 'INTERNSHIP', 'WALKIN'];
@@ -135,16 +133,16 @@ export default function EditProfilePage() {
 
     const handleIdentityUpdate = async () => {
         if (!fullName) {
-            toast.error('❌ Full name is required');
+            toast.error('Error: Full name is required');
             return;
         }
 
         setSaving(true);
-        const loadingToast = toast.loading('🛰️ Updating identity...');
+        const loadingToast = toast.loading('Saving your name...');
         try {
             await profileApi.updateProfile({ fullName });
             await refreshUser();
-            toast.success('Identity locked!', { id: loadingToast });
+            toast.success('Name updated.', { id: loadingToast });
             setEditingSection(null);
         } catch (err: unknown) {
             toast.error((err as Error).message || 'Update failed', { id: loadingToast });
@@ -155,17 +153,17 @@ export default function EditProfilePage() {
 
     const handleEducationUpdate = async () => {
         if (!tenthYear || !twelfthYear || !educationLevel || !gradCourse || !gradSpecialization || !gradYear) {
-            toast.error('❌ Education fields incomplete');
+            toast.error('Error: Education fields incomplete');
             return;
         }
 
         if (tenthYear.length !== 4 || twelfthYear.length !== 4 || gradYear.length !== 4 || (hasPG && pgYear && pgYear.length !== 4)) {
-            toast.error('❌ Years must be exactly 4 digits');
+            toast.error('Error: Years must be exactly 4 digits');
             return;
         }
 
         setSaving(true);
-        const loadingToast = toast.loading('🛰️ Syncing academic records...');
+        const loadingToast = toast.loading('Saving education details...');
         try {
             await profileApi.updateEducation({
                 educationLevel,
@@ -181,7 +179,7 @@ export default function EditProfilePage() {
                 })
             });
             await refreshUser();
-            toast.success('Academy updated!', { id: loadingToast });
+            toast.success('Education updated.', { id: loadingToast });
         } catch (err: unknown) {
             toast.error((err as Error).message || 'Update failed', { id: loadingToast });
         } finally {
@@ -191,16 +189,16 @@ export default function EditProfilePage() {
 
     const handlePreferencesUpdate = async () => {
         if (interestedIn.length === 0 || preferredCities.length === 0 || workModes.length === 0) {
-            toast.error('❌ Preferences incomplete');
+            toast.error('Error: Preferences incomplete');
             return;
         }
 
         setSaving(true);
-        const loadingToast = toast.loading('🎯 Updating career stream...');
+        const loadingToast = toast.loading('Saving preferences...');
         try {
             await profileApi.updatePreferences({ interestedIn, preferredCities, workModes });
             await refreshUser();
-            toast.success('Interests synced!', { id: loadingToast });
+            toast.success('Preferences saved.', { id: loadingToast });
         } catch (err: unknown) {
             toast.error((err as Error).message || 'Update failed', { id: loadingToast });
         } finally {
@@ -210,18 +208,18 @@ export default function EditProfilePage() {
 
     const handleReadinessUpdate = async () => {
         if (!availability || skills.length === 0) {
-            toast.error('❌ Skills & availability required');
+            toast.error('Error: Skills & availability required');
             return;
         }
 
         setSaving(true);
-        const loadingToast = toast.loading('🏆 Finalizing matrix...');
+        const loadingToast = toast.loading('Saving readiness...');
         try {
             await profileApi.updateReadiness({ availability, skills });
             await refreshUser();
-            toast.success('Talent profile updated!', { id: loadingToast });
+            toast.success('Readiness updated.', { id: loadingToast });
         } catch (err: unknown) {
-            toast.error((err as Error).message || 'Finalization failed', { id: loadingToast });
+            toast.error((err as Error).message || 'Update failed', { id: loadingToast });
         } finally {
             setSaving(false);
         }
@@ -264,15 +262,15 @@ export default function EditProfilePage() {
     return (
         <AuthGate>
             <ProfileGate>
-                <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 pb-24 space-y-6">
+                <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6 pb-16 space-y-4 md:space-y-5">
                     {/* Header */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border">
-                        <div className="flex items-center gap-4">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-border">
+                        <div className="flex items-center gap-3">
                             <Link href="/dashboard" className="p-2 hover:bg-muted rounded-lg transition-colors group">
                                 <ArrowLeftIcon className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
                             </Link>
                             <div>
-                                <h1 className="text-2xl font-bold tracking-tight text-foreground">Profile Settings</h1>
+                                <h1 className="text-xl font-bold tracking-tight text-foreground">Profile settings</h1>
                                 <div className="flex items-center gap-2 mt-1">
                                     <div className="h-1.5 w-24 bg-muted rounded-full overflow-hidden">
                                         <div
@@ -293,13 +291,13 @@ export default function EditProfilePage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-start">
                         {/* Main Content */}
-                        <div className="lg:col-span-8 space-y-6">
+                        <div className="lg:col-span-8 space-y-4 md:space-y-5">
 
                             {/* Personal Identity Section */}
                             <section className="bg-card rounded-xl border border-border overflow-hidden transition-all shadow-sm">
-                                <div className="flex items-center justify-between p-5 border-b border-border bg-muted/30">
+                                <div className="flex items-center justify-between p-3 md:p-4 border-b border-border bg-muted/30">
                                     <div className="flex items-center gap-3">
                                         <IdentificationIcon className="w-5 h-5 text-primary" />
                                         <h2 className="text-sm font-bold uppercase tracking-wider">Personal Identity</h2>
@@ -312,17 +310,17 @@ export default function EditProfilePage() {
                                     </button>
                                 </div>
 
-                                <div className="p-5">
+                                <div className="p-3 md:p-4">
                                     {editingSection === 'identity' ? (
-                                        <div className="space-y-5">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-3">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                 <div className="space-y-1.5">
-                                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Identity Name</label>
+                                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Full Name</label>
                                                     <input
                                                         type="text"
                                                         value={fullName}
                                                         onChange={(e) => setFullName(e.target.value)}
-                                                        className="premium-input !h-10 text-sm"
+                                                        className="premium-input !h-9 text-sm"
                                                         placeholder="Rahul Sharma"
                                                     />
                                                 </div>
@@ -332,17 +330,17 @@ export default function EditProfilePage() {
                                                         type="email"
                                                         value={user?.email || ''}
                                                         disabled
-                                                        className="premium-input !h-10 text-sm bg-muted cursor-not-allowed"
+                                                        className="premium-input !h-9 text-sm bg-muted cursor-not-allowed"
                                                     />
                                                 </div>
                                             </div>
-                                            <Button onClick={handleIdentityUpdate} disabled={saving} className="w-full h-10 text-xs font-bold uppercase tracking-wider">
+                                            <Button onClick={handleIdentityUpdate} disabled={saving} className="w-full h-9 text-[10px] font-bold uppercase tracking-wider">
                                                 {saving ? <ArrowPathIcon className="w-4 h-4 animate-spin mr-2" /> : null}
                                                 Update Personal Identity
                                             </Button>
                                         </div>
                                     ) : (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
                                                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5 opacity-60">Professional Name</p>
                                                 <h3 className="text-base font-bold tracking-tight">{user?.fullName || 'Not set'}</h3>
@@ -359,7 +357,7 @@ export default function EditProfilePage() {
 
                             {/* Academic Section */}
                             <section className="bg-card rounded-xl border border-border overflow-hidden transition-all">
-                                <div className="flex items-center justify-between p-5 border-b border-border bg-muted/30">
+                                <div className="flex items-center justify-between p-3 md:p-4 border-b border-border bg-muted/30">
                                     <div className="flex items-center gap-3">
                                         <AcademicCapIcon className="w-5 h-5 text-primary" />
                                         <h2 className="text-sm font-bold uppercase tracking-wider">Academic Foundation</h2>
@@ -372,21 +370,21 @@ export default function EditProfilePage() {
                                     </button>
                                 </div>
 
-                                <div className="p-5">
+                                <div className="p-3 md:p-4">
                                     {editingSection === 'academic' ? (
-                                        <div className="space-y-5">
-                                            <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-3">
+                                            <div className="grid grid-cols-2 gap-3">
                                                 <div className="space-y-1.5">
                                                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">10th Year</label>
-                                                    <input type="text" maxLength={4} value={tenthYear} onChange={(e) => setTenthYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-10 text-sm" placeholder="2018" />
+                                                    <input type="text" maxLength={4} value={tenthYear} onChange={(e) => setTenthYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-9 text-sm" placeholder="2018" />
                                                 </div>
                                                 <div className="space-y-1.5">
                                                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">12th Year</label>
-                                                    <input type="text" maxLength={4} value={twelfthYear} onChange={(e) => setTwelfthYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-10 text-sm" placeholder="2020" />
+                                                    <input type="text" maxLength={4} value={twelfthYear} onChange={(e) => setTwelfthYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-9 text-sm" placeholder="2020" />
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-4 pt-4 border-t border-border">
+                                            <div className="space-y-3 pt-3 border-t border-border">
                                                 <div className="space-y-2">
                                                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Highest Level</p>
                                                     <div className="grid grid-cols-3 gap-2">
@@ -414,21 +412,21 @@ export default function EditProfilePage() {
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                     <div className="space-y-1.5">
                                                         <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">UG Course</label>
-                                                        <select value={gradCourse} onChange={(e) => { setGradCourse(e.target.value); setGradSpecialization(''); }} className="premium-input !h-10 text-sm">
+                                                        <select value={gradCourse} onChange={(e) => { setGradCourse(e.target.value); setGradSpecialization(''); }} className="premium-input !h-9 text-sm">
                                                             <option value="">Select</option>
                                                             {(educationLevel === 'DIPLOMA' ? DIPLOMA_DEGREES : educationLevel === 'DEGREE' ? UG_DEGREES : educationLevel === 'PG' ? PG_DEGREES : []).map(d => <option key={d}>{d}</option>)}
                                                         </select>
                                                     </div>
                                                     <div className="space-y-1.5">
                                                         <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Field</label>
-                                                        <select value={gradSpecialization} onChange={(e) => setGradSpecialization(e.target.value)} className="premium-input !h-10 text-sm" disabled={!gradCourse}>
+                                                        <select value={gradSpecialization} onChange={(e) => setGradSpecialization(e.target.value)} className="premium-input !h-9 text-sm" disabled={!gradCourse}>
                                                             <option value="">Select</option>
                                                             {getSpecializations(gradCourse).map(s => <option key={s}>{s}</option>)}
                                                         </select>
                                                     </div>
                                                     <div className="space-y-1.5">
                                                         <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">UG Year</label>
-                                                        <input type="text" maxLength={4} value={gradYear} onChange={(e) => setGradYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-10 text-sm" placeholder="2024" />
+                                                        <input type="text" maxLength={4} value={gradYear} onChange={(e) => setGradYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-9 text-sm" placeholder="2024" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -445,21 +443,21 @@ export default function EditProfilePage() {
                                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                         <div className="space-y-1.5">
                                                             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">PG Course</label>
-                                                            <select value={pgCourse} onChange={(e) => setPgCourse(e.target.value)} className="premium-input !h-10 text-sm">
+                                                            <select value={pgCourse} onChange={(e) => setPgCourse(e.target.value)} className="premium-input !h-9 text-sm">
                                                                 <option value="">Select</option>
                                                                 {PG_DEGREES.map(d => <option key={d}>{d}</option>)}
                                                             </select>
                                                         </div>
                                                         <div className="space-y-1.5">
                                                             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Specialization</label>
-                                                            <select value={pgSpecialization} onChange={(e) => setPgSpecialization(e.target.value)} className="premium-input !h-10 text-sm">
+                                                            <select value={pgSpecialization} onChange={(e) => setPgSpecialization(e.target.value)} className="premium-input !h-9 text-sm">
                                                                 <option value="">Select</option>
                                                                 {getSpecializations(pgCourse).map(s => <option key={s}>{s}</option>)}
                                                             </select>
                                                         </div>
                                                         <div className="space-y-1.5">
                                                             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">PG Year</label>
-                                                            <input type="text" maxLength={4} value={pgYear} onChange={(e) => setPgYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-10 text-sm" placeholder="2026" />
+                                                            <input type="text" maxLength={4} value={pgYear} onChange={(e) => setPgYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-9 text-sm" placeholder="2026" />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -467,7 +465,7 @@ export default function EditProfilePage() {
 
                                             <Button onClick={async () => { await handleEducationUpdate(); setEditingSection(null); }} disabled={saving} className="w-full h-10 text-xs font-bold uppercase tracking-wider">
                                                 {saving ? <ArrowPathIcon className="w-4 h-4 animate-spin mr-2" /> : null}
-                                                Save Academic Records
+                                                Save education
                                             </Button>
                                         </div>
                                     ) : (
@@ -489,7 +487,7 @@ export default function EditProfilePage() {
                                                                 {profile.gradCourse}
                                                             </p>
                                                             <p className="text-[11px] text-muted-foreground font-medium">
-                                                                {profile.gradSpecialization ? `${profile.gradSpecialization} • ` : ''}
+                                                                {profile.gradSpecialization ? `${profile.gradSpecialization} - ` : ''}
                                                                 {profile.gradYear ? `Class of ${profile.gradYear}` : <span className="italic opacity-60">Year missing</span>}
                                                             </p>
                                                         </div>
@@ -501,8 +499,8 @@ export default function EditProfilePage() {
                                                     )}
                                                 </div>
                                             </div>
-                                            <div className="space-y-6">
-                                                <div className="grid grid-cols-2 gap-6">
+                                            <div className="space-y-4">
+                                                <div className="grid grid-cols-2 gap-4">
                                                     <div>
                                                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 opacity-60">10th Standard</p>
                                                         <p className={cn("text-sm font-semibold", !profile?.tenthYear && "text-muted-foreground font-normal italic text-xs opacity-50")}>
@@ -517,7 +515,7 @@ export default function EditProfilePage() {
                                                     </div>
                                                 </div>
                                                 {profile?.pgCourse || profile?.educationLevel === 'PG' ? (
-                                                    <div className="pt-4 border-t border-border/40">
+                                                    <div className="pt-3 border-t border-border/40">
                                                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 opacity-60">Postgraduate Records</p>
                                                         {profile.pgCourse ? (
                                                             <div className="space-y-1">
@@ -525,7 +523,7 @@ export default function EditProfilePage() {
                                                                     {profile.pgCourse}
                                                                 </p>
                                                                 <p className="text-[11px] text-muted-foreground font-medium">
-                                                                    {profile.pgSpecialization ? `${profile.pgSpecialization} • ` : ''}
+                                                                    {profile.pgSpecialization ? `${profile.pgSpecialization} - ` : ''}
                                                                     {profile.pgYear ? `Class of ${profile.pgYear}` : <span className="italic opacity-60">Year missing</span>}
                                                                 </p>
                                                             </div>
@@ -542,7 +540,7 @@ export default function EditProfilePage() {
 
                             {/* Talent Matrix Section */}
                             <section className="bg-card rounded-xl border border-border overflow-hidden transition-all">
-                                <div className="flex items-center justify-between p-5 border-b border-border bg-muted/30">
+                                <div className="flex items-center justify-between p-3 md:p-4 border-b border-border bg-muted/30">
                                     <div className="flex items-center gap-3">
                                         <BoltIcon className="w-5 h-5 text-primary" />
                                         <h2 className="text-sm font-bold uppercase tracking-wider">Professional Matrix</h2>
@@ -555,16 +553,16 @@ export default function EditProfilePage() {
                                     </button>
                                 </div>
 
-                                <div className="p-5">
+                                <div className="p-3 md:p-4">
                                     {editingSection === 'talent' ? (
-                                        <div className="space-y-5">
+                                        <div className="space-y-3">
                                             <div className="space-y-3">
                                                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Availability</p>
                                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                                     {AVAILABILITY_OPTIONS.map(opt => (
                                                         <button
                                                             key={opt.value} onClick={() => setAvailability(opt.value)}
-                                                            className={cn("h-12 rounded-lg flex flex-col items-center justify-center border-2 transition-all", availability === opt.value ? "border-primary bg-primary/5 text-primary" : "bg-muted/30 border-border text-muted-foreground hover:border-primary/30")}
+                                                            className={cn("h-10 rounded-lg flex flex-col items-center justify-center border-2 transition-all", availability === opt.value ? "border-primary bg-primary/5 text-primary" : "bg-muted/30 border-border text-muted-foreground hover:border-primary/30")}
                                                         >
                                                             <span className="font-bold text-xs">{opt.label}</span>
                                                         </button>
@@ -572,11 +570,11 @@ export default function EditProfilePage() {
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-3 pt-4 border-t border-border">
+                                            <div className="space-y-3 pt-3 border-t border-border">
                                                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Technical Skills</p>
                                                 <div className="flex gap-2">
-                                                    <input value={skillInput} onChange={(e) => setSkillInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && addSkill()} className="premium-input !h-10 text-sm" placeholder="e.g. React" />
-                                                    <Button onClick={addSkill} variant="outline" className="shrink-0 px-3 h-10"><PlusIcon className="w-4 h-4" /></Button>
+                                                    <input value={skillInput} onChange={(e) => setSkillInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && addSkill()} className="premium-input !h-9 text-sm" placeholder="e.g. React" />
+                                                    <Button onClick={addSkill} variant="outline" className="shrink-0 px-3 h-9"><PlusIcon className="w-4 h-4" /></Button>
                                                 </div>
                                                 <div className="flex flex-wrap gap-1.5 min-h-6">
                                                     {skills.map(s => (
@@ -588,13 +586,13 @@ export default function EditProfilePage() {
                                                 </div>
                                             </div>
 
-                                            <Button onClick={async () => { await handleReadinessUpdate(); setEditingSection(null); }} disabled={saving} className="w-full h-10 text-xs font-bold uppercase tracking-wider">
+                                            <Button onClick={async () => { await handleReadinessUpdate(); setEditingSection(null); }} disabled={saving} className="w-full h-9 text-[10px] font-bold uppercase tracking-wider">
                                                 {saving ? <ArrowPathIcon className="w-4 h-4 animate-spin mr-2" /> : null}
-                                                Sync Technical Profile
+                                                Save skills
                                             </Button>
                                         </div>
                                     ) : (
-                                        <div className="space-y-6">
+                                        <div className="space-y-4">
                                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                                 <div>
                                                     <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Availability Horizon</p>
@@ -620,12 +618,12 @@ export default function EditProfilePage() {
                         </div>
 
                         {/* Sidebar Preferences */}
-                        <aside className="lg:col-span-4 space-y-5 lg:sticky lg:top-24">
+                        <aside className="lg:col-span-4 space-y-3 lg:sticky lg:top-24">
                             <section className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
-                                <div className="p-4 border-b border-border bg-muted/20">
+                                <div className="p-3 border-b border-border bg-muted/20">
                                     <h2 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">Targeting Strategy</h2>
                                 </div>
-                                <div className="p-5 space-y-5">
+                                <div className="p-3 md:p-4 space-y-3">
                                     <div className="space-y-1.5">
                                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Career Goal</p>
                                         <div className="flex flex-wrap gap-2">
@@ -690,15 +688,15 @@ export default function EditProfilePage() {
 
                                     <Button onClick={handlePreferencesUpdate} disabled={saving} className="w-full h-9 text-[10px] font-bold uppercase tracking-wider mt-2">
                                         {saving ? <ArrowPathIcon className="w-3.5 h-3.5 animate-spin mr-2" /> : <CheckIcon className="w-3 h-3 mr-2" />}
-                                        Save Targets
+                                        Save targets
                                     </Button>
                                 </div>
                             </section>
 
-                            <div className="bg-muted/30 p-4 rounded-xl flex items-start gap-3 border border-border/50">
+                            <div className="bg-muted/30 p-3 rounded-xl flex items-start gap-3 border border-border/50">
                                 <IdentificationIcon className="w-5 h-5 text-primary shrink-0" />
                                 <p className="text-[10px] font-medium text-muted-foreground leading-relaxed">
-                                    Strategic profile updates increase match visibility by up to 300%. Ensure all criteria reflect your current career targets.
+                                    Keeping your profile updated improves match quality. Review your targets regularly.
                                 </p>
                             </div>
                         </aside>
@@ -708,4 +706,5 @@ export default function EditProfilePage() {
         </AuthGate>
     );
 }
+
 

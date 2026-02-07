@@ -190,7 +190,23 @@ export const adminAuthApi = {
         });
     },
 
-    me: () => apiClient<{ admin: Admin }>('/api/admin/auth/me')
+    me: () => apiClient<{ admin: Admin }>('/api/admin/auth/me'),
+
+    generateTotp: () =>
+        apiClient<{ secret: string; qrCode: string }>('/api/admin/auth/totp/generate', {
+            method: 'POST'
+        }),
+
+    verifyTotp: (code: string) =>
+        apiClient<{ success: boolean }>('/api/admin/auth/totp/verify', {
+            method: 'POST',
+            body: JSON.stringify({ code })
+        }),
+
+    disableTotp: () =>
+        apiClient<{ success: boolean }>('/api/admin/auth/totp/disable', {
+            method: 'POST'
+        })
 };
 
 // Profile API calls

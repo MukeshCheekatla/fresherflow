@@ -84,11 +84,11 @@ export default function LoginPage() {
         const initGoogle = () => {
             if (!mounted) return;
 
-            const googleBtn = document.getElementById(googleBtnId);
-            if (!googleBtn) {
-                setTimeout(initGoogle, 100);
-                return;
-            }
+                const googleBtn = document.getElementById(googleBtnId);
+                if (!googleBtn) {
+                    setTimeout(initGoogle, 100);
+                    return;
+                }
 
             try {
                 googleBtn.innerHTML = '';
@@ -98,6 +98,7 @@ export default function LoginPage() {
                     auto_select: false,
                 });
 
+                const buttonWidth = Math.min(400, googleBtn.clientWidth || 280);
                 window.google.accounts.id.renderButton(googleBtn, {
                     type: 'standard',
                     theme: 'outline',
@@ -105,7 +106,7 @@ export default function LoginPage() {
                     text: 'continue_with',
                     shape: 'rectangular',
                     logo_alignment: 'center',
-                    width: '400',
+                    width: buttonWidth,
                 });
                 // Google button rendered successfully
             } catch (err) {
@@ -154,10 +155,10 @@ export default function LoginPage() {
             <div className="hidden md:flex md:w-[45%] lg:w-[50%] bg-muted/30 border-r border-border relative overflow-hidden flex-col items-center justify-center p-12 text-center">
                 <div className="space-y-6 max-w-sm animate-in fade-in slide-in-from-left-6 duration-500">
                     <h2 className="text-4xl font-bold tracking-tight text-foreground">
-                        The definitive career protocol.
+                        Verified opportunities for freshers.
                     </h2>
                     <p className="text-base text-muted-foreground leading-relaxed">
-                        Access a verified feed of off-campus jobs, internships, and walk-ins. Built for the modern engineer.
+                        Access a verified feed of off-campus jobs, internships, and walk-ins. Direct apply links only.
                     </p>
                 </div>
                 {/* Decorative Element */}
@@ -165,8 +166,8 @@ export default function LoginPage() {
             </div>
 
             {/* Right Side: Login Form */}
-            <div className="flex-1 flex flex-col justify-center px-6 py-6 md:px-20 bg-background relative overflow-hidden">
-                <div className="max-w-[400px] mx-auto w-full space-y-6 md:space-y-10">
+            <div className="flex-1 flex flex-col justify-center px-5 py-5 md:px-20 bg-background relative overflow-hidden">
+                <div className="max-w-[400px] mx-auto w-full space-y-5 md:space-y-8">
 
                     {/* Form Header */}
                     <div className="space-y-2 text-center md:text-left">
@@ -179,7 +180,7 @@ export default function LoginPage() {
                                 Back to login
                             </button>
                         )}
-                        <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
                             {step === 'otp' ? 'Verify identity' : 'Sign in'}
                         </h1>
                         <p className="text-muted-foreground text-sm">
@@ -187,10 +188,10 @@ export default function LoginPage() {
                         </p>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="space-y-5">
                         {/* Step 1: Email Input */}
                         {step === 'email' && (
-                            <form onSubmit={handleSendOtp} className="space-y-6">
+                            <form onSubmit={handleSendOtp} className="space-y-5">
                                 <div className="space-y-2">
                                     <label className="text-xs font-medium text-foreground ml-1">
                                         Email Address
@@ -202,7 +203,7 @@ export default function LoginPage() {
                                             required
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
-                                            className="pl-12 !h-12 text-sm"
+                                            className="pl-11 !h-11 text-sm"
                                             placeholder="name@company.com"
                                         />
                                     </div>
@@ -211,7 +212,7 @@ export default function LoginPage() {
                                 <Button
                                     type="submit"
                                     disabled={isLoading || !email}
-                                    className="w-full !h-12 text-sm font-semibold !rounded-lg"
+                                    className="w-full !h-11 text-sm font-semibold !rounded-lg"
                                 >
                                     {isLoading ? (
                                         <ArrowPathIcon className="w-5 h-5 animate-spin mx-auto" />
@@ -229,13 +230,13 @@ export default function LoginPage() {
                                     </div>
                                 </div>
 
-                                <div id="google-login-btn" className="w-full min-h-[48px] overflow-hidden rounded-lg"></div>
+                                <div id="google-login-btn" className="w-full min-h-[44px] overflow-hidden rounded-lg flex justify-center"></div>
                             </form>
                         )}
 
                         {/* Step 2: OTP Verification */}
                         {step === 'otp' && (
-                            <form onSubmit={handleVerifyOtp} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <form onSubmit={handleVerifyOtp} className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <div className="space-y-2">
                                     <label className="text-xs font-medium text-foreground ml-1">
                                         Verification Code
@@ -248,7 +249,7 @@ export default function LoginPage() {
                                             maxLength={6}
                                             value={otp}
                                             onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                                            className="pl-12 !h-12 text-center text-xl font-bold tracking-[0.4em]"
+                                            className="pl-11 !h-11 text-center text-xl font-bold tracking-[0.4em]"
                                             placeholder="000000"
                                             autoFocus
                                         />
@@ -266,7 +267,7 @@ export default function LoginPage() {
                                 <Button
                                     type="submit"
                                     disabled={isLoading || otp.length !== 6}
-                                    className="w-full !h-12 text-sm font-semibold !rounded-lg"
+                                    className="w-full !h-11 text-sm font-semibold !rounded-lg"
                                 >
                                     {isLoading ? (
                                         <ArrowPathIcon className="w-5 h-5 animate-spin mx-auto" />
@@ -279,11 +280,16 @@ export default function LoginPage() {
                     </div>
 
                     {/* Footer Info */}
-                    <div className="pt-12 border-t border-border/50">
+                    <div className="pt-8 border-t border-border/50">
                         <div className="flex flex-col items-center gap-4 text-center">
                             <div className="flex items-center gap-2 text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
                                 <ShieldCheckIcon className="w-4 h-4 text-success/60" />
                                 <span>Verified Infrastructure</span>
+                            </div>
+                            <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                                <a href="/privacy" className="hover:text-foreground transition-colors">Privacy</a>
+                                <span className="text-muted-foreground/40">|</span>
+                                <a href="/terms" className="hover:text-foreground transition-colors">Terms</a>
                             </div>
                         </div>
                     </div>

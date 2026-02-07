@@ -10,6 +10,20 @@ export const metadata: Metadata = {
         title: 'Walk-in Drives & Campus Hiring | FresherFlow',
         description: 'Discover walk-in interview drives and on-campus recruitment events across India.',
         type: 'website',
+        images: [
+            {
+                url: '/main.png',
+                width: 1200,
+                height: 630,
+                alt: 'Verified walk-in drives on FresherFlow',
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Walk-in Drives & Campus Hiring | FresherFlow',
+        description: 'Discover walk-in interview drives and on-campus recruitment events across India.',
+        images: ['/main.png'],
     },
 };
 

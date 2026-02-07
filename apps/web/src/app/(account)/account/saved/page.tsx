@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MapPinIcon, TrashIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+import LoadingScreen from '@/components/ui/LoadingScreen';
 
 export default function SavedJobsPage() {
     const context = useContext(AuthContext);
@@ -50,28 +51,24 @@ export default function SavedJobsPage() {
 
 
 
-    if (authLoading) return (
-        <div className="min-h-screen bg-background flex items-center justify-center">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        </div>
-    );
+    if (authLoading) return <LoadingScreen message="Loading..." />;
 
     if (!user) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center p-6">
                 <div className="text-center space-y-6 max-w-md w-full bg-card p-8 rounded-xl border border-border shadow-lg">
-                    <h1 className="text-2xl font-bold tracking-tight text-foreground">Sign In Required</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground">Sign in required</h1>
                     <p className="text-muted-foreground font-medium">Please sign in to access your saved opportunities.</p>
-                    <Link href="/login" className="w-full h-11 bg-primary text-primary-foreground font-bold uppercase tracking-widest text-xs rounded-lg flex items-center justify-center hover:bg-primary/90 transition-all">Go to Sign In</Link>
+                    <Link href="/login" className="w-full h-11 bg-primary text-primary-foreground font-bold uppercase tracking-widest text-xs rounded-lg flex items-center justify-center hover:bg-primary/90 transition-all">Sign in</Link>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-background animate-in fade-in duration-500 pb-[64px] md:pb-0">
-            <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 space-y-6">
-                <div className="flex items-center gap-4">
+        <div className="min-h-screen bg-background animate-in fade-in duration-500 pb-12 md:pb-0">
+            <main className="max-w-7xl mx-auto px-4 md:px-6 py-5 md:py-10 space-y-4 md:space-y-6">
+                <div className="flex items-center gap-3">
                     <Link
                         href="/dashboard"
                         className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors"
@@ -81,39 +78,39 @@ export default function SavedJobsPage() {
                         </svg>
                     </Link>
                     <div className="space-y-0.5">
-                        <h1 className="text-2xl font-bold tracking-tight text-foreground">Saved Stream</h1>
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Your Curated Collection</p>
+                        <h1 className="text-2xl font-bold tracking-tight text-foreground">Saved</h1>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Your bookmarked opportunities</p>
                     </div>
                 </div>
 
                 {fetchingJobs ? (
-                    <div className="bg-card border border-border rounded-xl p-12 text-center text-muted-foreground font-medium">
-                        Synchronizing your prioritized opportunities...
+                    <div className="bg-card border border-border rounded-xl p-6 md:p-12 text-center text-muted-foreground font-medium">
+                        Loading your saved opportunities...
                     </div>
                 ) : savedJobs.length === 0 ? (
-                    <div className="bg-card border border-border rounded-xl p-12 text-center space-y-6 max-w-2xl mx-auto shadow-sm">
-                        <div className="w-16 h-16 bg-muted/40 rounded-2xl flex items-center justify-center mx-auto text-muted-foreground/50">
+                    <div className="bg-card border border-border rounded-xl p-6 md:p-12 text-center space-y-4 max-w-2xl mx-auto shadow-sm">
+                        <div className="w-14 h-14 bg-muted/40 rounded-2xl flex items-center justify-center mx-auto text-muted-foreground/50">
                             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                             </svg>
                         </div>
                         <div className="space-y-2">
-                            <h2 className="text-xl font-bold tracking-tight text-foreground">No saved matches yet</h2>
-                            <p className="text-muted-foreground text-sm font-medium max-w-sm mx-auto">Opportunities you bookmark from the global stream will appear here for high-speed access.</p>
+                        <h2 className="text-xl font-bold tracking-tight text-foreground">No saved opportunities yet</h2>
+                        <p className="text-muted-foreground text-sm font-medium max-w-sm mx-auto">Bookmark listings from the feed to keep them here.</p>
                         </div>
                         <Link
                             href="/opportunities"
-                            className="inline-flex h-11 items-center justify-center px-8 bg-primary text-primary-foreground font-bold uppercase tracking-widest text-xs rounded-lg hover:bg-primary/90 transition-all shadow-md"
+                            className="inline-flex h-10 items-center justify-center px-8 bg-primary text-primary-foreground font-bold uppercase tracking-widest text-xs rounded-lg hover:bg-primary/90 transition-all shadow-md"
                         >
-                            Browse Stream
+                            Browse feed
                         </Link>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {savedJobs.map((job) => (
                             <div
                                 key={job.id}
-                                className="bg-card group cursor-pointer relative p-5 rounded-xl border border-border shadow-sm hover:border-primary/50 hover:shadow-md transition-all space-y-4"
+                                className="bg-card group cursor-pointer relative p-4 rounded-xl border border-border shadow-sm hover:border-primary/50 hover:shadow-md transition-all space-y-3"
                                 onClick={() => router.push(`/opportunities/${job.slug || job.id}`)}
                             >
                                 <div className="flex justify-between items-start gap-4">
@@ -139,7 +136,7 @@ export default function SavedJobsPage() {
                                     </span>
                                     <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground/80">
                                         <MapPinIcon className="w-3.5 h-3.5" />
-                                        <span className="truncate max-w-[150px]">{job.locations?.[0] || 'Remote'}</span>
+                                        <span className="truncate max-w-37.5">{job.locations?.[0] || 'Remote'}</span>
                                     </span>
                                 </div>
                             </div>

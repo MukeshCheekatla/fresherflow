@@ -5,26 +5,24 @@ import { useEffect, useState, useCallback } from 'react';
 import { opportunitiesApi, actionsApi, feedbackApi, savedApi } from '@/lib/api/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Opportunity } from '@fresherflow/types';
-import { BookmarkIcon } from '@heroicons/react/24/outline';
+import BookmarkIcon from '@heroicons/react/24/outline/BookmarkIcon';
 import { BookmarkIcon as BookmarkSolidIcon } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
-import {
-    MapPinIcon,
-    ClockIcon,
-    BuildingOfficeIcon,
-    ArrowLeftIcon,
-    ArrowTopRightOnSquareIcon,
-    InformationCircleIcon,
-    ShareIcon,
-    FlagIcon,
-    ExclamationTriangleIcon,
-    ShieldCheckIcon
-} from '@heroicons/react/24/outline';
+import MapPinIcon from '@heroicons/react/24/outline/MapPinIcon';
+import ClockIcon from '@heroicons/react/24/outline/ClockIcon';
+import ArrowLeftIcon from '@heroicons/react/24/outline/ArrowLeftIcon';
+import ArrowTopRightOnSquareIcon from '@heroicons/react/24/outline/ArrowTopRightOnSquareIcon';
+import InformationCircleIcon from '@heroicons/react/24/outline/InformationCircleIcon';
+import ShareIcon from '@heroicons/react/24/outline/ShareIcon';
+import FlagIcon from '@heroicons/react/24/outline/FlagIcon';
+import ExclamationTriangleIcon from '@heroicons/react/24/outline/ExclamationTriangleIcon';
+import ShieldCheckIcon from '@heroicons/react/24/outline/ShieldCheckIcon';
 
 import Link from 'next/link';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
+import CompanyLogo from '@/components/ui/CompanyLogo';
 
 export default function OpportunityDetailClient({ id, initialData }: { id: string; initialData?: Opportunity | null }) {
     const router = useRouter();
@@ -63,7 +61,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                 isSaved: opportunity.isSaved || false
             });
         } catch {
-            toast.error('Listing protocol failed. Resource not found.');
+            toast.error('Listing not found.');
             router.push('/opportunities');
         } finally {
             setIsLoading(false);
@@ -91,7 +89,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
 
     const handleApply = async () => {
         if (!opp || !opp.applyLink) {
-            toast.error('❌ Apply link unavailable for this listing.');
+            toast.error('Error: Apply link unavailable for this listing.');
             return;
         }
         try {
@@ -121,6 +119,49 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
         }
     };
 
+    const handleCopyLink = async () => {
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            toast.success('Link copied to clipboard!');
+        } catch {
+            toast.error('Failed to copy link');
+        }
+    };
+
+    const formatSalary = (opportunity: Opportunity) => {
+        if (opportunity.salaryRange) return opportunity.salaryRange;
+        if (opportunity.stipend) return opportunity.stipend;
+
+        const period = opportunity.salaryPeriod === 'MONTHLY' ? '/mo' : ' LPA';
+        const isMonthly = opportunity.salaryPeriod === 'MONTHLY';
+        const sMin = opportunity.salaryMin ?? opportunity.salary?.min;
+        const sMax = opportunity.salaryMax ?? opportunity.salary?.max;
+
+        if (sMin != null && sMax != null) {
+            if (sMin === 0 && sMax === 0 && opportunity.type === 'INTERNSHIP') return 'Unpaid';
+            const formatMin = isMonthly ? sMin.toLocaleString() : (sMin / 100000).toFixed(1);
+            const formatMax = isMonthly ? sMax.toLocaleString() : (sMax / 100000).toFixed(1);
+            const finalMin = formatMin.endsWith('.0') ? formatMin.slice(0, -2) : formatMin;
+            const finalMax = formatMax.endsWith('.0') ? formatMax.slice(0, -2) : formatMax;
+            if (finalMin === finalMax) return `₹${finalMin}${period}`;
+            return `₹${finalMin}-${finalMax}${period}`;
+        }
+
+        if (sMin != null) {
+            const formatMin = isMonthly ? sMin.toLocaleString() : (sMin / 100000).toFixed(1);
+            const finalMin = formatMin.endsWith('.0') ? formatMin.slice(0, -2) : formatMin;
+            return `₹${finalMin}${period}`;
+        }
+
+        if (sMax != null) {
+            const formatMax = isMonthly ? sMax.toLocaleString() : (sMax / 100000).toFixed(1);
+            const finalMax = formatMax.endsWith('.0') ? formatMax.slice(0, -2) : formatMax;
+            return `Up to ₹${finalMax}${period}`;
+        }
+
+        return 'Not disclosed';
+    };
+
     const handleReport = async (reason: string) => {
         if (!user) {
             toast.error('Identity required to file report.');
@@ -128,34 +169,30 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
             return;
         }
 
-        const loadingToast = toast.loading('Filing community report...');
+        const loadingToast = toast.loading('Submitting report...');
         try {
             await feedbackApi.submit(opp!.id, reason);
             toast.success('Report received. Our moderation team will review this listing.', { id: loadingToast });
             setShowReports(false);
         } catch (err: unknown) {
-            toast.error((err as Error).message || 'Transmission failed.', { id: loadingToast });
+            toast.error((err as Error).message || 'Report failed.', { id: loadingToast });
         }
     };
 
-    if (isLoading) return <LoadingScreen message="Synchronizing Opportunity Data" />;
+    if (isLoading) return <LoadingScreen message="Loading opportunity..." />;
     if (!opp) return null;
 
-    return (
-        <div className="min-h-screen bg-background pb-20 selection:bg-primary/20">
-            {/* Immersive Background Blur Decor */}
-            <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 opacity-10 hidden md:block">
-                <div className="absolute top-[-10%] right-[-10%] w-[400px] h-[400px] bg-primary/10 rounded-full blur-[100px]" />
-                <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-success/10 rounded-full blur-[100px]" />
-            </div>
+    const detailPath = `/opportunities/${opp.slug || opp.id}`;
 
-            <main className="relative z-10 max-w-6xl mx-auto px-4 py-4 md:py-8 space-y-4 md:space-y-6">
+    return (
+        <div className="min-h-screen bg-background pb-16 selection:bg-primary/20">
+            <main className="relative z-10 max-w-6xl mx-auto px-4 py-4 md:py-7 space-y-3 md:space-y-5">
 
                 {/* Navigation & Actions Top Bar */}
                 <div className="flex items-center justify-between">
                     <Link href="/opportunities" className="group/back flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-all">
                         <ArrowLeftIcon className="w-3.5 h-3.5 group-hover/back:-translate-x-0.5 transition-all" />
-                        Back to Feed
+                        Back to feed
                     </Link>
 
                     <div className="flex items-center gap-1.5">
@@ -173,7 +210,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                 <FlagIcon className="w-4 h-4" />
                             </button>
                             {showReports && (
-                                <div className="absolute top-full right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-xl z-50 p-1.5 space-y-0.5 animate-in slide-in-from-top-1 duration-200">
+                                    <div className="absolute top-full right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-xl z-50 p-1.5 space-y-0.5 animate-in slide-in-from-top-1 duration-200">
                                     {[
                                         { id: 'LINK_BROKEN', label: 'Broken Link', icon: ArrowTopRightOnSquareIcon },
                                         { id: 'EXPIRED', label: 'Listing Expired', icon: ClockIcon },
@@ -196,14 +233,14 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                 </div>
 
                 {/* Main Content Sections */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-4 items-start">
 
                     {/* Left Column: Essential Details (Lg: 8Cols) */}
-                    <div className="lg:col-span-8 space-y-4">
+                    <div className="lg:col-span-8 space-y-3 md:space-y-4">
 
                         {/* Expired Banner */}
                         {opp.expiresAt && new Date(opp.expiresAt) < new Date() && (
-                            <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-4 flex items-center gap-4 animate-in fade-in slide-in-from-top-2">
+                            <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-3 md:p-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
                                 <div className="p-2 bg-destructive/10 rounded-full">
                                     <ClockIcon className="w-6 h-6 text-destructive" />
                                 </div>
@@ -217,11 +254,9 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                         )}
 
                         {/* Hero Branding Section */}
-                        <div className="bg-card p-4 md:p-6 rounded-xl border border-border relative overflow-hidden group shadow-sm">
-                            <div className="absolute inset-0 z-0 bg-gradient-to-br from-primary/5 via-transparent to-success/5 opacity-30" />
-
+                        <div className="bg-card p-4 md:p-5 rounded-xl border border-border relative overflow-hidden group shadow-sm">
                             <div className="relative z-10 space-y-4">
-                                <div className="flex flex-wrap items-center gap-2">
+                                <div className="flex flex-wrap items-center gap-1.5">
                                     <span className="px-1.5 py-0.5 bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-tight rounded border border-primary/20">
                                         {opp.type}
                                     </span>
@@ -238,19 +273,21 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                     )}
                                 </div>
 
-                                <div className="space-y-1.5">
-                                    <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground leading-tight">
+                                <div className="space-y-1">
+                                    <h1 className="text-lg md:text-2xl font-bold tracking-tight text-foreground leading-tight">
                                         {opp.title}
                                     </h1>
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-muted/30 border border-border rounded-lg flex items-center justify-center">
-                                            <BuildingOfficeIcon className="w-5 h-5 text-primary/60" />
-                                        </div>
+                                        <CompanyLogo
+                                            companyName={opp.company}
+                                            applyLink={opp.applyLink}
+                                            className="w-9 h-9 md:w-10 md:h-10 rounded-lg"
+                                        />
                                         <div>
                                             <div className="flex flex-wrap items-center gap-1.5">
                                                 <h2 className="text-base font-semibold text-foreground tracking-tight leading-none">{opp.company}</h2>
                                                 {opp.jobFunction && (
-                                                    <span className="text-[10px] text-muted-foreground font-medium">• {opp.jobFunction}</span>
+                                                    <span className="text-[10px] text-muted-foreground font-medium">- {opp.jobFunction}</span>
                                                 )}
                                             </div>
                                             <div className="flex items-center gap-1 text-muted-foreground mt-0.5">
@@ -262,10 +299,10 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                 </div>
 
                                 {/* Stats Grid */}
-                                <div className="pt-4 border-t border-border/50 grid grid-cols-2 lg:grid-cols-4 gap-3">
+                                <div className="pt-3 border-t border-border/50 grid grid-cols-2 lg:grid-cols-4 gap-2.5">
                                     <div className="space-y-0.5">
                                         <p className="text-[9px] font-bold text-muted-foreground uppercase">Package</p>
-                                        <p className="font-bold text-xs text-foreground truncate">{opp.salaryRange || 'Std. Entry'}</p>
+                                        <p className="font-bold text-xs text-foreground truncate">{formatSalary(opp)}</p>
                                     </div>
                                     <div className="space-y-0.5">
                                         <p className="text-[9px] font-bold text-muted-foreground uppercase">Mode</p>
@@ -283,8 +320,25 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                             </div>
                         </div>
 
+                        {!user && (
+                            <div className="bg-muted/20 border border-border rounded-xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                                <div className="space-y-1">
+                                    <h3 className="text-sm font-bold text-foreground">Like this listing?</h3>
+                                    <p className="text-xs text-muted-foreground">
+                                        Sign up to save listings, set alerts, and track applications.
+                                    </p>
+                                </div>
+                                <Link
+                                    href={`/login?redirect=${encodeURIComponent(detailPath)}`}
+                                    className="premium-button h-9 px-4 text-[10px] uppercase tracking-widest"
+                                >
+                                    Sign up free
+                                </Link>
+                            </div>
+                        )}
+
                         {/* Description Section */}
-                        <div className="bg-card p-4 md:p-6 rounded-xl border border-border shadow-sm space-y-3">
+                        <div className="bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3">
                             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border pb-2">Description</h3>
                             <div className="prose prose-sm max-w-none">
                                 <p className="text-foreground/80 font-medium text-sm leading-relaxed whitespace-pre-wrap">
@@ -294,15 +348,15 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                         </div>
 
                         {/* Requirements Section */}
-                        <div className="bg-card p-4 md:p-6 rounded-xl border border-border shadow-sm space-y-4">
+                        <div className="bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-4">
                             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border pb-2">Requirements</h3>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div className="space-y-0.5 p-2.5 bg-muted/20 border border-border rounded-lg">
+                                    <div className="space-y-0.5 p-2.5 bg-muted/20 border border-border rounded-lg">
                                     <p className="text-[9px] font-bold text-muted-foreground uppercase">Education</p>
                                     <p className="text-xs font-semibold text-foreground">{(opp.allowedDegrees || []).join(', ') || 'Any Graduate'}</p>
                                 </div>
-                                <div className="space-y-0.5 p-2.5 bg-muted/20 border border-border rounded-lg">
+                                    <div className="space-y-0.5 p-2.5 bg-muted/20 border border-border rounded-lg">
                                     <p className="text-[9px] font-bold text-muted-foreground uppercase">Key Skills</p>
                                     <div className="flex flex-wrap gap-1 mt-0.5">
                                         {(opp.requiredSkills || []).map((s: string) => (
@@ -317,7 +371,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
 
                         {/* Walk-in Drive */}
                         {opp.type === 'WALKIN' && (
-                            <div className="bg-amber-500/[0.03] border border-amber-500/10 p-4 md:p-6 rounded-xl space-y-4">
+                            <div className="bg-amber-500/3 border border-amber-500/10 p-4 md:p-5 rounded-xl space-y-4">
                                 <h2 className="text-xs font-bold uppercase tracking-wider text-amber-600 border-b border-amber-500/10 pb-2">Walk-in Details</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-1">
@@ -340,15 +394,58 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                 </div>
                             </div>
                         )}
+                        <div className="lg:hidden bg-card p-4 rounded-xl border border-border space-y-3">
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Quick actions</h4>
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    onClick={handleShare}
+                                    className="h-9 rounded-lg border border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 transition-all text-[10px] font-bold uppercase"
+                                >
+                                    Share
+                                </button>
+                                <button
+                                    onClick={handleCopyLink}
+                                    className="h-9 rounded-lg border border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 transition-all text-[10px] font-bold uppercase"
+                                >
+                                    Copy link
+                                </button>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setShowReports(true);
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
+                                className="w-full h-9 rounded-lg border border-destructive/30 text-destructive hover:bg-destructive/5 transition-all text-[10px] font-bold uppercase"
+                            >
+                                Report issue
+                            </button>
+                            <p className="text-[10px] text-muted-foreground">
+                                We never charge for placement. Report suspicious activity.
+                            </p>
+                        </div>
                     </div>
 
                     {/* Right Column: Dynamic Action Sidebar */}
-                    <aside className="lg:col-span-4 space-y-4 lg:sticky lg:top-24">
-                        <div className="bg-card p-5 rounded-xl border border-border shadow-sm space-y-4">
+                    <aside className="lg:col-span-4 space-y-3 lg:sticky lg:top-24">
+                        {!user && (
+                            <div className="bg-muted/20 border border-border rounded-xl p-4 space-y-2">
+                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Get more matches</h4>
+                                <p className="text-xs text-muted-foreground">
+                                    Create an account to save, share, and get alerts for similar roles.
+                                </p>
+                                <Link
+                                    href={`/login?redirect=${encodeURIComponent(detailPath)}`}
+                                    className="premium-button h-9 px-4 text-[10px] uppercase tracking-widest"
+                                >
+                                    Sign up free
+                                </Link>
+                            </div>
+                        )}
+                        <div className="bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3">
                             <div className="space-y-2">
                                 <Button
                                     onClick={handleApply}
-                                    className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg flex items-center justify-center gap-2 text-sm font-bold uppercase tracking-tight shadow-md"
+                                    className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg flex items-center justify-center gap-2 text-sm font-bold uppercase tracking-tight shadow-md"
                                 >
                                     Apply Now
                                     <ArrowTopRightOnSquareIcon className="w-4 h-4" />
@@ -381,8 +478,8 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                             </div>
                         </div>
 
-                        <div className="bg-card p-4 rounded-xl border border-border shadow-sm space-y-3">
-                            <h4 className="text-[9px] font-bold uppercase tracking-widest text-primary">Hiring Activity</h4>
+                        <div className="hidden lg:block bg-card p-4 rounded-xl border border-border shadow-sm space-y-3">
+                            <h4 className="text-[9px] font-bold uppercase tracking-widest text-primary">Hiring activity</h4>
                             <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
                                 <div className="h-full bg-primary w-[75%] shadow-[0_0_8px_rgba(var(--primary),0.3)]" />
                             </div>
@@ -391,10 +488,31 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                             </p>
                         </div>
 
-                        <div className="p-3.5 flex items-start gap-3 bg-muted/10 border border-border border-dashed rounded-xl">
-                            <InformationCircleIcon className="w-4 h-4 text-primary/40 flex-shrink-0 mt-0.5" />
+                        <div className="hidden lg:block bg-card p-4 rounded-xl border border-border shadow-sm space-y-3">
+                            <h4 className="text-[9px] font-bold uppercase tracking-widest text-primary">Share this listing</h4>
+                            <p className="text-[10px] font-medium text-muted-foreground leading-relaxed">
+                                Send this opportunity to a friend in one tap.
+                            </p>
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    onClick={handleShare}
+                                    className="h-9 rounded-lg border border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 transition-all text-[10px] font-bold uppercase"
+                                >
+                                    Share
+                                </button>
+                                <button
+                                    onClick={handleCopyLink}
+                                    className="h-9 rounded-lg border border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 transition-all text-[10px] font-bold uppercase"
+                                >
+                                    Copy link
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="hidden lg:flex p-3.5 items-start gap-3 bg-muted/10 border border-border border-dashed rounded-xl">
+                            <InformationCircleIcon className="w-4 h-4 text-primary/40 shrink-0 mt-0.5" />
                             <p className="text-[9px] font-medium text-muted-foreground leading-relaxed uppercase tracking-tight">
-                                Fraud Protection: We never charge for placement. Report suspicious activity.
+                                Fraud protection: We never charge for placement. Report suspicious activity.
                             </p>
                         </div>
 
@@ -418,10 +536,10 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
 
             {/* Mobile Actions - Floating Bottom (Logged In Users Only) */}
             {user ? (
-                <div className="md:hidden fixed bottom-6 left-4 right-4 z-40 flex gap-2 animate-in slide-in-from-bottom-4 duration-500">
+                <div className="md:hidden fixed bottom-4 left-3 right-3 z-40 flex gap-2 animate-in slide-in-from-bottom-4 duration-500">
                     <Button
                         onClick={handleApply}
-                        className="flex-1 h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold uppercase tracking-tight shadow-xl rounded-xl flex items-center justify-center gap-2"
+                        className="flex-1 h-11 bg-primary text-primary-foreground hover:bg-primary/90 font-bold uppercase tracking-tight shadow-xl rounded-xl flex items-center justify-center gap-2"
                     >
                         Apply Now
                         <ArrowTopRightOnSquareIcon className="w-4 h-4" />
@@ -429,7 +547,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                     <button
                         onClick={handleToggleSave}
                         className={cn(
-                            "w-12 h-12 rounded-xl shadow-lg flex items-center justify-center transition-all border",
+                            "w-11 h-11 rounded-xl shadow-lg flex items-center justify-center transition-all border",
                             opp.isSaved ? "bg-primary text-white border-primary" : "bg-card text-muted-foreground border-border"
                         )}
                     >
@@ -438,12 +556,12 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                 </div>
             ) : (
                 /* Guest CTA - Sticky Bottom or Inline */
-                <div className="md:hidden fixed bottom-6 left-4 right-4 z-40">
+                <div className="md:hidden fixed bottom-4 left-3 right-3 z-40">
                     <Link href="/login?redirect=/opportunities">
-                        <div className="bg-primary/95 backdrop-blur-md text-primary-foreground p-4 rounded-xl shadow-2xl flex items-center justify-between border border-primary/20 animate-in slide-in-from-bottom-4 duration-500">
+                        <div className="bg-primary/95 backdrop-blur-md text-primary-foreground p-3 rounded-xl shadow-2xl flex items-center justify-between border border-primary/20 animate-in slide-in-from-bottom-4 duration-500">
                             <div>
                                 <p className="text-xs font-bold uppercase tracking-wide">Join FresherFlow</p>
-                                <p className="text-[10px] opacity-90">Unlock 500+ more opportunities.</p>
+                                <p className="text-[10px] opacity-90">Unlock more verified listings.</p>
                             </div>
                             <div className="h-8 px-4 bg-white text-primary rounded-lg flex items-center justify-center text-[10px] font-bold uppercase tracking-tight shadow-sm">
                                 Sign Up Free

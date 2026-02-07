@@ -10,6 +10,20 @@ export const metadata: Metadata = {
         title: 'Internships for Students | FresherFlow',
         description: 'Find internship opportunities for students and recent graduates across India.',
         type: 'website',
+        images: [
+            {
+                url: '/main.png',
+                width: 1200,
+                height: 630,
+                alt: 'Verified internships on FresherFlow',
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Internships for Students | FresherFlow',
+        description: 'Find internship opportunities for students and recent graduates across India.',
+        images: ['/main.png'],
     },
 };
 
