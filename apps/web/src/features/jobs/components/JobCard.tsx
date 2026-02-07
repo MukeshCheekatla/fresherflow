@@ -6,11 +6,11 @@ import {
     CurrencyRupeeIcon,
     BriefcaseIcon,
     ChevronRightIcon,
-    BuildingOfficeIcon,
     ShieldCheckIcon,
     ClockIcon
 } from '@heroicons/react/24/outline';
 import { BookmarkIcon as BookmarkSolidIcon } from '@heroicons/react/24/solid';
+import CompanyLogo from '@/components/ui/CompanyLogo';
 
 /**
  * JobCard - CANONICAL REFERENCE PATTERN
@@ -117,9 +117,7 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
             {/* Header: Company + Title + Save */}
             <div className="flex justify-between items-start">
                 <div className="flex items-center gap-4 min-w-0 flex-1">
-                    <div className="w-12 h-12 bg-muted border border-border rounded flex items-center justify-center shrink-0">
-                        <BuildingOfficeIcon className="w-6 h-6 text-muted-foreground" />
-                    </div>
+                    <CompanyLogo companyName={job.company} applyLink={job.applyLink} />
                     <div className="min-w-0">
                         <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider line-clamp-1">
                             {job.company}

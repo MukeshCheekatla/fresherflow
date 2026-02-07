@@ -1,3 +1,4 @@
+import { Opportunity } from '@fresherflow/types';
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { opportunitiesApi } from '@/lib/api/client';
@@ -16,35 +17,32 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     try {
         const { opportunity } = await opportunitiesApi.getById(slugOrId);
 
-        // Format title based on opportunity type
-        let title = '';
-        if (opportunity.type === 'WALKIN') {
-            const date = opportunity.walkInDetails?.dateRange || 'Upcoming';
-            title = `Walk-in Interview: ${opportunity.title} at ${opportunity.company} | ${date}`;
-        } else if (opportunity.type === 'INTERNSHIP') {
-            const location = opportunity.locations[0] || 'Multiple Locations';
-            title = `${opportunity.title} Internship at ${opportunity.company} | ${location}`;
-        } else {
-            const location = opportunity.locations[0] || 'Multiple Locations';
-            title = `${opportunity.title} at ${opportunity.company} | ${location}`;
-        }
+        // Format title strictly per SEO Strategy: Role + "Fresher Job" + Company + Batch + Location
+        const role = opportunity.normalizedRole || opportunity.title;
+        const company = opportunity.company;
+        const batch = opportunity.allowedPassoutYears?.length > 0 ? `${opportunity.allowedPassoutYears.join('/')} Batch` : '';
+        const location = opportunity.locations?.[0] || 'Remote';
+        const type = opportunity.type === 'INTERNSHIP' ? 'Internship' : 'Fresher Job';
+
+        let seoTitle = `${role} ${type} at ${company}`;
+        if (batch) seoTitle += ` ${batch}`;
+        seoTitle += ` – ${location}`;
 
         // Generate description (max 155 chars)
         const eligibility = opportunity.allowedPassoutYears.length > 0
             ? `${opportunity.allowedPassoutYears.join(', ')} graduates`
             : 'freshers';
 
-        const location = opportunity.locations.join(', ') || 'Multiple locations';
         const description = `${opportunity.title} position at ${opportunity.company} in ${location}. Open to ${eligibility}. Apply now on FresherFlow.`.substring(0, 155);
 
         // Canonical URL
         const url = `https://fresherflow.in/opportunities/${opportunity.slug}`;
 
         return {
-            title: `${title} | FresherFlow`,
+            title: seoTitle,
             description,
             openGraph: {
-                title,
+                title: seoTitle,
                 description,
                 url,
                 siteName: 'FresherFlow',
@@ -60,7 +58,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             },
             twitter: {
                 card: 'summary_large_image',
-                title,
+                title: seoTitle,
                 description,
                 images: ['https://fresherflow.in/og-default.png'],
             },
@@ -76,11 +74,69 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
 }
 
+const generateJsonLd = (opportunity: Opportunity) => {
+    let logoUrl = 'https://fresherflow.in/logo.png';
+    try {
+        if (opportunity.applyLink) {
+            const hostname = new URL(opportunity.applyLink).hostname;
+            logoUrl = `https://logo.clearbit.com/${hostname}`;
+        }
+    } catch {
+        // Fallback to default
+    }
+
+    const schema: Record<string, unknown> = {
+        '@context': 'https://schema.org',
+        '@type': 'JobPosting',
+        title: opportunity.title,
+        description: opportunity.description,
+        identifier: {
+            '@type': 'PropertyValue',
+            name: opportunity.company,
+            value: opportunity.id
+        },
+        datePosted: opportunity.postedAt,
+        validThrough: opportunity.expiresAt,
+        hiringOrganization: {
+            '@type': 'Organization',
+            name: opportunity.company,
+            logo: logoUrl
+        },
+        jobLocation: {
+            '@type': 'Place',
+            address: {
+                '@type': 'PostalAddress',
+                addressLocality: opportunity.locations?.[0] || 'Remote',
+                addressCountry: 'IN'
+            }
+        },
+        employmentType: opportunity.type === 'INTERNSHIP' ? 'INTERN' : 'FULL_TIME',
+        directApply: true,
+    };
+
+    if (opportunity.salaryMin || (opportunity.salary && opportunity.salary.min)) {
+        schema.baseSalary = {
+            '@type': 'MonetaryAmount',
+            currency: 'INR',
+            value: {
+                '@type': 'QuantitativeValue',
+                minValue: opportunity.salaryMin || opportunity.salary?.min,
+                maxValue: opportunity.salaryMax || opportunity.salary?.max,
+                unitText: opportunity.salaryPeriod === 'MONTHLY' ? 'MONTH' : 'YEAR'
+            }
+        };
+    }
+
+    return schema;
+};
+
 export default async function OpportunityDetailPage({ params }: Props) {
     const { id: slugOrId } = await params;
+    let opportunityData = null;
 
     try {
         const { opportunity } = await opportunitiesApi.getById(slugOrId);
+        opportunityData = opportunity;
 
         // SEO Enforcement: Redirect to slug if ID was used
         if (slugOrId === opportunity.id && opportunity.slug) {
@@ -90,5 +146,15 @@ export default async function OpportunityDetailPage({ params }: Props) {
         // Fallback handled by client component (loading/404)
     }
 
-    return <OpportunityDetailClient id={slugOrId} />;
+    return (
+        <>
+            {opportunityData && (
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(generateJsonLd(opportunityData)) }}
+                />
+            )}
+            <OpportunityDetailClient id={slugOrId} initialData={opportunityData} />
+        </>
+    );
 }

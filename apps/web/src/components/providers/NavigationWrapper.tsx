@@ -3,6 +3,7 @@
 import { Suspense } from 'react';
 import { usePathname } from 'next/navigation';
 import { Navbar, MobileNav } from '@/components/ui/Navigation';
+import { Footer } from '@/components/ui/Footer';
 import { cn } from '@/lib/utils';
 
 export function NavigationWrapper({ children }: { children: React.ReactNode }) {
@@ -12,8 +13,6 @@ export function NavigationWrapper({ children }: { children: React.ReactNode }) {
     const isAdminRoute = normalizedPathname.startsWith('/admin');
 
     // Navigation is now constant/fixed and does not hide on scroll per user request
-
-    // Hide navigation and padding on admin routes, but keep on auth (login/register)
     const hideNav = isAdminRoute;
     const isHomePage = pathname === '/';
 
@@ -32,10 +31,11 @@ export function NavigationWrapper({ children }: { children: React.ReactNode }) {
             )}>
                 <div className={cn(
                     "flex-1 flex flex-col",
-                    (!isAuthRoute && !isAdminRoute) && "pb-20 md:pb-0"
+                    (!isAuthRoute && !isAdminRoute) && "min-h-[calc(100vh-theme(spacing.24)-theme(spacing.20))]" // rough calculation to ensure footer pushes to bottom if content is short
                 )}>
                     {children}
                 </div>
+                {!isAdminRoute && !isAuthRoute && <Footer />}
             </main>
             {!hideNav && (
                 <Suspense fallback={null}>
@@ -45,4 +45,3 @@ export function NavigationWrapper({ children }: { children: React.ReactNode }) {
         </>
     );
 }
-

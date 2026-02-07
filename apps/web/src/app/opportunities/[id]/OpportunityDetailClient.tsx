@@ -26,14 +26,27 @@ import LoadingScreen from '@/components/ui/LoadingScreen';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 
-export default function OpportunityDetailClient({ id }: { id: string }) {
+export default function OpportunityDetailClient({ id, initialData }: { id: string; initialData?: Opportunity | null }) {
     const router = useRouter();
     const { user } = useAuth();
-    const [opp, setOpp] = useState<Opportunity | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    // Use initialData if available, otherwise start null
+    const [opp, setOpp] = useState<Opportunity | null>(initialData || null);
+    // If initialData is provided, we are not loading. If not provided, we are loading.
+    const [isLoading, setIsLoading] = useState(!initialData);
     const [showReports, setShowReports] = useState(false);
 
     const loadOpportunity = useCallback(async () => {
+        // If we already have data (from server), we might not need to fetch again immediately
+        // But if we want to ensure fresh data or if we navigated here client-side without data:
+        if (initialData && !isLoading) {
+            // Optional: Background revalidation or just skip. 
+            // For now, let's skip re-fetching if we have initialData to avoid flicker/double-fetch
+            // unless we want to support soft-navigation updates.
+            // Let's stick to: Fetch only if we don't have data, or if we want to refresh.
+            // Given the current architecture, let's interpret initialData as "the data".
+            return;
+        }
+
         setIsLoading(true);
         try {
             const { opportunity } = await opportunitiesApi.getById(id);
@@ -55,13 +68,16 @@ export default function OpportunityDetailClient({ id }: { id: string }) {
         } finally {
             setIsLoading(false);
         }
-    }, [id, router]);
+    }, [id, router, initialData, isLoading]); // Added deps
 
     useEffect(() => {
-        if (id) {
+        // If we have initialData, we might not need to fetch. 
+        // But typically we might want to "hydrate" or check for updates.
+        // However, to fix the double fetch logic:
+        if (!initialData && id) {
             void loadOpportunity();
         }
-    }, [id, loadOpportunity]);
+    }, [id, initialData, loadOpportunity]); // Added deps
 
     const handleToggleSave = async () => {
         if (!opp) return;
