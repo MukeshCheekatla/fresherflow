@@ -15,7 +15,7 @@ import type {
 } from '@simplewebauthn/server';
 import { generateAdminToken, verifyAdminToken } from '@fresherflow/auth';
 import { AppError } from '../../middleware/errorHandler';
-// import { requireAdmin } from '../../middleware/auth'; // Not used in login flow
+import { requireAdmin } from '../../middleware/auth';
 import rateLimit from 'express-rate-limit';
 
 const router: Router = express.Router();
@@ -281,7 +281,60 @@ router.get('/me', async (req: Request, res: Response) => {
 });
 
 /**
- * 6. Logout
+ * 6. List Registered Passkeys
+ */
+router.get('/passkeys', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const authenticators = await prisma.authenticator.findMany({
+            where: { userId: req.adminId! }, // set by requireAdmin
+            select: {
+                credentialID: true,
+                deviceType: true,
+                backedUp: true,
+                transports: true
+            }
+        });
+
+        // Map to friendly format
+        const keys = authenticators.map(auth => ({
+            id: auth.credentialID, // Use credentialID as stable ID
+            name: `${auth.deviceType} (${auth.transports?.split(',').join(', ') || 'unknown'})`
+        }));
+
+        res.json({ keys });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * 7. Delete Passkey
+ */
+router.delete('/passkeys/:id', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const id = req.params.id as string;
+
+        // Prevent deleting the last key (lockout protection)
+        const count = await prisma.authenticator.count({ where: { userId: req.adminId! } });
+        if (count <= 1) {
+            throw new AppError('Cannot delete the last passkey. Add a new one first.', 400);
+        }
+
+        await prisma.authenticator.deleteMany({
+            where: {
+                credentialID: id,
+                userId: req.adminId! // Ensure ownership
+            }
+        });
+
+        res.json({ success: true });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * 8. Logout
  */
 router.post('/logout', (req, res) => {
     res.cookie('adminAccessToken', '', { ...COOKIE_OPTIONS, maxAge: 0 });

@@ -179,6 +179,14 @@ export const adminAuthApi = {
             body: JSON.stringify({ email, body })
         }),
 
+    getPasskeys: () =>
+        apiClient<{ keys: Array<{ id: string, name: string }> }>('/api/admin/auth/passkeys'),
+
+    deletePasskey: (id: string) =>
+        apiClient(`/api/admin/auth/passkeys/${id}`, {
+            method: 'DELETE'
+        }),
+
     logout: async () => {
         await apiClient('/api/admin/auth/logout', {
             method: 'POST'
