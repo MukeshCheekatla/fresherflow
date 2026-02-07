@@ -96,4 +96,4 @@ npm run dev          # Start Monorepo Stream
 
 ---
 **Built with discipline. Optimized for students.**
-**[cheekatlamukesh@gmail.com](mailto:cheekatlamukesh@gmail.com)**
+**[support@fresherflow.in](mailto:support@fresherflow.in)**

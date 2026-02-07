@@ -5,6 +5,7 @@
 import { z } from 'zod';
 import {
     OpportunityType,
+    OpportunityStatus,
     EducationLevel,
     WorkMode,
     Availability,
@@ -155,7 +156,7 @@ export const opportunityFiltersSchema = z.object({
 
 export const adminOpportunityFiltersSchema = z.object({
     type: z.nativeEnum(OpportunityType).optional(),
-    status: z.enum(['ACTIVE', 'EXPIRED', 'REMOVED']).optional()
+    status: z.nativeEnum(OpportunityStatus).optional()
 });
 
 // ========================================

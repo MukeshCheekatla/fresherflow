@@ -32,8 +32,30 @@ const COOKIE_OPTIONS = {
     path: '/'
 };
 
-// In-memory challenge store (Recommended: Redis for production)
-const challengeStore = new Map<string, string>();
+const CHALLENGE_TTL_MS = 10 * 60 * 1000;
+
+async function setChallenge(key: string, userId: string, type: 'reg' | 'auth', challenge: string) {
+    const expiresAt = new Date(Date.now() + CHALLENGE_TTL_MS);
+    await prisma.webAuthnChallenge.upsert({
+        where: { key },
+        update: { challenge, type, expiresAt },
+        create: { key, userId, challenge, type, expiresAt }
+    });
+}
+
+async function getChallenge(key: string) {
+    const record = await prisma.webAuthnChallenge.findUnique({ where: { key } });
+    if (!record) return null;
+    if (record.expiresAt < new Date()) {
+        await prisma.webAuthnChallenge.delete({ where: { key } });
+        return null;
+    }
+    return record.challenge;
+}
+
+async function clearChallenge(key: string) {
+    await prisma.webAuthnChallenge.delete({ where: { key } }).catch(() => { });
+}
 
 // Rate limiting
 const adminAuthLimiter = rateLimit({
@@ -122,7 +144,7 @@ router.post('/register/options', adminAuthLimiter, async (req: Request, res: Res
         };
 
         const registrationOptions = await generateRegistrationOptions(options);
-        challengeStore.set(`reg_${user.id}`, registrationOptions.challenge);
+        await setChallenge(`reg_${user.id}`, user.id, 'reg', registrationOptions.challenge);
 
         res.json(registrationOptions);
     } catch (error) {
@@ -139,7 +161,7 @@ router.post('/register/verify', adminAuthLimiter, async (req: Request, res: Resp
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user) return next(new AppError('Not found', 404));
 
-        const expectedChallenge = challengeStore.get(`reg_${user.id}`);
+        const expectedChallenge = await getChallenge(`reg_${user.id}`);
         if (!expectedChallenge) return next(new AppError('Challenge expired', 400));
 
         const verification = await verifyRegistrationResponse({
@@ -164,7 +186,7 @@ router.post('/register/verify', adminAuthLimiter, async (req: Request, res: Resp
                 },
             });
 
-            challengeStore.delete(`reg_${user.id}`);
+            await clearChallenge(`reg_${user.id}`);
             res.json({ verified: true });
         } else {
             res.status(400).json({ verified: false });
@@ -206,7 +228,7 @@ router.post('/login/options', adminAuthLimiter, async (req: Request, res: Respon
         };
 
         const authenticationOptions = await generateAuthenticationOptions(options);
-        challengeStore.set(`auth_${user.id}`, authenticationOptions.challenge);
+        await setChallenge(`auth_${user.id}`, user.id, 'auth', authenticationOptions.challenge);
 
         res.json(authenticationOptions);
     } catch (error) {
@@ -227,7 +249,7 @@ router.post('/login/verify', adminAuthLimiter, async (req: Request, res: Respons
 
         if (!user) return next(new AppError('Unauthorized', 401));
 
-        const expectedChallenge = challengeStore.get(`auth_${user.id}`);
+        const expectedChallenge = await getChallenge(`auth_${user.id}`);
         if (!expectedChallenge) return next(new AppError('Challenge expired', 400));
 
         const authenticator = user.authenticators.find(auth => auth.credentialID === body.id);
@@ -261,7 +283,7 @@ router.post('/login/verify', adminAuthLimiter, async (req: Request, res: Respons
                 maxAge: accessMaxAge
             });
 
-            challengeStore.delete(`auth_${user.id}`);
+            await clearChallenge(`auth_${user.id}`);
             res.json({ verified: true });
         } else {
             res.status(400).json({ verified: false });
@@ -275,9 +297,22 @@ router.post('/login/verify', adminAuthLimiter, async (req: Request, res: Respons
  * 5. Current Admin Status
  */
 router.get('/me', async (req: Request, res: Response) => {
-    // This uses a different token than user 'me'
-    // Simplified for this task
-    res.json({ admin: !!req.cookies.adminAccessToken });
+    try {
+        const token = req.cookies.adminAccessToken;
+        if (!token) return res.json({ admin: null });
+
+        const adminId = verifyAdminToken(token);
+        if (!adminId) return res.json({ admin: null });
+
+        const user = await prisma.user.findUnique({
+            where: { id: adminId },
+            select: { id: true, email: true, role: true, fullName: true, isTwoFactorEnabled: true }
+        });
+
+        res.json({ admin: user });
+    } catch (error) {
+        res.json({ admin: null });
+    }
 });
 
 /**

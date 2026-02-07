@@ -1,8 +1,11 @@
+import dotenv from 'dotenv';
+// Load environment variables immediately
+dotenv.config();
+
 import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 // import * as Sentry from '@sentry/node'; // Disabled for first run
 import { requestIdMiddleware } from './middleware/requestId';
@@ -24,12 +27,8 @@ import adminOpportunitiesRoutes from './routes/admin/opportunities';
 import adminFeedbackRoutes from './routes/admin/feedback';
 import adminSystemRoutes from './routes/admin/system';
 import adminAnalyticsRoutes from './routes/admin/analytics';
+import adminTotpRoutes from './routes/admin/totp';
 import healthRoutes from './routes/public/health';
-
-// Load environment variables (Local only)
-if (process.env.NODE_ENV !== 'production') {
-    dotenv.config();
-}
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
@@ -74,9 +73,18 @@ app.use(helmet());
 // Cookies
 app.use(cookieParser());
 
-// CORS - Hardened for production
+// CORS - Allowlist for multiple environments (comma-separated)
+const allowedOrigins = [
+    ...(process.env.FRONTEND_URLS || '').split(',').map(origin => origin.trim()).filter(Boolean),
+    ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
+];
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL,
+    origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+        return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true
 }));
 
@@ -141,6 +149,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/opportunities', feedbackRoutes);
 
 // Admin routes (isolated)
+app.use('/api/admin/auth/totp', adminTotpRoutes);
 app.use('/api/admin/auth/login', authLimiter);
 app.use('/api/admin/auth', adminAuthRoutes);
 app.use('/api/admin/opportunities', adminOpportunitiesRoutes);
@@ -176,10 +185,10 @@ app.use(errorHandler);
 // ============================================================================
 
 app.listen(PORT, () => {
-    logger.info(`🚀 Server running on port ${PORT}`);
-    logger.info(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-    logger.info(`🌐 Frontend URL: ${process.env.FRONTEND_URL}`);
-    logger.info(`🔍 Sentry: ${process.env.SENTRY_DSN ? 'Enabled' : 'Disabled'}`);
+    logger.info(`Server running on port ${PORT}`);
+    logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    logger.info(`Frontend URL: ${process.env.FRONTEND_URL}`);
+    logger.info(`Sentry: ${process.env.SENTRY_DSN ? 'Enabled' : 'Disabled'}`);
 
     // Start cron jobs
     startExpiryCron();

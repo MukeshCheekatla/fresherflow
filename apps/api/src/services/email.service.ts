@@ -20,8 +20,10 @@ Expires in: 5 minutes
 ========================================
         `;
 
-        console.log(localMessage);
-        logger.info(`OTP sent to ${email}: ${code}`);
+        if (process.env.NODE_ENV !== 'production') {
+            console.log(localMessage);
+            logger.info(`OTP sent to ${email}: ${code}`);
+        }
 
         if (resend) {
             try {
@@ -63,8 +65,10 @@ Expires in: 15 minutes
 ========================================
         `;
 
-        console.log(localMessage);
-        logger.info(`Magic Link sent to ${email}`);
+        if (process.env.NODE_ENV !== 'production') {
+            console.log(localMessage);
+            logger.info(`Magic Link sent to ${email}`);
+        }
 
         if (resend) {
             try {

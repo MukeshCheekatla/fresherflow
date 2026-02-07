@@ -29,6 +29,13 @@ function normalizeTypeParam(raw?: string) {
     return undefined;
 }
 
+function toCsvValue(value: unknown) {
+    if (value === null || value === undefined) return '';
+    const stringValue = Array.isArray(value) ? value.join(' | ') : String(value);
+    const escaped = stringValue.replace(/"/g, '""');
+    return `"${escaped}"`;
+}
+
 // GET /api/admin/opportunities/summary
 router.get('/summary', async (_req: Request, res: Response, next: NextFunction) => {
     try {
@@ -322,6 +329,69 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             pageSize,
             totalPages
         });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// GET /api/admin/opportunities/export
+router.get('/export', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { type, status } = req.query;
+        const where: any = {};
+
+        const normalizedType = typeof type === 'string' ? normalizeTypeParam(type) : undefined;
+        if (normalizedType) where.type = normalizedType;
+        if (typeof status === 'string' && Object.values(OpportunityStatus).includes(status as OpportunityStatus)) {
+            where.status = status as OpportunityStatus;
+        }
+
+        const opportunities = await prisma.opportunity.findMany({
+            where,
+            orderBy: { postedAt: 'desc' }
+        });
+
+        const header = [
+            'id',
+            'slug',
+            'type',
+            'status',
+            'title',
+            'company',
+            'locations',
+            'postedAt',
+            'expiresAt',
+            'linkHealth'
+        ].join(',');
+
+        const rows = opportunities.map(opp => ([
+            toCsvValue(opp.id),
+            toCsvValue(opp.slug),
+            toCsvValue(opp.type),
+            toCsvValue(opp.status),
+            toCsvValue(opp.title),
+            toCsvValue(opp.company),
+            toCsvValue(opp.locations),
+            toCsvValue(opp.postedAt),
+            toCsvValue(opp.expiresAt),
+            toCsvValue(opp.linkHealth)
+        ].join(',')));
+
+        if (req.adminId) {
+            prisma.adminAudit.create({
+                data: {
+                    userId: req.adminId,
+                    action: 'EXPORT',
+                    targetId: 'opportunities',
+                    reason: `type=${normalizedType || 'any'},status=${status || 'any'}`
+                }
+            }).catch(() => {});
+        }
+
+        const csv = [header, ...rows].join('\n');
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename="opportunities.csv"');
+        res.send(csv);
     } catch (error) {
         next(error);
     }

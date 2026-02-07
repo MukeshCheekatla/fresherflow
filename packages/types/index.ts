@@ -76,6 +76,7 @@ export interface User {
     role: Role;
     createdAt: Date;
     profile?: Profile;
+    isTwoFactorEnabled?: boolean;
 }
 
 export interface Profile {
@@ -110,6 +111,7 @@ export interface Admin {
     email: string;
     fullName: string;
     createdAt: Date;
+    isTwoFactorEnabled?: boolean;
 }
 
 export interface Opportunity {

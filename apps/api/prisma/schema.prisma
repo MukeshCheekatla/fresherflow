@@ -101,6 +101,11 @@ model User {
   postedOpportunities Opportunity[]
   auditLogs           AdminAudit[]
   authenticators     Authenticator[]
+  webAuthnChallenges WebAuthnChallenge[]
+
+  // Security - TOTP
+  totpSecret         String?
+  isTwoFactorEnabled Boolean  @default(false)
 }
 
 model Authenticator {
@@ -115,6 +120,21 @@ model Authenticator {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model WebAuthnChallenge {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  userId    String
+  challenge String
+  type      String   // "reg" or "auth"
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model RefreshToken {

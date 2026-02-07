@@ -71,6 +71,8 @@ export function errorHandler(
     res.status(statusCode).json({
         error: {
             message,
+            code: err.code || err.name || 'UNKNOWN_ERROR',
+            statusCode,
             requestId: req.requestId,
             // In dev, we still send technical info in separate fields for the console
             // but the 'message' field above is now guaranteed to be clean for toasts.
