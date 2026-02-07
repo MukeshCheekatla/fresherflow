@@ -31,6 +31,7 @@ export default function LoginPage() {
     const [otp, setOtp] = useState('');
     const [step, setStep] = useState<LoginStep>('email');
     const [isProcessing, setIsProcessing] = useState(false);
+    const [googleScriptLoaded, setGoogleScriptLoaded] = useState(false);
 
     const { sendOtp, verifyOtp, loginWithGoogle, user, isLoading } = useAuth();
     const router = useRouter();
@@ -46,6 +47,18 @@ export default function LoginPage() {
             router.push('/dashboard');
         }
     }, [user, isLoading, router]);
+
+    // Check if Google script is loaded
+    useEffect(() => {
+        const checkGoogleScript = () => {
+            if (typeof window !== 'undefined' && window.google?.accounts?.id) {
+                setGoogleScriptLoaded(true);
+            } else {
+                setTimeout(checkGoogleScript, 100);
+            }
+        };
+        checkGoogleScript();
+    }, []);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleGoogleCallback = useCallback(async (response: any) => {
@@ -66,43 +79,51 @@ export default function LoginPage() {
         }
     }, [loginWithGoogle, router]);
 
-    // Initialize Google Login - only when on email step
+    // Initialize Google Login - robust version with cleanup
     useEffect(() => {
-        // Only initialize when we're on the email step
-        if (step !== 'email') return;
+        if (step !== 'email' || !googleScriptLoaded) return;
 
-        if (typeof window !== 'undefined' && window.google) {
-            window.google.accounts.id.initialize({
-                client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-                callback: handleGoogleCallback,
-            });
+        let mounted = true;
+        const googleBtnId = 'google-login-btn';
 
-            // Wait for DOM to be ready
-            const renderGoogleButton = () => {
-                const googleBtn = document.getElementById("google-login-btn");
-                if (googleBtn) {
-                    // Clear any existing button content first
-                    googleBtn.innerHTML = '';
+        const initGoogle = () => {
+            if (!mounted) return;
 
-                    window.google.accounts.id.renderButton(
-                        googleBtn,
-                        {
-                            type: 'standard',
-                            theme: "outline",
-                            size: "large",
-                            text: "continue_with",
-                            shape: "rectangular",
-                            logo_alignment: "center",
-                            width: "400"
-                        }
-                    );
-                }
-            };
+            const googleBtn = document.getElementById(googleBtnId);
+            if (!googleBtn) {
+                setTimeout(initGoogle, 100);
+                return;
+            }
 
-            // Small delay to ensure container is fully ready
-            setTimeout(renderGoogleButton, 100);
-        }
-    }, [handleGoogleCallback, step]);
+            try {
+                googleBtn.innerHTML = '';
+                window.google.accounts.id.initialize({
+                    client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+                    callback: handleGoogleCallback,
+                    auto_select: false,
+                });
+
+                window.google.accounts.id.renderButton(googleBtn, {
+                    type: 'standard',
+                    theme: 'outline',
+                    size: 'large',
+                    text: 'continue_with',
+                    shape: 'rectangular',
+                    logo_alignment: 'center',
+                    width: '400',
+                });
+                console.log('[Google] Button rendered');
+            } catch (err) {
+                console.error('[Google] Render failed:', err);
+            }
+        };
+
+        const timer = setTimeout(initGoogle, 150);
+        return () => {
+            mounted = false;
+            clearTimeout(timer);
+        };
+    }, [step, googleScriptLoaded, handleGoogleCallback]);
 
     const handleSendOtp = async (e: React.FormEvent) => {
         e.preventDefault();
