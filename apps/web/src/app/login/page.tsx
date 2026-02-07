@@ -62,19 +62,14 @@ export default function LoginPage() {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleGoogleCallback = useCallback(async (response: any) => {
-        console.log('[Google Login] Starting authentication...', { hasCredential: !!response.credential });
         setIsProcessing(true);
         try {
-            console.log('[Google Login] Calling loginWithGoogle...');
             await loginWithGoogle(response.credential);
-            console.log('[Google Login] Success! Redirecting to dashboard...');
             toast.success('Welcome! Redirecting...');
             router.push('/dashboard');
         } catch (err: unknown) {
-            console.error('[Google Login] Error:', err);
             setIsProcessing(false);
             const errorMessage = (err as Error).message || 'Google login failed.';
-            console.error('[Google Login] Error message:', errorMessage);
             toast.error(errorMessage);
         }
     }, [loginWithGoogle, router]);
@@ -112,7 +107,7 @@ export default function LoginPage() {
                     logo_alignment: 'center',
                     width: '400',
                 });
-                console.log('[Google] Button rendered');
+                // Google button rendered successfully
             } catch (err) {
                 console.error('[Google] Render failed:', err);
             }

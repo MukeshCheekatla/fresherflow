@@ -42,10 +42,7 @@ export async function apiClient<T = any>(
             !endpoint.includes('/auth/register') &&
             !endpoint.includes('/auth/refresh')) {
 
-            console.log(`[Auth] 401 on ${endpoint}. Checking refresh lock...`);
-
             if (!isRefreshing) {
-                console.log('[Auth] No active refresh. Starting new refresh...');
                 isRefreshing = (async () => {
                     try {
                         const refreshResponse = await fetch(`${API_URL}/api/auth/refresh`, {
@@ -57,7 +54,7 @@ export async function apiClient<T = any>(
                         if (!refreshResponse.ok) {
                             throw new Error('Refresh failed');
                         }
-                        console.log('[Auth] Refresh successful.');
+                        // Refresh successful
                     } catch (error) {
                         console.error('[Auth] Refresh failed:', error);
                         // Let the error propagate to the waiting requests so they can throw proper 401
@@ -67,14 +64,14 @@ export async function apiClient<T = any>(
                     }
                 })();
             } else {
-                console.log('[Auth] Refresh already in progress. Waiting...');
+                // Refresh in progress, waiting
             }
 
             // Wait for the single refresh to complete (success or fail)
             try {
                 await isRefreshing;
                 // Retry original request
-                console.log(`[Auth] Retrying original request to ${endpoint}`);
+                // Retry original request
                 response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
             } catch {
                 console.error('[Auth] Refresh failed, session expired.');

@@ -15,7 +15,8 @@ import {
     Bars3Icon,
     XMarkIcon,
     AcademicCapIcon,
-    QuestionMarkCircleIcon
+    QuestionMarkCircleIcon,
+    UserGroupIcon
 } from '@heroicons/react/24/outline';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -30,9 +31,9 @@ export function Navbar() {
 
     const navLinks = [
         { href: '/dashboard', label: 'Dashboard' },
-        { href: '/opportunities?type=job', label: 'Jobs' },
-        { href: '/opportunities?type=internship', label: 'Internships' },
-        { href: '/opportunities?type=walk-in', label: 'Walk-ins' },
+        { href: '/jobs', label: 'Jobs' },
+        { href: '/internships', label: 'Internships' },
+        { href: '/walk-ins', label: 'Walk-ins' },
         { href: '/account/saved', label: 'Saved' },
     ];
 
@@ -197,10 +198,10 @@ export function MobileNav() {
 
     const tabs = [
         { href: '/dashboard', label: 'Home', icon: HomeIcon },
-        { href: '/opportunities', label: 'Search', icon: MagnifyingGlassIcon },
-        { href: '/opportunities?type=job', label: 'Jobs', icon: BriefcaseIcon },
+        { href: '/jobs', label: 'Jobs', icon: BriefcaseIcon },
+        { href: '/internships', label: 'Intern', icon: AcademicCapIcon },
+        { href: '/walk-ins', label: 'Drives', icon: UserGroupIcon },
         { href: '/account/saved', label: 'Saved', icon: BookmarkIcon },
-        { href: '/profile/edit', label: 'Profile', icon: UserIcon },
     ];
 
     return (
