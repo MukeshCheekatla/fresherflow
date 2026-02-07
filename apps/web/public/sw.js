@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fresherflow-pwa-v1.4.0';
+const CACHE_NAME = 'fresherflow-pwa-v1.4.1';
 const OFFLINE_URL = '/offline.html';
 
 // Assets that should be cached on install
@@ -10,7 +10,19 @@ const PRECACHE_ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_ASSETS))
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      for (const url of PRECACHE_ASSETS) {
+        try {
+          const response = await fetch(url, { redirect: 'follow', cache: 'reload' });
+          if (response.ok && response.type !== 'opaqueredirect') {
+            await cache.put(url, response.clone());
+          }
+        } catch {
+          // Skip precache item if it fails to fetch
+        }
+      }
+    })()
   );
   self.skipWaiting();
 });
@@ -36,7 +48,7 @@ self.addEventListener('fetch', (event) => {
   // Network-first for navigations (HTML), with offline fallback
   if (isNavigation) {
     event.respondWith(
-      fetch(event.request).then((response) => {
+      fetch(event.request, { redirect: 'follow' }).then((response) => {
         return response;
       }).catch(() => caches.match(OFFLINE_URL))
     );
