@@ -5,8 +5,8 @@ import { adminAuthApi } from "@/lib/api/client";
 import { startRegistration } from "@simplewebauthn/browser";
 import { Loader2, Plus, Trash2, Key } from "lucide-react";
 import { toast } from "sonner";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 
 interface Passkey {
     id: string;
@@ -63,9 +63,10 @@ export default function PasskeyManager() {
             } else {
                 toast.error("Verification failed");
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Passkey registration error:", error);
-            toast.error(error.message || "Failed to add passkey");
+            const message = error instanceof Error ? error.message : "Failed to add passkey";
+            toast.error(message);
         } finally {
             setRegistering(false);
         }
@@ -78,8 +79,9 @@ export default function PasskeyManager() {
             await adminAuthApi.deletePasskey(id);
             toast.success("Passkey removed");
             setKeys(keys.filter(k => k.id !== id));
-        } catch (error: any) {
-            toast.error(error.message || "Failed to remove passkey");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to remove passkey";
+            toast.error(message);
         }
     };
 

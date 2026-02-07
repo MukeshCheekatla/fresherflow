@@ -1,5 +1,5 @@
 import PasskeyManager from "@/components/admin/PasskeyManager";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/Badge";
 
 export const metadata = {
     title: "Admin Settings | FresherFlow",
