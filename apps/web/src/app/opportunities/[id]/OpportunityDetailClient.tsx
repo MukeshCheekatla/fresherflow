@@ -416,25 +416,42 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                 </div>
             </main>
 
-            {/* Mobile Actions - Floating Bottom */}
-            <div className="md:hidden fixed bottom-6 left-4 right-4 z-40 flex gap-2">
-                <Button
-                    onClick={handleApply}
-                    className="flex-1 h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold uppercase tracking-tight shadow-xl rounded-xl flex items-center justify-center gap-2"
-                >
-                    Apply Now
-                    <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                </Button>
-                <button
-                    onClick={handleToggleSave}
-                    className={cn(
-                        "w-12 h-12 rounded-xl shadow-lg flex items-center justify-center transition-all border",
-                        opp.isSaved ? "bg-primary text-white border-primary" : "bg-card text-muted-foreground border-border"
-                    )}
-                >
-                    {opp.isSaved ? <BookmarkSolidIcon className="w-5 h-5" /> : <BookmarkIcon className="w-5 h-5" />}
-                </button>
-            </div>
+            {/* Mobile Actions - Floating Bottom (Logged In Users Only) */}
+            {user ? (
+                <div className="md:hidden fixed bottom-6 left-4 right-4 z-40 flex gap-2 animate-in slide-in-from-bottom-4 duration-500">
+                    <Button
+                        onClick={handleApply}
+                        className="flex-1 h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold uppercase tracking-tight shadow-xl rounded-xl flex items-center justify-center gap-2"
+                    >
+                        Apply Now
+                        <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                    </Button>
+                    <button
+                        onClick={handleToggleSave}
+                        className={cn(
+                            "w-12 h-12 rounded-xl shadow-lg flex items-center justify-center transition-all border",
+                            opp.isSaved ? "bg-primary text-white border-primary" : "bg-card text-muted-foreground border-border"
+                        )}
+                    >
+                        {opp.isSaved ? <BookmarkSolidIcon className="w-5 h-5" /> : <BookmarkIcon className="w-5 h-5" />}
+                    </button>
+                </div>
+            ) : (
+                /* Guest CTA - Sticky Bottom or Inline */
+                <div className="md:hidden fixed bottom-6 left-4 right-4 z-40">
+                    <Link href="/login?redirect=/opportunities">
+                        <div className="bg-primary/95 backdrop-blur-md text-primary-foreground p-4 rounded-xl shadow-2xl flex items-center justify-between border border-primary/20 animate-in slide-in-from-bottom-4 duration-500">
+                            <div>
+                                <p className="text-xs font-bold uppercase tracking-wide">Join FresherFlow</p>
+                                <p className="text-[10px] opacity-90">Unlock 500+ more opportunities.</p>
+                            </div>
+                            <div className="h-8 px-4 bg-white text-primary rounded-lg flex items-center justify-center text-[10px] font-bold uppercase tracking-tight shadow-sm">
+                                Sign Up Free
+                            </div>
+                        </div>
+                    </Link>
+                </div>
+            )}
         </div>
     );
 }
