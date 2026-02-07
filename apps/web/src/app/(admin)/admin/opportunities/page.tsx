@@ -22,6 +22,12 @@ import {
     CheckCircleIcon,
     ArrowPathIcon
 } from '@heroicons/react/24/outline';
+import {
+    expireOpportunityAction,
+    updateOpportunityAction,
+    deleteOpportunityAction,
+    bulkOpportunityAction
+} from '@/features/jobs/actions/opportunity';
 
 export default function OpportunitiesListPage() {
     const { isAuthenticated } = useAdmin();
@@ -159,6 +165,7 @@ export default function OpportunitiesListPage() {
         }
     }, [typeFilter, statusFilter, search, sort, searchParams, pathname, router]);
 
+
     const handleExpire = (id: string, title: string) => {
         setConfirmModal({
             show: true,
@@ -169,7 +176,9 @@ export default function OpportunitiesListPage() {
             action: async () => {
                 const loadingToast = toast.loading(' Updating status...');
                 try {
-                    await adminApi.expireOpportunity(id);
+                    const res = await expireOpportunityAction(id);
+                    if (!res.success) throw new Error(res.error);
+
                     toast.success(' Opportunity marked as expired', { id: loadingToast });
                     loadOpportunities();
                     setConfirmModal(prev => ({ ...prev, show: false }));
@@ -183,7 +192,11 @@ export default function OpportunitiesListPage() {
     const handleStatusUpdate = async (id: string, newStatus: string) => {
         const loadingToast = toast.loading(`Updating to ${newStatus}...`);
         try {
-            await adminApi.updateOpportunity(id, { status: newStatus });
+            // TypeScript might complain about string vs explicit enum, but passing string works for now or casting
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const res = await updateOpportunityAction(id, { status: newStatus as any });
+            if (!res.success) throw new Error(res.error);
+
             toast.success(` Listing updated to ${newStatus}`, { id: loadingToast });
             loadOpportunities();
         } catch (err: unknown) {
@@ -201,7 +214,9 @@ export default function OpportunitiesListPage() {
             action: async () => {
                 const loadingToast = toast.loading(' Removing listing...');
                 try {
-                    await adminApi.deleteOpportunity(id, 'Removed by admin via dashboard');
+                    const res = await deleteOpportunityAction(id, 'Removed by admin via dashboard');
+                    if (!res.success) throw new Error(res.error);
+
                     toast.success(' Opportunity removed', { id: loadingToast });
                     loadOpportunities();
                     setConfirmModal(prev => ({ ...prev, show: false }));
@@ -231,7 +246,9 @@ export default function OpportunitiesListPage() {
             action: async () => {
                 const loadingToast = toast.loading(` Processing bulk ${action.toLowerCase()}...`);
                 try {
-                    await adminApi.bulkAction(selectedIds, action);
+                    const res = await bulkOpportunityAction(selectedIds, action);
+                    if (!res.success) throw new Error(res.error);
+
                     toast.success(` Success: ${selectedIds.length} items updated`, { id: loadingToast });
                     setSelectedIds([]);
                     loadOpportunities();
@@ -619,9 +636,9 @@ export default function OpportunitiesListPage() {
                                         </td>
                                         <td className="px-5 py-4">
                                             <span className={`inline-flex items-center rounded-md px-2 py-1 text-[10px] font-bold ring-1 ring-inset ${opp.status === 'ARCHIVED' ? 'bg-rose-50 text-rose-700 ring-rose-600/10' :
-                                                    (opp.status === 'PUBLISHED' && opp.expiresAt && new Date(opp.expiresAt) < new Date()) ? 'bg-orange-50 text-orange-700 ring-orange-600/10' :
-                                                        opp.status === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' :
-                                                            'bg-slate-50 text-slate-600 ring-slate-500/10'
+                                                (opp.status === 'PUBLISHED' && opp.expiresAt && new Date(opp.expiresAt) < new Date()) ? 'bg-orange-50 text-orange-700 ring-orange-600/10' :
+                                                    opp.status === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' :
+                                                        'bg-slate-50 text-slate-600 ring-slate-500/10'
                                                 }`}>
                                                 {opp.status === 'ARCHIVED' ? 'ARCHIVED' :
                                                     (opp.status === 'PUBLISHED' && opp.expiresAt && new Date(opp.expiresAt) < new Date()) ? 'EXPIRED' :
