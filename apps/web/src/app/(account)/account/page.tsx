@@ -28,7 +28,7 @@ export default function AccountPage() {
                         <UserCircleIcon className="w-10 h-10 text-muted-foreground" />
                     </div>
                     <div className="space-y-2">
-                        <h1 className="text-3xl font-black tracking-tight">Access Restricted</h1>
+                        <h1 className="text-3xl font-bold tracking-tight">Access Restricted</h1>
                         <p className="text-muted-foreground font-medium">Please sign in to manage your professional account.</p>
                     </div>
                     <Link href="/login" className="premium-button mx-auto !w-fit px-8">Sign In Now</Link>
@@ -44,25 +44,25 @@ export default function AccountPage() {
                     <Link href="/dashboard" className="p-2 hover:bg-muted rounded-xl transition-colors">
                         <ArrowLeftIcon className="w-5 h-5 text-muted-foreground" />
                     </Link>
-                    <h1 className="text-3xl md:text-5xl font-black tracking-tighter italic">Account Hub</h1>
+                    <h1 className="text-3xl md:text-5xl font-bold tracking-tighter">Account Hub</h1>
                 </div>
 
                 {/* Identity Card */}
                 <div className="premium-card !p-8 md:!p-10 flex flex-col md:flex-row items-center gap-8 justify-between">
                     <div className="flex items-center gap-6">
-                        <div className="w-20 h-20 rounded-3xl bg-primary text-white flex items-center justify-center text-3xl font-black shadow-xl shadow-primary/20 shrink-0">
+                        <div className="w-20 h-20 rounded-3xl bg-primary text-white flex items-center justify-center text-3xl font-bold shadow-xl shadow-primary/20 shrink-0">
                             {user.fullName?.[0].toUpperCase() || user.email?.[0].toUpperCase()}
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Authenticated Identity</p>
-                            <h2 className="text-2xl font-black tracking-tight">{user.fullName || 'User'}</h2>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Authenticated Identity</p>
+                            <h2 className="text-2xl font-bold tracking-tight">{user.fullName || 'User'}</h2>
                             <p className="text-muted-foreground font-medium text-sm">{user.email}</p>
                         </div>
                     </div>
                     <div className="w-full md:w-auto px-6 py-4 bg-success/5 border border-success/20 rounded-2xl">
                         <div className="flex items-center gap-2 mb-1">
                             <ShieldCheckIcon className="w-4 h-4 text-success" />
-                            <span className="text-[10px] font-black text-success uppercase tracking-widest">Protocol</span>
+                            <span className="text-[10px] font-bold text-success uppercase tracking-widest">Protocol</span>
                         </div>
                         <p className="text-xs font-bold text-foreground">Active Verified Session</p>
                     </div>
@@ -78,7 +78,7 @@ export default function AccountPage() {
                             <BookmarkIcon className="w-7 h-7" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-black tracking-tight group-hover:text-primary transition-colors">Saved Stream</h3>
+                            <h3 className="text-lg font-bold tracking-tight group-hover:text-primary transition-colors">Saved Stream</h3>
                             <p className="text-muted-foreground font-medium text-xs">Priority items in your queue</p>
                         </div>
                     </Link>
@@ -91,7 +91,7 @@ export default function AccountPage() {
                             <Squares2X2Icon className="w-7 h-7" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-black tracking-tight group-hover:text-primary transition-colors">Career Hub</h3>
+                            <h3 className="text-lg font-bold tracking-tight group-hover:text-primary transition-colors">Career Hub</h3>
                             <p className="text-muted-foreground font-medium text-xs">Manage matches and metrics</p>
                         </div>
                     </Link>
@@ -99,10 +99,10 @@ export default function AccountPage() {
 
                 {/* Danger Zone */}
                 <div className="pt-8 space-y-4">
-                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1 leading-none">Settings Zone</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1 leading-none">Settings Zone</p>
                     <button
                         onClick={logout}
-                        className="w-full h-14 flex items-center justify-center gap-3 text-error font-black border border-error/20 bg-error/5 rounded-2xl hover:bg-error/10 transition-all text-xs uppercase tracking-widest shadow-sm"
+                        className="w-full h-14 flex items-center justify-center gap-3 text-error font-bold border border-error/20 bg-error/5 rounded-2xl hover:bg-error/10 transition-all text-xs uppercase tracking-widest shadow-sm"
                     >
                         <ArrowRightOnRectangleIcon className="w-5 h-5" />
                         Terminate Active Session

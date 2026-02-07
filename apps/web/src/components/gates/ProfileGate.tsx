@@ -21,9 +21,7 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         if (!isLoading && profile) {
-            console.log(`[ProfileGate] Completion: ${profile.completionPercentage}% | Path: ${pathname}`);
             if (profile.completionPercentage < 100 && !isOnProfilePage) {
-                console.log('[ProfileGate] Redirecting to completion page...');
                 router.push('/profile/complete');
             }
         }
@@ -48,7 +46,7 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
                         <ExclamationTriangleIcon className="w-6 h-6 md:w-8 md:h-8 text-primary" />
                     </div>
                     <div className="space-y-1 md:space-y-2">
-                        <h2 className="text-xl md:text-2xl font-black tracking-tight leading-tight">Profile Incomplete</h2>
+                        <h2 className="text-xl md:text-2xl font-bold tracking-tight leading-tight">Profile Incomplete</h2>
                         <p className="text-xs md:text-sm text-muted-foreground leading-relaxed px-2">
                             Please complete your profile details to unlock all verified features.
                         </p>

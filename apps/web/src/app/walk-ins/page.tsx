@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import CategoryPage from '@/features/jobs/components/CategoryPage';
+import { OpportunityType } from '@fresherflow/types';
 
 export const metadata: Metadata = {
     title: 'Walk-in Drives & Campus Hiring | FresherFlow',
@@ -13,5 +14,5 @@ export const metadata: Metadata = {
 };
 
 export default function WalkInsPage() {
-    return <CategoryPage type="WALKIN" />;
+    return <CategoryPage type={OpportunityType.WALKIN} />;
 }

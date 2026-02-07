@@ -21,7 +21,7 @@ export default function LogoutPage() {
                     <ArrowRightOnRectangleIcon className="w-8 h-8 text-primary" />
                 </div>
                 <div className="space-y-2">
-                    <h1 className="text-2xl font-black tracking-tight">Logging Out</h1>
+                    <h1 className="text-2xl font-bold tracking-tight">Logging Out</h1>
                     <p className="text-sm text-muted-foreground">
                         Securing your session and clearing credentials...
                     </p>

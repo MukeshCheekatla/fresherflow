@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import CategoryPage from '@/features/jobs/components/CategoryPage';
+import { OpportunityType } from '@fresherflow/types';
 
 export const metadata: Metadata = {
     title: 'Jobs for Freshers | FresherFlow',
@@ -13,5 +14,5 @@ export const metadata: Metadata = {
 };
 
 export default function JobsPage() {
-    return <CategoryPage type="JOB" />;
+    return <CategoryPage type={OpportunityType.JOB} />;
 }

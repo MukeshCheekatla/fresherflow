@@ -345,12 +345,12 @@ export default function EditProfilePage() {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             <div>
                                                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5 opacity-60">Professional Name</p>
-                                                <h3 className="text-base font-black tracking-tight">{user?.fullName || 'Not set'}</h3>
+                                                <h3 className="text-base font-bold tracking-tight">{user?.fullName || 'Not set'}</h3>
                                             </div>
                                             <div>
                                                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5 opacity-60">Registered System Email</p>
-                                                <h3 className="text-base font-black tracking-tight opacity-50">{user?.email || 'Not set'}</h3>
-                                                <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-tighter mt-1 italic">Email cannot be modified for security.</p>
+                                                <h3 className="text-base font-bold tracking-tight opacity-50">{user?.email || 'Not set'}</h3>
+                                                <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-tighter mt-1">Email cannot be modified for security.</p>
                                             </div>
                                         </div>
                                     )}
@@ -697,7 +697,7 @@ export default function EditProfilePage() {
 
                             <div className="bg-muted/30 p-4 rounded-xl flex items-start gap-3 border border-border/50">
                                 <IdentificationIcon className="w-5 h-5 text-primary shrink-0" />
-                                <p className="text-[10px] font-medium text-muted-foreground leading-relaxed italic">
+                                <p className="text-[10px] font-medium text-muted-foreground leading-relaxed">
                                     Strategic profile updates increase match visibility by up to 300%. Ensure all criteria reflect your current career targets.
                                 </p>
                             </div>

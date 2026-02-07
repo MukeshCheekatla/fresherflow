@@ -51,7 +51,7 @@ export default function PasskeyManager() {
             // Let's assume for this MVP we know the admin email or the API can infer it.
             // Wait - the API `register/options` strictly checks `req.body.email === ADMIN_EMAIL`.
             // So we must send it.
-            const ADMIN_EMAIL = "admin@fresherflow.com"; // TODO: Fetch from profile
+            const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL!;
 
             const options = await adminAuthApi.getRegistrationOptions(ADMIN_EMAIL);
             const credential = await startRegistration({ optionsJSON: options });

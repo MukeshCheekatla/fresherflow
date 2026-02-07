@@ -729,7 +729,7 @@ export default function CreateOpportunityPage() {
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-8 text-sm font-black uppercase tracking-widest text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus:ring-ring focus:ring-offset-2 w-full md:w-auto order-1 md:order-2"
+                        className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-8 text-sm font-bold uppercase tracking-widest text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus:ring-ring focus:ring-offset-2 w-full md:w-auto order-1 md:order-2"
                     >
                         {isLoading ? (
                             <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />

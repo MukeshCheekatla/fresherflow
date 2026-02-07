@@ -763,7 +763,7 @@ export default function EditOpportunityPage() {
                                             className="flex h-10 w-full sm:w-auto rounded-md border border-amber-500/30 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                                         />
                                     </div>
-                                    <p className="text-[9px] font-black text-amber-600/60 uppercase">Preview: {formatDateRange(startDate, endDate)}</p>
+                                    <p className="text-[9px] font-bold text-amber-600/60 uppercase">Preview: {formatDateRange(startDate, endDate)}</p>
                                 </div>
                                 <div className="space-y-1.5 md:space-y-2">
                                     <label className="text-xs font-medium text-amber-700 dark:text-amber-400 tracking-wide uppercase">Reporting Window *</label>
@@ -783,7 +783,7 @@ export default function EditOpportunityPage() {
                                             className="flex h-10 w-full sm:w-auto rounded-md border border-amber-500/30 bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                                         />
                                     </div>
-                                    <p className="text-[9px] font-black text-amber-600/60 uppercase">Preview: {formatTime(startTime)} - {formatTime(endTime)}</p>
+                                    <p className="text-[9px] font-bold text-amber-600/60 uppercase">Preview: {formatTime(startTime)} - {formatTime(endTime)}</p>
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
