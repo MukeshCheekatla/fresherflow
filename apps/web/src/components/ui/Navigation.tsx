@@ -193,17 +193,14 @@ export function MobileNav() {
     const user = context?.user;
     const isLoading = context?.isLoading;
 
-    if (isLoading) return null;
+    if (isLoading || !user) return null;
 
-    const tabs = user ? [
+    const tabs = [
         { href: '/dashboard', label: 'Home', icon: HomeIcon },
         { href: '/opportunities', label: 'Search', icon: MagnifyingGlassIcon },
         { href: '/opportunities?type=job', label: 'Jobs', icon: BriefcaseIcon },
         { href: '/account/saved', label: 'Saved', icon: BookmarkIcon },
         { href: '/profile/edit', label: 'Profile', icon: UserIcon },
-    ] : [
-        { href: '/', label: 'Home', icon: HomeIcon },
-        { href: '/login', label: 'Sign In', icon: ArrowRightOnRectangleIcon },
     ];
 
     return (
