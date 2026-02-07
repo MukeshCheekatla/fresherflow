@@ -44,6 +44,9 @@ export class AuthService {
                         completionPercentage: 0
                     }
                 }
+            },
+            include: {
+                profile: true
             }
         });
     }
@@ -97,6 +100,9 @@ export class AuthService {
                         completionPercentage: 0
                     }
                 }
+            },
+            include: {
+                profile: true
             }
         });
     }
