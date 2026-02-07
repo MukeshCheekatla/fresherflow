@@ -94,11 +94,47 @@ class TelegramService {
             await axios.post(`${this.baseUrl}/sendMessage`, {
                 chat_id: channelUsername,
                 text: text,
-                parse_mode: 'HTML'
+                parse_mode: 'HTML',
+                disable_web_page_preview: false
             });
         } catch (error) {
             console.error(`TelegramService Broadcast Error (${channelUsername}):`, error);
         }
+    }
+
+    /**
+     * Broadcast a new job opportunity to the public channel
+     */
+    async broadcastNewOpportunity(
+        title: string,
+        company: string,
+        type: string,
+        locations: string[],
+        applyLink: string,
+        slug: string
+    ): Promise<void> {
+        const publicChannel = process.env.TELEGRAM_PUBLIC_CHANNEL;
+        if (!publicChannel || !this.botToken) {
+            console.log('TelegramService: Public channel not configured, skipping broadcast.');
+            return;
+        }
+
+        const typeEmoji = type === 'JOB' ? '💼' : type === 'INTERNSHIP' ? '🎓' : '🚶';
+        const locationText = locations.length > 0 ? locations.join(', ') : 'Remote/Multiple';
+        const jobUrl = `${process.env.FRONTEND_URL || 'https://fresherflow.in'}/opportunities/${slug}`;
+
+        const message = `
+${typeEmoji} <b>${title}</b>
+🏢 <b>Company:</b> ${company}
+📍 <b>Location:</b> ${locationText}
+🔗 <b>Apply:</b> <a href="${applyLink}">Official Application Link</a>
+
+📋 View full details: <a href="${jobUrl}">FresherFlow</a>
+
+<i>#FresherJobs #OffCampus #Hiring</i>
+        `.trim();
+
+        await this.broadcastToChannel(publicChannel, message);
     }
 }
 

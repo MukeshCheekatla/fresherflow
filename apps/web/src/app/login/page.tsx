@@ -49,41 +49,58 @@ export default function LoginPage() {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleGoogleCallback = useCallback(async (response: any) => {
+        console.log('[Google Login] Starting authentication...', { hasCredential: !!response.credential });
         setIsProcessing(true);
         try {
+            console.log('[Google Login] Calling loginWithGoogle...');
             await loginWithGoogle(response.credential);
+            console.log('[Google Login] Success! Redirecting to dashboard...');
+            toast.success('Welcome! Redirecting...');
             router.push('/dashboard');
         } catch (err: unknown) {
+            console.error('[Google Login] Error:', err);
             setIsProcessing(false);
-            toast.error((err as Error).message || 'Google login failed.');
+            const errorMessage = (err as Error).message || 'Google login failed.';
+            console.error('[Google Login] Error message:', errorMessage);
+            toast.error(errorMessage);
         }
     }, [loginWithGoogle, router]);
 
-    // Initialize Google Login
+    // Initialize Google Login - only when on email step
     useEffect(() => {
+        // Only initialize when we're on the email step
+        if (step !== 'email') return;
+
         if (typeof window !== 'undefined' && window.google) {
             window.google.accounts.id.initialize({
                 client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
                 callback: handleGoogleCallback,
             });
-            const googleBtn = document.getElementById("google-login-btn");
-            if (googleBtn) {
-                // Small delay to ensure container is fully ready
-                setTimeout(() => {
+
+            // Wait for DOM to be ready
+            const renderGoogleButton = () => {
+                const googleBtn = document.getElementById("google-login-btn");
+                if (googleBtn) {
+                    // Clear any existing button content first
+                    googleBtn.innerHTML = '';
+
                     window.google.accounts.id.renderButton(
                         googleBtn,
                         {
-                            type: 'standard', // Force standard button, not icon
+                            type: 'standard',
                             theme: "outline",
                             size: "large",
                             text: "continue_with",
                             shape: "rectangular",
                             logo_alignment: "center",
-                            width: "400" // Explicit pixel width often works better than 100% for Google script
+                            width: "400"
                         }
                     );
-                }, 100);
-            }
+                }
+            };
+
+            // Small delay to ensure container is fully ready
+            setTimeout(renderGoogleButton, 100);
         }
     }, [handleGoogleCallback, step]);
 

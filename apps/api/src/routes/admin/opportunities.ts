@@ -225,6 +225,18 @@ router.post(
                 opportunity.status === OpportunityStatus.PUBLISHED
             ).catch(() => { });
 
+            // Broadcast to Public Channel if Published (Async)
+            if (opportunity.status === OpportunityStatus.PUBLISHED) {
+                TelegramService.broadcastNewOpportunity(
+                    opportunity.title,
+                    opportunity.company,
+                    opportunity.type,
+                    opportunity.locations,
+                    opportunity.applyLink,
+                    opportunity.slug
+                ).catch(() => { });
+            }
+
             res.status(201).json({
                 opportunity,
                 message: 'Opportunity created successfully'
