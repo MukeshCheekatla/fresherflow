@@ -5,7 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
-import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import ExclamationTriangleIcon from '@heroicons/react/24/outline/ExclamationTriangleIcon';
+import LoadingScreen from '@/components/ui/LoadingScreen';
 
 /**
  * Profile Gate - Shows friendly message if profile incomplete
@@ -28,14 +29,7 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
     }, [profile, isLoading, pathname, router, isOnProfilePage]);
 
     if (isLoading) {
-        return (
-            <div className="flex items-center justify-center min-h-[60vh] py-12">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-                    <p className="mt-4 text-muted-foreground font-medium">Loading...</p>
-                </div>
-            </div>
-        );
+        return <LoadingScreen message="Loading..." fullScreen={false} />;
     }
 
     if (profile && profile.completionPercentage < 100 && !isOnProfilePage) {
@@ -78,14 +72,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     }, [user, isLoading, router]);
 
     if (isLoading) {
-        return (
-            <div className="flex items-center justify-center min-h-[60vh] py-12">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading...</p>
-                </div>
-            </div>
-        );
+        return <LoadingScreen message="Loading..." fullScreen={false} />;
     }
 
     if (!user) {
