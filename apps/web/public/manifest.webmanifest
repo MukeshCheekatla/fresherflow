@@ -2,7 +2,7 @@
     "name": "FresherFlow",
     "short_name": "FresherFlow",
     "description": "Premium job platform for freshers.",
-    "start_url": "/dashboard",
+    "start_url": "/",
     "scope": "/",
     "display": "standalone",
     "display_override": [
@@ -23,6 +23,32 @@
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Open Feed",
+            "short_name": "Feed",
+            "url": "/opportunities",
+            "icons": [
+                {
+                    "src": "/icon-192x192.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
+        },
+        {
+            "name": "Saved",
+            "short_name": "Saved",
+            "url": "/account/saved",
+            "icons": [
+                {
+                    "src": "/icon-192x192.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
         }
     ]
 }

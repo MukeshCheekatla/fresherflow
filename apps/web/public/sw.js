@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fresherflow-pwa-v1.3.0';
+const CACHE_NAME = 'fresherflow-pwa-v1.4.0';
 const OFFLINE_URL = '/offline.html';
 
 // Assets that should be cached on install
@@ -28,31 +28,38 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests and browser extensions
   if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) return;
 
-  // Strategy: Stale-While-Revalidate
-  // 1. Check cache
-  // 2. Return cached response if exists
-  // 3. Always fetch from network and update cache
-  event.respondWith(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.match(event.request).then((cachedResponse) => {
-        const fetchPromise = fetch(event.request).then((networkResponse) => {
-          // Check if valid response before caching
-          if (networkResponse && networkResponse.status === 200) {
-            cache.put(event.request, networkResponse.clone());
-          }
-          return networkResponse;
-        }).catch(() => {
-          // If network fails and no cache, return offline page for navigation
-          if (!cachedResponse && event.request.mode === 'navigate') {
-            return cache.match(OFFLINE_URL);
-          }
-          throw new Error('Network failure');
-        });
+  const url = new URL(event.request.url);
+  const isSameOrigin = url.origin === self.location.origin;
+  const isApiRequest = url.pathname.startsWith('/api');
+  const isNavigation = event.request.mode === 'navigate';
 
-        // Return cached response instantly if available, otherwise wait for network
-        return cachedResponse || fetchPromise;
-      });
-    })
-  );
+  // Network-first for navigations (HTML), with offline fallback
+  if (isNavigation) {
+    event.respondWith(
+      fetch(event.request).then((response) => {
+        return response;
+      }).catch(() => caches.match(OFFLINE_URL))
+    );
+    return;
+  }
+
+  // Only cache same-origin static assets
+  const dest = event.request.destination;
+  const isStaticAsset = isSameOrigin && ['style', 'script', 'image', 'font'].includes(dest);
+
+  if (isStaticAsset && !isApiRequest) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then((cache) =>
+        cache.match(event.request).then((cachedResponse) => {
+          const fetchPromise = fetch(event.request).then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              cache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          });
+          return cachedResponse || fetchPromise;
+        })
+      )
+    );
+  }
 });
-
