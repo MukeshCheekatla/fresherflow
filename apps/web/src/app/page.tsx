@@ -152,7 +152,7 @@ export default function LandingPage() {
                                             <div className="w-2.5 h-2.5 rounded-full bg-warning/20 border border-warning/30" />
                                             <div className="w-2.5 h-2.5 rounded-full bg-success/20 border border-success/30" />
                                         </div>
-                                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Feed intelligence</div>
+                                        <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.15em]">Feed intelligence</div>
                                     </div>
 
                                     {/* Mock Feed Content */}
@@ -165,8 +165,8 @@ export default function LandingPage() {
                                             <div key={i} className={`p-4 rounded-xl border border-border bg-muted/10 space-y-3 animate-in fade-in slide-in-from-right-4 duration-500`} style={{ animationDelay: `${i * 150}ms` }}>
                                                 <div className="flex items-start justify-between">
                                                     <div>
-                                                        <h5 className="font-bold text-sm text-foreground">{item.role}</h5>
-                                                        <p className="text-[11px] text-muted-foreground">{item.company}</p>
+                                                        <h5 className="font-semibold text-sm text-foreground">{item.role}</h5>
+                                                        <p className="text-[11px] font-medium text-muted-foreground">{item.company}</p>
                                                     </div>
                                                     <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${item.type === 'Walk-in' ? 'bg-warning/10 text-warning' : 'bg-primary/5 text-primary'
                                                         }`}>
@@ -175,7 +175,7 @@ export default function LandingPage() {
                                                 </div>
                                                 <div className="flex items-center justify-between pt-1">
                                                     <div className="flex gap-2">
-                                                        <span className="flex items-center gap-1 text-[9px] font-bold text-success uppercase">
+                                                        <span className="flex items-center gap-1 text-[9px] font-bold text-success uppercase tracking-wider">
                                                             <div className="w-1 h-1 rounded-full bg-success" />
                                                             {item.status}
                                                         </span>
@@ -218,7 +218,7 @@ export default function LandingPage() {
                                     { step: "04", title: "Deploy", desc: "Opportunities are pushed to your terminal with zero algorithmic delay." }
                                 ].map((item, i) => (
                                     <div key={i} className="space-y-4">
-                                        <span className="text-4xl font-black text-primary/10 tracking-tighter">{item.step}</span>
+                                        <span className="text-4xl font-bold text-primary/10 tracking-tighter">{item.step}</span>
                                         <h4 className="font-bold text-lg">{item.title}</h4>
                                         <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
                                     </div>
@@ -261,8 +261,8 @@ export default function LandingPage() {
                                 </div>
                             </div>
                             <div className="flex flex-col items-center md:items-end gap-2">
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] text-center md:text-right leading-loose">
-                                    © 2026 FresherFlow. <br className="md:hidden" /> Crafted for Engineering Excellence.
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] text-center md:text-right leading-loose">
+                                    © 2026 FresherFlow. <br className="md:hidden" /> Dedicated to Direct Careers.
                                 </p>
                             </div>
                         </div>

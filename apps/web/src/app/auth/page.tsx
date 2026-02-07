@@ -28,8 +28,6 @@ const AuthContent = () => {
         }
     }, [user, router]);
 
-
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
@@ -51,17 +49,15 @@ const AuthContent = () => {
             {/* Left Side: Hero Card (Desktop Only) */}
             <div className="hidden md:flex md:w-[45%] lg:w-[50%] bg-muted/30 border-r border-border relative overflow-hidden flex-col justify-between p-10 text-foreground">
                 <div className="relative z-10">
-                    {/* Brand logo removed - already in Navbar */}
-
                     <div className="space-y-6 max-w-lg">
-                        <h2 className="text-4xl md:text-5xl font-black tracking-tighter leading-none uppercase italic">
+                        <h2 className="text-4xl md:text-5xl font-bold tracking-tight leading-none uppercase">
                             Aggregate.
                             <br />
                             Verify.
                             <br />
                             Deploy.
                         </h2>
-                        <p className="text-base font-medium text-muted-foreground leading-relaxed italic">
+                        <p className="text-base font-medium text-muted-foreground leading-relaxed">
                             The centralized architecture for entry-level careers. Pure engineering, factual data, zero friction.
                         </p>
 
@@ -75,7 +71,7 @@ const AuthContent = () => {
                                     <div className="p-2 bg-background border border-border rounded-lg group-hover:border-primary/50 transition-colors">
                                         <item.icon className="w-4 h-4 text-primary" />
                                     </div>
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{item.text}</span>
+                                    <span className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground">{item.text}</span>
                                 </div>
                             ))}
                         </div>
@@ -83,32 +79,25 @@ const AuthContent = () => {
                 </div>
 
                 <div className="relative z-10 flex items-center justify-between border-t border-border pt-8 opacity-40">
-                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">© 2026 FresherFlow</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">© 2026 FresherFlow</p>
                 </div>
             </div>
 
             {/* Right Side: Auth Form */}
             <div className="flex-1 flex flex-col justify-center px-6 py-8 md:px-20 bg-background relative overflow-y-auto md:overflow-hidden">
-                {/* Mobile Identity */}
-                {/* Mobile Identity removed - already in Navbar */}
-
                 <div className="max-w-[400px] mx-auto w-full space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
                     <div className="space-y-1">
-                        <h2 className="text-2xl font-black tracking-tight text-foreground uppercase italic leading-none">
+                        <h2 className="text-2xl font-bold tracking-tight text-foreground uppercase leading-none">
                             System Login
                         </h2>
-                        <p className="text-muted-foreground font-medium uppercase text-[10px] tracking-widest">
+                        <p className="text-muted-foreground font-semibold uppercase text-[10px] tracking-[0.2em]">
                             Execute session authentication.
                         </p>
                     </div>
 
-
-
-                    <form onSubmit={handleSubmit} className="space-y-3.5">
-
-
+                    <form onSubmit={handleSubmit} className="space-y-4 mt-6">
                         <div className="space-y-2">
-                            <label className="text-[11px] font-black text-muted-foreground uppercase tracking-widest ml-1">
+                            <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.15em] ml-1">
                                 Email Address
                             </label>
                             <div className="relative group">
@@ -118,14 +107,14 @@ const AuthContent = () => {
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="premium-input !h-12 pl-12"
-                                    placeholder="IDENTITY@DOMAIN.COM"
+                                    className="premium-input !h-12 pl-12 text-sm"
+                                    placeholder="Your registered email"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[11px] font-black text-muted-foreground uppercase tracking-widest ml-1">
+                            <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.15em] ml-1">
                                 Access Password
                             </label>
                             <div className="relative group">
@@ -135,7 +124,7 @@ const AuthContent = () => {
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="premium-input !h-12 pl-12"
+                                    className="premium-input !h-12 pl-12 text-sm"
                                     placeholder="••••••••"
                                 />
                             </div>
@@ -146,24 +135,20 @@ const AuthContent = () => {
                             </div>
                         </div>
 
-
-
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full premium-button !h-12 text-sm uppercase font-black tracking-widest active:scale-[0.98] transition-all"
+                            className="w-full premium-button !h-12 text-sm uppercase font-bold tracking-[0.15em] active:scale-[0.98] transition-all mt-4"
                         >
                             {isLoading ? (
                                 <ArrowPathIcon className="w-5 h-5 animate-spin" />
                             ) : (
                                 <div className="flex items-center justify-center">
-                                    <span>Execute Auth</span>
+                                    <span>Execute Auth Flow</span>
                                 </div>
                             )}
                         </button>
                     </form>
-
-                    {/* Footer elements removed for extreme minimalism */}
                 </div>
             </div>
         </div>
@@ -177,4 +162,3 @@ export default function AuthPage() {
         </Suspense>
     );
 }
-

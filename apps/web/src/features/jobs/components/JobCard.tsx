@@ -4,7 +4,6 @@ import {
     BookmarkIcon,
     MapPinIcon,
     CurrencyRupeeIcon,
-    BriefcaseIcon,
     ChevronRightIcon,
     ShieldCheckIcon,
     ClockIcon
@@ -13,8 +12,8 @@ import { BookmarkIcon as BookmarkSolidIcon } from '@heroicons/react/24/solid';
 import CompanyLogo from '@/components/ui/CompanyLogo';
 
 /**
- * JobCard - CANONICAL REFERENCE PATTERN
- * Strict adherence to DESIGN_SYSTEM.md
+ * JobCard - REFINED TYPOGRAPHY PATTERN
+ * Adheres to DESIGN_SYSTEM.md with moderated boldness for professional clarity.
  */
 
 interface JobCardProps {
@@ -28,7 +27,6 @@ interface JobCardProps {
 }
 
 export default function JobCard({ job, onClick, isSaved = false, isApplied = false, onToggleSave, isAdmin }: JobCardProps) {
-
 
     const formatSalary = () => {
         if (job.salaryRange) return job.salaryRange;
@@ -55,14 +53,7 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
         return 'Not disclosed';
     };
 
-    const formatExperience = () => {
-        const min = job.experienceMin ?? 0;
-        const max = job.experienceMax;
 
-        if (min === 0 && (max === 0 || max === undefined || max === null)) return 'Fresher';
-        if (max === undefined || max === null) return `${min}+ years`;
-        return `${min}-${max} years`;
-    };
 
     const handleSaveClick = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -84,24 +75,24 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
 
         if (type === 'WALKIN' || job.type === 'WALKIN') {
             return (
-                <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-600 text-xs font-bold uppercase tracking-wider rounded">
-                    <div className="w-2 h-2 rounded-full bg-amber-600 animate-pulse" />
-                    Walk-in Drive
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 text-[10px] font-bold uppercase tracking-wider rounded">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse" />
+                    Drive
                 </span>
             );
         }
 
         if (type === 'INTERNSHIP' || job.type === 'INTERNSHIP') {
             return (
-                <span className="inline-flex items-center px-2 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-600 text-xs font-bold uppercase tracking-wider rounded">
+                <span className="inline-flex items-center px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-600 text-[10px] font-bold uppercase tracking-wider rounded">
                     Internship
                 </span>
             );
         }
 
         return (
-            <span className="inline-flex items-center px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-xs font-bold uppercase tracking-wider rounded">
-                Full-time Job
+            <span className="inline-flex items-center px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-[10px] font-bold uppercase tracking-wider rounded">
+                Full-time
             </span>
         );
     };
@@ -110,7 +101,7 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
         <div
             onClick={onClick}
             className={cn(
-                "group relative bg-card border border-border rounded-xl p-4 transition-all hover:border-primary/40 hover:shadow-sm flex flex-col gap-4",
+                "group relative bg-card border border-border rounded-xl p-5 transition-all hover:border-primary/30 hover:shadow-md flex flex-col gap-4",
                 onClick && "cursor-pointer"
             )}
         >
@@ -119,7 +110,7 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
                 <div className="flex items-center gap-4 min-w-0 flex-1">
                     <CompanyLogo companyName={job.company} applyLink={job.applyLink} />
                     <div className="min-w-0">
-                        <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider line-clamp-1">
+                        <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] line-clamp-1">
                             {job.company}
                         </h4>
                         <h3 className="text-base font-bold text-foreground group-hover:text-primary transition-colors leading-snug line-clamp-2 mt-1">
@@ -131,10 +122,10 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
                 <button
                     onClick={handleSaveClick}
                     className={cn(
-                        "h-12 w-12 rounded transition-all border shrink-0 flex items-center justify-center",
+                        "h-12 w-12 rounded-xl transition-all border shrink-0 flex items-center justify-center",
                         isSaved
-                            ? "bg-primary/10 border-primary/30 text-primary shadow-sm"
-                            : "bg-background border-border text-muted-foreground hover:border-primary/40"
+                            ? "bg-primary/10 border-primary/20 text-primary shadow-sm"
+                            : "bg-background border-border text-muted-foreground hover:border-primary/30"
                     )}
                     aria-label={isSaved ? "Remove from saved" : "Save job"}
                 >
@@ -146,9 +137,9 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
             <div className="flex flex-wrap items-center gap-2">
                 {getJobTypeBadge()}
                 {isClosingSoon() && (
-                    <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-600 text-xs font-bold uppercase tracking-wider rounded">
-                        <ClockIcon className="w-4 h-4" />
-                        Closing Soon
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 text-[10px] font-bold uppercase tracking-wider rounded">
+                        <ClockIcon className="w-3 h-3" />
+                        Expiring Soon
                     </span>
                 )}
             </div>
@@ -161,13 +152,13 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
                         return (
                             <div className="flex items-start justify-between gap-4">
                                 <div className="space-y-1">
-                                    <p className="text-xs font-bold text-amber-600 uppercase tracking-wider">Drive Schedule</p>
+                                    <p className="text-[10px] font-bold text-amber-600/80 uppercase tracking-widest">Drive Schedule</p>
                                     <p className="text-sm font-semibold text-foreground">
                                         {details.dateRange || 'Multiple Dates'}
                                     </p>
                                 </div>
                                 <div className="text-right space-y-1">
-                                    <p className="text-xs font-bold text-amber-600 uppercase tracking-wider">Timing Window</p>
+                                    <p className="text-[10px] font-bold text-amber-600/80 uppercase tracking-widest">Window</p>
                                     <p className="text-sm font-semibold text-foreground">
                                         {details.timeRange || details.reportingTime}
                                     </p>
@@ -179,67 +170,58 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
             )}
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border/50">
-                <div>
-                    <p className="text-xs font-bold text-muted-foreground uppercase mb-1">Location</p>
-                    <div className="flex items-center gap-2 text-foreground text-sm font-semibold">
-                        <MapPinIcon className="w-4 h-4 shrink-0 text-muted-foreground" />
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3 pt-4 border-t border-border/40">
+                <div className="flex flex-col gap-1">
+                    <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">Location</p>
+                    <div className="flex items-center gap-2 text-foreground/90 text-[13px] font-semibold">
+                        <MapPinIcon className="w-3.5 h-3.5 shrink-0 text-muted-foreground/50" />
                         <span className="truncate">{job.locations[0] || 'Remote'}</span>
                     </div>
                 </div>
 
-                <div>
-                    <p className="text-xs font-bold text-muted-foreground uppercase mb-1">Experience</p>
-                    <div className="flex items-center gap-2 text-foreground text-sm font-semibold">
-                        <BriefcaseIcon className="w-4 h-4 shrink-0 text-muted-foreground" />
-                        <span className="truncate">{formatExperience()}</span>
-                    </div>
-                </div>
-
-                <div>
-                    <p className="text-xs font-bold text-muted-foreground uppercase mb-1">Salary</p>
-                    <div className="flex items-center gap-2 text-foreground text-sm font-semibold">
-                        <CurrencyRupeeIcon className="w-4 h-4 shrink-0 text-muted-foreground" />
+                <div className="flex flex-col gap-1">
+                    <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">Salary Estimate</p>
+                    <div className="flex items-center gap-2 text-foreground/90 text-[13px] font-semibold">
+                        <CurrencyRupeeIcon className="w-3.5 h-3.5 shrink-0 text-muted-foreground/50" />
                         <span className="truncate">{formatSalary()}</span>
                     </div>
                 </div>
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between pt-4 border-t border-border/30">
+            <div className="flex items-center justify-between pt-4 border-t border-border/30 mt-auto">
                 <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1.5 text-success text-xs font-bold uppercase tracking-wider">
+                    <div className="flex items-center gap-1.5 text-success/80 text-[10px] font-bold uppercase tracking-widest">
                         <ShieldCheckIcon className="w-4 h-4" />
                         <span>Verified</span>
                     </div>
                     {isApplied && (
-                        <span className="px-2 py-0.5 bg-success/10 text-success rounded text-xs font-bold border border-success/20">
-                            Applied
+                        <span className="px-2 py-0.5 bg-success/10 text-success rounded text-[10px] font-bold border border-success/20 uppercase">
+                            Tracked
                         </span>
                     )}
                 </div>
-                <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1 text-foreground hover:text-primary transition-colors text-xs font-bold uppercase tracking-wider group-hover:translate-x-1 duration-300">
-                        <span>{isApplied ? 'Update Status' : 'View Details'}</span>
-                        <ChevronRightIcon className="w-4 h-4" />
-                    </div>
-                    {/* Admin Edit Shortcut */}
-                    {isAdmin && (
-                        <div
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                window.location.href = `/admin/opportunities/edit/${job.slug || job.id}`;
-                            }}
-                            className="ml-2 p-1.5 rounded bg-primary/10 text-primary hover:bg-primary/20 cursor-pointer z-10"
-                            title="Edit Listing (Admin)"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                            </svg>
-                        </div>
-                    )}
+                <div className="flex items-center gap-1 text-primary text-[11px] font-bold uppercase tracking-widest group-hover:translate-x-0.5 transition-transform duration-300">
+                    <span>{isApplied ? 'Track App' : 'Apply Now'}</span>
+                    <ChevronRightIcon className="w-3.5 h-3.5" />
                 </div>
             </div>
+
+            {/* Admin Edit Shortcut */}
+            {isAdmin && (
+                <div
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        window.location.href = `/admin/opportunities/edit/${job.slug || job.id}`;
+                    }}
+                    className="absolute -top-2 -right-2 p-2 rounded-full bg-card border border-border shadow-lg text-primary hover:bg-primary/10 transition-colors z-20"
+                    title="Edit Listing (Admin)"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                    </svg>
+                </div>
+            )}
         </div>
     );
 }

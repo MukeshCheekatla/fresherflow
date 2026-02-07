@@ -17,7 +17,7 @@ export default function LoadingScreen({
 }: LoadingScreenProps) {
     return (
         <div className={cn(
-            "flex flex-col items-center justify-center bg-background/95 backdrop-blur-sm z-50 transition-colors duration-300",
+            "flex flex-col items-center justify-center bg-background/95 backdrop-blur-sm z-50",
             fullScreen ? "fixed inset-0" : "absolute inset-0 min-h-[400px]",
             className
         )}>

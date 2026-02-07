@@ -226,7 +226,7 @@ export default function ProfileCompletePage() {
                         <div className="premium-card !p-6 space-y-6 shadow-xl border-primary/5">
                             <div className="flex items-start justify-between">
                                 <div>
-                                    <h1 className="text-2xl font-black tracking-tighter mb-2 italic">Complete Profile</h1>
+                                    <h1 className="text-2xl font-bold tracking-tight mb-2">Complete Profile</h1>
                                     <p className="text-xs text-muted-foreground font-medium uppercase tracking-[0.05em]">Setup your account for job matching.</p>
                                 </div>
                                 <a href="/logout" className="text-xs text-muted-foreground hover:text-error underline-offset-2 hover:underline shrink-0" title="Logout">
@@ -246,13 +246,13 @@ export default function ProfileCompletePage() {
                                             className="text-primary transition-all duration-1000 ease-out"
                                         />
                                     </svg>
-                                    <div className="absolute inset-0 flex items-center justify-center text-base font-black italic">
+                                    <div className="absolute inset-0 flex items-center justify-center text-base font-bold">
                                         {completion}%
                                     </div>
                                 </div>
                                 <div className="space-y-0.5">
-                                    <p className="text-xs font-black text-muted-foreground uppercase tracking-widest leading-none">Completion</p>
-                                    <p className="text-lg font-black text-foreground italic">{completion}% Finished</p>
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Completion</p>
+                                    <p className="text-base font-bold text-foreground">{completion}% Finished</p>
                                 </div>
                             </div>
 
@@ -270,17 +270,17 @@ export default function ProfileCompletePage() {
                                             key={s.id}
                                             className={cn(
                                                 "p-4 rounded-2xl flex items-center gap-4 transition-all border",
-                                                isActive ? "bg-primary text-white border-primary shadow-lg shadow-primary/20 scale-[1.02]" :
+                                                isActive ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-[1.02]" :
                                                     isDone ? "bg-primary/5 border-primary/20 text-primary" :
                                                         "bg-card border-border text-muted-foreground"
                                             )}
                                         >
-                                            <div className={cn("p-2 rounded-xl", isActive ? "bg-white/20" : "bg-muted/50")}>
+                                            <div className={cn("p-2 rounded-xl", isActive ? "bg-primary-foreground/20" : "bg-muted/50")}>
                                                 <s.icon className="w-5 h-5" />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className="text-xs font-black uppercase tracking-wider leading-none mb-1">{s.label}</p>
-                                                <p className={cn("text-xs font-medium opacity-70 truncate", isActive ? "text-white/80" : "text-muted-foreground")}>{s.desc}</p>
+                                                <p className="text-[10px] font-bold uppercase tracking-widest leading-none mb-1">{s.label}</p>
+                                                <p className={cn("text-[10px] font-medium opacity-70 truncate", isActive ? "text-primary-foreground/80" : "text-muted-foreground")}>{s.desc}</p>
                                             </div>
                                             {isDone && !isActive && <CheckCircleIcon className="w-5 h-5 ml-auto text-primary" />}
                                         </div>
@@ -298,7 +298,7 @@ export default function ProfileCompletePage() {
                             <div className="flex items-center gap-3 mb-8">
                                 <div className="w-1 h-8 bg-primary rounded-full" />
                                 <div>
-                                    <h2 className="text-xl font-black tracking-tight flex items-center gap-2 italic">
+                                    <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
                                         {currentStep === 'education' && "Academic Foundation"}
                                         {currentStep === 'preferences' && "Match Parameters"}
                                         {currentStep === 'readiness' && "Talent Showcase"}
@@ -321,11 +321,11 @@ export default function ProfileCompletePage() {
                                         <div className="space-y-6">
                                             <div className="flex items-center gap-2">
                                                 <div className="w-8 h-8 rounded bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">ID</div>
-                                                <h3 className="text-sm font-black italic uppercase tracking-wider">Personal Bio-Metric</h3>
+                                                <h3 className="text-sm font-bold uppercase tracking-wider">Personal Identity</h3>
                                             </div>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 <div className="space-y-2">
-                                                    <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Identity Name</label>
+                                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Identity Name</label>
                                                     <Input
                                                         type="text"
                                                         value={fullName}
@@ -335,14 +335,14 @@ export default function ProfileCompletePage() {
                                                     />
                                                 </div>
                                                 <div className="space-y-2 opacity-60">
-                                                    <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Verified Email</label>
+                                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Verified Email</label>
                                                     <Input
                                                         type="email"
                                                         value={user?.email || ''}
                                                         disabled
                                                         className="bg-muted cursor-not-allowed"
                                                     />
-                                                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight ml-1 italic">Email is non-mutable for security protocols.</p>
+                                                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight ml-1">Email is non-mutable for security protocols.</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -351,11 +351,10 @@ export default function ProfileCompletePage() {
                                             {/* 10th Standard */}
                                             <div className="space-y-6">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-8 h-8 rounded bg-muted flex items-center justify-center text-xs font-bold">10th</div>
-                                                    <h3 className="text-sm font-black italic uppercase tracking-wider">Secondary</h3>
+                                                    <h3 className="text-sm font-bold uppercase tracking-wider">Secondary</h3>
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Year of Passing</label>
+                                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Year of Passing</label>
                                                     <Input type="text" maxLength={4} value={tenthYear} onChange={(e) => setTenthYear(e.target.value.replace(/\D/g, ''))} placeholder="2018" />
                                                 </div>
                                             </div>
@@ -363,11 +362,10 @@ export default function ProfileCompletePage() {
                                             {/* 12th / Diploma */}
                                             <div className="space-y-6">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-8 h-8 rounded bg-muted flex items-center justify-center text-xs font-bold">12th</div>
-                                                    <h3 className="text-sm font-black italic uppercase tracking-wider">Higher Secondary</h3>
+                                                    <h3 className="text-sm font-bold uppercase tracking-wider">Higher Secondary</h3>
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Year of Passing</label>
+                                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Year of Passing</label>
                                                     <Input type="text" maxLength={4} value={twelfthYear} onChange={(e) => setTwelfthYear(e.target.value.replace(/\D/g, ''))} placeholder="2020" />
                                                 </div>
                                             </div>
@@ -376,12 +374,11 @@ export default function ProfileCompletePage() {
                                         {/* Higher Education */}
                                         <div className="space-y-6 pt-4 border-t border-border/50">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-8 h-8 rounded bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">UG</div>
-                                                <h3 className="text-sm font-black italic uppercase tracking-wider">Graduation (Primary)</h3>
+                                                <h3 className="text-sm font-bold uppercase tracking-wider">Graduation (Primary)</h3>
                                             </div>
 
                                             <div className="space-y-3">
-                                                <p className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Education Level</p>
+                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Education Level</p>
                                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                                     {EDUCATION_LEVELS.map(level => (
                                                         <button
@@ -389,7 +386,7 @@ export default function ProfileCompletePage() {
                                                             onClick={() => setEducationLevel(level)}
                                                             className={cn(
                                                                 "h-10 rounded-xl font-bold border-2 transition-all text-[10px] uppercase tracking-widest flex flex-col items-center justify-center gap-0.5",
-                                                                educationLevel === level ? "bg-primary border-primary text-white shadow-lg" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/40"
+                                                                educationLevel === level ? "bg-primary border-primary text-primary-foreground shadow-lg" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/40"
                                                             )}
                                                         >
                                                             <span>{level === 'DEGREE' ? 'UG' : level}</span>
@@ -405,14 +402,14 @@ export default function ProfileCompletePage() {
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 <div className="space-y-2">
-                                                    <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">UG Course</label>
+                                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">UG Course</label>
                                                     <Select value={gradCourse} onChange={(e) => { setGradCourse(e.target.value); setGradSpecialization(''); }}>
                                                         <option value="">Select UG</option>
                                                         {(educationLevel === 'DIPLOMA' ? DIPLOMA_DEGREES : educationLevel === 'DEGREE' ? UG_DEGREES : educationLevel === 'PG' ? PG_DEGREES : []).map(d => <option key={d}>{d}</option>)}
                                                     </Select>
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Specialization</label>
+                                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Specialization</label>
                                                     <Select value={gradSpecialization} onChange={(e) => setGradSpecialization(e.target.value)} disabled={!gradCourse}>
                                                         <option value="">Select Field</option>
                                                         {getSpecializations(gradCourse).map(s => <option key={s}>{s}</option>)}
@@ -421,7 +418,7 @@ export default function ProfileCompletePage() {
                                             </div>
 
                                             <div className="space-y-2">
-                                                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">UG Passout Year</label>
+                                                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">UG Passout Year</label>
                                                 <Input type="text" maxLength={4} value={gradYear} onChange={(e) => setGradYear(e.target.value.replace(/\D/g, ''))} placeholder="2024" />
                                             </div>
                                         </div>
@@ -429,7 +426,7 @@ export default function ProfileCompletePage() {
                                         <div className="pt-4 border-t border-border mt-4">
                                             <label className="flex items-center gap-3 p-4 bg-muted/30 rounded-2xl cursor-pointer hover:bg-muted/50 transition-colors border border-border/50">
                                                 <input type="checkbox" checked={hasPG} onChange={(e) => setHasPG(e.target.checked)} className="w-5 h-5 rounded-md border-border text-primary" />
-                                                <span className="text-sm font-bold text-foreground italic">Add Postgraduate (PG) Details</span>
+                                                <span className="text-sm font-bold text-foreground">Add Postgraduate (PG) Details</span>
                                             </label>
                                         </div>
 
@@ -437,14 +434,14 @@ export default function ProfileCompletePage() {
                                             <div className="space-y-6 animate-in slide-in-from-top-4 duration-500 pt-2 pb-6 border-b border-border/50">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     <div className="space-y-2">
-                                                        <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">PG Course</label>
+                                                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">PG Course</label>
                                                         <Select value={pgCourse} onChange={(e) => setPgCourse(e.target.value)}>
                                                             <option value="">Select PG</option>
                                                             {PG_DEGREES.map(d => <option key={d}>{d}</option>)}
                                                         </Select>
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">PG Specialization</label>
+                                                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">PG Specialization</label>
                                                         <Select value={pgSpecialization} onChange={(e) => setPgSpecialization(e.target.value)}>
                                                             <option value="">Select Field</option>
                                                             {getSpecializations(pgCourse).map(s => <option key={s}>{s}</option>)}
@@ -452,14 +449,14 @@ export default function ProfileCompletePage() {
                                                     </div>
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">PG Passout Year</label>
+                                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">PG Passout Year</label>
                                                     <Input type="text" maxLength={4} value={pgYear} onChange={(e) => setPgYear(e.target.value.replace(/\D/g, ''))} placeholder="2026" />
                                                 </div>
                                             </div>
                                         )}
 
-                                        <Button onClick={handleEducationSubmit} disabled={isLoading} className="w-full text-base shadow-xl shadow-primary/20 italic font-black">
-                                            {isLoading ? <ArrowPathIcon className="w-6 h-6 animate-spin" /> : <span>Step 1: Lockdown Foundations</span>}
+                                        <Button onClick={handleEducationSubmit} disabled={isLoading} className="w-full h-12 text-sm shadow-xl shadow-primary/20 font-bold uppercase tracking-widest">
+                                            {isLoading ? <ArrowPathIcon className="w-6 h-6 animate-spin" /> : <span>Step 1: Save Foundation</span>}
                                         </Button>
                                     </div>
                                 )}
@@ -467,7 +464,7 @@ export default function ProfileCompletePage() {
                                 {currentStep === 'preferences' && (
                                     <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
                                         <div className="space-y-4">
-                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Stream Selection</p>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Stream Selection</p>
                                             <div className="flex flex-wrap gap-2">
                                                 {OPPORTUNITY_TYPES.map(type => (
                                                     <button
@@ -475,7 +472,7 @@ export default function ProfileCompletePage() {
                                                         onClick={() => toggleArrayItem(interestedIn, setInterestedIn, type)}
                                                         className={cn(
                                                             "h-10 rounded-xl font-bold border-2 transition-all text-[10px] uppercase tracking-widest",
-                                                            interestedIn.includes(type) ? "bg-primary border-primary text-white shadow-lg" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/40"
+                                                            interestedIn.includes(type) ? "bg-primary border-primary text-primary-foreground shadow-lg" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/40"
                                                         )}
                                                     >
                                                         {type}
@@ -485,12 +482,12 @@ export default function ProfileCompletePage() {
                                         </div>
 
                                         <div className="space-y-4">
-                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Work Ecosystem</p>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Work Ecosystem</p>
                                             <div className="flex flex-wrap gap-2">
                                                 {WORK_MODES.map(t => (
                                                     <button
                                                         key={t} onClick={() => toggleArrayItem(workModes, setWorkModes, t)}
-                                                        className={cn("px-6 h-10 rounded-xl font-black text-xs uppercase tracking-widest transition-all border", workModes.includes(t) ? "bg-foreground text-background border-foreground shadow-lg" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/50")}
+                                                        className={cn("px-6 h-10 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all border", workModes.includes(t) ? "bg-foreground text-background border-foreground shadow-lg" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/50")}
                                                     >
                                                         {t}
                                                     </button>
@@ -499,7 +496,7 @@ export default function ProfileCompletePage() {
                                         </div>
 
                                         <div className="space-y-4">
-                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Primary Locations</p>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Primary Locations</p>
                                             <div className="flex gap-2">
                                                 <input
                                                     placeholder="Type city and hit Enter"
@@ -514,7 +511,7 @@ export default function ProfileCompletePage() {
                                             </div>
                                             <div className="flex flex-wrap gap-2 min-h-6">
                                                 {preferredCities.map(c => (
-                                                    <span key={c} className="bg-primary text-white px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1 shadow-lg shadow-primary/20">
+                                                    <span key={c} className="bg-primary text-primary-foreground px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 shadow-lg shadow-primary/20">
                                                         {c}
                                                         <XMarkIcon onClick={() => toggleArrayItem(preferredCities, setPreferredCities, c)} className="w-3 h-3 cursor-pointer opacity-70 hover:opacity-100" />
                                                     </span>
@@ -522,7 +519,7 @@ export default function ProfileCompletePage() {
                                             </div>
                                         </div>
 
-                                        <Button onClick={handlePreferencesSubmit} disabled={isLoading} className="w-full text-base shadow-xl shadow-primary/20 italic font-black">
+                                        <Button onClick={handlePreferencesSubmit} disabled={isLoading} className="w-full h-12 text-sm shadow-xl shadow-primary/20 font-bold uppercase tracking-widest">
                                             {isLoading ? <ArrowPathIcon className="w-6 h-6 animate-spin" /> : <span>Step 2: Map Interests</span>}
                                         </Button>
                                     </div>
@@ -531,29 +528,29 @@ export default function ProfileCompletePage() {
                                 {currentStep === 'readiness' && (
                                     <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
                                         <div className="space-y-4">
-                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Availability Window</p>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Availability Window</p>
                                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                                 {AVAILABILITY_OPTIONS.map(val => (
                                                     <button
                                                         key={val} onClick={() => setAvailability(val)}
-                                                        className={cn("h-14 rounded-xl flex flex-col items-center justify-center border-2 transition-all gap-0.5", availability === val ? "border-primary bg-primary text-white shadow-xl shadow-primary/20" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/40")}
+                                                        className={cn("h-14 rounded-xl flex flex-col items-center justify-center border-2 transition-all gap-0.5", availability === val ? "border-primary bg-primary text-primary-foreground shadow-xl shadow-primary/20" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/40")}
                                                     >
-                                                        <span className="font-black text-xs uppercase tracking-tighter italic">{val.replace('_', ' ')}</span>
-                                                        <span className="text-[8px] opacity-60 font-medium uppercase tracking-widest">Horizon</span>
+                                                        <span className="font-bold text-[10px] uppercase tracking-widest">{val.replace('_', ' ')}</span>
+                                                        <span className="text-[7px] opacity-60 font-medium uppercase tracking-[0.2em]">Horizon</span>
                                                     </button>
                                                 ))}
                                             </div>
                                         </div>
 
                                         <div className="space-y-4">
-                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Skill Catalog</p>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Skill Catalog</p>
                                             <div className="flex gap-2">
                                                 <input value={skillInput} onChange={(e) => setSkillInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && addSkill()} className="premium-input !h-10 text-[11px]" placeholder="e.g. React, Node.js" />
                                                 <button onClick={addSkill} className="premium-button shrink-0 px-4 !h-10"><PlusIcon className="w-4 h-4" /></button>
                                             </div>
                                             <div className="flex flex-wrap gap-2 min-h-6">
                                                 {skills.map(s => (
-                                                    <span key={s} className="bg-success/10 text-success border border-success/20 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                                                    <span key={s} className="bg-success/5 text-success border border-success/20 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
                                                         {s}
                                                         <XMarkIcon onClick={() => removeSkill(s)} className="w-3 h-3 cursor-pointer opacity-50 hover:opacity-100" />
                                                     </span>
@@ -561,7 +558,7 @@ export default function ProfileCompletePage() {
                                             </div>
                                         </div>
 
-                                        <Button onClick={handleReadinessSubmit} disabled={isLoading} className="w-full h-12 text-sm bg-foreground text-background hover:bg-foreground/90 shadow-xl italic font-black">
+                                        <Button onClick={handleReadinessSubmit} disabled={isLoading} className="w-full h-12 text-sm bg-foreground text-background hover:bg-foreground/90 shadow-xl font-bold uppercase tracking-widest">
                                             {isLoading ? <ArrowPathIcon className="w-5 h-5 animate-spin" /> : <div className="flex items-center gap-2"><span>Finish Entire Setup</span><CheckCircleIcon className="w-5 h-5" /></div>}
                                         </Button>
                                     </div>

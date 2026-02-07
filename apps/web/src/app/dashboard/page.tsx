@@ -113,7 +113,7 @@ export default function DashboardPage() {
                     {/* Header Section */}
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 py-4 border-b border-border/50">
                         <div className="space-y-0.5 text-left">
-                            <h1 className="text-xl md:text-2xl font-black tracking-tight text-foreground italic uppercase">
+                            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
                                 Dashboard &bull; {user?.fullName?.split(' ')[0]}
                             </h1>
                             <p className="text-[10px] md:text-xs text-muted-foreground font-medium uppercase tracking-wider">
@@ -149,8 +149,8 @@ export default function DashboardPage() {
                             return (
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                                        <h2 className="text-xs font-black uppercase tracking-widest text-amber-600 italic">Today&apos;s Important Updates</h2>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                        <h2 className="text-[10px] font-bold uppercase tracking-[0.15em] text-amber-600/80">Today&apos;s Important Updates</h2>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         {/* Urgent Walkins */}
@@ -162,17 +162,17 @@ export default function DashboardPage() {
                                             >
                                                 <div className="space-y-1">
                                                     <div className="flex items-center justify-between">
-                                                        <span className="text-[9px] font-black uppercase tracking-widest text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded">Urgent Walk-in</span>
-                                                        <div className="flex items-center gap-1 text-[10px] text-amber-600 font-bold">
+                                                        <span className="text-[8px] font-bold uppercase tracking-wider text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded">Urgent Walk-in</span>
+                                                        <div className="flex items-center gap-1 text-[9px] text-amber-600 font-bold tracking-tight">
                                                             <ClockIcon className="w-3 h-3" />
                                                             Closing Soon
                                                         </div>
                                                     </div>
-                                                    <h3 className="font-black text-sm tracking-tight line-clamp-1 italic group-hover:text-amber-600 transition-colors">{opp.title}</h3>
-                                                    <p className="text-[11px] font-bold text-muted-foreground">{opp.company} &bull; {opp.locations[0]}</p>
+                                                    <h3 className="font-bold text-sm tracking-tight line-clamp-1 group-hover:text-amber-600 transition-colors">{opp.title}</h3>
+                                                    <p className="text-[11px] font-medium text-muted-foreground">{opp.company} &bull; {opp.locations[0]}</p>
                                                 </div>
                                                 <div className="flex items-center justify-between border-t border-amber-500/10 pt-2">
-                                                    <span className="text-[10px] font-black uppercase tracking-tighter text-amber-700/60">Verified Drive</span>
+                                                    <span className="text-[9px] font-bold uppercase tracking-widest text-amber-700/60">Verified Drive</span>
                                                     <ChevronRightIcon className="w-4 h-4 text-amber-500 group-hover:translate-x-1 transition-transform" />
                                                 </div>
                                             </div>
@@ -187,14 +187,14 @@ export default function DashboardPage() {
                                             >
                                                 <div className="space-y-1">
                                                     <div className="flex items-center justify-between">
-                                                        <span className="text-[9px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded">New Listing</span>
+                                                        <span className="text-[9px] font-bold uppercase tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded">New Listing</span>
                                                         <span className="text-[10px] text-primary font-bold">Just Added</span>
                                                     </div>
-                                                    <h3 className="font-black text-sm tracking-tight line-clamp-1 italic group-hover:text-primary transition-colors">{opp.title}</h3>
-                                                    <p className="text-[11px] font-bold text-muted-foreground">{opp.company} &bull; {opp.locations[0]}</p>
+                                                    <h3 className="font-bold text-sm tracking-tight line-clamp-1 group-hover:text-primary transition-colors">{opp.title}</h3>
+                                                    <p className="text-[11px] font-medium text-muted-foreground">{opp.company} &bull; {opp.locations[0]}</p>
                                                 </div>
                                                 <div className="flex items-center justify-between border-t border-primary/10 pt-2">
-                                                    <span className="text-[10px] font-black uppercase tracking-tighter text-primary/60">Active Hiring</span>
+                                                    <span className="text-[10px] font-bold uppercase tracking-tighter text-primary/60">Active Hiring</span>
                                                     <ChevronRightIcon className="w-4 h-4 text-primary group-hover:translate-x-1 transition-transform" />
                                                 </div>
                                             </div>
@@ -212,10 +212,10 @@ export default function DashboardPage() {
                             <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                                 <UserIcon className="w-8 h-8 text-primary transform rotate-12" />
                             </div>
-                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest z-10">Readiness</span>
+                            <span className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-[0.1em] z-10">Readiness</span>
                             <div className="flex items-baseline gap-1 z-10">
-                                <h4 className="text-xl font-black text-primary italic leading-none">{profile?.completionPercentage}%</h4>
-                                <span className="text-[9px] font-bold text-muted-foreground/60">Complete</span>
+                                <h4 className="text-xl font-bold text-primary leading-none">{profile?.completionPercentage}%</h4>
+                                <span className="text-[9px] font-medium text-muted-foreground/60">Complete</span>
                             </div>
                         </div>
 
@@ -228,8 +228,8 @@ export default function DashboardPage() {
                                 <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                                     <stat.icon className="w-8 h-8 text-foreground transform rotate-12" />
                                 </div>
-                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest z-10 text-balance">{stat.label}</span>
-                                <h4 className="text-xl font-black text-foreground italic leading-none z-10">{isLoading ? '-' : stat.value}</h4>
+                                <span className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-[0.1em] z-10 text-balance">{stat.label}</span>
+                                <h4 className="text-xl font-bold text-foreground leading-none z-10">{isLoading ? '-' : stat.value}</h4>
                             </div>
                         ))}
                     </div>
@@ -241,10 +241,10 @@ export default function DashboardPage() {
                         <div className="lg:col-span-8 space-y-3 md:space-y-6">
                             <div className="flex items-center justify-between pb-1.5 border-b border-border/50">
                                 <div className="flex items-center gap-2">
-                                    <h2 className="text-sm md:text-base font-black italic uppercase tracking-wider">Active Stream</h2>
-                                    <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded-[4px] text-[8px] font-black uppercase tracking-widest border border-primary/20">Live</span>
+                                    <h2 className="text-sm md:text-base font-bold tracking-tight text-foreground/90">Active Stream</h2>
+                                    <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded-[4px] text-[8px] font-bold uppercase tracking-widest border border-primary/20">Live</span>
                                 </div>
-                                <Link href="/opportunities" className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline">View All</Link>
+                                <Link href="/opportunities" className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline">View All</Link>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -260,7 +260,7 @@ export default function DashboardPage() {
                                     </div>
                                 ) : (
                                     recentOpps.map((opp) => (
-                                        <div key={opp.id} className="animate-in fade-in duration-500">
+                                        <div key={opp.id}>
                                             <JobCard
                                                 job={{
                                                     company: opp.company,
@@ -290,12 +290,12 @@ export default function DashboardPage() {
 
                         {/* Intelligence Feed */}
                         <div className="lg:col-span-4 space-y-4 md:space-y-6">
-                            <h2 className="text-sm md:text-base font-black italic uppercase tracking-wider">Pulse Feed</h2>
+                            <h2 className="text-sm md:text-base font-bold tracking-tight text-foreground/90">Pulse Feed</h2>
                             <div className="space-y-3">
                                 <div className="p-4 rounded-xl border border-border/50 bg-card/30 space-y-2">
                                     <div className="flex items-center gap-2">
                                         <ChartBarIcon className="w-3.5 h-3.5 text-primary" />
-                                        <h4 className="text-[10px] font-black uppercase tracking-wider">Snapshot</h4>
+                                        <h4 className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Snapshot</h4>
                                     </div>
                                     <p className="text-[11px] text-muted-foreground leading-snug font-medium">
                                         {actionsSummary?.appliedCount || 0} active tracks. Complete profiles get 3x higher visibility.
@@ -305,7 +305,7 @@ export default function DashboardPage() {
                                 <div className="p-4 rounded-xl border border-border/50 bg-card/30 space-y-3 group hover:border-primary/20 transition-all">
                                     <div className="flex items-center gap-2">
                                         <CheckBadgeIcon className="w-3.5 h-3.5 text-success" />
-                                        <h3 className="text-[10px] font-black uppercase tracking-wider">Profile Status</h3>
+                                        <h3 className="text-[10px] font-bold uppercase tracking-wider">Profile Status</h3>
                                     </div>
                                     <p className="text-[11px] text-muted-foreground leading-snug font-medium">
                                         Ensure your academic records are locked for verified eligibility.
