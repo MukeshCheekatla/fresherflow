@@ -98,7 +98,7 @@ export default function AdminLoginPage() {
                         <ShieldCheckIcon className="w-10 h-10 text-primary" />
                     </div>
                     <h1 className="text-2xl font-bold tracking-tight uppercase text-foreground">Admin Portal</h1>
-                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest opacity-60">Security Hardware Required</p>
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest opacity-60">Passkey Required</p>
                 </div>
 
                 <div className="space-y-4">
@@ -113,7 +113,7 @@ export default function AdminLoginPage() {
                         <span className="text-base font-bold uppercase tracking-widest">
                             {isLoading ? 'Verifying...' : 'Quick Access'}
                         </span>
-                        <span className="text-[10px] opacity-70 mt-1 font-bold">Touch ID / Face ID / USB Key</span>
+                        <span className="text-[10px] opacity-70 mt-1 font-bold">Touch ID / Face ID / USB key</span>
                     </button>
 
                     {/* Secondary/Initial Creation */}

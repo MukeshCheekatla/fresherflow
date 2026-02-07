@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { adminApi } from '@/lib/api/admin';
 import toast from 'react-hot-toast';
+import LoadingScreen from '@/components/ui/LoadingScreen';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import {
     PlusCircleIcon,
@@ -47,6 +48,13 @@ export default function OpportunitiesListPage() {
     const pageSize = 20;
     const debouncedSearch = useDebounce(search, 300);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const exportUrl = useMemo(() => {
+        const params = new URLSearchParams();
+        if (typeFilter) params.set('type', enumToTypeParam(typeFilter));
+        if (statusFilter) params.set('status', statusFilter);
+        const query = params.toString();
+        return `${process.env.NEXT_PUBLIC_API_URL}/api/admin/opportunities/export${query ? `?${query}` : ''}`;
+    }, [typeFilter, statusFilter]);
 
     const typeParamToEnum = (value: string) => {
         const v = value.toLowerCase();
@@ -131,7 +139,7 @@ export default function OpportunitiesListPage() {
             toast.error(` ${errorMsg}`);
 
             if (errorMsg.includes('403') || errorMsg.includes('Unauthorized')) {
-                toast.error(' Session expired. Please login again.');
+                toast.error('Session expired. Please log in again.');
                 setTimeout(() => router.push('/admin/login'), 1500);
             }
         } finally {
@@ -179,7 +187,7 @@ export default function OpportunitiesListPage() {
                     const res = await expireOpportunityAction(id);
                     if (!res.success) throw new Error(res.error);
 
-                    toast.success(' Opportunity marked as expired', { id: loadingToast });
+                    toast.success('Opportunity marked as expired', { id: loadingToast });
                     loadOpportunities();
                     setConfirmModal(prev => ({ ...prev, show: false }));
                 } catch (err: unknown) {
@@ -217,7 +225,7 @@ export default function OpportunitiesListPage() {
                     const res = await deleteOpportunityAction(id, 'Removed by admin via dashboard');
                     if (!res.success) throw new Error(res.error);
 
-                    toast.success(' Opportunity removed', { id: loadingToast });
+                    toast.success('Opportunity removed', { id: loadingToast });
                     loadOpportunities();
                     setConfirmModal(prev => ({ ...prev, show: false }));
                 } catch (err: unknown) {
@@ -290,8 +298,8 @@ export default function OpportunitiesListPage() {
             {/* Header - Hidden on Mobile */}
             <div className="hidden md:flex items-center justify-between gap-4">
                 <div className="space-y-1">
-                    <h1 className="text-2xl font-semibold tracking-tight text-foreground">Stream Management</h1>
-                    <p className="text-sm text-muted-foreground">Monitor and curate the FresherFlow active stream.</p>
+                    <h1 className="text-2xl font-semibold tracking-tight text-foreground">Listings</h1>
+                    <p className="text-sm text-muted-foreground">Manage listings and keep the feed accurate.</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <button
@@ -302,9 +310,16 @@ export default function OpportunitiesListPage() {
                         <ArrowPathIcon className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                         Refresh
                     </button>
+                    <a
+                        href={exportUrl}
+                        className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+                    >
+                        <DocumentTextIcon className="w-4 h-4 mr-2" />
+                        Export CSV
+                    </a>
                     <Link href="/admin/opportunities/create" className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">
                         <PlusCircleIcon className="w-4 h-4 mr-2" />
-                        New Listing
+                        New listing
                     </Link>
                 </div>
             </div>
@@ -317,7 +332,7 @@ export default function OpportunitiesListPage() {
                             <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-bold">
                                 {selectedIds.length}
                             </div>
-                            <span className="text-sm font-medium text-primary">Selected for Bulk Action</span>
+                            <span className="text-sm font-medium text-primary">Selected listings</span>
                         </div>
                         <div className="h-4 w-[1px] bg-primary/20" />
                         <div className="flex items-center gap-1">
@@ -325,19 +340,19 @@ export default function OpportunitiesListPage() {
                                 onClick={() => handleBulkAction('PUBLISH')}
                                 className="h-8 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-100/50 rounded-md transition-colors"
                             >
-                                Publish All
+                                Publish all
                             </button>
                             <button
                                 onClick={() => handleBulkAction('ARCHIVE')}
                                 className="h-8 px-3 text-xs font-semibold text-amber-700 hover:bg-amber-100/50 rounded-md transition-colors"
                             >
-                                Archive All
+                                Archive all
                             </button>
                             <button
                                 onClick={() => handleBulkAction('DELETE')}
                                 className="h-8 px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100/50 rounded-md transition-colors"
                             >
-                                Delete All
+                                Delete all
                             </button>
                         </div>
                     </div>
@@ -345,7 +360,7 @@ export default function OpportunitiesListPage() {
                         onClick={() => setSelectedIds([])}
                         className="text-xs font-medium text-muted-foreground hover:text-foreground px-2"
                     >
-                        Cancel
+                        Clear selection
                     </button>
                 </div>
             )}
@@ -374,7 +389,7 @@ export default function OpportunitiesListPage() {
                     onClick={() => setTypeFilter('')}
                     className="inline-flex h-9 items-center justify-center rounded-md px-3 text-xs font-medium transition-colors border border-input bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 >
-                    All Types
+                    All types
                 </button>
             </div>
 
@@ -403,7 +418,7 @@ export default function OpportunitiesListPage() {
                             onChange={(e) => setTypeFilter(e.target.value)}
                             className="h-9 w-full md:w-auto rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                         >
-                            <option value="">All Types</option>
+                            <option value="">All types</option>
                             <option value="JOB">Jobs</option>
                             <option value="INTERNSHIP">Internships</option>
                             <option value="WALKIN">Walk-ins</option>
@@ -414,7 +429,7 @@ export default function OpportunitiesListPage() {
                             onChange={(e) => setStatusFilter(e.target.value)}
                             className="h-9 w-full md:w-auto rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                         >
-                            <option value="">All Statuses</option>
+                            <option value="">All status</option>
                             <option value="PUBLISHED">Published</option>
                             <option value="EXPIRED">Expired</option>
                             <option value="ARCHIVED">Archived</option>
@@ -449,11 +464,7 @@ export default function OpportunitiesListPage() {
 
             {/* Table/List */}
             {isLoading ? (
-                <div className="space-y-2">
-                    {[1, 2, 3, 4, 5].map(i => (
-                        <div key={i} className="h-16 bg-muted/20 border border-border/50 rounded-lg animate-pulse" />
-                    ))}
-                </div>
+                <LoadingScreen message="Loading listings..." fullScreen={false} />
             ) : opportunities.length === 0 ? (
                 <div className="bg-card border border-dashed border-border rounded-lg p-12 text-center space-y-3">
                     <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto text-muted-foreground">

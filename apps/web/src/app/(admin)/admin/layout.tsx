@@ -2,7 +2,6 @@
 
 import { useAdmin } from '@/contexts/AdminContext';
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import {
@@ -17,6 +16,8 @@ import {
     Cog8ToothIcon
 } from '@heroicons/react/24/outline';
 import AdminBottomNav from '@/shared/components/navigation/AdminBottomNav';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import LoadingScreen from '@/components/ui/LoadingScreen';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const { logout, isAuthenticated, isLoading } = useAdmin();
@@ -37,16 +38,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
 
     if (isLoading) {
-        return (
-            <div className="dark min-h-screen bg-background flex items-center justify-center text-muted-foreground">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="relative w-12 h-12">
-                        <Image src="/logo-white.png" alt="Loading..." fill className="object-contain opacity-50" />
-                    </div>
-                    <p className="text-sm font-medium">Loading Admin Portal...</p>
-                </div>
-            </div>
-        );
+        return <LoadingScreen message="Loading admin portal..." />;
     }
 
     // Don't render admin UI for unauthenticated users (except login page)
@@ -56,7 +48,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     if (isLoginPage) {
         return (
-            <div className="dark min-h-screen bg-background text-foreground">
+            <div className="min-h-screen bg-background text-foreground">
                 {children}
             </div>
         );
@@ -72,22 +64,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     ];
 
     return (
-        <div className="dark flex h-[100dvh] overflow-hidden bg-background text-foreground">
+        <div className="flex h-dvh overflow-hidden bg-background text-foreground">
             {/* Sidebar (Desktop) */}
             <aside className="w-64 bg-card border-r border-border sticky top-0 h-screen hidden md:flex flex-col">
-                <div className="p-6">
+                <div className="p-6 flex items-center justify-between">
                     <Link href="/admin/dashboard" className="flex items-center gap-3">
-                        <div className="relative w-8 h-8">
-                            <Image
-                                src="/logo-white.png"
-                                alt="FresherFlow"
-                                fill
-                                className="object-contain"
-                                priority
-                            />
-                        </div>
+                        <div
+                            className="w-8 h-8 bg-contain bg-center bg-no-repeat"
+                            style={{ backgroundImage: 'var(--logo-image)' }}
+                            aria-label="FresherFlow"
+                        />
                         <span className="text-lg font-bold tracking-tight text-foreground">FresherFlow <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded ml-1 tracking-wider">ADMIN</span></span>
                     </Link>
+                    <ThemeToggle />
                 </div>
 
                 <nav className="flex-1 px-3 space-y-1 mt-4">
@@ -128,29 +117,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     className="md:hidden bg-card border-b border-border p-4 flex items-center justify-between fixed top-0 left-0 right-0 z-20 h-16 transition-all duration-300 translate-y-0 opacity-100"
                 >
                     <Link href="/admin/dashboard" className="flex items-center gap-2">
-                        <div className="relative w-8 h-8">
-                            <Image
-                                src="/logo-white.png"
-                                alt="FresherFlow"
-                                fill
-                                className="object-contain"
-                                priority
-                            />
-                        </div>
+                        <div
+                            className="w-8 h-8 bg-contain bg-center bg-no-repeat"
+                            style={{ backgroundImage: 'var(--logo-image)' }}
+                            aria-label="FresherFlow"
+                        />
                         <span className="text-lg font-bold tracking-tight text-foreground">FresherFlow</span>
                     </Link>
-                    <button
-                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-                        aria-label="Toggle menu"
-                    >
-                        {mobileMenuOpen ? <XMarkIcon className="w-6 h-6" /> : <Bars3Icon className="w-6 h-6" />}
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <ThemeToggle />
+                        <button
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                            aria-label="Toggle menu"
+                        >
+                            {mobileMenuOpen ? <XMarkIcon className="w-6 h-6" /> : <Bars3Icon className="w-6 h-6" />}
+                        </button>
+                    </div>
                 </header>
 
                 {/* Mobile Hamburger Menu Dropdown */}
                 {mobileMenuOpen && (
-                    <div className="md:hidden fixed inset-0 top-16 z-[100] bg-background/95 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="md:hidden fixed inset-0 top-16 z-100 bg-background/95 backdrop-blur-sm animate-in fade-in duration-200">
                         <div className="bg-card border-b border-border shadow-2xl overflow-y-auto max-h-[calc(100vh-4rem)]">
                             <nav className="p-4 space-y-1">
                                 {navItems.map((item) => {
@@ -190,7 +178,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 )}
 
                 <main
-                    className="flex-1 overflow-y-auto pt-16 md:pb-8 p-4 md:p-8 md:pt-8 w-full pb-20 md:pb-8"
+                    className="flex-1 overflow-y-auto pt-16 p-4 md:p-8 md:pt-8 w-full pb-20 md:pb-8"
                 >
                     <div className="max-w-7xl mx-auto w-full">
                         {children}

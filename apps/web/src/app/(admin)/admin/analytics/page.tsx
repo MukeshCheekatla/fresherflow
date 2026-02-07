@@ -13,6 +13,7 @@ import {
     BriefcaseIcon,
     DocumentTextIcon
 } from '@heroicons/react/24/outline';
+import LoadingScreen from '@/components/ui/LoadingScreen';
 
 interface AnalyticsOverview {
     linkHealth: {
@@ -38,9 +39,16 @@ interface AnalyticsOverview {
     };
 }
 
+interface HealthStats {
+    healthy: number;
+    broken: number;
+    retrying: number;
+}
+
 export default function AdminAnalyticsPage() {
     const router = useRouter();
     const [analytics, setAnalytics] = useState<AnalyticsOverview | null>(null);
+    const [healthStats, setHealthStats] = useState<HealthStats | null>(null);
     const [loading, setLoading] = useState(true);
 
     const loadAnalytics = useCallback(async () => {
@@ -66,23 +74,26 @@ export default function AdminAnalyticsPage() {
         }
     }, [router]);
 
+    const loadHealthStats = useCallback(async () => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/system/health-stats`, {
+                credentials: 'include'
+            });
+            if (!response.ok) return;
+            const data = await response.json();
+            setHealthStats(data.stats || null);
+        } catch {
+            // Silent fail
+        }
+    }, []);
+
     useEffect(() => {
         loadAnalytics();
-    }, [loadAnalytics]);
+        loadHealthStats();
+    }, [loadAnalytics, loadHealthStats]);
 
     if (loading) {
-        return (
-            <div className="max-w-7xl mx-auto space-y-6 p-4 md:p-8">
-                <div className="animate-pulse space-y-4">
-                    <div className="h-8 bg-muted rounded w-1/3"></div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="h-24 bg-muted rounded"></div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        );
+        return <LoadingScreen message="Loading analytics..." fullScreen={false} />;
     }
 
     if (!analytics) {
@@ -102,10 +113,10 @@ export default function AdminAnalyticsPage() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 py-4 border-b border-border/50">
                 <div className="space-y-0.5 text-left">
                     <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground uppercase">
-                        Platform Analytics
+                        Analytics
                     </h1>
                     <p className="text-[10px] md:text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                        Real-time insights and system health monitoring
+                        Key metrics and system health
                     </p>
                 </div>
             </div>
@@ -115,7 +126,7 @@ export default function AdminAnalyticsPage() {
                 <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
                     <div className="flex items-center gap-2 mb-2">
                         <ExclamationTriangleIcon className="w-5 h-5 text-amber-600" />
-                        <h3 className="text-sm font-bold uppercase tracking-widest text-amber-600">Attention Required</h3>
+                        <h3 className="text-sm font-bold uppercase tracking-widest text-amber-600">Attention needed</h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {analytics.urgent.brokenLinks > 0 && (
@@ -125,7 +136,7 @@ export default function AdminAnalyticsPage() {
                         )}
                         {analytics.urgent.closingSoon48h > 0 && (
                             <div className="text-xs">
-                                <span className="font-bold">{analytics.urgent.closingSoon48h}</span> opportunities closing within 48h
+                                <span className="font-bold">{analytics.urgent.closingSoon48h}</span> listings closing within 48h
                             </div>
                         )}
                     </div>
@@ -137,12 +148,12 @@ export default function AdminAnalyticsPage() {
                 {/* Link Health */}
                 <div className="bg-card/50 rounded-xl border border-border/50 p-3 md:p-5">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-[9px] md:text-xs font-bold text-muted-foreground uppercase tracking-widest">Link Health</span>
+                        <span className="text-[9px] md:text-xs font-bold text-muted-foreground uppercase tracking-widest">Link health</span>
                         <CheckCircleIcon className="w-3 h-3 md:w-4 h-4 text-success" />
                     </div>
                     <h4 className="text-lg md:text-2xl font-bold text-foreground leading-none">{healthPercentage}%</h4>
                     <p className="text-[9px] md:text-[10px] font-bold text-muted-foreground uppercase tracking-tighter mt-1">
-                        {analytics.linkHealth.healthy} Healthy
+                        {analytics.linkHealth.healthy} healthy
                     </p>
                 </div>
 
@@ -153,7 +164,7 @@ export default function AdminAnalyticsPage() {
                         <DocumentTextIcon className="w-3 h-3 md:w-4 h-4 text-primary" />
                     </div>
                     <h4 className="text-lg md:text-2xl font-bold text-foreground leading-none">{analytics.activity.applications30d}</h4>
-                    <p className="text-[9px] md:text-[10px] font-bold text-muted-foreground uppercase tracking-tighter mt-1">Last 30 Days</p>
+                    <p className="text-[9px] md:text-[10px] font-bold text-muted-foreground uppercase tracking-tighter mt-1">Last 30 days</p>
                 </div>
 
                 {/* New Users */}
@@ -163,7 +174,7 @@ export default function AdminAnalyticsPage() {
                         <UsersIcon className="w-3 h-3 md:w-4 h-4 text-primary" />
                     </div>
                     <h4 className="text-lg md:text-2xl font-bold text-foreground leading-none">{analytics.activity.newUsers30d}</h4>
-                    <p className="text-[9px] md:text-[10px] font-bold text-muted-foreground uppercase tracking-tighter mt-1">Last 30 Days</p>
+                    <p className="text-[9px] md:text-[10px] font-bold text-muted-foreground uppercase tracking-tighter mt-1">Last 30 days</p>
                 </div>
 
                 {/* Bookmarks (7d) */}
@@ -175,6 +186,20 @@ export default function AdminAnalyticsPage() {
                     <h4 className="text-lg md:text-2xl font-bold text-foreground leading-none">{analytics.activity.bookmarks7d}</h4>
                     <p className="text-[9px] md:text-[10px] font-bold text-muted-foreground uppercase tracking-tighter mt-1">Last 7 Days</p>
                 </div>
+
+                {/* System Health */}
+                <div className="bg-card/50 rounded-xl border border-border/50 p-3 md:p-5">
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-[9px] md:text-xs font-bold text-muted-foreground uppercase tracking-widest">System health</span>
+                        <ChartBarIcon className="w-3 h-3 md:w-4 h-4 text-primary" />
+                    </div>
+                    <h4 className="text-lg md:text-2xl font-bold text-foreground leading-none">
+                        {healthStats ? `${healthStats.healthy}` : '-'}
+                    </h4>
+                    <p className="text-[9px] md:text-[10px] font-bold text-muted-foreground uppercase tracking-tighter mt-1">
+                        Healthy links
+                    </p>
+                </div>
             </div>
 
             {/* Detailed Breakdowns */}
@@ -183,7 +208,7 @@ export default function AdminAnalyticsPage() {
                 <div className="bg-card/30 rounded-xl border border-border/50 p-4 md:p-6 space-y-4">
                     <h3 className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
                         <ChartBarIcon className="w-4 h-4" />
-                        Link Health Distribution
+                        Link health distribution
                     </h3>
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
@@ -214,7 +239,7 @@ export default function AdminAnalyticsPage() {
                 <div className="bg-card/30 rounded-xl border border-border/50 p-4 md:p-6 space-y-4">
                     <h3 className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
                         <BriefcaseIcon className="w-4 h-4" />
-                        Opportunity Status
+                        Listing status
                     </h3>
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
@@ -234,7 +259,7 @@ export default function AdminAnalyticsPage() {
 
                 {/* Type Distribution */}
                 <div className="bg-card/30 rounded-xl border border-border/50 p-4 md:p-6 space-y-4">
-                    <h3 className="text-[10px] font-bold uppercase tracking-widest">Type Distribution</h3>
+                    <h3 className="text-[10px] font-bold uppercase tracking-widest">Type distribution</h3>
                     <div className="space-y-3">
                         {analytics.typeDistribution.map(item => (
                             <div key={item.type} className="flex items-center justify-between">
@@ -247,7 +272,7 @@ export default function AdminAnalyticsPage() {
 
                 {/* Feedback Summary */}
                 <div className="bg-card/30 rounded-xl border border-border/50 p-4 md:p-6 space-y-4">
-                    <h3 className="text-[10px] font-bold uppercase tracking-widest">User Feedback (30d)</h3>
+                    <h3 className="text-[10px] font-bold uppercase tracking-widest">User feedback (30d)</h3>
                     <div className="space-y-3">
                         {Object.keys(analytics.feedback).length > 0 ? (
                             Object.entries(analytics.feedback).map(([reason, count]) => (

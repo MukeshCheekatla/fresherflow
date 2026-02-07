@@ -138,7 +138,7 @@ export default function CreateOpportunityPage() {
         }
 
         setIsParsing(true);
-        const toastId = toast.loading('🔍 Auto-filling...');
+        const toastId = toast.loading('Auto-filling from text...');
 
         try {
             const { parsed } = await adminApi.parseJobText(pastedText);
@@ -168,7 +168,7 @@ export default function CreateOpportunityPage() {
                 if (parsed.timeRange) setWalkInTimeRange(parsed.timeRange);
             }
 
-            toast.success('Successfully auto-filled from content!', { id: toastId });
+            toast.success('Form updated from text.', { id: toastId });
             setShowParser(false);
         } catch {
             toast.error('Failed to parse text. Please fill manually.', { id: toastId });
@@ -203,7 +203,7 @@ export default function CreateOpportunityPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        const loadingToast = toast.loading('⏳ Publishing to platform...');
+        const loadingToast = toast.loading('Publishing listing...');
 
         try {
             const payload: Record<string, unknown> = {
@@ -244,11 +244,11 @@ export default function CreateOpportunityPage() {
 
             await adminApi.createOpportunity(payload);
 
-            toast.success('🚀 Opportunity published!', { id: loadingToast });
+            toast.success('Listing published.', { id: loadingToast });
             router.push('/admin/opportunities');
         } catch (err: unknown) {
             const error = err as Error;
-            toast.error(`❌ Error: ${error.message}`, { id: loadingToast });
+            toast.error(`Error: ${error.message}`, { id: loadingToast });
         } finally {
             setIsLoading(false);
         }
@@ -262,13 +262,13 @@ export default function CreateOpportunityPage() {
             <div className="space-y-3">
                 <Link href="/admin/opportunities" className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
                     <ArrowLeftIcon className="w-3.5 h-3.5" />
-                    Back to Log
+                    Back to listings
                 </Link>
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                     <div>
-                        <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground">Post Opportunity</h1>
+                        <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground">New listing</h1>
                         <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
-                            Create and publish a new listing for matched candidates.
+                            Create and publish a verified listing.
                         </p>
                     </div>
                     <button
@@ -276,7 +276,7 @@ export default function CreateOpportunityPage() {
                         className="inline-flex items-center justify-center h-10 px-4 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm w-full md:w-auto"
                     >
                         <BoltIcon className="w-4 h-4 mr-2" />
-                        Auto-Fill Text
+                        Auto-fill text
                     </button>
                 </div>
             </div>
@@ -288,7 +288,7 @@ export default function CreateOpportunityPage() {
                         <div className="flex items-center justify-between">
                             <h3 className="text-sm font-bold flex items-center gap-2">
                                 <BoltIcon className="w-4 h-4 text-primary" />
-                                Mission Briefing
+                                Auto-fill
                             </h3>
                             <button onClick={() => setShowParser(false)} className="text-muted-foreground hover:text-foreground text-xs font-bold uppercase">
                                 Close
@@ -298,7 +298,7 @@ export default function CreateOpportunityPage() {
                             value={pastedText}
                             onChange={(e) => setPastedText(e.target.value)}
                             placeholder="Paste the job description here..."
-                            className="w-full min-h-[140px] p-3 text-sm rounded-md border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                            className="w-full min-h-35 p-3 text-sm rounded-md border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                         />
                         <button
                             onClick={handleAutoFill}
@@ -310,7 +310,7 @@ export default function CreateOpportunityPage() {
                             ) : (
                                 <BoltIcon className="w-4 h-4" />
                             )}
-                            {isParsing ? 'Processing...' : 'Deploy Data to Form'}
+                            {isParsing ? 'Processing...' : 'Apply to form'}
                         </button>
                     </div>
                 </div>
@@ -322,7 +322,7 @@ export default function CreateOpportunityPage() {
                 <div className="space-y-3">
                     <h3 className="text-sm md:text-base font-semibold text-foreground flex items-center gap-2">
                         <InformationCircleIcon className="w-4 h-4 text-muted-foreground" />
-                        Classification
+                        Type
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         {(['JOB', 'INTERNSHIP', 'WALKIN'] as const).map((t) => (
@@ -337,7 +337,7 @@ export default function CreateOpportunityPage() {
                             >
                                 <span className={`text-xs md:text-sm font-semibold uppercase tracking-wider ${type === t ? 'text-primary' : 'text-foreground'}`}>{t}</span>
                                 <span className="text-[10px] md:text-xs text-muted-foreground mt-0.5">
-                                    {t === 'WALKIN' ? 'Physical' : 'Direct'}
+                                    {t === 'WALKIN' ? 'In-person' : 'Direct apply'}
                                 </span>
                             </button>
                         ))}
@@ -348,7 +348,7 @@ export default function CreateOpportunityPage() {
                 <div className="space-y-5 md:space-y-6 border border-border rounded-lg p-4 md:p-5 bg-card shadow-sm">
                     <h3 className="text-sm md:text-base font-semibold text-foreground flex items-center gap-2">
                         <BriefcaseIcon className="w-4 h-4 text-muted-foreground" />
-                        Core Identity
+                        Core details
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -359,7 +359,7 @@ export default function CreateOpportunityPage() {
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                                 className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all shadow-sm"
-                                placeholder="e.g. Senior Frontend Engineer"
+                                placeholder="e.g. Frontend Engineer"
                             />
                         </div>
                         <div className="space-y-1.5">
@@ -369,14 +369,14 @@ export default function CreateOpportunityPage() {
                                 value={company}
                                 onChange={(e) => setCompany(e.target.value)}
                                 className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all shadow-sm"
-                                placeholder="e.g. Google India"
+                                placeholder="e.g. Google"
                             />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Functional Role</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Function</label>
                             <input
                                 value={jobFunction}
                                 onChange={(e) => setJobFunction(e.target.value)}
@@ -385,7 +385,7 @@ export default function CreateOpportunityPage() {
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Incentives</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Benefits</label>
                             <input
                                 value={incentives}
                                 onChange={(e) => setIncentives(e.target.value)}
@@ -401,7 +401,7 @@ export default function CreateOpportunityPage() {
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             rows={8}
-                            className="flex min-h-[160px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50 resize-y transition-all shadow-sm"
+                            className="flex min-h-40 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50 resize-y transition-all shadow-sm"
                             placeholder="Roles and responsibilities..."
                         />
                     </div>
@@ -482,13 +482,13 @@ export default function CreateOpportunityPage() {
                 <div className="space-y-5 md:space-y-6 border border-border rounded-lg p-4 md:p-5 bg-card shadow-sm">
                     <h3 className="text-sm md:text-base font-semibold text-foreground flex items-center gap-2">
                         <AcademicCapIcon className="w-4 h-4 text-muted-foreground" />
-                        Target Parameters
+                        Requirements
                     </h3>
 
                     <div className="space-y-3">
                         <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            Academic Spectrum
-                            <span className="ml-2 text-[10px] font-normal lowercase opacity-70 italic">(Optional)</span>
+                            Education level
+                            <span className="ml-2 text-[10px] font-normal lowercase opacity-70 italic">(optional)</span>
                         </label>
                         <div className="flex flex-wrap gap-2">
                             {['DIPLOMA', 'DEGREE', 'PG'].map((deg) => (
@@ -557,7 +557,7 @@ export default function CreateOpportunityPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                Passout Years
+                                Passout years
                             </label>
                             <input
                                 value={passoutYears.join(', ')}
@@ -582,7 +582,7 @@ export default function CreateOpportunityPage() {
                 <div className="space-y-5 md:space-y-6 border border-border rounded-lg p-4 md:p-5 bg-card shadow-sm">
                     <h3 className="text-sm md:text-base font-semibold text-foreground flex items-center gap-2">
                         <MapPinIcon className="w-4 h-4 text-muted-foreground" />
-                        Operations
+                        Logistics
                     </h3>
 
                     <div className="space-y-2">
@@ -610,7 +610,7 @@ export default function CreateOpportunityPage() {
 
                     {type !== 'WALKIN' && (
                         <div className="space-y-2.5">
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Work Mode</label>
+                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Work mode</label>
                             <div className="grid grid-cols-3 gap-2">
                                 {(['ONSITE', 'HYBRID', 'REMOTE'] as const).map((mode) => (
                                     <button
@@ -634,14 +634,14 @@ export default function CreateOpportunityPage() {
                 <div className="space-y-5 md:space-y-6 border border-border rounded-lg p-4 md:p-5 bg-card shadow-sm">
                     <h3 className="text-sm md:text-base font-semibold text-foreground flex items-center gap-2">
                         <LinkIcon className="w-4 h-4 text-muted-foreground" />
-                        Channel
+                        Apply link
                     </h3>
 
                     {type === 'WALKIN' ? (
                         <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-4 md:p-5 space-y-5">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Drive Dates *</label>
+                                    <label className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Drive dates *</label>
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                                         <input
                                             type="date"
@@ -660,7 +660,7 @@ export default function CreateOpportunityPage() {
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Reporting Window *</label>
+                                    <label className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Reporting window *</label>
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                                         <input
                                             type="time"
@@ -681,18 +681,18 @@ export default function CreateOpportunityPage() {
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Venue Address *</label>
+                                    <label className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Venue address *</label>
                                     <textarea
                                         required
                                         value={venueAddress}
                                         onChange={(e) => setVenueAddress(e.target.value)}
                                         rows={2}
-                                        className="flex min-h-[60px] w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus:ring-2 focus:ring-amber-500/50 resize-none transition-all"
+                                        className="flex min-h-15 w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus:ring-2 focus:ring-amber-500/50 resize-none transition-all"
                                         placeholder="Complete street address..."
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Maps Link</label>
+                                    <label className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Maps link</label>
                                     <input
                                         value={venueLink}
                                         onChange={(e) => setVenueLink(e.target.value)}
@@ -705,7 +705,7 @@ export default function CreateOpportunityPage() {
                     )
                         : (
                             <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Gateway URL *</label>
+                                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Apply URL *</label>
                                 <input
                                     type="url"
                                     required
@@ -724,7 +724,7 @@ export default function CreateOpportunityPage() {
                         href="/admin/opportunities"
                         className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-6 text-sm font-semibold text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus:ring-ring focus:ring-offset-2 w-full md:w-auto order-2 md:order-1"
                     >
-                        Abort
+                        Cancel
                     </Link>
                     <button
                         type="submit"
@@ -736,7 +736,7 @@ export default function CreateOpportunityPage() {
                         ) : (
                             <PaperAirplaneIcon className="w-4 h-4 mr-2" />
                         )}
-                        {isLoading ? 'Wait...' : 'Deploy'}
+                        {isLoading ? 'Publishing...' : 'Publish listing'}
                     </button>
                 </div>
             </form>

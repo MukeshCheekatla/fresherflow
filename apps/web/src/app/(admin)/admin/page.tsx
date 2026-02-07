@@ -13,6 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import LoadingScreen from '@/components/ui/LoadingScreen';
 
 export default function AdminDashboardHome() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -60,25 +61,21 @@ export default function AdminDashboardHome() {
     }, []);
 
     const statsCards = [
-        { label: 'Live Online Jobs', value: stats.jobs, icon: BriefcaseIcon, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-        { label: 'Walk-in Drives', value: stats.walkins, icon: MapPinIcon, color: 'text-purple-500', bg: 'bg-purple-500/10' },
-        { label: 'Total Postings', value: stats.total, icon: ChartBarIcon, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-        { label: 'Recent (24h)', value: stats.recent24h, icon: ClockIcon, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+        { label: 'Live listings', value: stats.jobs, icon: BriefcaseIcon, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+        { label: 'Walk-ins', value: stats.walkins, icon: MapPinIcon, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+        { label: 'Total listings', value: stats.total, icon: ChartBarIcon, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+        { label: 'New (24h)', value: stats.recent24h, icon: ClockIcon, color: 'text-amber-500', bg: 'bg-amber-500/10' },
     ];
 
     if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-[400px]">
-                <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            </div>
-        );
+        return <LoadingScreen message="Loading admin overview..." fullScreen={false} />;
     }
 
     return (
         <div className="space-y-4 md:space-y-6 animate-in fade-in duration-700 pb-8 text-foreground">
             <header className="space-y-0.5">
-                <h1 className="text-xl md:text-2xl font-semibold tracking-tight">Command Center</h1>
-                <p className="text-xs md:text-sm text-muted-foreground">Platform overview and management hub.</p>
+                <h1 className="text-xl md:text-2xl font-semibold tracking-tight">Admin overview</h1>
+                <p className="text-xs md:text-sm text-muted-foreground">Quick summary and shortcuts.</p>
             </header>
 
             {/* Stats Grid */}
@@ -105,10 +102,10 @@ export default function AdminDashboardHome() {
                     <div className="space-y-0.5">
                         <div className="flex items-center gap-2 text-primary">
                             <PlusCircleIcon className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                            <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider">Global Stream</span>
+                            <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider">Listings</span>
                         </div>
-                        <h3 className="text-sm md:text-base font-semibold">Post New Listing</h3>
-                        <p className="text-[11px] md:text-xs text-muted-foreground font-medium">Add jobs, internships or walk-ins.</p>
+                        <h3 className="text-sm md:text-base font-semibold">Create listing</h3>
+                        <p className="text-[11px] md:text-xs text-muted-foreground font-medium">Add jobs, internships, or walk-ins.</p>
                     </div>
                     <div className="w-9 h-9 md:w-10 md:h-10 bg-primary/10 rounded-md flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                         <ArrowRightIcon className="w-4 h-4 text-primary" />
@@ -122,10 +119,10 @@ export default function AdminDashboardHome() {
                     <div className="space-y-0.5">
                         <div className="flex items-center gap-2 text-emerald-500">
                             <ChartBarIcon className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                            <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider">Platform Pulse</span>
+                            <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider">Reports</span>
                         </div>
-                        <h3 className="text-sm md:text-base font-semibold">Review Feedback</h3>
-                        <p className="text-[11px] md:text-xs text-muted-foreground font-medium">Analyze user reports and logs.</p>
+                        <h3 className="text-sm md:text-base font-semibold">Review feedback</h3>
+                        <p className="text-[11px] md:text-xs text-muted-foreground font-medium">Review user reports.</p>
                     </div>
                     <div className="w-9 h-9 md:w-10 md:h-10 bg-muted rounded-md flex items-center justify-center group-hover:bg-muted/80 transition-colors">
                         <ArrowRightIcon className="w-4 h-4 text-foreground/70" />
@@ -136,8 +133,8 @@ export default function AdminDashboardHome() {
             {/* Recent Postings Simple List */}
             <div className="bg-card dark:bg-card/40 rounded-lg border border-border shadow-sm overflow-hidden w-full">
                 <div className="px-4 py-3 md:px-5 md:py-4 border-b border-border flex justify-between items-center bg-muted/20 md:bg-transparent">
-                    <h3 className="text-sm md:text-base font-semibold tracking-tight">Recent Activity Stream</h3>
-                    <Link href="/admin/opportunities" className="text-[10px] md:text-xs font-medium text-primary hover:underline">View Full Log</Link>
+                    <h3 className="text-sm md:text-base font-semibold tracking-tight">Recent listings</h3>
+                    <Link href="/admin/opportunities" className="text-[10px] md:text-xs font-medium text-primary hover:underline">View all</Link>
                 </div>
                 <div className="divide-y divide-border">
                     {recent.map((item) => {
@@ -152,7 +149,7 @@ export default function AdminDashboardHome() {
                                         {item.title || item.normalizedRole}
                                     </p>
                                 </div>
-                                <div className="flex-shrink-0 text-right space-y-0.5 md:space-y-1">
+                                <div className="shrink-0 text-right space-y-0.5 md:space-y-1">
                                     <span className="text-[9px] md:text-xs text-muted-foreground font-medium block">
                                         {new Date(item.postedAt).toLocaleDateString()}
                                     </span>
@@ -168,7 +165,7 @@ export default function AdminDashboardHome() {
                     })}
                     {recent.length === 0 && (
                         <div className="px-5 py-6 text-center text-xs md:text-sm text-muted-foreground">
-                            No recent activity found.
+                            No recent listings yet.
                         </div>
                     )}
                 </div>

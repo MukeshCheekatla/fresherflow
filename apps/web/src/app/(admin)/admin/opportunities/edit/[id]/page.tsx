@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useAdmin } from '@/contexts/AdminContext';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import LoadingScreen from '@/components/ui/LoadingScreen';
 import {
     ArrowLeftIcon,
     BriefcaseIcon,
@@ -177,7 +178,7 @@ export default function EditOpportunityPage() {
             setLoading(false);
         } catch (err: unknown) {
             const error = err as Error;
-            toast.error(`❌ Failed to load: ${error.message}`);
+            toast.error(`Failed to load: ${error.message}`);
             router.push('/admin/opportunities');
         }
     }, [params.id, router]);
@@ -268,7 +269,7 @@ export default function EditOpportunityPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
-        const loadingToast = toast.loading(' Saving changes...');
+        const loadingToast = toast.loading('Saving changes...');
 
         try {
             const payload: Record<string, unknown> = {
@@ -313,23 +314,18 @@ export default function EditOpportunityPage() {
 
             await adminApi.updateOpportunity(params.id as string, payload);
 
-            toast.success(' Changes saved successfully!', { id: loadingToast });
+            toast.success('Changes saved.', { id: loadingToast });
             router.push('/admin/opportunities');
         } catch (err: unknown) {
             const error = err as Error;
-            toast.error(` Failed: ${error.message}`, { id: loadingToast });
+            toast.error(`Failed: ${error.message}`, { id: loadingToast });
         } finally {
             setSaving(false);
         }
     };
 
     if (loading) {
-        return (
-            <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
-                <div className="w-12 h-12 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
-                <p className="text-slate-500 font-medium animate-pulse">Fetching details...</p>
-            </div>
-        );
+        return <LoadingScreen message="Loading listing..." fullScreen={false} />;
     }
 
     return (
@@ -339,17 +335,17 @@ export default function EditOpportunityPage() {
                 <div>
                     <Link href="/admin/opportunities" className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors mb-3">
                         <ArrowLeftIcon className="w-4 h-4" />
-                        Back to Log
+                        Back to listings
                     </Link>
-                    <h1 className="text-2xl font-semibold tracking-tight text-foreground">Edit Opportunity</h1>
-                    <p className="text-sm text-muted-foreground">Modify entry details and requirements.</p>
+                    <h1 className="text-2xl font-semibold tracking-tight text-foreground">Edit listing</h1>
+                    <p className="text-sm text-muted-foreground">Update details and requirements.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <span className={`inline-flex h-8 items-center rounded-md px-3 text-xs font-medium ${type === 'WALKIN' ? 'bg-amber-500/10 text-amber-700 border border-amber-500/30' :
                         type === 'INTERNSHIP' ? 'bg-purple-500/10 text-purple-700 border border-purple-500/30' :
                             'bg-blue-500/10 text-blue-700 border border-blue-500/30'
                         }`}>
-                        {type} Protocol Active
+                        {type} listing
                     </span>
                 </div>
             </div>
@@ -359,7 +355,7 @@ export default function EditOpportunityPage() {
                 <div className="bg-card border border-border rounded-lg p-6 space-y-4">
                     <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
                         <InformationCircleIcon className="w-4 h-4 text-muted-foreground" />
-                        Modify Listing Type
+                        Listing type
                     </h3>
                     <div className="grid grid-cols-3 gap-4">
                         {(['JOB', 'INTERNSHIP', 'WALKIN'] as const).map((t) => (
@@ -485,7 +481,7 @@ export default function EditOpportunityPage() {
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             rows={12}
-                            className="flex min-h-[250px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-y"
+                            className="flex min-h-62.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-y"
                         />
                     </div>
 
@@ -582,7 +578,7 @@ export default function EditOpportunityPage() {
                 <div className="bg-card border border-border rounded-lg p-6 space-y-6">
                     <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
                         <AcademicCapIcon className="w-4 h-4 text-muted-foreground" />
-                        Credential Criteria
+                        Requirements
                     </h3>
 
                     <div className="space-y-3">
@@ -634,7 +630,7 @@ export default function EditOpportunityPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
-                                min experience (years)
+                                Min experience (years)
                             </label>
                             <input
                                 type="text"
@@ -646,7 +642,7 @@ export default function EditOpportunityPage() {
                         </div>
                         <div className="space-y-2">
                             <label className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
-                                max experience (years)
+                                Max experience (years)
                             </label>
                             <input
                                 type="text"
@@ -686,7 +682,7 @@ export default function EditOpportunityPage() {
                 <div className="bg-card border border-border rounded-lg p-6 space-y-6">
                     <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
                         <MapPinIcon className="w-4 h-4 text-muted-foreground" />
-                        Logistics & Presence
+                        Logistics
                     </h3>
 
                     <div className="space-y-2">
@@ -739,7 +735,7 @@ export default function EditOpportunityPage() {
                 <div className="bg-card border border-border rounded-lg p-6 space-y-6">
                     <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
                         <LinkIcon className="w-4 h-4 text-muted-foreground" />
-                        Engagement Path
+                        Apply link
                     </h3>
 
                     {type === 'WALKIN' ? (
@@ -794,7 +790,7 @@ export default function EditOpportunityPage() {
                                         value={venueAddress}
                                         onChange={(e) => setVenueAddress(e.target.value)}
                                         rows={2}
-                                        className="flex min-h-[44px] w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 resize-none"
+                                        className="flex min-h-11 w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 resize-none"
                                         placeholder="Complete street address..."
                                     />
                                 </div>
@@ -812,7 +808,7 @@ export default function EditOpportunityPage() {
                     )
                         : (
                             <div className="space-y-2">
-                                <label className="text-xs font-medium text-muted-foreground tracking-wide">Official Apply URL *</label>
+                                <label className="text-xs font-medium text-muted-foreground tracking-wide">Apply URL *</label>
                                 <input
                                     type="url"
                                     required
@@ -836,13 +832,13 @@ export default function EditOpportunityPage() {
                         ) : (
                             <CheckIcon className="w-5 h-5 mr-2" />
                         )}
-                        {saving ? 'Synchronizing...' : 'Update Listing'}
+                        {saving ? 'Saving...' : 'Update listing'}
                     </button>
                     <Link
                         href="/admin/opportunities"
                         className="inline-flex h-11 items-center justify-center rounded-md border border-input bg-background px-8 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
                     >
-                        Discard
+                        Cancel
                     </Link>
                 </div>
             </form>

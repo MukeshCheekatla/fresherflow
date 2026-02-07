@@ -48,7 +48,7 @@ export default function AdminDashboardPage() {
         } catch (err: unknown) {
             const error = err as Error;
             console.error('Error fetching stats:', error);
-            toast.error(`❌ Failed to load stats: ${error.message}`);
+            toast.error(`Error: Failed to load stats: ${error.message}`);
             setStats(prev => ({ ...prev, loading: false }));
         }
     }, [isAuthenticated]);
@@ -78,7 +78,7 @@ export default function AdminDashboardPage() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Overview</h1>
-                        <p className="text-sm text-muted-foreground">Platform performance and listing status.</p>
+                        <p className="text-sm text-muted-foreground">Listings, activity, and health at a glance.</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <button
@@ -89,7 +89,7 @@ export default function AdminDashboardPage() {
                         </button>
                         <Link href="/admin/opportunities/create" className="premium-button flex items-center gap-2">
                             <PlusIcon className="w-5 h-5" />
-                            New Opportunity
+                            Add listing
                         </Link>
                     </div>
                 </div>
@@ -126,16 +126,16 @@ export default function AdminDashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-3 bg-card rounded-3xl border border-border p-5 md:p-7">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-bold text-foreground">Quick Actions</h3>
-                        <Link href="/admin/opportunities" className="text-sm font-semibold text-blue-500 hover:underline">View All</Link>
+                        <h3 className="text-lg font-bold text-foreground">Quick actions</h3>
+                        <Link href="/admin/opportunities" className="text-sm font-semibold text-blue-500 hover:underline">View all</Link>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         {[
-                            { title: 'New Job Listing', desc: 'Create a permanent role', icon: GlobeAltIcon, href: '/admin/opportunities/create' },
-                            { title: 'New Internship', desc: 'Post a student opportunity', icon: ChartBarIcon, href: '/admin/opportunities/create' },
-                            { title: 'Review Feedback', desc: 'Check user reports', icon: ChatBubbleBottomCenterTextIcon, href: '/admin/feedback' },
-                            { title: 'Manage Listings', desc: 'Update or remove jobs', icon: BriefcaseIcon, href: '/admin/opportunities' },
+                            { title: 'New job listing', desc: 'Add a full-time role', icon: GlobeAltIcon, href: '/admin/opportunities/create' },
+                            { title: 'New internship', desc: 'Add a student opportunity', icon: ChartBarIcon, href: '/admin/opportunities/create' },
+                            { title: 'Review feedback', desc: 'Check user reports', icon: ChatBubbleBottomCenterTextIcon, href: '/admin/feedback' },
+                            { title: 'Manage listings', desc: 'Update or remove listings', icon: BriefcaseIcon, href: '/admin/opportunities' },
                         ].map((action, i) => (
                             <Link
                                 key={i}
