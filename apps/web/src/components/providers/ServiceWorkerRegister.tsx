@@ -25,7 +25,12 @@ export default function ServiceWorkerRegister() {
 
         const register = async () => {
             try {
-                await navigator.serviceWorker.register('/sw.js');
+                const registration = await navigator.serviceWorker.register('/sw.js?v=1.4.4');
+                await registration.update();
+
+                if (registration.waiting) {
+                    registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                }
             } catch (err) {
                 // Silent fail - app should still work without SW
                 console.warn('Service worker registration failed', err);
