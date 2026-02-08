@@ -343,6 +343,24 @@ export const dashboardApi = {
     getHighlights: () => apiClient('/api/dashboard/highlights')
 };
 
+// Alerts API calls
+export const alertsApi = {
+    getPreferences: () => apiClient('/api/alerts/preferences'),
+    updatePreferences: (data: {
+        enabled?: boolean;
+        emailEnabled?: boolean;
+        dailyDigest?: boolean;
+        closingSoon?: boolean;
+        minRelevanceScore?: number;
+        preferredHour?: number;
+        timezone?: string;
+    }) =>
+        apiClient('/api/alerts/preferences', {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        })
+};
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const setTokens = (_a: string, _b: string) => { }; // Deprecated: No-op
 export const getTokens = () => ({ accessToken: null, refreshToken: null }); // Deprecated: No-op

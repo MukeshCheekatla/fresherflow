@@ -78,7 +78,7 @@ export function hashRefreshToken(token: string): string {
 
 // Admin Tokens
 export function generateAdminToken(adminId: string): string {
-    const expiry = process.env.ACCESS_TOKEN_EXPIRY || '15m';
+    const expiry = process.env.ADMIN_ACCESS_TOKEN_EXPIRY || process.env.ACCESS_TOKEN_EXPIRY || '7d';
     // @ts-ignore - JWT type issue
     return jwt.sign({ adminId, role: 'admin' }, getAccessSecret(), { expiresIn: expiry });
 }

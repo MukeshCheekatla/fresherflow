@@ -8,7 +8,8 @@ import {
     ArrowRightOnRectangleIcon,
     UserCircleIcon,
     ShieldCheckIcon,
-    ArrowLeftIcon
+    ArrowLeftIcon,
+    BellAlertIcon
 } from '@heroicons/react/24/outline';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 
@@ -79,6 +80,20 @@ export default function AccountPage() {
                             <p className="text-[11px] text-muted-foreground">Your bookmarked opportunities</p>
                         </div>
                         <span className="text-xs text-muted-foreground">View</span>
+                    </Link>
+                    <div className="h-px bg-border" />
+                    <Link
+                        href="/account/alerts"
+                        className="flex items-center gap-4 px-4 py-4 hover:bg-muted/40 transition-colors"
+                    >
+                        <div className="w-10 h-10 rounded-xl bg-muted text-muted-foreground flex items-center justify-center">
+                            <BellAlertIcon className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-sm font-semibold tracking-tight">Alerts</h3>
+                            <p className="text-[11px] text-muted-foreground">Digest and closing-soon notifications</p>
+                        </div>
+                        <span className="text-xs text-muted-foreground">Manage</span>
                     </Link>
                     <div className="h-px bg-border" />
                     <Link

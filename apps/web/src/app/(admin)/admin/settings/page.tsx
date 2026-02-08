@@ -1,6 +1,5 @@
 import TwoFactorSetup from "@/components/admin/TwoFactorSetup";
 import PasskeyManager from "@/components/admin/PasskeyManager";
-import TelegramBroadcastPanel from "@/components/admin/TelegramBroadcastPanel";
 import { Badge } from "@/components/ui/Badge";
 
 export const metadata = {
@@ -36,18 +35,6 @@ export default function AdminSettingsPage() {
                     <PasskeyManager />
                 </div>
             </div>
-
-            {/* Telegram Info Section (Read-only for now) */}
-            <div className="bg-card border rounded-lg p-6 mt-8 max-w-xl">
-                <h3 className="font-semibold mb-2">Telegram alerts</h3>
-                <p className="text-sm text-muted-foreground">
-                    System alerts and notifications are routed to the configured Telegram bot.
-                    <br />
-                    To update the connected chat, please change the <code>TELEGRAM_ADMIN_CHAT_ID</code> environment variable.
-                </p>
-            </div>
-
-            <TelegramBroadcastPanel />
         </div>
     );
 }

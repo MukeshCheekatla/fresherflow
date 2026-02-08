@@ -139,9 +139,21 @@ router.get('/telegram-broadcasts', requireAdmin, async (req: Request, res: Respo
             take: limit,
         });
 
+        const grouped = await prisma.telegramBroadcast.groupBy({
+            by: ['status'],
+            _count: true
+        });
+        const summary = { sent: 0, failed: 0, skipped: 0 };
+        for (const row of grouped) {
+            if (row.status === 'SENT') summary.sent = row._count;
+            if (row.status === 'FAILED') summary.failed = row._count;
+            if (row.status === 'SKIPPED') summary.skipped = row._count;
+        }
+
         res.json({
             broadcasts,
-            count: broadcasts.length
+            count: broadcasts.length,
+            summary
         });
     } catch (error) {
         next(error);

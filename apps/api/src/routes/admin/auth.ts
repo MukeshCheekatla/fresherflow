@@ -52,6 +52,28 @@ const COOKIE_OPTIONS = {
     ...(COOKIE_DOMAIN ? { domain: COOKIE_DOMAIN } : {})
 };
 
+function parseDurationToMs(value: string): number | null {
+    const trimmed = value.trim().toLowerCase();
+    const match = trimmed.match(/^(\d+)\s*([smhd])$/);
+    if (!match) return null;
+    const amount = Number(match[1]);
+    const unit = match[2];
+    if (!Number.isFinite(amount) || amount <= 0) return null;
+    if (unit === 's') return amount * 1000;
+    if (unit === 'm') return amount * 60 * 1000;
+    if (unit === 'h') return amount * 60 * 60 * 1000;
+    return amount * 24 * 60 * 60 * 1000;
+}
+
+function getAdminCookieMaxAgeMs(): number {
+    const explicitDays = Number(process.env.ADMIN_ACCESS_COOKIE_DAYS || '7');
+    if (Number.isFinite(explicitDays) && explicitDays > 0) {
+        return Math.floor(explicitDays * 24 * 60 * 60 * 1000);
+    }
+    const tokenExpiry = process.env.ADMIN_ACCESS_TOKEN_EXPIRY || process.env.ACCESS_TOKEN_EXPIRY || '7d';
+    return parseDurationToMs(tokenExpiry) || (7 * 24 * 60 * 60 * 1000);
+}
+
 const CHALLENGE_TTL_MS = 10 * 60 * 1000;
 
 async function setChallenge(key: string, userId: string, type: 'reg' | 'auth', challenge: string) {
@@ -298,7 +320,7 @@ router.post('/login/verify', adminAuthLimiter, async (req: Request, res: Respons
 
             // Set Admin Token
             const token = generateAdminToken(user.id);
-            const accessMaxAge = process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 24 * 60 * 60 * 1000;
+            const accessMaxAge = getAdminCookieMaxAgeMs();
             res.cookie('adminAccessToken', token, {
                 ...COOKIE_OPTIONS,
                 maxAge: accessMaxAge
@@ -346,7 +368,7 @@ router.post('/login/totp', adminAuthLimiter, async (req: Request, res: Response,
         }
 
         const token = generateAdminToken(user.id);
-        const accessMaxAge = process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 24 * 60 * 60 * 1000;
+        const accessMaxAge = getAdminCookieMaxAgeMs();
 
         res.cookie('adminAccessToken', token, {
             ...COOKIE_OPTIONS,

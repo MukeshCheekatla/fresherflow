@@ -24,10 +24,15 @@ type BroadcastItem = {
 };
 
 export default function TelegramBroadcastPanel() {
-    const [statusFilter, setStatusFilter] = useState<"ALL" | BroadcastStatus>("FAILED");
+    const [statusFilter, setStatusFilter] = useState<"ALL" | BroadcastStatus>("ALL");
     const [loading, setLoading] = useState(true);
     const [retryingId, setRetryingId] = useState<string | null>(null);
     const [items, setItems] = useState<BroadcastItem[]>([]);
+    const [summary, setSummary] = useState<{ sent: number; failed: number; skipped: number }>({
+        sent: 0,
+        failed: 0,
+        skipped: 0,
+    });
 
     const load = async () => {
         setLoading(true);
@@ -37,6 +42,7 @@ export default function TelegramBroadcastPanel() {
                 50
             );
             setItems(response.broadcasts || []);
+            setSummary(response.summary || { sent: 0, failed: 0, skipped: 0 });
         } catch {
             toast.error("Failed to load Telegram broadcast logs");
         } finally {
@@ -104,6 +110,20 @@ export default function TelegramBroadcastPanel() {
                         <Button variant="outline" size="icon" onClick={load} aria-label="Refresh logs">
                             <RefreshCw className="h-4 w-4" />
                         </Button>
+                    </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                    <div className="rounded-lg border p-2">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Sent</p>
+                        <p className="text-lg font-bold text-foreground">{summary.sent}</p>
+                    </div>
+                    <div className="rounded-lg border p-2">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Failed</p>
+                        <p className="text-lg font-bold text-red-600 dark:text-red-400">{summary.failed}</p>
+                    </div>
+                    <div className="rounded-lg border p-2">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Skipped</p>
+                        <p className="text-lg font-bold text-amber-600 dark:text-amber-400">{summary.skipped}</p>
                     </div>
                 </div>
             </CardHeader>

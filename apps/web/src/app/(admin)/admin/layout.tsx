@@ -13,7 +13,8 @@ import {
     ArrowRightOnRectangleIcon,
     Bars3Icon,
     XMarkIcon,
-    Cog8ToothIcon
+    Cog8ToothIcon,
+    PaperAirplaneIcon
 } from '@heroicons/react/24/outline';
 import AdminBottomNav from '@/shared/components/navigation/AdminBottomNav';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -60,6 +61,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { href: '/admin/opportunities/create', label: 'Post New', icon: PlusCircleIcon },
         { href: '/admin/analytics', label: 'Analytics', icon: ChartBarIcon },
         { href: '/admin/feedback', label: 'Feedback', icon: ChatBubbleBottomCenterTextIcon },
+        { href: '/admin/telegram', label: 'Telegram', icon: PaperAirplaneIcon },
         { href: '/admin/settings', label: 'Settings', icon: Cog8ToothIcon },
     ];
 
