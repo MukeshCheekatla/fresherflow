@@ -16,6 +16,15 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { AdminOverviewSkeleton } from '@/components/ui/Skeleton';
 
+type RouteMetric = {
+    route: string;
+    requests: number;
+    errors: number;
+    errorRatePct: number;
+    avgLatencyMs: number;
+    maxLatencyMs: number;
+};
+
 export default function AdminDashboardHome() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [recent, setRecent] = useState<any[]>([]);
@@ -33,6 +42,8 @@ export default function AdminDashboardHome() {
         avgLatencyMs: 0,
         p95LatencyMs: 0
     });
+    const [topSlowRoutes, setTopSlowRoutes] = useState<RouteMetric[]>([]);
+    const [topErrorRoutes, setTopErrorRoutes] = useState<RouteMetric[]>([]);
     const errorBudgetBreached = observability.errorRatePct > 2 || observability.p95LatencyMs > 1500;
 
     const loadDashboard = useCallback(async () => {
@@ -48,6 +59,12 @@ export default function AdminDashboardHome() {
             const summary = summaryRes.summary || {};
             const opportunities = recentRes.opportunities || [];
             const totals = metricsRes.metrics?.totals || {};
+            const routeEntries = Object.entries(metricsRes.metrics?.routes || {})
+                .map(([route, values]) => ({
+                    route,
+                    ...(values as Omit<RouteMetric, 'route'>)
+                }))
+                .filter((row) => row.requests > 0);
 
             setRecent(opportunities);
             setStats({
@@ -66,6 +83,21 @@ export default function AdminDashboardHome() {
                 avgLatencyMs: totals.avgLatencyMs || 0,
                 p95LatencyMs: totals.p95LatencyMs || 0
             });
+            setTopSlowRoutes(
+                routeEntries
+                    .filter((row) => row.requests >= 5)
+                    .sort((a, b) => b.avgLatencyMs - a.avgLatencyMs)
+                    .slice(0, 5)
+            );
+            setTopErrorRoutes(
+                routeEntries
+                    .filter((row) => row.errors > 0)
+                    .sort((a, b) => {
+                        if (b.errorRatePct !== a.errorRatePct) return b.errorRatePct - a.errorRatePct;
+                        return b.errors - a.errors;
+                    })
+                    .slice(0, 5)
+            );
         } catch (err: unknown) {
             const error = err as Error;
             const message = error.message || 'Unknown error';
@@ -197,6 +229,42 @@ export default function AdminDashboardHome() {
                     <div className="rounded-md border border-border bg-muted/20 px-3 py-2">
                         <p className="text-[10px] uppercase tracking-wider text-muted-foreground">P95 latency</p>
                         <p className="text-sm md:text-base font-semibold">{observability.p95LatencyMs} ms</p>
+                    </div>
+                </div>
+                <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="rounded-md border border-border bg-muted/10 p-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                            Top slow routes
+                        </p>
+                        <div className="space-y-2">
+                            {topSlowRoutes.length > 0 ? topSlowRoutes.map((row) => (
+                                <div key={`slow-${row.route}`} className="flex items-center justify-between gap-3 text-xs">
+                                    <span className="truncate text-foreground/90">{row.route}</span>
+                                    <span className="shrink-0 font-semibold text-amber-600 dark:text-amber-300">
+                                        {row.avgLatencyMs} ms
+                                    </span>
+                                </div>
+                            )) : (
+                                <p className="text-xs text-muted-foreground">No slow-route sample yet.</p>
+                            )}
+                        </div>
+                    </div>
+                    <div className="rounded-md border border-border bg-muted/10 p-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                            Top error routes
+                        </p>
+                        <div className="space-y-2">
+                            {topErrorRoutes.length > 0 ? topErrorRoutes.map((row) => (
+                                <div key={`err-${row.route}`} className="flex items-center justify-between gap-3 text-xs">
+                                    <span className="truncate text-foreground/90">{row.route}</span>
+                                    <span className="shrink-0 font-semibold text-destructive">
+                                        {row.errorRatePct}% ({row.errors})
+                                    </span>
+                                </div>
+                            )) : (
+                                <p className="text-xs text-muted-foreground">No error-route sample yet.</p>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
