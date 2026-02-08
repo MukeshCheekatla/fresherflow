@@ -3,7 +3,7 @@
 import { AuthGate, ProfileGate } from '@/components/gates/ProfileGate';
 import { cn } from '@/lib/utils';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import Link from 'next/link';
 import { Opportunity } from '@fresherflow/types';
 import JobCard from '@/features/jobs/components/JobCard';
@@ -56,6 +56,9 @@ function OpportunitiesContent() {
     const [closingSoon, setClosingSoon] = useState(false);
     const [showOnlySaved, setShowOnlySaved] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [isOnline, setIsOnline] = useState<boolean>(() =>
+        typeof window !== 'undefined' ? window.navigator.onLine : true
+    );
 
     // Filter Logic
     const {
@@ -84,6 +87,20 @@ function OpportunitiesContent() {
         return opp.actions && opp.actions.length > 0;
     };
 
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
+
     const updateType = (type: string | null) => {
         const params = new URLSearchParams(searchParams.toString());
         if (type) {
@@ -108,6 +125,14 @@ function OpportunitiesContent() {
                         <div className="flex flex-wrap items-center gap-2">
                             <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-1 rounded-full border border-border uppercase tracking-wider">
                                 {filteredOpps.length} results
+                            </span>
+                            <span className={cn(
+                                "text-[10px] font-semibold px-2 py-1 rounded-full border uppercase tracking-wider",
+                                isOnline
+                                    ? "text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border-emerald-500/30"
+                                    : "text-amber-700 dark:text-amber-300 bg-amber-500/10 border-amber-500/30"
+                            )}>
+                                {isOnline ? 'Online' : 'Offline mode'}
                             </span>
                             {usingCachedFeed && (
                                 <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-500/10 px-2 py-1 rounded-full border border-amber-500/30 uppercase tracking-wider">

@@ -109,6 +109,10 @@ export function useOpportunitiesFeed({
     }, [opportunities, debouncedSearch, selectedLoc, closingSoon]);
 
     const toggleSave = async (opportunityId: string) => {
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            toast.error('You are offline. Reconnect to update saved listings.');
+            return;
+        }
         try {
             const result = await savedApi.toggle(opportunityId);
             setOpportunities(prev => prev.map(opp =>
