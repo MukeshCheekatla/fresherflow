@@ -319,6 +319,25 @@ export default function OpportunitiesListPage() {
     const getPublicOpportunityHref = (opp: { id: string; slug?: string | null }) =>
         `/opportunities/${opp.slug || opp.id}`;
 
+    const formatLinkHealth = (health?: string) => {
+        if (!health) return 'Unknown';
+        return health.toUpperCase();
+    };
+
+    const linkHealthClass = (health?: string) => {
+        if (health === 'HEALTHY') return 'bg-emerald-50 text-emerald-700 ring-emerald-600/20';
+        if (health === 'RETRYING') return 'bg-amber-50 text-amber-700 ring-amber-600/20';
+        if (health === 'BROKEN') return 'bg-rose-50 text-rose-700 ring-rose-600/20';
+        return 'bg-slate-50 text-slate-600 ring-slate-500/10';
+    };
+
+    const formatLastVerified = (value?: string | Date | null) => {
+        if (!value) return 'Never';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return 'Never';
+        return date.toLocaleString();
+    };
+
     if (!isAuthenticated) return null;
 
     const computedTotalPages = totalCount > 0 ? Math.ceil(totalCount / pageSize) : 1;
@@ -595,6 +614,15 @@ export default function OpportunitiesListPage() {
                                         <CalendarIcon className="w-3 h-3" />
                                         {new Date(opp.postedAt).toLocaleDateString()}
                                     </div>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className={`inline-flex items-center rounded-md px-2 py-1 text-[10px] font-bold ring-1 ring-inset ${linkHealthClass(opp.linkHealth)}`}>
+                                            {formatLinkHealth(opp.linkHealth)}
+                                        </span>
+                                        <span className="text-[10px]">Fails: {opp.verificationFailures ?? 0}</span>
+                                    </div>
+                                    <div className="text-[10px] text-muted-foreground">
+                                        Verified: {formatLastVerified(opp.lastVerifiedAt)}
+                                    </div>
                                 </div>
 
                                 <div className="mt-4 flex items-center justify-end gap-2">
@@ -717,6 +745,17 @@ export default function OpportunitiesListPage() {
                                                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                                                     <CalendarIcon className="w-3 h-3" />
                                                     {new Date(opp.postedAt).toLocaleDateString()}
+                                                </div>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset ${linkHealthClass(opp.linkHealth)}`}>
+                                                        {formatLinkHealth(opp.linkHealth)}
+                                                    </span>
+                                                    <span className="text-[10px] text-muted-foreground">
+                                                        Fails: {opp.verificationFailures ?? 0}
+                                                    </span>
+                                                </div>
+                                                <div className="text-[10px] text-muted-foreground">
+                                                    Verified: {formatLastVerified(opp.lastVerifiedAt)}
                                                 </div>
                                             </div>
                                         </td>
