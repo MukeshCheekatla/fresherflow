@@ -24,6 +24,7 @@ import actionsRoutes from './routes/actions';
 import feedbackRoutes from './routes/feedback';
 import savedRoutes from './routes/saved';
 import dashboardRoutes from './routes/dashboard';
+import alertsRoutes from './routes/alerts';
 import adminAuthRoutes from './routes/admin/auth';
 import adminOpportunitiesRoutes from './routes/admin/opportunities';
 import adminFeedbackRoutes from './routes/admin/feedback';
@@ -170,6 +171,7 @@ app.use('/api/opportunities', opportunitiesRoutes);
 app.use('/api/actions', actionsRoutes);
 app.use('/api/saved', savedRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/alerts', alertsRoutes);
 app.use('/api/opportunities', feedbackRoutes);
 
 // Admin routes (isolated)

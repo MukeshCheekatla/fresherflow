@@ -83,6 +83,15 @@ enum GrowthFunnelEvent {
   SIGNUP_SUCCESS
 }
 
+enum AlertChannel {
+  EMAIL
+}
+
+enum AlertKind {
+  DAILY_DIGEST
+  CLOSING_SOON
+}
+
 // ============================================================================
 // USER MODELS
 // ============================================================================
@@ -103,6 +112,8 @@ model User {
   actions       UserAction[]
   feedback      ListingFeedback[]
   savedOpportunities SavedOpportunity[]
+  alertPreference AlertPreference?
+  alertDeliveries AlertDelivery[]
   
   // Admin Relations (only for role=ADMIN)
   postedOpportunities Opportunity[]
@@ -280,6 +291,7 @@ model Opportunity {
   actions  UserAction[]
   feedback ListingFeedback[]
   savedBy  SavedOpportunity[]
+  alertDeliveries AlertDelivery[]
 
   // DB-level filtering indexes
   @@index([status])
@@ -352,6 +364,23 @@ model ListingFeedback {
   @@unique([userId, opportunityId]) // One feedback per user per listing
 }
 
+model AlertPreference {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  enabled           Boolean  @default(true)
+  emailEnabled      Boolean  @default(true)
+  dailyDigest       Boolean  @default(true)
+  closingSoon       Boolean  @default(true)
+  minRelevanceScore Int      @default(45)
+  preferredHour     Int      @default(8)
+  timezone          String   @default("Asia/Kolkata")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  lastDigestSentAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 model GrowthEvent {
   id        String            @id @default(uuid())
   source    String            @default("unknown")
@@ -360,4 +389,21 @@ model GrowthEvent {
 
   @@index([createdAt])
   @@index([source, event])
+}
+
+model AlertDelivery {
+  id            String       @id @default(uuid())
+  userId        String
+  opportunityId String?
+  kind          AlertKind
+  channel       AlertChannel @default(EMAIL)
+  dedupeKey     String       @unique
+  sentAt        DateTime     @default(now())
+  metadata      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunity Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+
+  @@index([userId, kind])
+  @@index([sentAt])
 }

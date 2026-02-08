@@ -119,3 +119,13 @@ export const feedbackSchema = z.object({
     reason: z.nativeEnum(FeedbackReason)
 });
 
+export const alertPreferencesSchema = z.object({
+    enabled: z.boolean().optional(),
+    emailEnabled: z.boolean().optional(),
+    dailyDigest: z.boolean().optional(),
+    closingSoon: z.boolean().optional(),
+    minRelevanceScore: z.number().int().min(0).max(100).optional(),
+    preferredHour: z.number().int().min(0).max(23).optional(),
+    timezone: z.string().min(1).max(64).optional()
+});
+
