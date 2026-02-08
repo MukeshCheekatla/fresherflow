@@ -137,6 +137,24 @@ export function sortOpportunitiesWithWalkinsFirst<T extends { type: string; post
     });
 }
 
+export interface RelevanceBreakdown {
+    experience: number;
+    skills: number;
+    passoutYear: number;
+    educationLevel: number;
+    course: number;
+    location: number;
+    workMode: number;
+    freshness: number;
+    urgency: number;
+}
+
+export interface RankedOpportunity<T extends Opportunity> {
+    opportunity: T;
+    score: number;
+    breakdown: RelevanceBreakdown;
+}
+
 function isLikelyFresher(profile: Profile): boolean {
     const baseYear = profile.pgYear || profile.gradYear;
     if (!baseYear) return false;
@@ -177,11 +195,44 @@ function getPassoutExactness(opportunity: Opportunity, profile: Profile): number
     return years.includes(userYear) ? 1 : 0;
 }
 
+function getEducationLevelScore(opportunity: Opportunity, profile: Profile): number {
+    const allowed = opportunity.allowedDegrees || [];
+    if (allowed.length === 0) return 1;
+    if (!profile.educationLevel) return 0;
+
+    if (allowed.includes(profile.educationLevel)) return 1;
+
+    // Higher education should still partially match lower requirement buckets.
+    const hierarchy = ['DIPLOMA', 'DEGREE', 'PG'];
+    const userLevel = hierarchy.indexOf(profile.educationLevel);
+    const hasLowerAllowed = allowed.some((deg: any) => hierarchy.indexOf(deg) <= userLevel);
+    return hasLowerAllowed ? 0.6 : 0;
+}
+
+function getCourseMatchScore(opportunity: Opportunity, profile: Profile): number {
+    const allowed = (opportunity.allowedCourses || []).map((c) => c.toLowerCase());
+    if (allowed.length === 0) return 1;
+
+    const userCourses = [profile.gradCourse, profile.pgCourse]
+        .filter(Boolean)
+        .map((c) => (c as string).toLowerCase());
+
+    if (userCourses.length === 0) return 0;
+    return userCourses.some((course) => allowed.includes(course)) ? 1 : 0;
+}
+
 function getLocationPreferenceScore(opportunity: Opportunity, profile: Profile): number {
     const preferredCities = (profile.preferredCities || []).map((c: string) => c.toLowerCase());
     if (preferredCities.length === 0) return 0.7;
     const oppLocations = (opportunity.locations || []).map((l: string) => l.toLowerCase());
     return oppLocations.some((loc) => preferredCities.includes(loc)) ? 1 : 0;
+}
+
+function getWorkModeScore(opportunity: Opportunity, profile: Profile): number {
+    const preferred = profile.workModes || [];
+    if (preferred.length === 0) return 0.7;
+    if (!opportunity.workMode) return 0.6;
+    return preferred.includes(opportunity.workMode) ? 1 : 0;
 }
 
 function getFreshnessBoost(opportunity: Opportunity): number {
@@ -206,43 +257,32 @@ function getUrgencyBoost(opportunity: Opportunity): number {
     return 0;
 }
 
-function computeRelevanceScore(opportunity: Opportunity, profile: Profile): number {
+function computeRelevanceBreakdown(opportunity: Opportunity, profile: Profile): RelevanceBreakdown {
     const fresher = isLikelyFresher(profile);
-    const experienceRelevance = getExperienceRelevance(opportunity, fresher);
-    const skillOverlap = getSkillOverlapScore(opportunity, profile);
-    const passoutExactness = getPassoutExactness(opportunity, profile);
-    const locationPreference = getLocationPreferenceScore(opportunity, profile);
-    const freshnessBoost = getFreshnessBoost(opportunity);
-    const urgencyBoost = getUrgencyBoost(opportunity);
-
-    // Weighted relevance (0-100).
-    const score =
-        (experienceRelevance * 40) +
-        (skillOverlap * 20) +
-        (passoutExactness * 15) +
-        (locationPreference * 10) +
-        (freshnessBoost * 10) +
-        (urgencyBoost * 5);
-
-    return Math.round(score);
+    return {
+        experience: Math.round(getExperienceRelevance(opportunity, fresher) * 30),
+        skills: Math.round(getSkillOverlapScore(opportunity, profile) * 20),
+        passoutYear: Math.round(getPassoutExactness(opportunity, profile) * 12),
+        educationLevel: Math.round(getEducationLevelScore(opportunity, profile) * 10),
+        course: Math.round(getCourseMatchScore(opportunity, profile) * 8),
+        location: Math.round(getLocationPreferenceScore(opportunity, profile) * 8),
+        workMode: Math.round(getWorkModeScore(opportunity, profile) * 4),
+        freshness: Math.round(getFreshnessBoost(opportunity) * 5),
+        urgency: Math.round(getUrgencyBoost(opportunity) * 3),
+    };
 }
 
-/**
- * Personalized relevance ranking.
- * Keeps only eligible opportunities (done by caller), then orders to show
- * fresher-friendly and high-signal jobs first while keeping all results visible.
- */
-export function sortOpportunitiesForUser<T extends Opportunity>(opportunities: T[], profile: Profile): T[] {
+export function rankOpportunitiesForUser<T extends Opportunity>(opportunities: T[], profile: Profile): RankedOpportunity<T>[] {
     const fresher = isLikelyFresher(profile);
-
     return [...opportunities]
-        .map((opportunity) => ({
-            opportunity,
-            relevanceScore: computeRelevanceScore(opportunity, profile),
-        }))
+        .map((opportunity) => {
+            const breakdown = computeRelevanceBreakdown(opportunity, profile);
+            const score = Object.values(breakdown).reduce((acc, val) => acc + val, 0);
+            return { opportunity, score, breakdown };
+        })
         .sort((a, b) => {
-            if (b.relevanceScore !== a.relevanceScore) {
-                return b.relevanceScore - a.relevanceScore;
+            if (b.score !== a.score) {
+                return b.score - a.score;
             }
 
             // Additional fresher bias when scores tie: lower min experience first.
@@ -258,6 +298,14 @@ export function sortOpportunitiesForUser<T extends Opportunity>(opportunities: T
             if (aExpiry !== bExpiry) return aExpiry - bExpiry;
 
             return new Date(b.opportunity.postedAt).getTime() - new Date(a.opportunity.postedAt).getTime();
-        })
-        .map((item) => item.opportunity);
+        });
+}
+
+/**
+ * Personalized relevance ranking.
+ * Keeps only eligible opportunities (done by caller), then orders to show
+ * fresher-friendly and high-signal jobs first while keeping all results visible.
+ */
+export function sortOpportunitiesForUser<T extends Opportunity>(opportunities: T[], profile: Profile): T[] {
+    return rankOpportunitiesForUser(opportunities, profile).map((item) => item.opportunity);
 }

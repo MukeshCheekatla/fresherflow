@@ -1,5 +1,5 @@
-import { checkEligibility, sortOpportunitiesWithWalkinsFirst } from './match';
-import { Opportunity, Profile, OpportunityType, OpportunityStatus, EducationLevel, WorkMode, Availability } from '@fresherflow/types';
+import { checkEligibility, sortOpportunitiesWithWalkinsFirst, rankOpportunitiesForUser } from './match';
+import { Opportunity, Profile, OpportunityType, OpportunityStatus, EducationLevel, WorkMode, Availability, LinkHealth } from '@fresherflow/types';
 
 describe('Eligibility Matching Engine', () => {
     const mockProfile: Profile = {
@@ -7,9 +7,17 @@ describe('Eligibility Matching Engine', () => {
         userId: 'user-1',
         interestedIn: [OpportunityType.JOB],
         preferredCities: ['Bangalore'],
-        preferredWorkModes: [WorkMode.REMOTE],
+        workModes: [WorkMode.REMOTE],
+        availability: Availability.IMMEDIATE,
         skills: ['React', 'Node.js'],
         gradYear: 2024,
+        gradCourse: 'B.Tech',
+        gradSpecialization: 'Computer Science',
+        pgCourse: null,
+        pgSpecialization: null,
+        pgYear: null,
+        tenthYear: 2020,
+        twelfthYear: 2022,
         educationLevel: EducationLevel.DEGREE,
         completionPercentage: 100,
     };
@@ -87,5 +95,91 @@ describe('Sorting Logic', () => {
         expect(sorted[0].id).toBe('2'); // Walk-in
         expect(sorted[1].id).toBe('3'); // Newest Full-time
         expect(sorted[2].id).toBe('1'); // Oldest Full-time
+    });
+});
+
+describe('Relevance Ranking v2', () => {
+    const profile: Profile = {
+        id: 'profile-rank',
+        userId: 'user-rank',
+        completionPercentage: 100,
+        educationLevel: EducationLevel.DEGREE,
+        tenthYear: 2020,
+        twelfthYear: 2022,
+        gradCourse: 'B.Tech',
+        gradSpecialization: 'Computer Science',
+        gradYear: 2024,
+        pgCourse: null,
+        pgSpecialization: null,
+        pgYear: null,
+        interestedIn: [OpportunityType.JOB, OpportunityType.INTERNSHIP],
+        preferredCities: ['Bangalore', 'Hyderabad'],
+        workModes: [WorkMode.REMOTE, WorkMode.HYBRID],
+        availability: Availability.IMMEDIATE,
+        skills: ['React', 'TypeScript', 'SQL']
+    };
+
+    const now = Date.now();
+
+    const highFit: Opportunity = {
+        id: 'high-fit',
+        slug: 'high-fit',
+        type: OpportunityType.JOB,
+        status: OpportunityStatus.PUBLISHED,
+        title: 'Frontend Engineer',
+        company: 'Acme',
+        description: 'Build frontend',
+        allowedDegrees: [EducationLevel.DEGREE],
+        allowedCourses: ['B.Tech'],
+        allowedPassoutYears: [2024],
+        requiredSkills: ['React', 'TypeScript'],
+        locations: ['Bangalore'],
+        workMode: WorkMode.REMOTE,
+        experienceMin: 0,
+        experienceMax: 1,
+        linkHealth: LinkHealth.HEALTHY,
+        verificationFailures: 0,
+        lastVerifiedAt: new Date(now - 30 * 60 * 1000),
+        postedAt: new Date(now - 2 * 60 * 60 * 1000),
+        expiresAt: new Date(now + 2 * 24 * 60 * 60 * 1000),
+        adminId: 'admin-1'
+    };
+
+    const lowFit: Opportunity = {
+        id: 'low-fit',
+        slug: 'low-fit',
+        type: OpportunityType.JOB,
+        status: OpportunityStatus.PUBLISHED,
+        title: 'Senior Backend Engineer',
+        company: 'Acme',
+        description: 'Build backend',
+        allowedDegrees: [EducationLevel.PG],
+        allowedCourses: ['MBA'],
+        allowedPassoutYears: [2020],
+        requiredSkills: ['Go', 'Kubernetes'],
+        locations: ['Delhi'],
+        workMode: WorkMode.ONSITE,
+        experienceMin: 3,
+        experienceMax: 6,
+        linkHealth: LinkHealth.HEALTHY,
+        verificationFailures: 0,
+        lastVerifiedAt: new Date(now - 30 * 60 * 1000),
+        postedAt: new Date(now - 20 * 24 * 60 * 60 * 1000),
+        expiresAt: new Date(now + 20 * 24 * 60 * 60 * 1000),
+        adminId: 'admin-1'
+    };
+
+    test('should rank high-fit opportunity above low-fit opportunity', () => {
+        const ranked = rankOpportunitiesForUser([lowFit, highFit], profile);
+        expect(ranked[0].opportunity.id).toBe('high-fit');
+        expect(ranked[0].score).toBeGreaterThan(ranked[1].score);
+    });
+
+    test('should expose explainable score breakdown for each ranked opportunity', () => {
+        const ranked = rankOpportunitiesForUser([highFit], profile);
+        expect(ranked[0].breakdown).toBeDefined();
+        expect(ranked[0].breakdown.skills).toBeGreaterThan(0);
+        expect(ranked[0].breakdown.location).toBeGreaterThan(0);
+        expect(ranked[0].breakdown.experience).toBeGreaterThan(0);
     });
 });

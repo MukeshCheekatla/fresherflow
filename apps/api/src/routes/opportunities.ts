@@ -3,7 +3,7 @@ import { PrismaClient, OpportunityStatus } from '@prisma/client';
 import { requireAuth } from '../middleware/auth';
 import { profileGate } from '../middleware/profileGate';
 import { AppError } from '../middleware/errorHandler';
-import { filterOpportunitiesForUser, sortOpportunitiesForUser, checkEligibility } from '../domain/eligibility';
+import { filterOpportunitiesForUser, rankOpportunitiesForUser, checkEligibility } from '../domain/eligibility';
 import { verifyAccessToken } from '@fresherflow/auth';
 
 const router: Router = express.Router();
@@ -21,7 +21,7 @@ function normalizeTypeParam(raw?: string) {
 // GET /api/opportunities - Get filtered// Reading file to check filter logicng)
 router.get('/', requireAuth, profileGate, async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { type, category, city, closingSoon } = req.query;
+        const { type, category, city, closingSoon, relevanceDebug } = req.query;
         const filterType = normalizeTypeParam((type || category) as string | undefined);
 
         // Get user for role check
@@ -87,14 +87,30 @@ router.get('/', requireAuth, profileGate, async (req: Request, res: Response, ne
             finalResults = filterOpportunitiesForUser(mappedResults as any, profile as any);
         }
 
+        const includeRelevanceDebug = isAdmin && relevanceDebug === 'true' && Boolean(profile);
+        let sorted = finalResults as any[];
+        let debug: any[] | undefined;
+
         // Personalized relevance sort (fresher-friendly experience ordering included).
-        const sorted = !isAdmin && profile
-            ? sortOpportunitiesForUser(finalResults as any, profile as any)
-            : finalResults;
+        if (profile) {
+            const ranked = rankOpportunitiesForUser(finalResults as any, profile as any);
+            sorted = ranked.map((item) => item.opportunity);
+
+            if (includeRelevanceDebug) {
+                debug = ranked.map((item) => ({
+                    opportunityId: item.opportunity.id,
+                    title: item.opportunity.title,
+                    company: item.opportunity.company,
+                    score: item.score,
+                    breakdown: item.breakdown,
+                }));
+            }
+        }
 
         res.json({
             opportunities: sorted,
-            count: sorted.length
+            count: sorted.length,
+            ...(includeRelevanceDebug ? { relevanceDebug: debug } : {})
         });
     } catch (error) {
         next(error);
