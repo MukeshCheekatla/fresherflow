@@ -1,43 +1,43 @@
 import winston from 'winston';
 import chalk from 'chalk';
 
-// Custom format with Chalk for vibrant colors
+const isProd = process.env.NODE_ENV === 'production';
+const useJsonLogs = process.env.LOG_FORMAT === 'json' || isProd;
+
+const sanitizeMeta = (meta: Record<string, unknown>) => {
+    if (!meta.error || typeof meta.error !== 'object') return meta;
+
+    const err = meta.error as Error;
+    return {
+        ...meta,
+        error: {
+            name: err.name,
+            message: err.message,
+            stack: err.stack
+        }
+    };
+};
+
+// Human-friendly dev format; production uses JSON for machine parsing.
 const consoleFormat = winston.format.printf(({ level, message, timestamp, requestId, ...meta }) => {
     const time = chalk.gray(new Date(timestamp as string).toLocaleTimeString());
-    const reqId = (requestId && typeof requestId === 'string')
-        ? chalk.gray(`[${requestId.substring(0, 8)}]`)
-        : '';
+    const reqId = requestId && typeof requestId === 'string' ? chalk.gray(`[${requestId.substring(0, 8)}]`) : '';
 
-    // Vibrant color-coded symbols and levels
-    let prefix = '';
-    let coloredMessage = message;
+    const levelStyles: Record<string, (value: string) => string> = {
+        info: chalk.blue,
+        warn: chalk.yellow,
+        error: chalk.red,
+        debug: chalk.cyan
+    };
 
-    if (level.includes('info')) {
-        prefix = chalk.blue('●');
-        coloredMessage = chalk.white(message);
-    } else if (level.includes('warn')) {
-        prefix = chalk.yellow('⚠');
-        coloredMessage = chalk.yellow(message);
-    } else if (level.includes('error')) {
-        prefix = chalk.red('✖');
-        coloredMessage = chalk.red(message);
-    } else if (level.includes('debug')) {
-        prefix = chalk.cyan('○');
-        coloredMessage = chalk.cyan(message);
-    } else {
-        prefix = chalk.gray('○');
-    }
+    const renderLevel = (levelStyles[level] || chalk.white)(level.toUpperCase().padEnd(5));
+    const metaEntries = Object.keys(meta).length > 0 ? chalk.dim(JSON.stringify(sanitizeMeta(meta as Record<string, unknown>))) : '';
 
-    // Add metadata for errors
-    const metaStr = level.includes('error') && Object.keys(meta).length
-        ? chalk.dim(JSON.stringify(meta))
-        : '';
-
-    return `${time} ${prefix} ${coloredMessage} ${reqId} ${metaStr}`;
+    return `${time} ${renderLevel} ${chalk.white(String(message))} ${reqId} ${metaEntries}`.trim();
 });
 
 const logger = winston.createLogger({
-    level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+    level: isProd ? 'info' : 'debug',
     format: winston.format.combine(
         winston.format.timestamp(),
         winston.format.errors({ stack: true })
@@ -45,18 +45,24 @@ const logger = winston.createLogger({
     defaultMeta: { service: 'fresherflow-api' },
     transports: [
         new winston.transports.Console({
-            format: consoleFormat
+            format: useJsonLogs
+                ? winston.format.combine(
+                    winston.format.timestamp(),
+                    winston.format.errors({ stack: true }),
+                    winston.format.json()
+                )
+                : consoleFormat
         })
     ]
 });
 
 // Helper methods
 export const log = {
-    info: (message: string, meta?: any) => logger.info(message, meta),
-    warn: (message: string, meta?: any) => logger.warn(message, meta),
-    error: (message: string, meta?: any) => logger.error(message, meta),
-    debug: (message: string, meta?: any) => logger.debug(message, meta),
-    success: (message: string) => logger.info(chalk.green(`✅ ${message}`)),
+    info: (message: string, meta?: unknown) => logger.info(message, meta),
+    warn: (message: string, meta?: unknown) => logger.warn(message, meta),
+    error: (message: string, meta?: unknown) => logger.error(message, meta),
+    debug: (message: string, meta?: unknown) => logger.debug(message, meta),
+    success: (message: string) => logger.info(`SUCCESS: ${message}`),
 };
 
 export default logger;
