@@ -460,6 +460,28 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                             </div>
                         </div>
 
+                        <div className="lg:hidden bg-card p-4 rounded-xl border border-border shadow-sm space-y-3">
+                            {hasApplyLink && (
+                                <Button
+                                    onClick={handleApply}
+                                    className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg flex items-center justify-center gap-2 text-sm font-bold uppercase tracking-wide shadow-md"
+                                >
+                                    Apply Now
+                                    <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                                </Button>
+                            )}
+                            <button
+                                onClick={handleToggleSave}
+                                className={cn(
+                                    "w-full flex items-center justify-center gap-2 h-10 rounded-lg border transition-all text-xs font-bold uppercase tracking-wide",
+                                    opp.isSaved ? "bg-primary/10 text-primary border-primary/20" : "bg-muted/30 border-border text-muted-foreground hover:bg-muted/50"
+                                )}
+                            >
+                                {opp.isSaved ? <BookmarkSolidIcon className="w-4 h-4" /> : <BookmarkIcon className="w-4 h-4" />}
+                                {opp.isSaved ? 'Saved' : 'Save'}
+                            </button>
+                        </div>
+
                         {!user && (
                             <div className="bg-muted/20 border border-border rounded-xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                                 <div className="space-y-1">
@@ -478,7 +500,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                         )}
 
                         {/* Description Section */}
-                        <div className="bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3">
+                        <div className="hidden lg:block bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3">
                             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border pb-2">Description</h3>
                             <div className="prose prose-sm max-w-none">
                                 <p className="text-foreground/80 font-medium text-sm md:text-base leading-relaxed whitespace-pre-wrap">
