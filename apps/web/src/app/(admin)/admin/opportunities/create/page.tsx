@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -342,6 +342,47 @@ export default function CreateOpportunityPage() {
   }
 }`;
 
+    const jsonReport = useMemo(() => {
+        if (!pastedJson.trim()) return null;
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const data: any = JSON.parse(pastedJson);
+            const normalizedType = data.type ? typeParamToEnum(String(data.type)) : 'JOB';
+            const requiredFields = ['title', 'company', 'description', 'locations'];
+            if (normalizedType !== 'WALKIN') requiredFields.push('applyLink');
+            if (normalizedType === 'WALKIN') {
+                requiredFields.push('venueAddress');
+            }
+
+            const hasField = (field: string) => {
+                if (field === 'venueAddress') {
+                    return Boolean(data.venueAddress || data.walkInDetails?.venueAddress);
+                }
+                const value = data[field];
+                if (Array.isArray(value)) return value.length > 0;
+                if (typeof value === 'string') return value.trim().length > 0;
+                return value !== undefined && value !== null;
+            };
+
+            const missing = requiredFields.filter((field) => !hasField(field));
+            const present = requiredFields.filter((field) => hasField(field));
+
+            return {
+                valid: true,
+                type: normalizedType,
+                missing,
+                present,
+            };
+        } catch {
+            return {
+                valid: false,
+                type: null,
+                missing: [] as string[],
+                present: [] as string[],
+            };
+        }
+    }, [pastedJson]);
+
     const applyJsonToForm = () => {
         if (!pastedJson.trim()) {
             toast.error('Please paste JSON first');
@@ -597,17 +638,38 @@ export default function CreateOpportunityPage() {
                                         Insert Walk-in
                                     </button>
                                 </div>
-                                <button
-                                    onClick={applyJsonToForm}
-                                    disabled={!pastedJson.trim()}
-                                    className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-md transition-all shadow-sm active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
-                                >
-                                    Apply JSON
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                                  <button
+                                      onClick={applyJsonToForm}
+                                      disabled={!pastedJson.trim()}
+                                      className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-md transition-all shadow-sm active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                                  >
+                                      Apply JSON
+                                  </button>
+                                  {jsonReport && (
+                                      <div className={`rounded-md border p-3 text-[10px] space-y-2 ${jsonReport.valid ? 'border-border bg-muted/40' : 'border-destructive/30 bg-destructive/5 text-destructive'}`}>
+                                          {!jsonReport.valid ? (
+                                              <p className="font-bold uppercase tracking-wider">Invalid JSON format</p>
+                                          ) : (
+                                              <>
+                                                  <p className="font-bold uppercase tracking-wider text-muted-foreground">
+                                                      JSON report • {jsonReport.type}
+                                                  </p>
+                                                  <div className="text-muted-foreground">
+                                                      Present: {jsonReport.present.join(', ') || 'none'}
+                                                  </div>
+                                                  <div className={jsonReport.missing.length > 0 ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-emerald-600 dark:text-emerald-400 font-semibold'}>
+                                                      {jsonReport.missing.length > 0
+                                                          ? `Missing required: ${jsonReport.missing.join(', ')}`
+                                                          : 'All required fields found'}
+                                                  </div>
+                                              </>
+                                          )}
+                                      </div>
+                                  )}
+                              </div>
+                          </div>
+                      </div>
+                  </div>
             )}
 
 

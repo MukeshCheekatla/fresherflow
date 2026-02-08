@@ -28,6 +28,8 @@ export default function EditOpportunityPage() {
     const { isAuthenticated } = useAdmin();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [showParser, setShowParser] = useState(false);
+    const [pastedJson, setPastedJson] = useState('');
 
     // Form state
     const [type, setType] = useState<'JOB' | 'INTERNSHIP' | 'WALKIN'>('JOB');
@@ -47,6 +49,7 @@ export default function EditOpportunityPage() {
     const [applyLink, setApplyLink] = useState('');
     const [expiresAt, setExpiresAt] = useState('');
     const [jobFunction, setJobFunction] = useState('');
+    const [employmentType, setEmploymentType] = useState('');
     const [incentives, setIncentives] = useState('');
     const [salaryPeriod, setSalaryPeriod] = useState<'YEARLY' | 'MONTHLY'>('YEARLY');
     const [experienceMin, setExperienceMin] = useState('');
@@ -107,6 +110,73 @@ export default function EditOpportunityPage() {
         return `${hours}:${m} ${ampm}`;
     };
 
+    const typeParamToEnum = (value: string) => {
+        const v = value.toLowerCase();
+        if (v === 'job' || v === 'jobs') return 'JOB';
+        if (v === 'internship' || v === 'internships') return 'INTERNSHIP';
+        if (v === 'walk-in' || v === 'walkin' || v === 'walkins' || v === 'walk-ins') return 'WALKIN';
+        return value.toUpperCase();
+    };
+
+    const normalizeTextValue = (value: string) =>
+        value
+            .replace(/[\u2018\u2019]/g, "'")
+            .replace(/[\u201C\u201D]/g, '"')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+    const uniqueValues = (items: string[]) => Array.from(new Set(items.map(normalizeTextValue).filter(Boolean)));
+
+    const normalizeDegreeValue = (degree: string) => {
+        const value = normalizeTextValue(degree).toLowerCase();
+        if (
+            value.includes('bachelor') ||
+            value.includes('undergraduate') ||
+            value === 'ug' ||
+            value.includes('degree')
+        ) return 'DEGREE';
+        if (
+            value.includes('master') ||
+            value.includes('postgraduate') ||
+            value.includes('post graduate') ||
+            value === 'pg'
+        ) return 'PG';
+        if (value.includes('diploma') || value.includes('polytechnic') || value.includes('iti')) return 'DIPLOMA';
+        return normalizeTextValue(degree);
+    };
+
+    const toStringArray = (values: unknown) => {
+        if (Array.isArray(values)) return values.map((value) => String(value));
+        if (typeof values === 'string') {
+            return values.split(',').map((value) => value.trim()).filter(Boolean);
+        }
+        return [];
+    };
+
+    const normalizeDegrees = (values: unknown) => uniqueValues(toStringArray(values).map((value) => normalizeDegreeValue(value)));
+    const normalizeCourses = (values: unknown) => uniqueValues(toStringArray(values));
+
+    const normalizePassoutYears = (values: unknown) => {
+        return toStringArray(values)
+            .map((value) => parseInt(String(value).replace(/[^0-9]/g, ''), 10))
+            .filter((value) => Number.isFinite(value));
+    };
+
+    const normalizeWorkModeValue = (value: unknown): 'ONSITE' | 'HYBRID' | 'REMOTE' | undefined => {
+        const normalized = String(value || '').toLowerCase().replace(/[\s_-]/g, '');
+        if (normalized === 'onsite' || normalized === 'office') return 'ONSITE';
+        if (normalized === 'hybrid') return 'HYBRID';
+        if (normalized === 'remote' || normalized === 'wfh') return 'REMOTE';
+        return undefined;
+    };
+
+    const normalizeSalaryPeriodValue = (value: unknown): 'YEARLY' | 'MONTHLY' | undefined => {
+        const normalized = String(value || '').toLowerCase();
+        if (normalized.includes('month')) return 'MONTHLY';
+        if (normalized.includes('year') || normalized.includes('annum') || normalized.includes('lpa')) return 'YEARLY';
+        return undefined;
+    };
+
     const fetchOpportunity = useCallback(async () => {
         try {
             const data = await adminApi.getOpportunity(params.id as string);
@@ -130,6 +200,7 @@ export default function EditOpportunityPage() {
                 setSalaryRange(`${opp.salaryMin}-${opp.salaryMax}`);
             }
             setJobFunction(opp.jobFunction || '');
+            setEmploymentType(opp.employmentType || '');
             setIncentives(opp.incentives || '');
             setSalaryPeriod(opp.salaryPeriod || 'YEARLY');
             setExperienceMin(opp.experienceMin?.toString() || '');
@@ -279,6 +350,83 @@ export default function EditOpportunityPage() {
         }
     };
 
+    const applyJsonToForm = () => {
+        if (!pastedJson.trim()) {
+            toast.error('Please paste JSON first');
+            return;
+        }
+
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const data: any = JSON.parse(pastedJson);
+
+            if (data.type) {
+                const normalizedType = typeParamToEnum(String(data.type));
+                if (normalizedType === 'JOB' || normalizedType === 'INTERNSHIP' || normalizedType === 'WALKIN') {
+                    setType(normalizedType as 'JOB' | 'INTERNSHIP' | 'WALKIN');
+                }
+            }
+            if (data.status && ['DRAFT', 'PUBLISHED', 'ARCHIVED'].includes(String(data.status).toUpperCase())) {
+                setStatus(String(data.status).toUpperCase() as 'DRAFT' | 'PUBLISHED' | 'ARCHIVED');
+            }
+            if (data.title) setTitle(String(data.title));
+            if (data.company) setCompany(String(data.company));
+            if (data.companyWebsite) setCompanyWebsite(String(data.companyWebsite));
+            if (data.description) setDescription(String(data.description));
+            setAllowedDegrees(normalizeDegrees(data.allowedDegrees));
+            setAllowedCourses(normalizeCourses(data.allowedCourses));
+            setPassoutYears(normalizePassoutYears(data.allowedPassoutYears));
+
+            const requiredSkillsValues = toStringArray(data.requiredSkills);
+            if (requiredSkillsValues.length > 0) setRequiredSkills(requiredSkillsValues.join(', '));
+            const locationsValues = toStringArray(data.locations);
+            if (locationsValues.length > 0) setLocations(locationsValues.join(', '));
+
+            if (data.workMode) {
+                const normalizedWorkMode = normalizeWorkModeValue(data.workMode);
+                if (normalizedWorkMode) setWorkMode(normalizedWorkMode);
+            }
+            if (data.salaryRange) setSalaryRange(String(data.salaryRange));
+            if (data.salaryMin !== undefined && data.salaryMax !== undefined) {
+                setSalaryRange(`${data.salaryMin}-${data.salaryMax}`);
+            }
+            if (data.salaryPeriod) {
+                const normalizedSalaryPeriod = normalizeSalaryPeriodValue(data.salaryPeriod);
+                if (normalizedSalaryPeriod) setSalaryPeriod(normalizedSalaryPeriod);
+            }
+            if (data.jobFunction) setJobFunction(String(data.jobFunction));
+            if (data.employmentType) setEmploymentType(String(data.employmentType));
+            if (data.incentives) setIncentives(String(data.incentives));
+            if (data.experienceMin !== undefined) setExperienceMin(String(data.experienceMin));
+            if (data.experienceMax !== undefined) setExperienceMax(String(data.experienceMax));
+            if (data.applyLink) setApplyLink(String(data.applyLink));
+            if (data.expiresAt) setExpiresAt(String(data.expiresAt));
+            if (data.venueAddress) setVenueAddress(String(data.venueAddress));
+            if (data.venueLink) setVenueLink(String(data.venueLink));
+            if (data.dateRange) setWalkInDateRange(String(data.dateRange));
+            if (data.timeRange) setWalkInTimeRange(String(data.timeRange));
+
+            if (data.walkInDetails) {
+                if (data.walkInDetails.dateRange) setWalkInDateRange(String(data.walkInDetails.dateRange));
+                if (data.walkInDetails.timeRange) setWalkInTimeRange(String(data.walkInDetails.timeRange));
+                if (data.walkInDetails.venueAddress) setVenueAddress(String(data.walkInDetails.venueAddress));
+                if (data.walkInDetails.venueLink) setVenueLink(String(data.walkInDetails.venueLink));
+                if (data.walkInDetails.reportingTime) setReportingTime(String(data.walkInDetails.reportingTime));
+                const requiredDocumentsValues = toStringArray(data.walkInDetails.requiredDocuments);
+                if (requiredDocumentsValues.length > 0) setRequiredDocuments(requiredDocumentsValues.join(', '));
+                if (data.walkInDetails.contactPerson) setContactPerson(String(data.walkInDetails.contactPerson));
+                if (data.walkInDetails.contactPhone) setContactPhone(String(data.walkInDetails.contactPhone));
+                const walkinDates = toStringArray(data.walkInDetails.dates);
+                if (walkinDates.length > 0) setWalkInDates(walkinDates.join(', '));
+            }
+
+            toast.success('Edit form updated from JSON.');
+            setShowParser(false);
+        } catch {
+            toast.error('Invalid JSON. Please paste a valid JSON payload.');
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
@@ -300,6 +448,7 @@ export default function EditOpportunityPage() {
                 workMode: type === 'WALKIN' ? undefined : workMode,
                 salaryRange: salaryRange || formatSalaryRange(salaryAmount, salaryPeriod) || undefined,
                 salaryPeriod,
+                employmentType: employmentType || undefined,
                 incentives: incentives || undefined,
                 jobFunction: jobFunction || undefined,
                 experienceMin: experienceMin ? parseInt(String(experienceMin).replace(/[^0-9]/g, '')) : undefined,
@@ -360,8 +509,50 @@ export default function EditOpportunityPage() {
                         }`}>
                         {type} listing
                     </span>
+                    <button
+                        type="button"
+                        onClick={() => setShowParser(!showParser)}
+                        className="inline-flex h-8 items-center rounded-md bg-primary/10 border border-primary/20 px-3 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors"
+                    >
+                        <BoltIcon className="w-3.5 h-3.5 mr-1.5" />
+                        JSON autofill
+                    </button>
                 </div>
             </div>
+
+            {showParser && (
+                <div className="bg-muted/30 border border-border rounded-lg p-4 md:p-5 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-bold flex items-center gap-2">
+                            <BoltIcon className="w-4 h-4 text-primary" />
+                            Paste JSON to overwrite fields
+                        </h3>
+                        <button
+                            type="button"
+                            onClick={() => setShowParser(false)}
+                            className="text-xs font-semibold text-muted-foreground hover:text-foreground"
+                        >
+                            Close
+                        </button>
+                    </div>
+                    <textarea
+                        value={pastedJson}
+                        onChange={(e) => setPastedJson(e.target.value)}
+                        rows={10}
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs font-mono focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        placeholder='{"type":"JOB","title":"...","company":"..."}'
+                    />
+                    <div className="flex justify-end">
+                        <button
+                            type="button"
+                            onClick={applyJsonToForm}
+                            className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-xs font-bold uppercase tracking-widest text-primary-foreground hover:bg-primary/90 transition-colors"
+                        >
+                            Apply JSON
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Type Selection */}
@@ -482,6 +673,17 @@ export default function EditOpportunityPage() {
                                 value={companyWebsite}
                                 onChange={(e) => setCompanyWebsite(e.target.value)}
                                 placeholder="https://wipro.com"
+                                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
+                                Employment type
+                            </label>
+                            <input
+                                value={employmentType}
+                                onChange={(e) => setEmploymentType(e.target.value)}
+                                placeholder="e.g. Full Time, Permanent"
                                 className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                             />
                         </div>
