@@ -74,10 +74,15 @@ export const adminApi = {
         apiClient(`/api/admin/system/growth-funnel?window=${window}`),
 
     // Telegram broadcast logs
-    getTelegramBroadcasts: (status?: 'SENT' | 'FAILED' | 'SKIPPED', limit = 50) => {
+    getTelegramBroadcasts: (
+        status?: 'SENT' | 'FAILED' | 'SKIPPED',
+        limit = 50,
+        window: '24h' | '7d' | '30d' | 'all' = 'all'
+    ) => {
         const query = new URLSearchParams();
         if (status) query.append('status', status);
         query.append('limit', String(limit));
+        query.append('window', window);
         const queryString = query.toString();
         return apiClient(`/api/admin/system/telegram-broadcasts${queryString ? `?${queryString}` : ''}`);
     },

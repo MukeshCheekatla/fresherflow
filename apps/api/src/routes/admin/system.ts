@@ -115,10 +115,24 @@ router.get('/telegram-broadcasts', requireAdmin, async (req: Request, res: Respo
         const statusRaw = String(req.query.status || '').toUpperCase();
         const limitRaw = Number(req.query.limit || 50);
         const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 200) : 50;
+        const windowRaw = String(req.query.window || 'all').toLowerCase();
 
-        const where = statusRaw && Object.values(TelegramBroadcastStatus).includes(statusRaw as TelegramBroadcastStatus)
-            ? { status: statusRaw as TelegramBroadcastStatus }
-            : {};
+        let fromDate: Date | undefined;
+        if (windowRaw === '24h') fromDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        if (windowRaw === '7d') fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        if (windowRaw === '30d') fromDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+        const where: {
+            status?: TelegramBroadcastStatus;
+            createdAt?: { gte: Date };
+        } = {};
+
+        if (statusRaw && Object.values(TelegramBroadcastStatus).includes(statusRaw as TelegramBroadcastStatus)) {
+            where.status = statusRaw as TelegramBroadcastStatus;
+        }
+        if (fromDate) {
+            where.createdAt = { gte: fromDate };
+        }
 
         const broadcasts = await prisma.telegramBroadcast.findMany({
             where,
@@ -140,6 +154,7 @@ router.get('/telegram-broadcasts', requireAdmin, async (req: Request, res: Respo
         });
 
         const grouped = await prisma.telegramBroadcast.groupBy({
+            where,
             by: ['status'],
             _count: true
         });

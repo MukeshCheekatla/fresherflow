@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Loader2, RefreshCw } from "lucide-react";
 
 type BroadcastStatus = "SENT" | "FAILED" | "SKIPPED";
+type BroadcastWindow = "24h" | "7d" | "30d" | "all";
 
 type BroadcastItem = {
     id: string;
@@ -25,6 +26,7 @@ type BroadcastItem = {
 
 export default function TelegramBroadcastPanel() {
     const [statusFilter, setStatusFilter] = useState<"ALL" | BroadcastStatus>("ALL");
+    const [windowFilter, setWindowFilter] = useState<BroadcastWindow>("7d");
     const [loading, setLoading] = useState(true);
     const [retryingId, setRetryingId] = useState<string | null>(null);
     const [items, setItems] = useState<BroadcastItem[]>([]);
@@ -39,7 +41,8 @@ export default function TelegramBroadcastPanel() {
         try {
             const response = await adminApi.getTelegramBroadcasts(
                 statusFilter === "ALL" ? undefined : statusFilter,
-                50
+                50,
+                windowFilter
             );
             setItems(response.broadcasts || []);
             setSummary(response.summary || { sent: 0, failed: 0, skipped: 0 });
@@ -53,7 +56,10 @@ export default function TelegramBroadcastPanel() {
     useEffect(() => {
         load();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [statusFilter]);
+    }, [statusFilter, windowFilter]);
+
+    const total = summary.sent + summary.failed + summary.skipped;
+    const successRate = total > 0 ? Math.round((summary.sent / total) * 100) : 0;
 
     const onRetry = async (id: string) => {
         setRetryingId(id);
@@ -75,7 +81,7 @@ export default function TelegramBroadcastPanel() {
                     <div>
                         <CardTitle>Telegram broadcasts</CardTitle>
                         <CardDescription>
-                            Track channel post status and retry failures.
+                            Track channel post status, weekly reliability, and retry failures.
                         </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
@@ -112,6 +118,36 @@ export default function TelegramBroadcastPanel() {
                         </Button>
                     </div>
                 </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                    <Button
+                        variant={windowFilter === "24h" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setWindowFilter("24h")}
+                    >
+                        24h
+                    </Button>
+                    <Button
+                        variant={windowFilter === "7d" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setWindowFilter("7d")}
+                    >
+                        7d
+                    </Button>
+                    <Button
+                        variant={windowFilter === "30d" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setWindowFilter("30d")}
+                    >
+                        30d
+                    </Button>
+                    <Button
+                        variant={windowFilter === "all" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setWindowFilter("all")}
+                    >
+                        All
+                    </Button>
+                </div>
                 <div className="grid grid-cols-3 gap-2">
                     <div className="rounded-lg border p-2">
                         <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Sent</p>
@@ -125,6 +161,10 @@ export default function TelegramBroadcastPanel() {
                         <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Skipped</p>
                         <p className="text-lg font-bold text-amber-600 dark:text-amber-400">{summary.skipped}</p>
                     </div>
+                </div>
+                <div className="rounded-lg border p-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Delivery success rate ({windowFilter})</p>
+                    <p className="text-lg font-bold text-foreground">{successRate}%</p>
                 </div>
             </CardHeader>
             <CardContent className="space-y-3">
