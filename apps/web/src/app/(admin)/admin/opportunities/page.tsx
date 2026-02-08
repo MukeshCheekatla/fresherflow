@@ -50,6 +50,13 @@ export default function OpportunitiesListPage() {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [bulkActionPending, setBulkActionPending] = useState(false);
     const [bulkActionLabel, setBulkActionLabel] = useState('');
+    const [lastBulkResult, setLastBulkResult] = useState<{
+        action: string;
+        requestedCount: number;
+        updatedCount: number;
+        skippedCount: number;
+        at: number;
+    } | null>(null);
     const exportUrl = useMemo(() => {
         const params = new URLSearchParams();
         if (typeFilter) params.set('type', enumToTypeParam(typeFilter));
@@ -258,10 +265,28 @@ export default function OpportunitiesListPage() {
                 try {
                     setBulkActionPending(true);
                     setBulkActionLabel(actionNames[action]);
+                    const selectedCount = selectedIds.length;
                     const res = await bulkOpportunityAction(selectedIds, action);
                     if (!res.success) throw new Error(res.error);
 
-                    toast.success(` Success: ${selectedIds.length} items updated`, { id: loadingToast });
+                    const requestedCount = res.requestedCount ?? selectedCount;
+                    const updatedCount = res.updatedCount ?? 0;
+                    const skippedCount = res.skippedCount ?? Math.max(0, requestedCount - updatedCount);
+
+                    setLastBulkResult({
+                        action,
+                        requestedCount,
+                        updatedCount,
+                        skippedCount,
+                        at: Date.now()
+                    });
+
+                    toast.success(
+                        skippedCount > 0
+                            ? `${updatedCount}/${requestedCount} updated, ${skippedCount} skipped`
+                            : `${updatedCount} listings updated`,
+                        { id: loadingToast }
+                    );
                     setSelectedIds([]);
                     loadOpportunities();
                     setConfirmModal(prev => ({ ...prev, show: false }));
@@ -330,6 +355,20 @@ export default function OpportunitiesListPage() {
                     </Link>
                 </div>
             </div>
+
+            {lastBulkResult && (
+                <div className="rounded-lg border border-border bg-card/70 px-3 py-2 text-xs text-muted-foreground">
+                    Last bulk {lastBulkResult.action.toLowerCase()}:
+                    <span className="ml-1 font-semibold text-foreground">{lastBulkResult.updatedCount}</span>
+                    {' '}updated
+                    {lastBulkResult.skippedCount > 0 && (
+                        <>
+                            , <span className="font-semibold text-amber-700">{lastBulkResult.skippedCount}</span> skipped
+                        </>
+                    )}
+                    {' '}out of {lastBulkResult.requestedCount} ({new Date(lastBulkResult.at).toLocaleTimeString()}).
+                </div>
+            )}
 
             {/* Bulk Actions Bar */}
             {selectedIds.length > 0 && (

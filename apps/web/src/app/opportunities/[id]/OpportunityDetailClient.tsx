@@ -240,6 +240,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
 
     const detailPath = `/opportunities/${opp.slug || opp.id}`;
     const hasApplyLink = !!opp.applyLink;
+    const loginFromDetailHref = `/login?redirect=${encodeURIComponent(detailPath)}&source=opportunity_detail`;
 
     return (
         <div className="min-h-screen bg-background pb-16 selection:bg-primary/20">
@@ -341,7 +342,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                     </h1>
                                     {!user && (
                                         <Link
-                                            href={`/login?redirect=${encodeURIComponent(detailPath)}`}
+                                            href={loginFromDetailHref}
                                             className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-primary hover:underline"
                                         >
                                             Sign up to save & get alerts
@@ -400,7 +401,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                     </p>
                                 </div>
                                 <Link
-                                    href={`/login?redirect=${encodeURIComponent(detailPath)}`}
+                                    href={loginFromDetailHref}
                                     className="premium-button h-9 px-4 text-[10px] uppercase tracking-widest"
                                 >
                                     Sign up free
@@ -518,7 +519,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                     Create an account to save, share, and get alerts for similar roles.
                                 </p>
                                 <Link
-                                    href={`/login?redirect=${encodeURIComponent(detailPath)}`}
+                                    href={loginFromDetailHref}
                                     className="premium-button h-9 px-4 text-[10px] uppercase tracking-widest"
                                 >
                                     Sign up free
@@ -687,7 +688,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
             ) : (
                 /* Guest CTA - Sticky Bottom or Inline */
                 <div className="md:hidden fixed bottom-4 left-3 right-3 z-40">
-                    <Link href="/login?redirect=/opportunities">
+                    <Link href={loginFromDetailHref}>
                         <div className="bg-primary/95 backdrop-blur-md text-primary-foreground p-3 rounded-xl shadow-2xl flex items-center justify-between border border-primary/20 animate-in slide-in-from-bottom-4 duration-500">
                             <div>
                                 <p className="text-xs font-bold uppercase tracking-wide">Join FresherFlow</p>

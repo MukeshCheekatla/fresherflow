@@ -129,7 +129,10 @@ router.post(
 
             res.json({
                 message: `Bulk ${action.toLowerCase()} completed`,
-                count: result.count
+                action,
+                requestedCount: ids.length,
+                updatedCount: result.count,
+                skippedCount: Math.max(0, ids.length - result.count)
             });
         } catch (error) {
             next(error);

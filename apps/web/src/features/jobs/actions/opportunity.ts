@@ -73,12 +73,19 @@ export async function bulkOpportunityAction(
 ) {
     'use server';
     try {
-        await serverApiClient('/api/admin/opportunities/bulk', {
+        const response = await serverApiClient('/api/admin/opportunities/bulk', {
             method: 'POST',
             body: JSON.stringify({ ids, action, reason }),
         });
         revalidatePath('/admin/opportunities');
-        return { success: true };
+        return {
+            success: true,
+            action: response.action as string,
+            requestedCount: Number(response.requestedCount || ids.length),
+            updatedCount: Number(response.updatedCount || 0),
+            skippedCount: Number(response.skippedCount || 0),
+            message: response.message as string | undefined,
+        };
     } catch (error) {
         return { success: false, error: (error as Error).message };
     }
