@@ -29,6 +29,7 @@
 
 @layer base {
   :root {
+    color-scheme: light;
     /* Light Mode - High-Contrast Trust + Energy */
     --primary: 222 47% 11%; /* Deep navy */
     --primary-foreground: 0 0% 100%;

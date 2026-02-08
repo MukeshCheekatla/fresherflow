@@ -83,6 +83,25 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
         return expiryDate >= now && expiryDate <= threeDaysFromNow;
     };
 
+    const isExpired = () => {
+        if (!job.expiresAt) return false;
+        return new Date(job.expiresAt) < new Date();
+    };
+
+    const formatExpiryDate = () => {
+        if (!job.expiresAt) return null;
+        return new Date(job.expiresAt).toLocaleDateString('en-IN', {
+            day: '2-digit',
+            month: 'short'
+        });
+    };
+
+    const daysToExpiry = () => {
+        if (!job.expiresAt) return null;
+        const diff = new Date(job.expiresAt).getTime() - new Date().getTime();
+        return Math.ceil(diff / (24 * 60 * 60 * 1000));
+    };
+
     const getJobTypeBadge = () => {
         const type = (job.employmentType || job.type) as string;
 
@@ -149,7 +168,26 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
             {/* Badges */}
             <div className="flex flex-wrap items-center gap-1.5">
                 {getJobTypeBadge()}
-                {isClosingSoon() && (
+                {job.expiresAt && (
+                    <span
+                        className={cn(
+                            "inline-flex items-center gap-1 px-2 py-0.5 border text-[9px] font-bold uppercase tracking-wider rounded-full",
+                            isExpired()
+                                ? "bg-destructive/5 border-destructive/20 text-destructive"
+                                : isClosingSoon()
+                                    ? "bg-orange-100 border-orange-300 text-orange-900 dark:bg-amber-500/15 dark:border-amber-500/30 dark:text-amber-300"
+                                    : "bg-muted/60 border-border text-foreground"
+                        )}
+                    >
+                        <ClockIcon className="w-3 h-3" />
+                        {isExpired()
+                            ? 'Expired'
+                            : isClosingSoon()
+                                ? `Expires in ${Math.max(0, daysToExpiry() || 0)}d • ${formatExpiryDate()}`
+                                : `Apply by ${formatExpiryDate()}`}
+                    </span>
+                )}
+                {isClosingSoon() && !isExpired() && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-muted/60 border border-border text-foreground text-[9px] font-bold uppercase tracking-wider rounded-full">
                         <ClockIcon className="w-3 h-3" />
                         Closing soon

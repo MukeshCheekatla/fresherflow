@@ -102,7 +102,7 @@ export default function DashboardPage() {
         setRecentError(null);
         try {
             const data = await opportunitiesApi.list();
-            const sanitized = (data.opportunities || []).slice(0, 3).map((o: Opportunity) => ({
+            const sanitized = (data.opportunities || []).slice(0, 6).map((o: Opportunity) => ({
                 ...o,
                 locations: o.locations || [],
                 requiredSkills: o.requiredSkills || []
@@ -140,6 +140,35 @@ export default function DashboardPage() {
         loadRecentOpportunities();
         loadHighlights();
     };
+
+    const getDaysToExpiry = (expiresAt?: string | Date | null) => {
+        if (!expiresAt) return null;
+        const diffMs = new Date(expiresAt).getTime() - new Date().getTime();
+        return Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+    };
+
+    const formatExpiry = (expiresAt?: string | Date | null) => {
+        if (!expiresAt) return null;
+        return new Date(expiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+    };
+
+    const activeRecentOpps = recentOpps.filter((o) => !o.expiresAt || new Date(o.expiresAt) > new Date());
+    const closingSoon = activeRecentOpps
+        .filter((o) => o.expiresAt)
+        .sort((a, b) => new Date(a.expiresAt as string).getTime() - new Date(b.expiresAt as string).getTime())
+        .slice(0, 8);
+
+    const totalActive = activeRecentOpps.length || 1;
+    const jobsCount = activeRecentOpps.filter((o) => o.type === 'JOB').length;
+    const internshipsCount = activeRecentOpps.filter((o) => o.type === 'INTERNSHIP').length;
+    const walkinsCount = activeRecentOpps.filter((o) => o.type === 'WALKIN').length;
+
+    const sections = [
+        { key: 'all', title: 'All relevant', href: '/opportunities', items: activeRecentOpps.slice(0, 6) },
+        { key: 'jobs', title: 'Jobs', href: '/jobs', items: activeRecentOpps.filter((o) => o.type === 'JOB').slice(0, 4) },
+        { key: 'internships', title: 'Internships', href: '/internships', items: activeRecentOpps.filter((o) => o.type === 'INTERNSHIP').slice(0, 4) },
+        { key: 'walkins', title: 'Walk-ins', href: '/walk-ins', items: activeRecentOpps.filter((o) => o.type === 'WALKIN').slice(0, 4) },
+    ];
 
     return (
         <AuthGate>
@@ -304,68 +333,66 @@ export default function DashboardPage() {
                                     </Button>
                                 </div>
                             )}
-                            <div className="flex items-center justify-between pb-1.5 border-b border-border/50">
-                                <div className="flex items-center gap-2">
-                                    <h2 className="text-sm md:text-base font-bold tracking-tight text-foreground/90">Active Stream</h2>
-                                    <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded-[4px] text-[8px] font-bold uppercase tracking-widest border border-primary/20">Live</span>
+                            {isLoadingOpps ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {[1, 2, 3, 4].map(i => <SkeletonJobCard key={i} />)}
                                 </div>
-                                <Link href="/opportunities" className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline">View All</Link>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {isLoadingOpps ? (
-                                    [1, 2].map(i => <SkeletonJobCard key={i} />)
-                                ) : recentError ? (
-                                    <div className="col-span-full bg-card rounded-xl text-center p-8 md:p-10 border border-dashed border-border">
-                                        <h3 className="font-semibold text-foreground text-sm">Could not load recommendations</h3>
-                                        <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">{recentError}</p>
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => {
-                                                setIsLoadingOpps(true);
-                                                loadRecentOpportunities();
-                                            }}
-                                            className="mt-5 h-8 px-3 text-[10px] font-bold uppercase tracking-widest"
-                                        >
-                                            Retry
-                                        </Button>
-                                    </div>
-                                ) : recentOpps.length === 0 ? (
-                                    <div className="col-span-full bg-card rounded-xl text-center p-8 md:p-12 border border-dashed border-border">
-                                        <h3 className="font-semibold text-foreground text-sm">No recommended jobs yet</h3>
-                                        <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">Update your profile parameters to see matching jobs.</p>
-                                        <Button asChild className="mt-6 h-9 px-4 text-xs font-medium">
-                                            <Link href="/profile/edit">Setup Profile</Link>
-                                        </Button>
-                                    </div>
-                                ) : (
-                                    recentOpps.map((opp) => (
-                                        <div key={opp.id}>
-                                            <JobCard
-                                                job={{
-                                                    company: opp.company,
-                                                    normalizedRole: opp.title,
-                                                    locations: opp.locations,
-                                                    experienceRange: { min: 0, max: 0 },
-                                                    salary: (opp.salaryMin && opp.salaryMax) ? { min: opp.salaryMin, max: opp.salaryMax } : undefined,
-                                                    employmentType: opp.type,
-                                                    workType: opp.workMode,
-                                                    postedDate: opp.postedAt,
-                                                    description: opp.description,
-                                                    skills: opp.requiredSkills
-                                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                } as any}
-                                                jobId={opp.id}
-                                                isApplied={false}
-                                                isSaved={opp.isSaved}
-                                                onToggleSave={() => toggleSave(opp.id)}
-                                                onClick={() => router.push(`/opportunities/${opp.slug || opp.id}`)}
-                                                isAdmin={user?.role === 'ADMIN'}
-                                            />
+                            ) : recentError ? (
+                                <div className="col-span-full bg-card rounded-xl text-center p-8 md:p-10 border border-dashed border-border">
+                                    <h3 className="font-semibold text-foreground text-sm">Could not load recommendations</h3>
+                                    <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">{recentError}</p>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            setIsLoadingOpps(true);
+                                            loadRecentOpportunities();
+                                        }}
+                                        className="mt-5 h-8 px-3 text-[10px] font-bold uppercase tracking-widest"
+                                    >
+                                        Retry
+                                    </Button>
+                                </div>
+                            ) : recentOpps.length === 0 ? (
+                                <div className="col-span-full bg-card rounded-xl text-center p-8 md:p-12 border border-dashed border-border">
+                                    <h3 className="font-semibold text-foreground text-sm">No recommended jobs yet</h3>
+                                    <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">Update your profile parameters to see matching jobs.</p>
+                                    <Button asChild className="mt-6 h-9 px-4 text-xs font-medium">
+                                        <Link href="/profile/edit">Setup Profile</Link>
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="space-y-7">
+                                    {sections.map((section) => (
+                                        <div key={section.key} className="space-y-3">
+                                            <div className="flex items-center justify-between pb-1.5 border-b border-border/50">
+                                                <h2 className="text-sm md:text-base font-bold tracking-tight text-foreground/90">{section.title}</h2>
+                                                <Link href={section.href} className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline">View all</Link>
+                                            </div>
+                                            {section.items.length === 0 ? (
+                                                <div className="rounded-xl border border-dashed border-border bg-card p-4 text-xs text-muted-foreground">
+                                                    No active listings in this section.
+                                                </div>
+                                            ) : (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    {section.items.map((opp) => (
+                                                        <JobCard
+                                                            key={`${section.key}-${opp.id}`}
+                                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                            job={opp as any}
+                                                            jobId={opp.id}
+                                                            isApplied={false}
+                                                            isSaved={opp.isSaved}
+                                                            onToggleSave={() => toggleSave(opp.id)}
+                                                            onClick={() => router.push(`/opportunities/${opp.slug || opp.id}`)}
+                                                            isAdmin={user?.role === 'ADMIN'}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
-                                    ))
-                                )}
-                            </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         {/* Intelligence Feed */}
@@ -417,6 +444,62 @@ export default function DashboardPage() {
                                     <Button asChild className="w-full h-9 text-[10px] font-bold uppercase tracking-widest">
                                         <Link href="/profile/edit">Improve profile</Link>
                                     </Button>
+                                </div>
+
+                                <div className="p-5 rounded-2xl border border-border bg-card/70 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <ClockIcon className="w-4 h-4 text-amber-500" />
+                                            <h3 className="text-[10px] font-bold uppercase tracking-wider">Deadline radar</h3>
+                                        </div>
+                                        <Link href="/opportunities?closingSoon=true" className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline">
+                                            View all
+                                        </Link>
+                                    </div>
+                                    {closingSoon.length === 0 ? (
+                                        <p className="text-xs text-muted-foreground">No urgent deadlines right now.</p>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {closingSoon.slice(0, 5).map((opp) => {
+                                                const days = getDaysToExpiry(opp.expiresAt);
+                                                return (
+                                                    <button
+                                                        key={opp.id}
+                                                        onClick={() => router.push(`/opportunities/${opp.slug || opp.id}`)}
+                                                        className="w-full text-left rounded-lg border border-border bg-muted/20 hover:bg-muted/40 p-2.5 transition-colors"
+                                                    >
+                                                        <p className="text-xs font-semibold text-foreground line-clamp-1">{opp.title}</p>
+                                                        <p className="text-[10px] text-muted-foreground line-clamp-1">{opp.company}</p>
+                                                        <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 mt-1">
+                                                            {days != null && days >= 0 ? `Expires in ${days}d` : 'Closing'} • {formatExpiry(opp.expiresAt)}
+                                                        </p>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="p-5 rounded-2xl border border-border bg-card/70 space-y-3">
+                                    <h3 className="text-[10px] font-bold uppercase tracking-wider">Category pulse</h3>
+                                    {[
+                                        { label: 'Jobs', count: jobsCount, href: '/jobs' },
+                                        { label: 'Internships', count: internshipsCount, href: '/internships' },
+                                        { label: 'Walk-ins', count: walkinsCount, href: '/walk-ins' },
+                                    ].map((item) => {
+                                        const pct = Math.max(8, Math.round((item.count / totalActive) * 100));
+                                        return (
+                                            <Link key={item.label} href={item.href} className="block space-y-1.5">
+                                                <div className="flex items-center justify-between text-xs">
+                                                    <span className="font-semibold text-foreground">{item.label}</span>
+                                                    <span className="text-muted-foreground">{item.count}</span>
+                                                </div>
+                                                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                                                    <div className="h-full rounded-full bg-primary/70" style={{ width: `${pct}%` }} />
+                                                </div>
+                                            </Link>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>

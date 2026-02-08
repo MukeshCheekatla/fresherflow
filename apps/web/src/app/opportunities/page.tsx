@@ -11,6 +11,7 @@ import MagnifyingGlassIcon from '@heroicons/react/24/outline/MagnifyingGlassIcon
 import MapPinIcon from '@heroicons/react/24/outline/MapPinIcon';
 import ChevronRightIcon from '@heroicons/react/24/outline/ChevronRightIcon';
 import FunnelIcon from '@heroicons/react/24/outline/FunnelIcon';
+import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import ShieldCheckIcon from '@heroicons/react/24/outline/ShieldCheckIcon';
 import ClockIcon from '@heroicons/react/24/outline/ClockIcon';
 import BookmarkIcon from '@heroicons/react/24/outline/BookmarkIcon';
@@ -56,6 +57,11 @@ function OpportunitiesContent() {
     const [closingSoon, setClosingSoon] = useState(false);
     const [showOnlySaved, setShowOnlySaved] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+    const [draftSelectedLoc, setDraftSelectedLoc] = useState<string | null>(null);
+    const [draftClosingSoon, setDraftClosingSoon] = useState(false);
+    const [draftShowOnlySaved, setDraftShowOnlySaved] = useState(false);
+    const activeFilterCount = (selectedLoc ? 1 : 0) + (closingSoon ? 1 : 0) + (showOnlySaved ? 1 : 0);
     const [isOnline, setIsOnline] = useState<boolean>(() =>
         typeof window !== 'undefined' ? window.navigator.onLine : true
     );
@@ -111,6 +117,20 @@ function OpportunitiesContent() {
         router.push(`${pathname}?${params.toString()}`);
     };
 
+    const openMobileFilters = () => {
+        setDraftSelectedLoc(selectedLoc);
+        setDraftClosingSoon(closingSoon);
+        setDraftShowOnlySaved(showOnlySaved);
+        setIsMobileFilterOpen(true);
+    };
+
+    const applyMobileFilters = () => {
+        setSelectedLoc(draftSelectedLoc);
+        setClosingSoon(draftClosingSoon);
+        setShowOnlySaved(draftShowOnlySaved);
+        setIsMobileFilterOpen(false);
+    };
+
     return (
         <AuthGate>
             <ProfileGate>
@@ -150,12 +170,19 @@ function OpportunitiesContent() {
                                 <button
                                     onClick={() => setIsFilterOpen(!isFilterOpen)}
                                     className={cn(
-                                        "inline-flex h-8 items-center justify-center rounded-full border px-3 text-[10px] font-bold uppercase tracking-widest transition-all",
+                                        "hidden lg:inline-flex h-8 items-center justify-center rounded-full border px-3 text-[10px] font-bold uppercase tracking-widest transition-all",
                                         isFilterOpen ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border text-muted-foreground hover:bg-muted"
                                     )}
                                 >
                                     <FunnelIcon className="w-4 h-4 mr-2" />
                                     {isFilterOpen ? 'Hide' : 'Filters'}
+                                </button>
+                                <button
+                                    onClick={openMobileFilters}
+                                    className="inline-flex lg:hidden h-8 items-center justify-center rounded-full border px-3 text-[10px] font-bold uppercase tracking-widest transition-all bg-background border-border text-muted-foreground hover:bg-muted"
+                                >
+                                    <FunnelIcon className="w-4 h-4 mr-2" />
+                                    {activeFilterCount > 0 ? `Filters (${activeFilterCount})` : 'Filters'}
                                 </button>
                             </div>
                         </div>
@@ -194,13 +221,151 @@ function OpportunitiesContent() {
                                 </Button>
                             </div>
                         </div>
+                        <div className="flex flex-wrap gap-2 pt-1">
+                            <button
+                                onClick={() => setSelectedLoc(selectedLoc === 'Remote' ? null : 'Remote')}
+                                className={cn(
+                                    "h-8 px-3 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all",
+                                    selectedLoc === 'Remote'
+                                        ? "bg-primary/10 border-primary text-primary"
+                                        : "bg-background border-border text-muted-foreground hover:bg-muted"
+                                )}
+                            >
+                                Remote
+                            </button>
+                            <button
+                                onClick={() => setSelectedLoc(selectedLoc === 'Bangalore' ? null : 'Bangalore')}
+                                className={cn(
+                                    "h-8 px-3 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all",
+                                    selectedLoc === 'Bangalore'
+                                        ? "bg-primary/10 border-primary text-primary"
+                                        : "bg-background border-border text-muted-foreground hover:bg-muted"
+                                )}
+                            >
+                                Bangalore
+                            </button>
+                            <button
+                                onClick={() => setClosingSoon(!closingSoon)}
+                                className={cn(
+                                    "h-8 px-3 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all",
+                                    closingSoon
+                                        ? "bg-orange-100 border-orange-300 text-orange-900 dark:bg-amber-500/15 dark:border-amber-500/30 dark:text-amber-300"
+                                        : "bg-background border-border text-muted-foreground hover:bg-muted"
+                                )}
+                            >
+                                Closing soon
+                            </button>
+                            <button
+                                onClick={() => setShowOnlySaved(!showOnlySaved)}
+                                className={cn(
+                                    "h-8 px-3 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all",
+                                    showOnlySaved
+                                        ? "bg-primary/10 border-primary text-primary"
+                                        : "bg-background border-border text-muted-foreground hover:bg-muted"
+                                )}
+                            >
+                                Saved
+                            </button>
+                        </div>
                     </div>
+
+                    {/* Mobile Filter Popup */}
+                    {isMobileFilterOpen && (
+                        <div className="fixed inset-0 z-50 lg:hidden">
+                            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setIsMobileFilterOpen(false)} />
+                            <div className="absolute inset-x-3 top-6 bottom-6 overflow-auto rounded-2xl border border-border bg-card p-4 shadow-2xl">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-sm font-bold tracking-tight text-foreground">Filters</h3>
+                                    <button
+                                        onClick={() => setIsMobileFilterOpen(false)}
+                                        className="h-8 w-8 rounded-lg border border-border flex items-center justify-center text-muted-foreground"
+                                    >
+                                        <XMarkIcon className="w-4 h-4" />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-5">
+                                    <div className="space-y-2">
+                                        <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Location</h4>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {FILTERS.location.map((loc) => (
+                                                <button
+                                                    key={`mobile-${loc}`}
+                                                    onClick={() => setDraftSelectedLoc(draftSelectedLoc === loc ? null : loc)}
+                                                    className={cn(
+                                                        "px-3 py-2.5 rounded-xl border text-xs font-semibold transition-all uppercase tracking-wide",
+                                                        draftSelectedLoc === loc
+                                                            ? "bg-primary/10 border-primary text-primary"
+                                                            : "bg-background border-border text-muted-foreground"
+                                                    )}
+                                                >
+                                                    {loc}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Urgency</h4>
+                                        <button
+                                            onClick={() => setDraftClosingSoon(!draftClosingSoon)}
+                                            className={cn(
+                                                "w-full flex items-center justify-between px-3 py-3 rounded-xl border text-xs font-semibold transition-all uppercase tracking-wide",
+                                                draftClosingSoon
+                                                    ? "bg-orange-100 border-orange-300 text-orange-900 dark:bg-amber-500/10 dark:border-amber-500/50 dark:text-amber-300"
+                                                    : "bg-background border-border text-muted-foreground"
+                                            )}
+                                        >
+                                            <span>Closing soon</span>
+                                            {draftClosingSoon && <div className="w-1.5 h-1.5 rounded-full bg-orange-600 dark:bg-amber-500" />}
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Saved</h4>
+                                        <button
+                                            onClick={() => setDraftShowOnlySaved(!draftShowOnlySaved)}
+                                            className={cn(
+                                                "w-full flex items-center justify-between px-3 py-3 rounded-xl border text-xs font-semibold transition-all uppercase tracking-wide",
+                                                draftShowOnlySaved
+                                                    ? "bg-primary/10 border-primary text-primary"
+                                                    : "bg-background border-border text-muted-foreground"
+                                            )}
+                                        >
+                                            <span>Saved only</span>
+                                            {draftShowOnlySaved && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="sticky bottom-0 bg-card pt-4 mt-6 border-t border-border flex gap-2">
+                                    <Button
+                                        variant="outline"
+                                        className="flex-1 h-10 text-[10px] font-bold uppercase tracking-widest"
+                                        onClick={() => {
+                                            setDraftSelectedLoc(null);
+                                            setDraftClosingSoon(false);
+                                            setDraftShowOnlySaved(false);
+                                        }}
+                                    >
+                                        Clear
+                                    </Button>
+                                    <Button
+                                        className="flex-1 h-10 text-[10px] font-bold uppercase tracking-widest"
+                                        onClick={applyMobileFilters}
+                                    >
+                                        Apply filters
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start">
                         {/* Control Panel (Sticky) */}
                         <aside className={cn(
-                            "lg:col-span-3 space-y-6 lg:sticky lg:top-24",
-                            isFilterOpen ? "block" : "hidden"
+                            "hidden lg:col-span-3 lg:space-y-6 lg:sticky lg:top-24",
+                            isFilterOpen ? "lg:block" : "lg:hidden"
                         )}>
                             <div className="bg-card/80 rounded-2xl border border-border p-4 md:p-5 space-y-6">
 
@@ -239,7 +404,7 @@ function OpportunitiesContent() {
                                         className={cn(
                                             "w-full flex items-center justify-between px-3 py-3 rounded-xl border text-xs font-semibold transition-all text-left uppercase tracking-wide",
                                             closingSoon
-                                                ? "bg-amber-500/10 border-amber-500/50 text-amber-700 dark:text-amber-400 shadow-sm"
+                                                ? "bg-orange-100 border-orange-300 text-orange-900 dark:bg-amber-500/10 dark:border-amber-500/50 dark:text-amber-300 shadow-sm"
                                                 : "bg-background border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                                         )}
                                     >

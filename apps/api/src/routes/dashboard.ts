@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { PrismaClient, OpportunityStatus } from '@prisma/client';
 import { requireAuth } from '../middleware/auth';
 import { profileGate } from '../middleware/profileGate';
-import { filterOpportunitiesForUser } from '../domain/eligibility';
+import { filterOpportunitiesForUser, sortOpportunitiesForUser } from '../domain/eligibility';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -55,10 +55,11 @@ router.get('/highlights', requireAuth, profileGate, async (req: Request, res: Re
 
         // 3. Apply eligibility filtering
         const eligiblePotentials = filterOpportunitiesForUser(potentials as any, profile as any);
+        const rankedUrgent = sortOpportunitiesForUser(eligiblePotentials as any, profile as any);
 
         // 4. Categorize for the UI
-        const walkins = eligiblePotentials.filter(o => o.type === 'WALKIN');
-        const others = eligiblePotentials.filter(o => o.type !== 'WALKIN');
+        const walkins = rankedUrgent.filter(o => o.type === 'WALKIN');
+        const others = rankedUrgent.filter(o => o.type !== 'WALKIN');
 
         // 5. Fetch "New Opportunities" (less than 24h old)
         const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -72,13 +73,14 @@ router.get('/highlights', requireAuth, profileGate, async (req: Request, res: Re
             take: 5
         });
         const eligibleNew = filterOpportunitiesForUser(newOpps as any, profile as any);
+        const rankedNew = sortOpportunitiesForUser(eligibleNew as any, profile as any);
 
         res.json({
             urgent: {
                 walkins: walkins.slice(0, 3),
                 others: others.slice(0, 3)
             },
-            newlyAdded: eligibleNew.slice(0, 3)
+            newlyAdded: rankedNew.slice(0, 3)
         });
     } catch (error) {
         next(error);

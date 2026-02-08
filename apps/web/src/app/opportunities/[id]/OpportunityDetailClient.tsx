@@ -250,6 +250,28 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
         return 'Not disclosed';
     };
 
+    const isExpired = (opportunity: Opportunity) => {
+        if (!opportunity.expiresAt) return false;
+        return new Date(opportunity.expiresAt) < new Date();
+    };
+
+    const isClosingSoon = (opportunity: Opportunity) => {
+        if (!opportunity.expiresAt) return false;
+        const expiryDate = new Date(opportunity.expiresAt);
+        const now = new Date();
+        const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+        return expiryDate >= now && expiryDate <= threeDaysFromNow;
+    };
+
+    const formatDeadline = (opportunity: Opportunity) => {
+        if (!opportunity.expiresAt) return null;
+        return new Date(opportunity.expiresAt).toLocaleDateString('en-IN', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        });
+    };
+
     const handleReport = async (reason: string) => {
         if (!user) {
             toast.error('Identity required to file report.');
@@ -337,7 +359,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                     <div className="lg:col-span-8 space-y-3 md:space-y-4">
 
                         {/* Expired Banner */}
-                        {opp.expiresAt && new Date(opp.expiresAt) < new Date() && (
+                        {opp.expiresAt && isExpired(opp) && (
                             <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-3 md:p-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
                                 <div className="p-2 bg-destructive/10 rounded-full">
                                     <ClockIcon className="w-6 h-6 text-destructive" />
@@ -361,7 +383,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                     <span className="px-1.5 py-0.5 bg-muted/40 text-muted-foreground text-[9px] font-bold uppercase tracking-tight rounded border border-border">
                                         {isOnline ? 'Online' : 'Offline'} • Sync {formatSyncTime(detailLastSyncAt)}
                                     </span>
-                                    {opp.expiresAt && new Date(opp.expiresAt) < new Date() ? (
+                                    {opp.expiresAt && isExpired(opp) ? (
                                         <div className="flex items-center gap-1.5 px-1.5 py-0.5 bg-destructive/5 border border-destructive/10 text-destructive text-[9px] font-bold uppercase tracking-tight rounded">
                                             <div className="w-1.5 h-1.5 rounded-full bg-destructive" />
                                             Expired
@@ -375,7 +397,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                 </div>
 
                                 <div className="space-y-1">
-                                    <h1 className="text-lg md:text-2xl font-bold tracking-tight text-foreground leading-tight">
+                                    <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground leading-tight">
                                         {opp.title}
                                     </h1>
                                     {!user && (
@@ -397,12 +419,12 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                             <div className="flex flex-wrap items-center gap-1.5">
                                                 <h2 className="text-base font-semibold text-foreground tracking-tight leading-none">{opp.company}</h2>
                                                 {opp.jobFunction && (
-                                                    <span className="text-[10px] text-muted-foreground font-medium">- {opp.jobFunction}</span>
+                                                    <span className="text-xs text-muted-foreground font-medium">- {opp.jobFunction}</span>
                                                 )}
                                             </div>
                                             <div className="flex items-center gap-1 text-muted-foreground mt-0.5">
                                                 <MapPinIcon className="w-3 h-3" />
-                                                <span className="font-medium text-[10px] md:text-xs">{(opp.locations || []).join(', ') || 'Remote'}</span>
+                                                <span className="font-medium text-xs md:text-sm">{(opp.locations || []).join(', ') || 'Remote'}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -412,21 +434,32 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                 <div className="pt-3 border-t border-border/50 grid grid-cols-2 lg:grid-cols-4 gap-2.5">
                                     <div className="space-y-0.5">
                                         <p className="text-[9px] font-bold text-muted-foreground uppercase">Package</p>
-                                        <p className="font-bold text-xs text-foreground truncate">{formatSalary(opp)}</p>
+                                        <p className="font-bold text-sm text-foreground truncate">{formatSalary(opp)}</p>
                                     </div>
                                     <div className="space-y-0.5">
                                         <p className="text-[9px] font-bold text-muted-foreground uppercase">Employment</p>
-                                        <p className="font-bold text-xs text-foreground truncate">{opp.employmentType || 'Not specified'}</p>
+                                        <p className="font-bold text-sm text-foreground truncate">{opp.employmentType || 'Not specified'}</p>
                                     </div>
                                     <div className="space-y-0.5">
                                         <p className="text-[9px] font-bold text-muted-foreground uppercase">Batch</p>
-                                        <p className="font-bold text-xs text-foreground truncate">{opp.allowedPassoutYears?.[0] ? `${opp.allowedPassoutYears[0]}+` : 'Any'}</p>
+                                        <p className="font-bold text-sm text-foreground truncate">{opp.allowedPassoutYears?.[0] ? `${opp.allowedPassoutYears[0]}+` : 'Any'}</p>
                                     </div>
                                     <div className="space-y-0.5">
                                         <p className="text-[9px] font-bold text-muted-foreground uppercase">Experience</p>
-                                        <p className="font-bold text-xs text-foreground truncate">{opp.experienceMax ? `${opp.experienceMin || 0}-${opp.experienceMax}y` : 'Fresher+'}</p>
+                                        <p className="font-bold text-sm text-foreground truncate">{opp.experienceMax ? `${opp.experienceMin || 0}-${opp.experienceMax}y` : 'Fresher+'}</p>
                                     </div>
                                 </div>
+                                {opp.expiresAt && (
+                                    <div className={cn(
+                                        "pt-3 border-t border-border/50 flex items-center justify-between gap-2 text-xs",
+                                        isExpired(opp) ? "text-destructive" : isClosingSoon(opp) ? "text-amber-700 dark:text-amber-300" : "text-muted-foreground"
+                                    )}>
+                                        <span className="font-bold uppercase tracking-wider">
+                                            {isExpired(opp) ? 'Expired on' : isClosingSoon(opp) ? 'Closing soon' : 'Apply before'}
+                                        </span>
+                                        <span className="font-semibold">{formatDeadline(opp)}</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -448,10 +481,10 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                         )}
 
                         {/* Description Section */}
-                        <div className="hidden md:block bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3">
+                        <div className="bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3">
                             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border pb-2">Description</h3>
                             <div className="prose prose-sm max-w-none">
-                                <p className="text-foreground/80 font-medium text-sm leading-relaxed whitespace-pre-wrap">
+                                <p className="text-foreground/80 font-medium text-sm md:text-base leading-relaxed whitespace-pre-wrap">
                                     {opp.description}
                                 </p>
                             </div>
@@ -464,17 +497,17 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <div className="space-y-0.5 p-2.5 bg-muted/20 border border-border rounded-lg">
                                     <p className="text-[9px] font-bold text-muted-foreground uppercase">Education</p>
-                                    <p className="text-xs font-semibold text-foreground">{(opp.allowedDegrees || []).join(', ') || 'Any Graduate'}</p>
+                                    <p className="text-sm font-semibold text-foreground">{(opp.allowedDegrees || []).join(', ') || 'Any Graduate'}</p>
                                 </div>
                                     <div className="space-y-0.5 p-2.5 bg-muted/20 border border-border rounded-lg">
                                     <p className="text-[9px] font-bold text-muted-foreground uppercase">Courses</p>
-                                    <p className="text-xs font-semibold text-foreground">{(opp.allowedCourses || []).join(', ') || 'Any / Not restricted'}</p>
+                                    <p className="text-sm font-semibold text-foreground">{(opp.allowedCourses || []).join(', ') || 'Any / Not restricted'}</p>
                                 </div>
                                     <div className="space-y-0.5 p-2.5 bg-muted/20 border border-border rounded-lg">
                                     <p className="text-[9px] font-bold text-muted-foreground uppercase">Key Skills</p>
                                     <div className="flex flex-wrap gap-1 mt-0.5">
                                         {(opp.requiredSkills || []).map((s: string) => (
-                                            <span key={s} className="px-1 py-0.5 bg-primary/5 text-primary text-[9px] font-bold uppercase rounded">
+                                            <span key={s} className="px-1.5 py-0.5 bg-primary/5 text-primary text-[10px] font-semibold rounded">
                                                 {s}
                                             </span>
                                         ))}
@@ -483,9 +516,9 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                     {(opp.jobFunction || opp.incentives) && (
                                         <div className="space-y-0.5 p-2.5 bg-muted/20 border border-border rounded-lg">
                                             <p className="text-[9px] font-bold text-muted-foreground uppercase">Role details</p>
-                                            <p className="text-xs font-semibold text-foreground">{opp.jobFunction || 'General'}</p>
+                                            <p className="text-sm font-semibold text-foreground">{opp.jobFunction || 'General'}</p>
                                             {opp.incentives ? (
-                                                <p className="text-[10px] text-muted-foreground">Incentives: {opp.incentives}</p>
+                                                <p className="text-xs text-muted-foreground">Incentives: {opp.incentives}</p>
                                             ) : null}
                                         </div>
                                     )}
@@ -656,10 +689,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                 </div>
                             </div>
                         </div>
-                        <div className={cn(
-                            "bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3",
-                            user ? "hidden md:block" : ""
-                        )}>
+                        <div className="bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3">
                             {hasApplyLink && (
                                 <div className="space-y-2">
                                     <Button
@@ -726,29 +756,8 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                 </div>
             </main>
 
-            {/* Mobile Actions - Floating Bottom (Logged In Users Only) */}
-            {user ? (
-                <div className="md:hidden fixed bottom-4 left-3 right-3 z-40 flex gap-2 animate-in slide-in-from-bottom-4 duration-500">
-                    {hasApplyLink && (
-                        <Button
-                            onClick={handleApply}
-                            className="flex-1 h-11 bg-primary text-primary-foreground hover:bg-primary/90 font-bold uppercase tracking-tight shadow-xl rounded-xl flex items-center justify-center gap-2"
-                        >
-                            Apply Now
-                            <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                        </Button>
-                    )}
-                    <button
-                        onClick={handleToggleSave}
-                        className={cn(
-                            `w-11 h-11 rounded-xl shadow-lg flex items-center justify-center transition-all border ${!hasApplyLink ? 'flex-1' : ''}`,
-                            opp.isSaved ? "bg-primary text-white border-primary" : "bg-card text-muted-foreground border-border"
-                        )}
-                    >
-                        {opp.isSaved ? <BookmarkSolidIcon className="w-5 h-5" /> : <BookmarkIcon className="w-5 h-5" />}
-                    </button>
-                </div>
-            ) : (
+            {/* Mobile guest CTA */}
+            {!user && (
                 /* Guest CTA - Sticky Bottom or Inline */
                 <div className="md:hidden fixed bottom-4 left-3 right-3 z-40">
                     <Link href={loginFromDetailHref}>

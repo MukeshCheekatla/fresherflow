@@ -3,7 +3,7 @@ import { PrismaClient, OpportunityStatus } from '@prisma/client';
 import { requireAuth } from '../middleware/auth';
 import { profileGate } from '../middleware/profileGate';
 import { AppError } from '../middleware/errorHandler';
-import { filterOpportunitiesForUser, sortOpportunitiesWithWalkinsFirst, checkEligibility } from '../domain/eligibility';
+import { filterOpportunitiesForUser, sortOpportunitiesForUser, checkEligibility } from '../domain/eligibility';
 import { verifyAccessToken } from '@fresherflow/auth';
 
 const router: Router = express.Router();
@@ -87,8 +87,10 @@ router.get('/', requireAuth, profileGate, async (req: Request, res: Response, ne
             finalResults = filterOpportunitiesForUser(mappedResults as any, profile as any);
         }
 
-        // Sort with walk-ins first
-        const sorted = sortOpportunitiesWithWalkinsFirst(finalResults);
+        // Personalized relevance sort (fresher-friendly experience ordering included).
+        const sorted = !isAdmin && profile
+            ? sortOpportunitiesForUser(finalResults as any, profile as any)
+            : finalResults;
 
         res.json({
             opportunities: sorted,

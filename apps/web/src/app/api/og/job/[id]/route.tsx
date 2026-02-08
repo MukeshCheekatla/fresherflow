@@ -14,6 +14,13 @@ type OpportunityDto = {
   type?: "JOB" | "INTERNSHIP" | "WALKIN";
   status?: string;
   locations?: string[];
+  experienceMin?: number;
+  experienceMax?: number;
+  salaryRange?: string | null;
+  salaryMin?: number | null;
+  salaryMax?: number | null;
+  salaryPeriod?: "MONTHLY" | "YEARLY" | null;
+  expiresAt?: string | null;
   companyWebsite?: string | null;
   applyLink?: string | null;
 };
@@ -27,9 +34,7 @@ const sanitizeDomain = (raw: string) => {
   try {
     const host = new URL(raw).hostname.toLowerCase().replace(/^www\./, "");
     const parts = host.split(".").filter(Boolean);
-    if (parts.length >= 2) {
-      return parts.slice(-2).join(".");
-    }
+    if (parts.length >= 2) return parts.slice(-2).join(".");
     return host;
   } catch {
     return "";
@@ -71,9 +76,8 @@ const inferDomain = (opportunity: OpportunityDto) => {
 const getLogoCandidates = (opportunity: OpportunityDto) => {
   const domain = inferDomain(opportunity);
   if (!domain) return [];
-
   return [
-    `https://logo.clearbit.com/${domain}?size=200`,
+    `https://logo.clearbit.com/${domain}?size=256`,
     `https://icons.duckduckgo.com/ip3/${domain}.ico`,
     `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
   ];
@@ -99,6 +103,50 @@ const getTypeLabel = (type?: string) => {
 
 const truncate = (value: string, max: number) =>
   value.length > max ? `${value.slice(0, max - 3)}...` : value;
+
+const formatExperience = (opportunity: OpportunityDto) => {
+  const min = opportunity.experienceMin ?? 0;
+  const max = opportunity.experienceMax;
+  if (max == null) return min <= 0 ? "Fresher+" : `${min}+ yrs`;
+  if (min === max) return `${max} yr`;
+  return `${min}-${max} yrs`;
+};
+
+const formatSalary = (opportunity: OpportunityDto) => {
+  if (opportunity.salaryRange) return truncate(opportunity.salaryRange, 24);
+  const min = opportunity.salaryMin;
+  const max = opportunity.salaryMax;
+  if (min == null && max == null) return "Not disclosed";
+  const monthly = opportunity.salaryPeriod === "MONTHLY";
+  const suffix = monthly ? "/mo" : " LPA";
+  const toDisplay = (v: number) =>
+    monthly ? v.toLocaleString("en-IN") : (v / 100000).toFixed(1).replace(/\.0$/, "");
+  if (min != null && max != null) {
+    if (min === max) return `INR ${toDisplay(min)}${suffix}`;
+    return `INR ${toDisplay(min)}-${toDisplay(max)}${suffix}`;
+  }
+  if (min != null) return `INR ${toDisplay(min)}${suffix}`;
+  return `Up to INR ${toDisplay(max as number)}${suffix}`;
+};
+
+const getDaysUntilExpiry = (opportunity: OpportunityDto) => {
+  if (!opportunity.expiresAt) return null;
+  const now = new Date();
+  const expiry = new Date(opportunity.expiresAt);
+  if (Number.isNaN(expiry.getTime())) return null;
+  const diff = expiry.getTime() - now.getTime();
+  return Math.ceil(diff / (24 * 60 * 60 * 1000));
+};
+
+const formatDeadline = (opportunity: OpportunityDto) => {
+  if (!opportunity.expiresAt) return "Rolling";
+  const dt = new Date(opportunity.expiresAt);
+  if (Number.isNaN(dt.getTime())) return "Rolling";
+  return dt.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+  });
+};
 
 const renderFallbackCard = (title: string, subtitle: string) =>
   new ImageResponse(
@@ -200,10 +248,20 @@ export async function GET(
   }
 
   const logoUrl = await resolveLogoUrl(opportunity);
-  const title = truncate(opportunity.title || "Opportunity", 88);
+  const title = truncate(opportunity.title || "Opportunity", 66);
   const company = truncate(opportunity.company || "Company", 42);
-  const location = truncate(opportunity.locations?.[0] || "India", 28);
+  const location = truncate(opportunity.locations?.[0] || "India", 24);
   const typeLabel = getTypeLabel(opportunity.type);
+  const experienceLabel = formatExperience(opportunity);
+  const salaryLabel = formatSalary(opportunity);
+  const deadlineLabel = formatDeadline(opportunity);
+  const daysUntilExpiry = getDaysUntilExpiry(opportunity);
+  const urgencyLabel =
+    daysUntilExpiry != null && daysUntilExpiry >= 0 && daysUntilExpiry <= 3
+      ? daysUntilExpiry === 0
+        ? "Closing today"
+        : `Closing in ${daysUntilExpiry}d`
+      : null;
 
   return new ImageResponse(
     (
@@ -213,11 +271,10 @@ export async function GET(
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          position: "relative",
           background:
             "linear-gradient(135deg, #07142d 0%, #0e274f 40%, #153872 100%)",
           color: "#f8fafc",
-          padding: "48px",
+          padding: "40px",
           fontFamily:
             "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
         }}
@@ -233,11 +290,11 @@ export async function GET(
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "16px",
+              gap: "14px",
               background: "rgba(15, 23, 42, 0.45)",
               border: "1px solid rgba(148, 163, 184, 0.25)",
-              borderRadius: "18px",
-              padding: "14px 20px",
+              borderRadius: "16px",
+              padding: "10px 14px",
             }}
           >
             {logoUrl ? (
@@ -245,10 +302,10 @@ export async function GET(
               <img
                 src={logoUrl}
                 alt="Company logo"
-                width={56}
-                height={56}
+                width={50}
+                height={50}
                 style={{
-                  borderRadius: "12px",
+                  borderRadius: "10px",
                   background: "#ffffff",
                   objectFit: "contain",
                   padding: "6px",
@@ -257,9 +314,9 @@ export async function GET(
             ) : (
               <div
                 style={{
-                  width: "56px",
-                  height: "56px",
-                  borderRadius: "12px",
+                  width: "50px",
+                  height: "50px",
+                  borderRadius: "10px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -274,14 +331,14 @@ export async function GET(
             <div style={{ display: "flex", flexDirection: "column" }}>
               <span
                 style={{
-                  fontSize: "20px",
+                  fontSize: "17px",
                   color: "#cbd5e1",
                   letterSpacing: "0.03em",
                 }}
               >
                 Hiring at
               </span>
-              <span style={{ fontSize: "34px", fontWeight: 700 }}>{company}</span>
+              <span style={{ fontSize: "30px", fontWeight: 700 }}>{company}</span>
             </div>
           </div>
 
@@ -289,17 +346,17 @@ export async function GET(
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "12px",
+              gap: "10px",
               borderRadius: "999px",
               background: "rgba(2, 6, 23, 0.5)",
               border: "1px solid rgba(148, 163, 184, 0.28)",
-              padding: "10px 18px",
+              padding: "8px 14px",
             }}
           >
             <span
               style={{
-                width: "28px",
-                height: "28px",
+                width: "24px",
+                height: "24px",
                 borderRadius: "999px",
                 background: "#f8fafc",
                 color: "#0f172a",
@@ -307,28 +364,28 @@ export async function GET(
                 alignItems: "center",
                 justifyContent: "center",
                 fontWeight: 800,
-                fontSize: "15px",
+                fontSize: "13px",
               }}
             >
               F
             </span>
-            <span style={{ fontSize: "24px", fontWeight: 700 }}>FresherFlow</span>
+            <span style={{ fontSize: "20px", fontWeight: 700 }}>FresherFlow</span>
           </div>
         </div>
 
         <div
           style={{
-            marginTop: "58px",
+            marginTop: "32px",
             display: "flex",
             flexDirection: "column",
-            gap: "20px",
+            gap: "14px",
           }}
         >
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "16px",
+              gap: "12px",
             }}
           >
             <span
@@ -337,10 +394,10 @@ export async function GET(
                 border: "1px solid rgba(186, 230, 253, 0.45)",
                 background: "rgba(14, 116, 144, 0.24)",
                 color: "#e0f2fe",
-                fontSize: "22px",
+                fontSize: "18px",
                 fontWeight: 700,
                 letterSpacing: "0.06em",
-                padding: "10px 18px",
+                padding: "8px 14px",
               }}
             >
               {typeLabel}
@@ -351,19 +408,35 @@ export async function GET(
                 border: "1px solid rgba(186, 230, 253, 0.25)",
                 background: "rgba(15, 23, 42, 0.35)",
                 color: "#e2e8f0",
-                fontSize: "22px",
+                fontSize: "18px",
                 fontWeight: 600,
-                padding: "10px 18px",
+                padding: "8px 14px",
               }}
             >
               {location}
             </span>
+            {urgencyLabel ? (
+              <span
+                style={{
+                  borderRadius: "999px",
+                  border: "1px solid rgba(251, 191, 36, 0.5)",
+                  background: "rgba(120, 53, 15, 0.38)",
+                  color: "#fde68a",
+                  fontSize: "16px",
+                  fontWeight: 700,
+                  letterSpacing: "0.03em",
+                  padding: "8px 14px",
+                }}
+              >
+                {urgencyLabel}
+              </span>
+            ) : null}
           </div>
 
           <div
             style={{
-              fontSize: "62px",
-              lineHeight: 1.1,
+              fontSize: "56px",
+              lineHeight: 1.08,
               fontWeight: 800,
               maxWidth: "1100px",
             }}
@@ -375,9 +448,60 @@ export async function GET(
         <div
           style={{
             marginTop: "auto",
+            display: "flex",
+            alignItems: "stretch",
+            gap: "12px",
+          }}
+        >
+          {[
+            { label: "Experience", value: experienceLabel },
+            { label: "Compensation", value: salaryLabel },
+            { label: "Apply by", value: deadlineLabel },
+          ].map((item) => (
+            <div
+              key={item.label}
+              style={{
+                flex: 1,
+                borderRadius: "14px",
+                border: "1px solid rgba(148, 163, 184, 0.22)",
+                background: "rgba(2, 6, 23, 0.42)",
+                padding: "12px 14px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "5px",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "14px",
+                  color: "#cbd5e1",
+                  letterSpacing: "0.03em",
+                  textTransform: "uppercase",
+                  fontWeight: 600,
+                }}
+              >
+                {item.label}
+              </span>
+              <span
+                style={{
+                  fontSize: "24px",
+                  lineHeight: 1.2,
+                  fontWeight: 700,
+                  color: "#f8fafc",
+                }}
+              >
+                {item.value}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div
+          style={{
             color: "#bfdbfe",
-            fontSize: "24px",
+            fontSize: "18px",
             letterSpacing: "0.02em",
+            marginTop: "10px",
           }}
         >
           Verified listing on fresherflow.in

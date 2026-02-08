@@ -17,23 +17,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     try {
         const { opportunity } = await opportunitiesApi.getById(slugOrId);
 
-        // Format title strictly per SEO Strategy: Role + "Fresher Job" + Company + Batch + Location
         const role = opportunity.normalizedRole || opportunity.title;
         const company = opportunity.company;
         const batch = opportunity.allowedPassoutYears?.length > 0 ? `${opportunity.allowedPassoutYears.join('/')} Batch` : '';
         const location = opportunity.locations?.[0] || 'Remote';
-        const type = opportunity.type === 'INTERNSHIP' ? 'Internship' : 'Fresher Job';
+        const type = opportunity.type === 'INTERNSHIP'
+            ? 'Internship'
+            : opportunity.type === 'WALKIN'
+                ? 'Walk-in'
+                : 'Job';
 
-        let seoTitle = `${role} ${type} at ${company}`;
-        if (batch) seoTitle += ` ${batch}`;
-        seoTitle += ` - ${location}`;
+        let seoTitle = `${role} at ${company} | ${type}`;
+        if (batch) seoTitle += ` | ${batch}`;
+        seoTitle += ` | ${location}`;
 
-        // Generate description (max 155 chars)
         const eligibility = opportunity.allowedPassoutYears.length > 0
             ? `${opportunity.allowedPassoutYears.join(', ')} graduates`
             : 'freshers';
 
-        const description = `${opportunity.title} position at ${opportunity.company} in ${location}. Open to ${eligibility}. Apply now on FresherFlow.`.substring(0, 155);
+        const description = `Verified ${type.toLowerCase()} at ${company} in ${location}. Open to ${eligibility}. Apply directly via FresherFlow.`.substring(0, 155);
 
         // Canonical URL
         const canonicalId = opportunity.slug || opportunity.id;
