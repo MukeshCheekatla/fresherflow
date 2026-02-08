@@ -433,7 +433,11 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                     </div>
                                     <div className="space-y-0.5">
                                         <p className="text-[9px] font-bold text-muted-foreground uppercase">Batch</p>
-                                        <p className="font-bold text-sm text-foreground truncate">{opp.allowedPassoutYears?.[0] ? `${opp.allowedPassoutYears[0]}+` : 'Any'}</p>
+                                        <p className="font-bold text-sm text-foreground truncate">
+                                            {opp.allowedPassoutYears && opp.allowedPassoutYears.length > 0
+                                                ? [...opp.allowedPassoutYears].sort((a, b) => a - b).join(', ')
+                                                : 'Any'}
+                                        </p>
                                     </div>
                                     <div className="space-y-0.5">
                                         <p className="text-[9px] font-bold text-muted-foreground uppercase">Experience</p>
