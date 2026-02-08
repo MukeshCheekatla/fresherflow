@@ -168,8 +168,7 @@ class TelegramService {
             `<b>Type:</b> ${typeLabel}`,
             `<b>Company:</b> ${company}`,
             `<b>Location:</b> ${locationText}`,
-            `<b>View details:</b> <a href="${jobUrl}">FresherFlow Listing</a>`,
-            `<b>Apply:</b> <a href="${applyLink}">Official Application Link</a>`,
+            `<b>View details:</b> <a href="${jobUrl}">fresherflow.in</a>`,
             '',
             '<i>#FresherJobs #OffCampus #Hiring</i>'
         ].join('\n');
