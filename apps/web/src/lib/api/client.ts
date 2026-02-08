@@ -176,6 +176,12 @@ export const adminAuthApi = {
             body: JSON.stringify({ email, body })
         }),
 
+    verifyLoginTotp: (email: string, code: string) =>
+        apiClient<{ verified: boolean }>('/api/admin/auth/login/totp', {
+            method: 'POST',
+            body: JSON.stringify({ email, code })
+        }),
+
     getPasskeys: () =>
         apiClient<{ keys: Array<{ id: string, name: string }> }>('/api/admin/auth/passkeys'),
 

@@ -16,6 +16,7 @@ export default function AdminLoginPage() {
     const [email, setEmail] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showOtherOptions, setShowOtherOptions] = useState(false);
+    const [totpCode, setTotpCode] = useState('');
 
     // Check if user has passkeys on mount
     useEffect(() => {
@@ -96,6 +97,39 @@ export default function AdminLoginPage() {
         }
     };
 
+    const handleTotpLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const effectiveEmail = adminEmailConfigured ? ADMIN_EMAIL : email.toLowerCase();
+        if (!effectiveEmail) {
+            toast.error('Enter admin email to continue');
+            return;
+        }
+        if (adminEmailConfigured && effectiveEmail !== ADMIN_EMAIL) {
+            toast.error('Unauthorized email');
+            return;
+        }
+        if (!/^\d{6}$/.test(totpCode)) {
+            toast.error('Enter a valid 6-digit authenticator code');
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const verification = await adminAuthApi.verifyLoginTotp(effectiveEmail, totpCode);
+            if (verification.verified) {
+                toast.success('Access Granted');
+                setTimeout(() => {
+                    window.location.href = '/admin/dashboard';
+                }, 500);
+            }
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'TOTP verification failed.';
+            toast.error(message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
             <div className="max-w-md w-full space-y-8 bg-card border border-border p-8 rounded-2xl shadow-2xl relative overflow-hidden">
@@ -107,7 +141,7 @@ export default function AdminLoginPage() {
                         <ShieldCheckIcon className="w-10 h-10 text-primary" />
                     </div>
                     <h1 className="text-2xl font-bold tracking-tight uppercase text-foreground">Admin Portal</h1>
-                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest opacity-60">Passkey Required</p>
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest opacity-60">Passkey or Authenticator</p>
                     {!adminEmailConfigured && (
                         <p className="text-[9px] text-muted-foreground uppercase tracking-widest opacity-50">
                             Admin email not configured in client env
@@ -154,6 +188,48 @@ export default function AdminLoginPage() {
                             </Button>
                         </form>
                     )}
+
+                    <form onSubmit={handleTotpLogin} className="p-6 bg-muted/30 rounded-2xl border border-border space-y-4">
+                        {!adminEmailConfigured && (
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
+                                    Admin Email
+                                </label>
+                                <input
+                                    type="email"
+                                    placeholder="admin@yourdomain.com"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                                />
+                            </div>
+                        )}
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
+                                Authenticator Code
+                            </label>
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                autoComplete="one-time-code"
+                                maxLength={6}
+                                placeholder="123456"
+                                value={totpCode}
+                                onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all tracking-[0.2em]"
+                            />
+                        </div>
+                        <Button
+                            type="submit"
+                            disabled={isLoading || totpCode.length !== 6}
+                            className="w-full h-11 text-[10px] font-bold uppercase tracking-widest"
+                        >
+                            Login with Authenticator
+                        </Button>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                            Alternative path: use authenticator instead of passkey.
+                        </p>
+                    </form>
 
                     <button
                         onClick={() => setShowOtherOptions(!showOtherOptions)}

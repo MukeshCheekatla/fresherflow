@@ -32,8 +32,8 @@ export default function LoadingScreen({
                         src="/logo.png"
                         alt="Loading..."
                         fill
+                        sizes="48px"
                         className="object-contain"
-                        priority
                     />
                 </div>
 
@@ -43,8 +43,8 @@ export default function LoadingScreen({
                         src="/logo-white.png"
                         alt="Loading..."
                         fill
+                        sizes="48px"
                         className="object-contain"
-                        priority
                     />
                 </div>
             </div>

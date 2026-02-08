@@ -6,6 +6,7 @@ import {
     generateAuthenticationOptions,
     verifyAuthenticationResponse,
 } from '@simplewebauthn/server';
+import { verify as verifyTotpToken } from 'otplib';
 import type {
     GenerateRegistrationOptionsOpts,
     VerifyRegistrationResponseOpts,
@@ -274,20 +275,65 @@ router.post('/login/verify', adminAuthLimiter, async (req: Request, res: Respons
                 data: { counter: verification.authenticationInfo.newCounter }
             });
 
+            await clearChallenge(`auth_${user.id}`);
+
             // Set Admin Token
             const token = generateAdminToken(user.id);
             const accessMaxAge = process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 24 * 60 * 60 * 1000;
-
             res.cookie('adminAccessToken', token, {
                 ...COOKIE_OPTIONS,
                 maxAge: accessMaxAge
             });
-
-            await clearChallenge(`auth_${user.id}`);
-            res.json({ verified: true });
+            return res.json({ verified: true });
         } else {
             res.status(400).json({ verified: false });
         }
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * 5. Verify TOTP code as an alternative admin login method
+ */
+router.post('/login/totp', adminAuthLimiter, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { email, code } = req.body as { email?: string; code?: string };
+        if (email?.toLowerCase() !== ADMIN_EMAIL) {
+            return next(new AppError('Invalid admin email', 401));
+        }
+
+        if (!code || !/^\d{6}$/.test(code)) {
+            return next(new AppError('Enter a valid 6-digit code', 400));
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { email },
+            select: { id: true, role: true, isTwoFactorEnabled: true, totpSecret: true }
+        });
+
+        if (!user || user.role !== 'ADMIN' || !user.isTwoFactorEnabled || !user.totpSecret) {
+            return next(new AppError('TOTP login is not enabled for this admin', 401));
+        }
+
+        const totpResult = await verifyTotpToken({ token: code, secret: user.totpSecret });
+        const isValidTotp =
+            typeof totpResult === 'boolean'
+                ? totpResult
+                : Boolean((totpResult as { valid?: boolean }).valid);
+
+        if (!isValidTotp) {
+            return next(new AppError('Invalid authenticator code', 400));
+        }
+
+        const token = generateAdminToken(user.id);
+        const accessMaxAge = process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 24 * 60 * 60 * 1000;
+
+        res.cookie('adminAccessToken', token, {
+            ...COOKIE_OPTIONS,
+            maxAge: accessMaxAge
+        });
+        return res.json({ verified: true });
     } catch (error) {
         next(error);
     }

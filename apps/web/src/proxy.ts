@@ -3,6 +3,18 @@ import type { NextRequest } from 'next/server';
 
 const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL;
 
+async function safeAuthCheck(url: string, cookieHeader: string) {
+    try {
+        const response = await fetch(url, {
+            headers: { cookie: cookieHeader },
+            cache: 'no-store'
+        });
+        return response.ok;
+    } catch {
+        return false;
+    }
+}
+
 export async function proxy(request: NextRequest) {
     const { pathname, hostname } = request.nextUrl;
     const cookieHeader = request.headers.get('cookie') || '';
@@ -46,11 +58,8 @@ export async function proxy(request: NextRequest) {
             return NextResponse.redirect(new URL('/admin/login', request.url));
         }
         if (API_URL) {
-            const adminCheck = await fetch(`${API_URL}/api/admin/auth/me`, {
-                headers: { cookie: cookieHeader },
-                cache: 'no-store'
-            });
-            if (!adminCheck.ok) {
+            const adminOk = await safeAuthCheck(`${API_URL}/api/admin/auth/me`, cookieHeader);
+            if (!adminOk) {
                 return NextResponse.redirect(new URL('/admin/login', request.url));
             }
         }
@@ -63,11 +72,8 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(loginUrl);
     }
     if (userProtectedPaths.includes(pathname) && isAuthenticated && API_URL) {
-        const userCheck = await fetch(`${API_URL}/api/auth/me`, {
-            headers: { cookie: cookieHeader },
-            cache: 'no-store'
-        });
-        if (!userCheck.ok) {
+        const userOk = await safeAuthCheck(`${API_URL}/api/auth/me`, cookieHeader);
+        if (!userOk) {
             const loginUrl = new URL('/login', request.url);
             loginUrl.searchParams.set('redirect', pathname);
             return NextResponse.redirect(loginUrl);

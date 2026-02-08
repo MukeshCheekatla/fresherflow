@@ -7,6 +7,22 @@ export default function ServiceWorkerRegister() {
         if (typeof window === 'undefined') return;
         if (!('serviceWorker' in navigator)) return;
 
+        const isLocalhost =
+            window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1';
+
+        // Avoid SW navigation/cache side effects in local dev.
+        if (isLocalhost || process.env.NODE_ENV !== 'production') {
+            navigator.serviceWorker.getRegistrations().then((registrations) => {
+                registrations.forEach((registration) => {
+                    void registration.unregister();
+                });
+            }).catch(() => {
+                // Ignore cleanup errors in dev
+            });
+            return;
+        }
+
         const register = async () => {
             try {
                 await navigator.serviceWorker.register('/sw.js');

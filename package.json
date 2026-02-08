@@ -9,7 +9,12 @@
     ],
     "scripts": {
         "kill:port": "powershell -Command \"$p = (Get-NetTCPConnection -LocalPort 5000 -EA SilentlyContinue).OwningProcess | Select-Object -First 1; if ($p) { taskkill /F /PID $p } else { Write-Host 'Port 5000 is free' }\"",
+        "kill:web-port": "powershell -Command \"$p = (Get-NetTCPConnection -LocalPort 3000 -EA SilentlyContinue).OwningProcess | Select-Object -First 1; if ($p) { taskkill /F /PID $p } else { Write-Host 'Port 3000 is free' }\"",
+        "kill:ports": "npm run kill:web-port && npm run kill:port",
         "dev": "npm run kill:port && turbo run dev",
+        "dev:stack": "concurrently -k -n API,WEB -c green,cyan \"npm run dev:api\" \"npm run dev:web\"",
+        "dev:start": "npm run kill:ports && npm run dev:stack",
+        "dev:check": "node scripts/check-local-dev.js",
         "dev:api": "npm run dev --workspace=apps/api",
         "dev:web": "npm run dev --workspace=apps/web",
         "build": "turbo run build",
