@@ -8,11 +8,11 @@ import { adminApi } from '@/lib/api/admin';
 import toast from 'react-hot-toast';
 import { AdminOpportunitiesSkeleton } from '@/components/ui/Skeleton';
 import { useDebounce } from '@/lib/hooks/useDebounce';
+import CompanyLogo from '@/components/ui/CompanyLogo';
 import {
     PlusCircleIcon,
     MagnifyingGlassIcon,
     MapPinIcon,
-    BuildingOfficeIcon,
     CalendarIcon,
     AdjustmentsHorizontalIcon,
     TrashIcon,
@@ -21,7 +21,8 @@ import {
     XMarkIcon,
     DocumentTextIcon,
     CheckCircleIcon,
-    ArrowPathIcon
+    ArrowPathIcon,
+    EyeIcon
 } from '@heroicons/react/24/outline';
 import {
     expireOpportunityAction,
@@ -314,6 +315,10 @@ export default function OpportunitiesListPage() {
         );
     };
 
+    // Admin preview should match exactly what a user sees on the public detail route.
+    const getPublicOpportunityHref = (opp: { id: string; slug?: string | null }) =>
+        `/opportunities/${opp.slug || opp.id}`;
+
     if (!isAuthenticated) return null;
 
     const computedTotalPages = totalCount > 0 ? Math.ceil(totalCount / pageSize) : 1;
@@ -554,17 +559,19 @@ export default function OpportunitiesListPage() {
                                                 <div className="w-2 h-2 bg-primary-foreground rounded-[1px]" />
                                             )}
                                         </div>
-                                        <div className={`w-9 h-9 rounded-md flex items-center justify-center font-semibold text-xs ${opp.type === 'WALKIN' ? 'bg-amber-100 text-amber-700' :
-                                            opp.type === 'INTERNSHIP' ? 'bg-purple-100 text-purple-700' :
-                                                'bg-blue-100 text-blue-700'
-                                            }`}>
-                                            {opp.type[0]}
-                                        </div>
+                                        <CompanyLogo
+                                            companyName={opp.company}
+                                            companyWebsite={opp.companyWebsite}
+                                            applyLink={opp.applyLink}
+                                            className="w-9 h-9 rounded-md flex-shrink-0"
+                                        />
                                         <div>
                                             <div className="font-medium text-foreground">{opp.title}</div>
-                                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                                                <BuildingOfficeIcon className="w-3 h-3" />
-                                                {opp.company}
+                                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5 flex-wrap">
+                                                <span>{opp.company}</span>
+                                                <span className="text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-muted/50 border border-border">
+                                                    {opp.type}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -591,6 +598,16 @@ export default function OpportunitiesListPage() {
                                 </div>
 
                                 <div className="mt-4 flex items-center justify-end gap-2">
+                                    <Link
+                                        href={getPublicOpportunityHref(opp)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="h-9 px-3 inline-flex items-center justify-center rounded-md border border-input bg-background text-xs font-medium text-foreground hover:bg-accent hover:text-accent-foreground"
+                                        title="View as user"
+                                    >
+                                        <EyeIcon className="w-4 h-4 mr-1.5" />
+                                        View
+                                    </Link>
                                     <Link
                                         href={`/admin/opportunities/edit/${opp.slug || opp.id}`}
                                         className="h-9 px-3 inline-flex items-center justify-center rounded-md border border-input bg-background text-xs font-medium text-foreground hover:bg-accent hover:text-accent-foreground"
@@ -674,17 +691,19 @@ export default function OpportunitiesListPage() {
                                         </td>
                                         <td className="px-5 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className={`w-8 h-8 rounded-md flex items-center justify-center font-semibold text-xs ${opp.type === 'WALKIN' ? 'bg-amber-100 text-amber-700' :
-                                                    opp.type === 'INTERNSHIP' ? 'bg-purple-100 text-purple-700' :
-                                                        'bg-blue-100 text-blue-700'
-                                                    }`}>
-                                                    {opp.type[0]}
-                                                </div>
+                                                <CompanyLogo
+                                                    companyName={opp.company}
+                                                    companyWebsite={opp.companyWebsite}
+                                                    applyLink={opp.applyLink}
+                                                    className="w-8 h-8 rounded-md flex-shrink-0"
+                                                />
                                                 <div>
                                                     <div className="font-medium text-foreground">{opp.title}</div>
-                                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                                                        <BuildingOfficeIcon className="w-3 h-3" />
-                                                        {opp.company}
+                                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5 flex-wrap">
+                                                        <span>{opp.company}</span>
+                                                        <span className="text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-muted/50 border border-border">
+                                                            {opp.type}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -714,6 +733,15 @@ export default function OpportunitiesListPage() {
                                         </td>
                                         <td className="px-5 py-4 text-right">
                                             <div className="flex items-center justify-end gap-1">
+                                                <Link
+                                                    href={getPublicOpportunityHref(opp)}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-all"
+                                                    title="View as user"
+                                                >
+                                                    <EyeIcon className="w-4 h-4" />
+                                                </Link>
                                                 <Link
                                                     href={`/admin/opportunities/edit/${opp.slug || opp.id}`}
                                                     className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-all"
