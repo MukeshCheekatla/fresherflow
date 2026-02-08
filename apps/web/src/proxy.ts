@@ -15,6 +15,13 @@ async function safeAuthCheck(url: string, cookieHeader: string) {
     }
 }
 
+function redirectWithMethodAwareness(request: NextRequest, target: string) {
+    const url = new URL(target, request.url);
+    const method = request.method.toUpperCase();
+    const status = method === 'GET' || method === 'HEAD' ? 307 : 303;
+    return NextResponse.redirect(url, status);
+}
+
 export async function proxy(request: NextRequest) {
     const { pathname, hostname } = request.nextUrl;
     const cookieHeader = request.headers.get('cookie') || '';
@@ -43,11 +50,11 @@ export async function proxy(request: NextRequest) {
         if (pathname === '/') {
             // If logged in -> Dashboard
             if (isAuthenticated) {
-                return NextResponse.redirect(new URL('/dashboard', request.url));
+                return redirectWithMethodAwareness(request, '/dashboard');
             }
             // If NOT logged in -> Login
             else {
-                return NextResponse.redirect(new URL('/login', request.url));
+                return redirectWithMethodAwareness(request, '/login');
             }
         }
     }
@@ -55,12 +62,12 @@ export async function proxy(request: NextRequest) {
     // 2. Admin Route Protection
     if (isAdminRoute && !isAdminLogin) {
         if (!isAdminAuthenticated) {
-            return NextResponse.redirect(new URL('/admin/login', request.url));
+            return redirectWithMethodAwareness(request, '/admin/login');
         }
         if (API_URL) {
             const adminOk = await safeAuthCheck(`${API_URL}/api/admin/auth/me`, cookieHeader);
             if (!adminOk) {
-                return NextResponse.redirect(new URL('/admin/login', request.url));
+                return redirectWithMethodAwareness(request, '/admin/login');
             }
         }
     }
@@ -69,14 +76,18 @@ export async function proxy(request: NextRequest) {
     if (userProtectedPaths.includes(pathname) && !isAuthenticated) {
         const loginUrl = new URL('/login', request.url);
         loginUrl.searchParams.set('redirect', pathname);
-        return NextResponse.redirect(loginUrl);
+        const method = request.method.toUpperCase();
+        const status = method === 'GET' || method === 'HEAD' ? 307 : 303;
+        return NextResponse.redirect(loginUrl, status);
     }
     if (userProtectedPaths.includes(pathname) && isAuthenticated && API_URL) {
         const userOk = await safeAuthCheck(`${API_URL}/api/auth/me`, cookieHeader);
         if (!userOk) {
             const loginUrl = new URL('/login', request.url);
             loginUrl.searchParams.set('redirect', pathname);
-            return NextResponse.redirect(loginUrl);
+            const method = request.method.toUpperCase();
+            const status = method === 'GET' || method === 'HEAD' ? 307 : 303;
+            return NextResponse.redirect(loginUrl, status);
         }
     }
 
@@ -84,7 +95,7 @@ export async function proxy(request: NextRequest) {
     // If user is already logged in and visits the landing page,
     // we can optionally redirect them to dashboard for "App-like" feel.
     if (pathname === '/' && isAuthenticated) {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
+        return redirectWithMethodAwareness(request, '/dashboard');
     }
 
     return NextResponse.next();
