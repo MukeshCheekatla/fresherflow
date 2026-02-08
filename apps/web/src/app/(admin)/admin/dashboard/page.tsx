@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { adminApi } from '@/lib/api/admin';
 import { cn } from '@/lib/utils';
 import {
@@ -20,6 +20,7 @@ export default function AdminDashboardHome() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [recent, setRecent] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [stats, setStats] = useState({
         jobs: 0,
         walkins: 0,
@@ -33,47 +34,50 @@ export default function AdminDashboardHome() {
         p95LatencyMs: 0
     });
 
-    useEffect(() => {
-        const load = async () => {
-            setLoading(true);
-            try {
-                const [summaryRes, recentRes, metricsRes] = await Promise.all([
-                    adminApi.getOpportunitiesSummary(),
-                    adminApi.getOpportunities({ limit: 5 }),
-                    adminApi.getSystemMetrics()
-                ]);
+    const loadDashboard = useCallback(async () => {
+        setLoading(true);
+        setLoadError(null);
+        try {
+            const [summaryRes, recentRes, metricsRes] = await Promise.all([
+                adminApi.getOpportunitiesSummary(),
+                adminApi.getOpportunities({ limit: 5 }),
+                adminApi.getSystemMetrics()
+            ]);
 
-                const summary = summaryRes.summary || {};
-                const opportunities = recentRes.opportunities || [];
-                const totals = metricsRes.metrics?.totals || {};
+            const summary = summaryRes.summary || {};
+            const opportunities = recentRes.opportunities || [];
+            const totals = metricsRes.metrics?.totals || {};
 
-                setRecent(opportunities);
-                setStats({
-                    jobs: (summary.total || 0) - (summary.walkins || 0),
-                    walkins: summary.walkins || 0,
-                    total: summary.total || 0,
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    recent24h: opportunities.filter((o: any) => {
-                        const posted = new Date(o.postedAt).getTime();
-                        return posted > Date.now() - 24 * 60 * 60 * 1000;
-                    }).length
-                });
-                setObservability({
-                    requests: totals.requests || 0,
-                    errorRatePct: totals.errorRatePct || 0,
-                    avgLatencyMs: totals.avgLatencyMs || 0,
-                    p95LatencyMs: totals.p95LatencyMs || 0
-                });
-            } catch (err: unknown) {
-                const error = err as Error;
-                toast.error(`Failed to load dashboard: ${error.message || 'Unknown error'}`);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        load();
+            setRecent(opportunities);
+            setStats({
+                jobs: (summary.total || 0) - (summary.walkins || 0),
+                walkins: summary.walkins || 0,
+                total: summary.total || 0,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                recent24h: opportunities.filter((o: any) => {
+                    const posted = new Date(o.postedAt).getTime();
+                    return posted > Date.now() - 24 * 60 * 60 * 1000;
+                }).length
+            });
+            setObservability({
+                requests: totals.requests || 0,
+                errorRatePct: totals.errorRatePct || 0,
+                avgLatencyMs: totals.avgLatencyMs || 0,
+                p95LatencyMs: totals.p95LatencyMs || 0
+            });
+        } catch (err: unknown) {
+            const error = err as Error;
+            const message = error.message || 'Unknown error';
+            setLoadError(message);
+            toast.error(`Failed to load dashboard: ${message}`);
+        } finally {
+            setLoading(false);
+        }
     }, []);
+
+    useEffect(() => {
+        void loadDashboard();
+    }, [loadDashboard]);
 
     const statsCards = [
         { label: 'Live listings', value: stats.jobs, icon: BriefcaseIcon, color: 'text-blue-500', bg: 'bg-blue-500/10' },
@@ -92,6 +96,21 @@ export default function AdminDashboardHome() {
                 <h1 className="text-xl md:text-2xl font-semibold tracking-tight">Admin overview</h1>
                 <p className="text-xs md:text-sm text-muted-foreground">Quick summary and shortcuts.</p>
             </header>
+
+            {loadError && (
+                <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+                    <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                        Some dashboard data could not be loaded.
+                    </p>
+                    <p className="text-xs text-amber-700/80 dark:text-amber-200/80 mt-1">{loadError}</p>
+                    <button
+                        onClick={() => void loadDashboard()}
+                        className="mt-3 inline-flex h-8 items-center justify-center rounded-md bg-amber-500 px-3 text-xs font-semibold text-black hover:bg-amber-400 transition-colors"
+                    >
+                        Retry
+                    </button>
+                </div>
+            )}
 
             {/* Stats Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
