@@ -9,6 +9,7 @@ import ServiceWorkerRegister from "@/components/providers/ServiceWorkerRegister"
 import { ThemeScript } from "@/components/providers/ThemeScript";
 import OfflineNotification from "@/components/ui/OfflineNotification";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -92,6 +93,7 @@ export default function RootLayout({
         <SmartToaster />
         <OfflineNotification />
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
