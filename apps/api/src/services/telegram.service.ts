@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { PrismaClient } from '@prisma/client';
+import { buildSocialOpportunityUrl } from '../utils/share';
 
 const prisma = new PrismaClient();
 
@@ -162,19 +163,18 @@ class TelegramService {
         const typeLabel = type === 'JOB' ? 'Job' : type === 'INTERNSHIP' ? 'Internship' : 'Walk-in';
         const locationText = locations.length > 0 ? locations.join(', ') : 'Remote/Multiple';
         const frontendOrigin = process.env.FRONTEND_URL || 'https://fresherflow.in';
-        const jobUrl = new URL(`/opportunities/${slug}`, frontendOrigin);
-        jobUrl.searchParams.set('ref', 'social');
-        jobUrl.searchParams.set('source', 'opportunity_share');
-        jobUrl.searchParams.set('utm_source', 'telegram');
-        jobUrl.searchParams.set('utm_medium', 'channel');
-        jobUrl.searchParams.set('utm_campaign', 'job_share');
+        const jobUrl = buildSocialOpportunityUrl({
+            frontendOrigin,
+            slug,
+            platform: 'telegram',
+        });
 
         const message = [
             `<b>${title}</b>`,
             `<b>Type:</b> ${typeLabel}`,
             `<b>Company:</b> ${company}`,
             `<b>Location:</b> ${locationText}`,
-            `<b>View details:</b> <a href="${jobUrl.toString()}">fresherflow.in</a>`,
+            `<b>View details:</b> <a href="${jobUrl}">fresherflow.in</a>`,
             '',
             '<i>#FresherJobs #OffCampus #Hiring</i>'
         ].join('\n');
