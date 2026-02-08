@@ -23,6 +23,7 @@ export interface ParsedSignature {
     timeRange?: string;
     venueLink?: string;
     venueAddress?: string;
+    expiresAt?: string;
 }
 
 export class ParserService {
@@ -30,6 +31,74 @@ export class ParserService {
     private static stopWords = ['requirements', 'eligibility', 'apply', 'link', 'official', 'company', 'hiring', 'salary', 'posted', 'openings', 'applicants', 'save', 'interested', 'reviews', 'match', 'score', 'early', 'applicant', 'follow', 'stay', 'updated', 'logo', 'send', 'jobs', 'like', 'this', 'highlights', 'perks', 'benefits', 'details', 'responsibilities', 'description', 'carry', 'resume', 'aadhar', 'card', 'mention', 'coming', 'festive', 'dates', 'saturday', 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
     private static genericTitles = ['associate', 'senior', 'junior', 'lead', 'trainee', 'representative', 'specialist', 'analyst', 'candidate', 'associate senior', 'immediate joiner'];
     private static commonSkills = ['react', 'node.js', 'aws', 'python', 'java', 'javascript', 'sql', 'itil', 'active directory', 'itsm', 'service desk', 'troubleshooting', 'vpn', 'networking', 'customer support', 'voice process', 'technical support', 'service-now', 'o365', 'outlook', 'windows os', 'bmc remedy', 'hpsm', 'ca service desk', 'citrix', 'exchange support', 'sccm', 'antivirus', 'itil processes'];
+    private static monthIndex: Record<string, number> = {
+        jan: 0, january: 0,
+        feb: 1, february: 1,
+        mar: 2, march: 2,
+        apr: 3, april: 3,
+        may: 4,
+        jun: 5, june: 5,
+        jul: 6, july: 6,
+        aug: 7, august: 7,
+        sep: 8, sept: 8, september: 8,
+        oct: 9, october: 9,
+        nov: 10, november: 10,
+        dec: 11, december: 11,
+    };
+
+    private static toLocalInputString(date: Date): string {
+        const tzOffset = date.getTimezoneOffset() * 60000;
+        const local = new Date(date.getTime() - tzOffset);
+        return local.toISOString().slice(0, 16);
+    }
+
+    private static parseDayMonth(input: string): Date | null {
+        const cleaned = input.trim().replace(/(\d+)(st|nd|rd|th)/gi, '$1');
+        const match = cleaned.match(/(\d{1,2})\s+([a-zA-Z]{3,9})(?:\s+(\d{4}))?/);
+        if (!match) return null;
+        const day = Number(match[1]);
+        const monthKey = match[2].toLowerCase();
+        const month = this.monthIndex[monthKey];
+        if (!Number.isFinite(day) || month === undefined) return null;
+        const now = new Date();
+        const year = match[3] ? Number(match[3]) : now.getFullYear();
+        const date = new Date(year, month, day, 23, 59, 0, 0);
+        // If year not provided and this date already passed by > 14 days, assume next year.
+        if (!match[3]) {
+            const threshold = new Date();
+            threshold.setDate(threshold.getDate() - 14);
+            if (date < threshold) date.setFullYear(year + 1);
+        }
+        return date;
+    }
+
+    private static extractExpiryFromText(text: string): string | undefined {
+        const patterns = [
+            /(?:apply\s*by|last\s*date(?:\s*to\s*apply)?|deadline)\s*[:\-]?\s*(\d{1,2}(?:st|nd|rd|th)?\s+[a-zA-Z]{3,9}(?:\s+\d{4})?)/i,
+            /(?:apply\s*before)\s*[:\-]?\s*(\d{1,2}(?:st|nd|rd|th)?\s+[a-zA-Z]{3,9}(?:\s+\d{4})?)/i,
+            /(?:apply\s*by|last\s*date|deadline)\s*[:\-]?\s*(\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})/i
+        ];
+
+        for (const pattern of patterns) {
+            const match = text.match(pattern);
+            if (!match) continue;
+            const raw = match[1];
+            if (/\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}/.test(raw)) {
+                const normalized = raw.replace(/-/g, '/');
+                const parts = normalized.split('/').map((v) => Number(v));
+                if (parts.length === 3) {
+                    const [d, m, y] = parts;
+                    const year = y < 100 ? 2000 + y : y;
+                    const date = new Date(year, m - 1, d, 23, 59, 0, 0);
+                    if (!Number.isNaN(date.getTime())) return this.toLocalInputString(date);
+                }
+                continue;
+            }
+            const parsed = this.parseDayMonth(raw);
+            if (parsed) return this.toLocalInputString(parsed);
+        }
+        return undefined;
+    }
 
     private static splitMergedWords(text: string): string[] {
         // Handle merged words like "TechnicalSupport" or "TicketingTools"
@@ -271,6 +340,7 @@ export class ParserService {
         let timeRange: string | undefined;
         let venueLink: string | undefined;
         let venueAddress: string | undefined;
+        const expiresAt = this.extractExpiryFromText(text);
 
         if (type === 'WALKIN') {
             // Enhanced Date Range (handle ordinals and shared months)
@@ -316,6 +386,7 @@ export class ParserService {
             timeRange,
             venueLink,
             venueAddress,
+            expiresAt,
             skills,
             isRemote: textLower.includes('remote') || textLower.includes('work from home'),
         };
