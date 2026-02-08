@@ -38,6 +38,25 @@ import growthRoutes from './routes/public/growth';
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
 
+function extractClientIp(req: express.Request): string {
+    const forwarded = req.headers['x-forwarded-for'];
+    const cfIp = req.headers['cf-connecting-ip'];
+    const realIp = req.headers['x-real-ip'];
+
+    const firstForwarded = Array.isArray(forwarded)
+        ? forwarded[0]
+        : typeof forwarded === 'string'
+            ? forwarded.split(',')[0]
+            : undefined;
+
+    const raw = (firstForwarded || (Array.isArray(cfIp) ? cfIp[0] : cfIp) || (Array.isArray(realIp) ? realIp[0] : realIp) || req.ip || 'unknown')
+        .toString()
+        .trim();
+
+    // Normalize IPv6-mapped IPv4 (e.g. ::ffff:1.2.3.4)
+    return raw.replace(/^::ffff:/, '');
+}
+
 // Lightweight Health Check (Zero-DB, Zero-Auth)
 app.use('/api', healthRoutes);
 app.use('/api/public/growth', growthRoutes);
@@ -108,9 +127,11 @@ const defaultLimiter = rateLimit({
     max: 1000, // 1000 requests per window (Relaxed for dev)
     standardHeaders: true,
     legacyHeaders: false,
+    keyGenerator: (req) => extractClientIp(req),
+    skip: (req) => req.path === '/api/auth/me' || req.path === '/api/admin/auth/me',
     handler: (req, res) => {
         logger.warn('Rate limit exceeded', {
-            ip: req.ip,
+            ip: extractClientIp(req),
             path: req.path,
             requestId: req.requestId
         });
@@ -126,16 +147,29 @@ const defaultLimiter = rateLimit({
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 500, // 500 login attempts (Relaxed for dev)
+    keyGenerator: (req) => extractClientIp(req),
     skipSuccessfulRequests: true
 });
 
 const registerLimiter = rateLimit({
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 100 // 100 registrations (Relaxed for dev)
+    max: 100, // 100 registrations (Relaxed for dev)
+    keyGenerator: (req) => extractClientIp(req)
+});
+
+// Session-check endpoints are called frequently by edge middleware and app bootstrap.
+const sessionCheckLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5000,
+    keyGenerator: (req) => extractClientIp(req),
+    standardHeaders: true,
+    legacyHeaders: false
 });
 
 // Apply default rate limiting
 app.use(defaultLimiter);
+app.use('/api/auth/me', sessionCheckLimiter);
+app.use('/api/admin/auth/me', sessionCheckLimiter);
 
 // ============================================================================
 // Routes
