@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { opportunitiesApi, actionsApi, feedbackApi, savedApi } from '@/lib/api/client';
+import { opportunitiesApi, actionsApi, feedbackApi, savedApi, growthApi } from '@/lib/api/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Opportunity } from '@fresherflow/types';
 import BookmarkIcon from '@heroicons/react/24/outline/BookmarkIcon';
@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import CompanyLogo from '@/components/ui/CompanyLogo';
 import { getRecentViewedByIdOrSlug, saveRecentViewed } from '@/lib/offline/recentViewed';
+import { formatSyncTime, getDetailLastSyncAt } from '@/lib/offline/syncStatus';
 import { OpportunityDetailSkeleton } from '@/components/ui/Skeleton';
 
 export default function OpportunityDetailClient({ id, initialData }: { id: string; initialData?: Opportunity | null }) {
@@ -35,6 +36,9 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
     const [isLoading, setIsLoading] = useState(!initialData);
     const [showReports, setShowReports] = useState(false);
     const reportMenuRef = useRef<HTMLDivElement | null>(null);
+    const hasTrackedDetailViewRef = useRef(false);
+    const [isOnline, setIsOnline] = useState(true);
+    const [detailLastSyncAt, setDetailLastSyncAt] = useState<number | null>(null);
 
     const loadOpportunity = useCallback(async () => {
         // If we already have data (from server), we might not need to fetch again immediately
@@ -67,6 +71,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                 ...sanitized,
                 isSaved: opportunity.isSaved || false
             });
+            setDetailLastSyncAt(getDetailLastSyncAt());
         } catch {
             const cachedOpportunity = getRecentViewedByIdOrSlug(id);
             if (cachedOpportunity) {
@@ -95,6 +100,28 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
             saveRecentViewed(opp);
         }
     }, [opp]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        setIsOnline(window.navigator.onLine);
+        setDetailLastSyncAt(getDetailLastSyncAt());
+
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!opp || user || hasTrackedDetailViewRef.current) return;
+        hasTrackedDetailViewRef.current = true;
+        growthApi.trackEvent('DETAIL_VIEW', 'opportunity_detail').catch(() => undefined);
+    }, [opp, user]);
 
     useEffect(() => {
         if (!showReports) return;
@@ -322,6 +349,9 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                 <div className="flex flex-wrap items-center gap-1.5">
                                     <span className="px-1.5 py-0.5 bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-tight rounded border border-primary/20">
                                         {opp.type}
+                                    </span>
+                                    <span className="px-1.5 py-0.5 bg-muted/40 text-muted-foreground text-[9px] font-bold uppercase tracking-tight rounded border border-border">
+                                        {isOnline ? 'Online' : 'Offline'} • Sync {formatSyncTime(detailLastSyncAt)}
                                     </span>
                                     {opp.expiresAt && new Date(opp.expiresAt) < new Date() ? (
                                         <div className="flex items-center gap-1.5 px-1.5 py-0.5 bg-destructive/5 border border-destructive/10 text-destructive text-[9px] font-bold uppercase tracking-tight rounded">

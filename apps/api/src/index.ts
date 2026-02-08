@@ -30,12 +30,14 @@ import adminSystemRoutes from './routes/admin/system';
 import adminAnalyticsRoutes from './routes/admin/analytics';
 import adminTotpRoutes from './routes/admin/totp';
 import healthRoutes from './routes/public/health';
+import growthRoutes from './routes/public/growth';
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
 
 // Lightweight Health Check (Zero-DB, Zero-Auth)
 app.use('/api', healthRoutes);
+app.use('/api/public/growth', growthRoutes);
 
 // Trust proxy for Render/Vercel/Load Balancers
 if (process.env.NODE_ENV === 'production') {

@@ -10,8 +10,8 @@ interface AuthContextType {
     isLoading: boolean;
     login: (email: string, password: string) => Promise<void>;
     sendOtp: (email: string) => Promise<void>;
-    verifyOtp: (email: string, code: string) => Promise<void>;
-    loginWithGoogle: (token: string) => Promise<void>;
+    verifyOtp: (email: string, code: string, source?: string) => Promise<void>;
+    loginWithGoogle: (token: string, source?: string) => Promise<void>;
 
     logout: () => Promise<void>;
     refreshUser: () => Promise<void>;
@@ -74,14 +74,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await authApi.sendOtp(email);
     }
 
-    async function verifyOtp(email: string, code: string) {
-        const response = await authApi.verifyOtp(email, code);
+    async function verifyOtp(email: string, code: string, source?: string) {
+        const response = await authApi.verifyOtp(email, code, source);
         setUser(response.user);
         setProfile(response.profile as Profile);
     }
 
-    async function loginWithGoogle(token: string) {
-        const response = await authApi.googleLogin(token);
+    async function loginWithGoogle(token: string, source?: string) {
+        const response = await authApi.googleLogin(token, source);
         setUser(response.user);
         setProfile(response.profile as Profile);
     }

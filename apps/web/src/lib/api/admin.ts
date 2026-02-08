@@ -61,6 +61,10 @@ export const adminApi = {
     getSystemMetrics: () =>
         apiClient('/api/admin/system/metrics'),
 
+    // Growth funnel metrics
+    getGrowthFunnelMetrics: () =>
+        apiClient('/api/admin/system/growth-funnel'),
+
     // Parse job description text
     parseJobText: (text: string) =>
         apiClient('/api/admin/opportunities/parse', {

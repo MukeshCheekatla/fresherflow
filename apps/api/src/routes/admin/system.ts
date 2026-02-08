@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { requireAdmin } from '../../middleware/auth';
 import { runLinkVerification } from '../../services/verificationBot';
 import { getObservabilityMetrics } from '../../middleware/observability';
+import { getGrowthFunnelMetrics } from '../../services/growthFunnel.service';
 import { PrismaClient } from '@prisma/client';
 
 const router = Router();
@@ -64,6 +65,19 @@ router.get('/health-stats', requireAdmin, async (req: Request, res: Response, ne
 router.get('/metrics', requireAdmin, async (_req: Request, res: Response, next: NextFunction) => {
     try {
         const metrics = getObservabilityMetrics();
+        res.json({ metrics });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * Get growth funnel metrics by source
+ * GET /api/admin/system/growth-funnel
+ */
+router.get('/growth-funnel', requireAdmin, async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+        const metrics = getGrowthFunnelMetrics();
         res.json({ metrics });
     } catch (error) {
         next(error);

@@ -5,6 +5,7 @@ import type {
     PublicKeyCredentialRequestOptionsJSON,
     AuthenticationResponseJSON
 } from '@simplewebauthn/browser';
+import { markDetailSyncedNow, markFeedSyncedNow } from '@/lib/offline/syncStatus';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -119,6 +120,15 @@ export async function apiClient<T = any>(
             throw new Error(errorMessage);
         }
 
+        if (method === 'GET') {
+            if (endpoint.startsWith('/api/opportunities') || endpoint.startsWith('/api/dashboard')) {
+                markFeedSyncedNow();
+            }
+            if (/^\/api\/opportunities\/[^/?]+/.test(endpoint)) {
+                markDetailSyncedNow();
+            }
+        }
+
         return await response.json();
     } catch (error) {
         console.error('API Error:', error);
@@ -142,16 +152,16 @@ export const authApi = {
             body: JSON.stringify({ email })
         }),
 
-    verifyOtp: (email: string, code: string) =>
+    verifyOtp: (email: string, code: string, source?: string) =>
         apiClient<AuthResponse>('/api/auth/otp/verify', {
             method: 'POST',
-            body: JSON.stringify({ email, code })
+            body: JSON.stringify({ email, code, source })
         }),
 
-    googleLogin: (token: string) =>
+    googleLogin: (token: string, source?: string) =>
         apiClient<AuthResponse>('/api/auth/google', {
             method: 'POST',
-            body: JSON.stringify({ token })
+            body: JSON.stringify({ token, source })
         }),
 
     logout: async () => {
@@ -273,6 +283,14 @@ export const profileApi = {
         }),
 
     getCompletion: () => apiClient('/api/profile/completion')
+};
+
+export const growthApi = {
+    trackEvent: (event: 'DETAIL_VIEW' | 'LOGIN_VIEW', source = 'unknown') =>
+        apiClient('/api/public/growth/event', {
+            method: 'POST',
+            body: JSON.stringify({ event, source })
+        })
 };
 
 // Opportunities API calls

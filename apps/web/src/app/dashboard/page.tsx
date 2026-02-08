@@ -17,6 +17,7 @@ import CheckBadgeIcon from '@heroicons/react/24/outline/CheckBadgeIcon';
 import { SkeletonJobCard } from '@/components/ui/Skeleton';
 import JobCard from '@/features/jobs/components/JobCard';
 import { Button } from '@/components/ui/Button';
+import { formatSyncTime, getFeedLastSyncAt } from '@/lib/offline/syncStatus';
 
 export default function DashboardPage() {
     const { user, profile, isLoading: authLoading } = useAuth();
@@ -31,6 +32,8 @@ export default function DashboardPage() {
     const [recentError, setRecentError] = useState<string | null>(null);
     const [highlightsError, setHighlightsError] = useState<string | null>(null);
     const [activityError, setActivityError] = useState<string | null>(null);
+    const [isOnline, setIsOnline] = useState(true);
+    const [feedLastSyncAt, setFeedLastSyncAt] = useState<number | null>(null);
 
     useEffect(() => {
         // Only load once when auth is confirmed and user exists
@@ -42,6 +45,22 @@ export default function DashboardPage() {
         }
     }, [authLoading, user, hasLoaded]);
 
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        setIsOnline(window.navigator.onLine);
+        setFeedLastSyncAt(getFeedLastSyncAt());
+
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
+
     const loadHighlights = async () => {
         setHighlightsError(null);
         try {
@@ -52,6 +71,7 @@ export default function DashboardPage() {
             setHighlightsError(message);
         } finally {
             setIsLoadingHighlights(false);
+            setFeedLastSyncAt(getFeedLastSyncAt());
         }
     };
 
@@ -93,6 +113,7 @@ export default function DashboardPage() {
             setRecentError(message);
         } finally {
             setIsLoadingOpps(false);
+            setFeedLastSyncAt(getFeedLastSyncAt());
         }
     };
 
@@ -107,6 +128,7 @@ export default function DashboardPage() {
             setActivityError(error.message || 'Unable to load activity');
         } finally {
             setIsLoading(false);
+            setFeedLastSyncAt(getFeedLastSyncAt());
         }
     };
 
@@ -148,6 +170,9 @@ export default function DashboardPage() {
                             </div>
                         </div>
                         <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-widest text-muted-foreground">
+                            <span className="px-2 py-1 rounded-full border border-border bg-muted/50">
+                                {isOnline ? 'Online' : 'Offline'} {'•'} Sync {formatSyncTime(feedLastSyncAt)}
+                            </span>
                             <span className="px-2 py-1 rounded-full border border-border bg-muted/50">
                                 Readiness {profile?.completionPercentage ?? 0}%
                             </span>

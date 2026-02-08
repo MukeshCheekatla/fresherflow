@@ -13,6 +13,7 @@ import { AppError } from '../middleware/errorHandler';
 import { requireAuth } from '../middleware/auth';
 import { AuthService } from '../services/auth.service';
 import { EmailService } from '../services/email.service';
+import { recordAuthSuccess } from '../services/growthFunnel.service';
 
 const router: Router = express.Router();
 const prisma = new PrismaClient();
@@ -90,10 +91,11 @@ router.post('/otp/send', validate(sendOtpSchema), async (req: Request, res: Resp
 // POST /api/auth/otp/verify
 router.post('/otp/verify', validate(verifyOtpSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { email, code } = req.body;
-        const user = await AuthService.verifyOtp(email, code);
+        const { email, code, source } = req.body;
+        const { user, isNewUser } = await AuthService.verifyOtp(email, code);
 
         await setAuthCookies(user, res);
+        recordAuthSuccess(source, isNewUser);
 
         res.json({
             user: { id: user.id, email: user.email, fullName: user.fullName },
@@ -107,12 +109,13 @@ router.post('/otp/verify', validate(verifyOtpSchema), async (req: Request, res: 
 // POST /api/auth/google
 router.post('/google', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { token } = req.body;
+        const { token, source } = req.body;
         if (!token) return next(new AppError('Google token is required', 400));
 
-        const user = await AuthService.verifyGoogleIdToken(token);
+        const { user, isNewUser } = await AuthService.verifyGoogleIdToken(token);
 
         await setAuthCookies(user, res);
+        recordAuthSuccess(source, isNewUser);
 
         res.json({
             user: { id: user.id, email: user.email, fullName: user.fullName },

@@ -12,7 +12,7 @@ export class AuthService {
     /**
      * Verify Google ID Token and return/create user
      */
-    static async verifyGoogleIdToken(idToken: string): Promise<User> {
+    static async verifyGoogleIdToken(idToken: string): Promise<{ user: User; isNewUser: boolean }> {
         const ticket = await googleClient.verifyIdToken({
             idToken,
             audience: process.env.GOOGLE_CLIENT_ID
@@ -27,8 +27,12 @@ export class AuthService {
         const fullName = payload.name;
         const providerId = payload.sub;
 
+        const existingUser = await prisma.user.findUnique({
+            where: { email }
+        });
+
         // Upsert User
-        return await prisma.user.upsert({
+        const user = await prisma.user.upsert({
             where: { email },
             update: {
                 provider: 'google',
@@ -49,6 +53,11 @@ export class AuthService {
                 profile: true
             }
         });
+
+        return {
+            user,
+            isNewUser: !existingUser
+        };
     }
 
     /**
@@ -66,7 +75,7 @@ export class AuthService {
     /**
      * Verify OTP and return/create user
      */
-    static async verifyOtp(email: string, code: string): Promise<User> {
+    static async verifyOtp(email: string, code: string): Promise<{ user: User; isNewUser: boolean }> {
         const stored = otpStore.get(email.toLowerCase());
 
         if (!stored) {
@@ -85,8 +94,13 @@ export class AuthService {
         // Success - clean up
         otpStore.delete(email.toLowerCase());
 
+        const normalizedEmail = email.toLowerCase();
+        const existingUser = await prisma.user.findUnique({
+            where: { email: normalizedEmail }
+        });
+
         // Upsert User
-        return await prisma.user.upsert({
+        const user = await prisma.user.upsert({
             where: { email: email.toLowerCase() },
             update: {
                 provider: 'email'
@@ -105,5 +119,10 @@ export class AuthService {
                 profile: true
             }
         });
+
+        return {
+            user,
+            isNewUser: !existingUser
+        };
     }
 }

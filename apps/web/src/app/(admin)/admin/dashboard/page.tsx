@@ -25,6 +25,16 @@ type RouteMetric = {
     maxLatencyMs: number;
 };
 
+type GrowthSourceMetric = {
+    source: string;
+    DETAIL_VIEW: number;
+    LOGIN_VIEW: number;
+    AUTH_SUCCESS: number;
+    SIGNUP_SUCCESS: number;
+    detailToLoginPct: number;
+    loginToAuthPct: number;
+};
+
 export default function AdminDashboardHome() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [recent, setRecent] = useState<any[]>([]);
@@ -44,16 +54,18 @@ export default function AdminDashboardHome() {
     });
     const [topSlowRoutes, setTopSlowRoutes] = useState<RouteMetric[]>([]);
     const [topErrorRoutes, setTopErrorRoutes] = useState<RouteMetric[]>([]);
+    const [growthSources, setGrowthSources] = useState<GrowthSourceMetric[]>([]);
     const errorBudgetBreached = observability.errorRatePct > 2 || observability.p95LatencyMs > 1500;
 
     const loadDashboard = useCallback(async () => {
         setLoading(true);
         setLoadError(null);
         try {
-            const [summaryRes, recentRes, metricsRes] = await Promise.all([
+            const [summaryRes, recentRes, metricsRes, growthRes] = await Promise.all([
                 adminApi.getOpportunitiesSummary(),
                 adminApi.getOpportunities({ limit: 5 }),
-                adminApi.getSystemMetrics()
+                adminApi.getSystemMetrics(),
+                adminApi.getGrowthFunnelMetrics()
             ]);
 
             const summary = summaryRes.summary || {};
@@ -65,6 +77,7 @@ export default function AdminDashboardHome() {
                     ...(values as Omit<RouteMetric, 'route'>)
                 }))
                 .filter((row) => row.requests > 0);
+            const growthSourceRows = (growthRes.metrics?.sources || []) as GrowthSourceMetric[];
 
             setRecent(opportunities);
             setStats({
@@ -98,6 +111,7 @@ export default function AdminDashboardHome() {
                     })
                     .slice(0, 5)
             );
+            setGrowthSources(growthSourceRows.slice(0, 5));
         } catch (err: unknown) {
             const error = err as Error;
             const message = error.message || 'Unknown error';
@@ -267,6 +281,37 @@ export default function AdminDashboardHome() {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            {/* Growth Funnel */}
+            <div className="bg-card rounded-lg border border-border shadow-sm p-4 md:p-5">
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm md:text-base font-semibold tracking-tight">Growth funnel (by source)</h3>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Detail {'>'} Login {'>'} Auth
+                    </span>
+                </div>
+                {growthSources.length > 0 ? (
+                    <div className="space-y-2">
+                        {growthSources.map((row) => (
+                            <div key={row.source} className="rounded-md border border-border bg-muted/10 px-3 py-2">
+                                <div className="flex items-center justify-between gap-3">
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-foreground/90 truncate">{row.source}</p>
+                                    <p className="text-[11px] text-muted-foreground">
+                                        {row.DETAIL_VIEW} {'>'} {row.LOGIN_VIEW} {'>'} {row.AUTH_SUCCESS}
+                                    </p>
+                                </div>
+                                <div className="mt-1 flex items-center gap-3 text-[11px]">
+                                    <span className="text-amber-700 dark:text-amber-300 font-medium">D2L: {row.detailToLoginPct}%</span>
+                                    <span className="text-emerald-700 dark:text-emerald-300 font-medium">L2A: {row.loginToAuthPct}%</span>
+                                    <span className="text-muted-foreground">Signups: {row.SIGNUP_SUCCESS}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-xs text-muted-foreground">No growth funnel events recorded yet.</p>
+                )}
             </div>
 
             {/* Recent Postings Simple List */}

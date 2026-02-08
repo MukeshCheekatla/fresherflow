@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import {
     EnvelopeIcon,
@@ -14,6 +14,7 @@ import {
 import { useAuthFormData } from '@/contexts/AuthFormDataContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { growthApi } from '@/lib/api/client';
 
 declare global {
     interface Window {
@@ -36,6 +37,8 @@ export default function LoginPage() {
 
     const { sendOtp, verifyOtp, loginWithGoogle, user, isLoading } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const source = searchParams.get('source') || undefined;
 
     useEffect(() => {
         // Don't redirect if:
@@ -82,7 +85,7 @@ export default function LoginPage() {
     const handleGoogleCallback = useCallback(async (response: any) => {
         setIsProcessing(true);
         try {
-            await loginWithGoogle(response.credential);
+            await loginWithGoogle(response.credential, source);
             toast.success('Welcome! Redirecting...');
             router.push('/dashboard');
         } catch (err: unknown) {
@@ -90,7 +93,12 @@ export default function LoginPage() {
             const errorMessage = (err as Error).message || 'Google login failed.';
             toast.error(errorMessage);
         }
-    }, [loginWithGoogle, router]);
+    }, [loginWithGoogle, router, source]);
+
+    useEffect(() => {
+        if (!source) return;
+        growthApi.trackEvent('LOGIN_VIEW', source).catch(() => undefined);
+    }, [source]);
 
     // Initialize Google Login - robust version with cleanup
     useEffect(() => {
@@ -157,7 +165,7 @@ export default function LoginPage() {
         e.preventDefault();
         setIsProcessing(true);
         try {
-            await verifyOtp(email, otp);
+            await verifyOtp(email, otp, source);
             router.push('/dashboard');
         } catch (err: unknown) {
             setIsProcessing(false);
