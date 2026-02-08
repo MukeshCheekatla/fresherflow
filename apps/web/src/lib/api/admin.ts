@@ -73,6 +73,21 @@ export const adminApi = {
     getGrowthFunnelMetrics: (window: '24h' | '7d' | '30d' | 'all' = '30d') =>
         apiClient(`/api/admin/system/growth-funnel?window=${window}`),
 
+    // Telegram broadcast logs
+    getTelegramBroadcasts: (status?: 'SENT' | 'FAILED' | 'SKIPPED', limit = 50) => {
+        const query = new URLSearchParams();
+        if (status) query.append('status', status);
+        query.append('limit', String(limit));
+        const queryString = query.toString();
+        return apiClient(`/api/admin/system/telegram-broadcasts${queryString ? `?${queryString}` : ''}`);
+    },
+
+    // Retry a Telegram broadcast by log id
+    retryTelegramBroadcast: (id: string) =>
+        apiClient(`/api/admin/system/telegram-broadcasts/${id}/retry`, {
+            method: 'POST'
+        }),
+
     // Parse job description text
     parseJobText: (text: string) =>
         apiClient('/api/admin/opportunities/parse', {

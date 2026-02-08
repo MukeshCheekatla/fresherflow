@@ -292,6 +292,7 @@ model Opportunity {
   feedback ListingFeedback[]
   savedBy  SavedOpportunity[]
   alertDeliveries AlertDelivery[]
+  telegramBroadcasts TelegramBroadcast[]
 
   // DB-level filtering indexes
   @@index([status])
@@ -406,4 +407,28 @@ model AlertDelivery {
 
   @@index([userId, kind])
   @@index([sentAt])
+}
+
+enum TelegramBroadcastStatus {
+  SENT
+  FAILED
+  SKIPPED
+}
+
+model TelegramBroadcast {
+  id            String                  @id @default(uuid())
+  opportunityId String
+  channel       String
+  dedupeKey     String                  @unique
+  status        TelegramBroadcastStatus @default(SKIPPED)
+  messageId     String?
+  errorMessage  String?
+  sentAt        DateTime?
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@index([opportunityId, status])
+  @@index([channel])
 }

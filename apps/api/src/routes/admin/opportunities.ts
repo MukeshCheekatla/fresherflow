@@ -362,6 +362,7 @@ router.post(
             // Broadcast to Public Channel if Published (Async)
             if (opportunity.status === OpportunityStatus.PUBLISHED && opportunity.applyLink) {
                 TelegramService.broadcastNewOpportunity(
+                    opportunity.id,
                     opportunity.title,
                     opportunity.company,
                     opportunity.type,

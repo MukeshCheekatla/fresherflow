@@ -3,7 +3,8 @@ import { requireAdmin } from '../../middleware/auth';
 import { getVerificationStats, runLinkVerification } from '../../services/verificationBot';
 import { getObservabilityMetrics } from '../../middleware/observability';
 import { getGrowthFunnelMetrics, GrowthWindow } from '../../services/growthFunnel.service';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, TelegramBroadcastStatus } from '@prisma/client';
+import TelegramService from '../../services/telegram.service';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -100,6 +101,114 @@ router.get('/growth-funnel', requireAdmin, async (req: Request, res: Response, n
 
         const metrics = await getGrowthFunnelMetrics(window);
         res.json({ metrics });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * List Telegram broadcast attempts
+ * GET /api/admin/system/telegram-broadcasts
+ */
+router.get('/telegram-broadcasts', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const statusRaw = String(req.query.status || '').toUpperCase();
+        const limitRaw = Number(req.query.limit || 50);
+        const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 200) : 50;
+
+        const where = statusRaw && Object.values(TelegramBroadcastStatus).includes(statusRaw as TelegramBroadcastStatus)
+            ? { status: statusRaw as TelegramBroadcastStatus }
+            : {};
+
+        const broadcasts = await prisma.telegramBroadcast.findMany({
+            where,
+            include: {
+                opportunity: {
+                    select: {
+                        id: true,
+                        slug: true,
+                        title: true,
+                        company: true,
+                        type: true,
+                        locations: true,
+                        applyLink: true,
+                    }
+                }
+            },
+            orderBy: { createdAt: 'desc' },
+            take: limit,
+        });
+
+        res.json({
+            broadcasts,
+            count: broadcasts.length
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * Retry one failed/skipped Telegram broadcast
+ * POST /api/admin/system/telegram-broadcasts/:id/retry
+ */
+router.post('/telegram-broadcasts/:id/retry', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const idParam = req.params.id;
+        const id = Array.isArray(idParam) ? idParam[0] : idParam;
+        if (!id) {
+            return res.status(400).json({ message: 'Broadcast ID is required' });
+        }
+
+        const broadcast = await prisma.telegramBroadcast.findUnique({
+            where: { id },
+            include: {
+                opportunity: {
+                    select: {
+                        id: true,
+                        slug: true,
+                        title: true,
+                        company: true,
+                        type: true,
+                        locations: true,
+                        applyLink: true,
+                    }
+                }
+            }
+        });
+
+        if (!broadcast || !broadcast.opportunity) {
+            return res.status(404).json({ message: 'Broadcast not found' });
+        }
+
+        const opp = broadcast.opportunity;
+        if (!opp.applyLink) {
+            await prisma.telegramBroadcast.update({
+                where: { id },
+                data: {
+                    status: 'FAILED',
+                    errorMessage: 'Missing apply link; cannot broadcast',
+                }
+            });
+            return res.status(400).json({ message: 'Opportunity has no apply link' });
+        }
+
+        await TelegramService.broadcastNewOpportunity(
+            opp.id,
+            opp.title,
+            opp.company,
+            opp.type,
+            opp.locations,
+            opp.applyLink,
+            opp.slug,
+            { force: true }
+        );
+
+        const refreshed = await prisma.telegramBroadcast.findUnique({ where: { id } });
+        res.json({
+            success: true,
+            broadcast: refreshed
+        });
     } catch (error) {
         next(error);
     }

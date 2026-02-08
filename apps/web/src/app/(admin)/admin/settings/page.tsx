@@ -1,5 +1,6 @@
 import TwoFactorSetup from "@/components/admin/TwoFactorSetup";
 import PasskeyManager from "@/components/admin/PasskeyManager";
+import TelegramBroadcastPanel from "@/components/admin/TelegramBroadcastPanel";
 import { Badge } from "@/components/ui/Badge";
 
 export const metadata = {
@@ -45,6 +46,8 @@ export default function AdminSettingsPage() {
                     To update the connected chat, please change the <code>TELEGRAM_ADMIN_CHAT_ID</code> environment variable.
                 </p>
             </div>
+
+            <TelegramBroadcastPanel />
         </div>
     );
 }

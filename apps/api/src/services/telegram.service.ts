@@ -1,4 +1,7 @@
 import axios from 'axios';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 class TelegramService {
     private botToken: string;
@@ -25,9 +28,6 @@ class TelegramService {
         return !!this.botToken && !!this.chatId;
     }
 
-    /**
-     * Send a simple text message to the admin
-     */
     async sendMessage(text: string): Promise<void> {
         if (!this.isConfigured) {
             if (!this.hasWarnedFailure) {
@@ -43,7 +43,7 @@ class TelegramService {
         try {
             await axios.post(`${this.baseUrl}/sendMessage`, {
                 chat_id: this.chatId,
-                text: text,
+                text,
                 parse_mode: 'HTML'
             });
         } catch (error: any) {
@@ -56,24 +56,18 @@ class TelegramService {
         }
     }
 
-    /**
-     * Send a notification about a new user signup
-     */
     async notifyNewUser(email: string, name: string): Promise<void> {
-        const message = `
-🚀 <b>New User Signup</b>
-------------------------
-👤 <b>Name:</b> ${name}
-📧 <b>Email:</b> ${email}
-------------------------
-<i>FresherFlow Admin</i>
-        `;
+        const message = [
+            '<b>New User Signup</b>',
+            '------------------------',
+            `<b>Name:</b> ${name}`,
+            `<b>Email:</b> ${email}`,
+            '------------------------',
+            '<i>FresherFlow Admin</i>'
+        ].join('\n');
         await this.sendMessage(message);
     }
 
-    /**
-     * Send a notification about a critical system error
-     */
     async notifyError(context: string, error: any): Promise<void> {
         const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
         const dedupeKey = `${context}::${errorMessage}`;
@@ -83,86 +77,139 @@ class TelegramService {
             return;
         }
         this.lastErrorSentAt.set(dedupeKey, now);
-        const message = `
-🚨 <b>Critical Error</b>
-------------------------
-📂 <b>Context:</b> ${context}
-❌ <b>Error:</b> ${errorMessage}
-------------------------
-<i>FresherFlow System</i>
-        `;
+
+        const message = [
+            '<b>Critical Error</b>',
+            '------------------------',
+            `<b>Context:</b> ${context}`,
+            `<b>Error:</b> ${errorMessage}`,
+            '------------------------',
+            '<i>FresherFlow System</i>'
+        ].join('\n');
         await this.sendMessage(message);
     }
 
-    /**
-     * Send a notification about a new job post
-     */
     async notifyNewJob(jobTitle: string, company: string, jobId: string, isLive: boolean): Promise<void> {
-        const status = isLive ? '✅ LIVE' : '⏸️ DRAFT';
-        const message = `
-💼 <b>New Job Created</b>
-------------------------
-🏢 <b>Company:</b> ${company}
-👨‍💻 <b>Role:</b> ${jobTitle}
-📊 <b>Status:</b> ${status}
-🆔 <b>ID:</b> ${jobId}
-------------------------
-<i>FresherFlow Admin</i>
-        `;
+        const status = isLive ? 'LIVE' : 'DRAFT';
+        const message = [
+            '<b>New Job Created</b>',
+            '------------------------',
+            `<b>Company:</b> ${company}`,
+            `<b>Role:</b> ${jobTitle}`,
+            `<b>Status:</b> ${status}`,
+            `<b>ID:</b> ${jobId}`,
+            '------------------------',
+            '<i>FresherFlow Admin</i>'
+        ].join('\n');
         await this.sendMessage(message);
     }
 
-    /**
-     * Broadcast a message to a public channel (requires channel username like @fresherflow_jobs)
-     */
-    async broadcastToChannel(channelUsername: string, text: string): Promise<void> {
-        if (!this.botToken) return;
+    async broadcastToChannel(channelUsername: string, text: string): Promise<string | null> {
+        if (!this.botToken) return null;
 
         try {
-            await axios.post(`${this.baseUrl}/sendMessage`, {
+            const response = await axios.post(`${this.baseUrl}/sendMessage`, {
                 chat_id: channelUsername,
-                text: text,
+                text,
                 parse_mode: 'HTML',
                 disable_web_page_preview: false
             });
+            const messageId = response?.data?.result?.message_id;
+            return messageId ? String(messageId) : null;
         } catch (error) {
             console.error(`TelegramService Broadcast Error (${channelUsername}):`, error);
+            return null;
         }
     }
 
-    /**
-     * Broadcast a new job opportunity to the public channel
-     */
     async broadcastNewOpportunity(
+        opportunityId: string,
         title: string,
         company: string,
         type: string,
         locations: string[],
         applyLink: string,
-        slug: string
+        slug: string,
+        options?: { force?: boolean }
     ): Promise<void> {
         const publicChannel = process.env.TELEGRAM_PUBLIC_CHANNEL;
+        const dedupeKey = `${opportunityId}:${publicChannel || 'unknown'}`;
+
         if (!publicChannel || !this.botToken) {
             console.log('TelegramService: Public channel not configured, skipping broadcast.');
+            await prisma.telegramBroadcast.upsert({
+                where: { dedupeKey },
+                create: {
+                    opportunityId,
+                    channel: publicChannel || 'unknown',
+                    dedupeKey,
+                    status: 'SKIPPED',
+                    errorMessage: 'Public channel or bot token not configured'
+                },
+                update: {
+                    status: 'SKIPPED',
+                    errorMessage: 'Public channel or bot token not configured'
+                }
+            }).catch(() => { });
             return;
         }
 
-        const typeEmoji = type === 'JOB' ? '💼' : type === 'INTERNSHIP' ? '🎓' : '🚶';
+        const existing = await prisma.telegramBroadcast.findUnique({ where: { dedupeKey } });
+        if (existing && existing.status === 'SENT' && !options?.force) {
+            return;
+        }
+
+        const typeLabel = type === 'JOB' ? 'Job' : type === 'INTERNSHIP' ? 'Internship' : 'Walk-in';
         const locationText = locations.length > 0 ? locations.join(', ') : 'Remote/Multiple';
         const jobUrl = `${process.env.FRONTEND_URL || 'https://fresherflow.in'}/opportunities/${slug}`;
 
-        const message = `
-${typeEmoji} <b>${title}</b>
-🏢 <b>Company:</b> ${company}
-📍 <b>Location:</b> ${locationText}
-🔗 <b>Apply:</b> <a href="${applyLink}">Official Application Link</a>
+        const message = [
+            `<b>${title}</b>`,
+            `<b>Type:</b> ${typeLabel}`,
+            `<b>Company:</b> ${company}`,
+            `<b>Location:</b> ${locationText}`,
+            `<b>View details:</b> <a href="${jobUrl}">FresherFlow Listing</a>`,
+            `<b>Apply:</b> <a href="${applyLink}">Official Application Link</a>`,
+            '',
+            '<i>#FresherJobs #OffCampus #Hiring</i>'
+        ].join('\n');
 
-📋 View full details: <a href="${jobUrl}">FresherFlow</a>
+        const messageId = await this.broadcastToChannel(publicChannel, message);
+        if (messageId) {
+            await prisma.telegramBroadcast.upsert({
+                where: { dedupeKey },
+                create: {
+                    opportunityId,
+                    channel: publicChannel,
+                    dedupeKey,
+                    status: 'SENT',
+                    messageId,
+                    sentAt: new Date()
+                },
+                update: {
+                    status: 'SENT',
+                    messageId,
+                    sentAt: new Date(),
+                    errorMessage: null
+                }
+            });
+            return;
+        }
 
-<i>#FresherJobs #OffCampus #Hiring</i>
-        `.trim();
-
-        await this.broadcastToChannel(publicChannel, message);
+        await prisma.telegramBroadcast.upsert({
+            where: { dedupeKey },
+            create: {
+                opportunityId,
+                channel: publicChannel,
+                dedupeKey,
+                status: 'FAILED',
+                errorMessage: 'Telegram sendMessage failed'
+            },
+            update: {
+                status: 'FAILED',
+                errorMessage: 'Telegram sendMessage failed'
+            }
+        });
     }
 }
 
