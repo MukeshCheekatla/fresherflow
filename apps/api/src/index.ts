@@ -15,6 +15,7 @@ import logger from './utils/logger';
 import httpLogger from './middleware/httpLogger';
 import { startExpiryCron } from './cron/expiryCron';
 import { startVerificationCron } from './cron/verificationCron';
+import { startAlertsCron } from './cron/alertsCron';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -219,6 +220,7 @@ app.listen(PORT, () => {
     // Start cron jobs
     startExpiryCron();
     startVerificationCron();
+    startAlertsCron();
 });
 
 // Graceful shutdown
