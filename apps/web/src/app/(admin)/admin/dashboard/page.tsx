@@ -9,7 +9,8 @@ import {
     PlusCircleIcon,
     ArrowRightIcon,
     ChartBarIcon,
-    ClockIcon
+    ClockIcon,
+    SignalIcon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -25,18 +26,26 @@ export default function AdminDashboardHome() {
         total: 0,
         recent24h: 0
     });
+    const [observability, setObservability] = useState({
+        requests: 0,
+        errorRatePct: 0,
+        avgLatencyMs: 0,
+        p95LatencyMs: 0
+    });
 
     useEffect(() => {
         const load = async () => {
             setLoading(true);
             try {
-                const [summaryRes, recentRes] = await Promise.all([
+                const [summaryRes, recentRes, metricsRes] = await Promise.all([
                     adminApi.getOpportunitiesSummary(),
-                    adminApi.getOpportunities({ limit: 5 })
+                    adminApi.getOpportunities({ limit: 5 }),
+                    adminApi.getSystemMetrics()
                 ]);
 
                 const summary = summaryRes.summary || {};
                 const opportunities = recentRes.opportunities || [];
+                const totals = metricsRes.metrics?.totals || {};
 
                 setRecent(opportunities);
                 setStats({
@@ -48,6 +57,12 @@ export default function AdminDashboardHome() {
                         const posted = new Date(o.postedAt).getTime();
                         return posted > Date.now() - 24 * 60 * 60 * 1000;
                     }).length
+                });
+                setObservability({
+                    requests: totals.requests || 0,
+                    errorRatePct: totals.errorRatePct || 0,
+                    avgLatencyMs: totals.avgLatencyMs || 0,
+                    p95LatencyMs: totals.p95LatencyMs || 0
                 });
             } catch (err: unknown) {
                 const error = err as Error;
@@ -128,6 +143,32 @@ export default function AdminDashboardHome() {
                         <ArrowRightIcon className="w-4 h-4 text-foreground/70" />
                     </div>
                 </Link>
+            </div>
+
+            {/* Request Health */}
+            <div className="bg-card rounded-lg border border-border shadow-sm p-4 md:p-5">
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm md:text-base font-semibold tracking-tight">Request health</h3>
+                    <SignalIcon className="w-4 h-4 text-muted-foreground" />
+                </div>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className="rounded-md border border-border bg-muted/20 px-3 py-2">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Total requests</p>
+                        <p className="text-sm md:text-base font-semibold">{observability.requests}</p>
+                    </div>
+                    <div className="rounded-md border border-border bg-muted/20 px-3 py-2">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Error rate</p>
+                        <p className="text-sm md:text-base font-semibold">{observability.errorRatePct}%</p>
+                    </div>
+                    <div className="rounded-md border border-border bg-muted/20 px-3 py-2">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Avg latency</p>
+                        <p className="text-sm md:text-base font-semibold">{observability.avgLatencyMs} ms</p>
+                    </div>
+                    <div className="rounded-md border border-border bg-muted/20 px-3 py-2">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">P95 latency</p>
+                        <p className="text-sm md:text-base font-semibold">{observability.p95LatencyMs} ms</p>
+                    </div>
+                </div>
             </div>
 
             {/* Recent Postings Simple List */}

@@ -57,6 +57,10 @@ export const adminApi = {
     getFeedback: () =>
         apiClient('/api/admin/feedback'),
 
+    // System observability metrics
+    getSystemMetrics: () =>
+        apiClient('/api/admin/system/metrics'),
+
     // Parse job description text
     parseJobText: (text: string) =>
         apiClient('/api/admin/opportunities/parse', {
