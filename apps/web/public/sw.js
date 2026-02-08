@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fresherflow-pwa-v1.4.1';
+const CACHE_NAME = 'fresherflow-pwa-v1.4.2';
 const OFFLINE_URL = '/offline.html';
 
 // Assets that should be cached on install
@@ -44,13 +44,30 @@ self.addEventListener('fetch', (event) => {
   const isSameOrigin = url.origin === self.location.origin;
   const isApiRequest = url.pathname.startsWith('/api');
   const isNavigation = event.request.mode === 'navigate';
+  const isAdminPath = url.pathname.startsWith('/admin');
+
+  // Let browser handle admin/auth navigations directly to avoid redirect-mode issues.
+  if (isNavigation && isAdminPath) {
+    return;
+  }
 
   // Network-first for navigations (HTML), with offline fallback
   if (isNavigation) {
     event.respondWith(
-      fetch(event.request, { redirect: 'follow' }).then((response) => {
-        return response;
-      }).catch(() => caches.match(OFFLINE_URL))
+      (async () => {
+        try {
+          // Use URL fetch with credentials so same-origin redirects are followed safely.
+          const response = await fetch(url.href, {
+            credentials: 'include',
+            redirect: 'follow',
+            cache: 'no-store'
+          });
+          return response;
+        } catch {
+          const offline = await caches.match(OFFLINE_URL);
+          return offline || new Response('Offline', { status: 503 });
+        }
+      })()
     );
     return;
   }

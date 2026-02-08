@@ -121,7 +121,7 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
             {/* Header: Company + Title + Save */}
             <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <CompanyLogo companyName={job.company} applyLink={job.applyLink} />
+                    <CompanyLogo companyName={job.company} companyWebsite={job.companyWebsite} applyLink={job.applyLink} />
                     <div className="min-w-0">
                         <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider line-clamp-1">
                             {job.company}

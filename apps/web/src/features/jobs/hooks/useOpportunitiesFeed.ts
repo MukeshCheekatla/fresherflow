@@ -24,6 +24,7 @@ export function useOpportunitiesFeed({
     const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
     const [totalCount, setTotalCount] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [profileIncomplete, setProfileIncomplete] = useState<{ percentage: number; message: string } | null>(null);
     const debouncedSearch = useDebounce(search, 300);
 
@@ -31,6 +32,7 @@ export function useOpportunitiesFeed({
         if (!user || authLoading) return;
         setIsLoading(true);
         setProfileIncomplete(null);
+        setError(null);
         try {
             let data;
             if (showOnlySaved) {
@@ -54,7 +56,9 @@ export function useOpportunitiesFeed({
                     message: error.message || 'Complete your profile to access job listings'
                 });
             } else {
-                toast.error(error.message || 'Failed to load feed');
+                const message = error.message || 'Failed to load feed';
+                setError(message);
+                toast.error(message);
             }
         } finally {
             setIsLoading(false);
@@ -105,8 +109,10 @@ export function useOpportunitiesFeed({
         filteredOpps,
         totalCount,
         isLoading,
+        error,
         profileIncomplete,
         toggleSave,
         setOpportunities,
+        reload: loadOpportunities,
     };
 }

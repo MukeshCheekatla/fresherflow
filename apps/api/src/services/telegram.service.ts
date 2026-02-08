@@ -4,14 +4,24 @@ class TelegramService {
     private botToken: string;
     private chatId: string;
     private baseUrl: string;
+    private allowInDev: boolean;
+    private hasWarnedFailure: boolean;
+    private lastErrorSentAt: Map<string, number>;
+    private errorCooldownMs: number;
 
     constructor() {
         this.botToken = process.env.TELEGRAM_BOT_TOKEN || '';
         this.chatId = process.env.TELEGRAM_ADMIN_CHAT_ID || '';
         this.baseUrl = `https://api.telegram.org/bot${this.botToken}`;
+        this.allowInDev = process.env.TELEGRAM_ALLOW_DEV === 'true';
+        this.hasWarnedFailure = false;
+        this.lastErrorSentAt = new Map();
+        const cooldownMinutes = Number(process.env.TELEGRAM_ERROR_COOLDOWN_MINUTES || '5');
+        this.errorCooldownMs = Math.max(1, cooldownMinutes) * 60 * 1000;
     }
 
     private get isConfigured(): boolean {
+        if (process.env.NODE_ENV !== 'production' && !this.allowInDev) return false;
         return !!this.botToken && !!this.chatId;
     }
 
@@ -20,7 +30,13 @@ class TelegramService {
      */
     async sendMessage(text: string): Promise<void> {
         if (!this.isConfigured) {
-            console.warn('TelegramService: Credentials missing, skipping message.');
+            if (!this.hasWarnedFailure) {
+                const reason = process.env.NODE_ENV !== 'production' && !this.allowInDev
+                    ? 'disabled in non-production'
+                    : 'credentials missing';
+                console.warn(`TelegramService: ${reason}, skipping message.`);
+                this.hasWarnedFailure = true;
+            }
             return;
         }
 
@@ -30,8 +46,13 @@ class TelegramService {
                 text: text,
                 parse_mode: 'HTML'
             });
-        } catch (error) {
-            console.error('TelegramService Error:', error);
+        } catch (error: any) {
+            if (this.hasWarnedFailure) return;
+            const status = error?.response?.status;
+            const description = error?.response?.data?.description;
+            const reason = description ? `(${status}) ${description}` : (status ? `(${status})` : 'unknown error');
+            console.error(`TelegramService Error: ${reason}`);
+            this.hasWarnedFailure = true;
         }
     }
 
@@ -55,6 +76,13 @@ class TelegramService {
      */
     async notifyError(context: string, error: any): Promise<void> {
         const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+        const dedupeKey = `${context}::${errorMessage}`;
+        const now = Date.now();
+        const lastSent = this.lastErrorSentAt.get(dedupeKey) || 0;
+        if (now - lastSent < this.errorCooldownMs) {
+            return;
+        }
+        this.lastErrorSentAt.set(dedupeKey, now);
         const message = `
 🚨 <b>Critical Error</b>
 ------------------------

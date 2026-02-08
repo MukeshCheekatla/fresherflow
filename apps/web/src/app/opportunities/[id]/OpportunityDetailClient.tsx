@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { opportunitiesApi, actionsApi, feedbackApi, savedApi } from '@/lib/api/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Opportunity } from '@fresherflow/types';
@@ -14,6 +14,7 @@ import ArrowLeftIcon from '@heroicons/react/24/outline/ArrowLeftIcon';
 import ArrowTopRightOnSquareIcon from '@heroicons/react/24/outline/ArrowTopRightOnSquareIcon';
 import InformationCircleIcon from '@heroicons/react/24/outline/InformationCircleIcon';
 import ShareIcon from '@heroicons/react/24/outline/ShareIcon';
+import LinkIcon from '@heroicons/react/24/outline/LinkIcon';
 import FlagIcon from '@heroicons/react/24/outline/FlagIcon';
 import ExclamationTriangleIcon from '@heroicons/react/24/outline/ExclamationTriangleIcon';
 import ShieldCheckIcon from '@heroicons/react/24/outline/ShieldCheckIcon';
@@ -32,6 +33,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
     // If initialData is provided, we are not loading. If not provided, we are loading.
     const [isLoading, setIsLoading] = useState(!initialData);
     const [showReports, setShowReports] = useState(false);
+    const reportMenuRef = useRef<HTMLDivElement | null>(null);
 
     const loadOpportunity = useCallback(async () => {
         // If we already have data (from server), we might not need to fetch again immediately
@@ -77,6 +79,32 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
         }
     }, [id, initialData, loadOpportunity]); // Added deps
 
+    useEffect(() => {
+        if (!showReports) return;
+
+        const handleClickOutside = (event: Event) => {
+            if (!reportMenuRef.current) return;
+            if (!reportMenuRef.current.contains(event.target as Node)) {
+                setShowReports(false);
+            }
+        };
+
+        const handleEsc = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') setShowReports(false);
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('touchstart', handleClickOutside);
+        document.addEventListener('pointerdown', handleClickOutside);
+        document.addEventListener('keydown', handleEsc);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('touchstart', handleClickOutside);
+            document.removeEventListener('pointerdown', handleClickOutside);
+            document.removeEventListener('keydown', handleEsc);
+        };
+    }, [showReports]);
+
     const handleToggleSave = async () => {
         if (!opp) return;
         try {
@@ -100,18 +128,29 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
         }
     };
 
+    const getShareUrl = () => {
+        try {
+            const url = new URL(window.location.href);
+            url.searchParams.set('ref', 'share');
+            return url.toString();
+        } catch {
+            return window.location.href;
+        }
+    };
+
     const handleShare = async () => {
+        const shareUrl = getShareUrl();
         const shareData = {
             title: `${opp?.title} at ${opp?.company}`,
             text: `Check out this opportunity: ${opp?.title} at ${opp?.company}`,
-            url: window.location.href,
+            url: shareUrl,
         };
 
         try {
             if (navigator.share) {
                 await navigator.share(shareData);
             } else {
-                await navigator.clipboard.writeText(window.location.href);
+                await navigator.clipboard.writeText(shareUrl);
                 toast.success('Link copied to clipboard!');
             }
         } catch {
@@ -121,7 +160,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
 
     const handleCopyLink = async () => {
         try {
-            await navigator.clipboard.writeText(window.location.href);
+            await navigator.clipboard.writeText(getShareUrl());
             toast.success('Link copied to clipboard!');
         } catch {
             toast.error('Failed to copy link');
@@ -183,6 +222,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
     if (!opp) return null;
 
     const detailPath = `/opportunities/${opp.slug || opp.id}`;
+    const hasApplyLink = !!opp.applyLink;
 
     return (
         <div className="min-h-screen bg-background pb-16 selection:bg-primary/20">
@@ -196,10 +236,15 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                     </Link>
 
                     <div className="flex items-center gap-1.5">
-                        <button onClick={handleShare} className="p-2 bg-muted/40 hover:bg-primary/10 rounded-lg transition-all text-muted-foreground hover:text-primary border border-border/50">
+                        <button onClick={handleShare} className="p-2 bg-muted/40 hover:bg-primary/10 rounded-lg transition-all text-muted-foreground hover:text-primary border border-border/50 md:px-3 md:gap-2 md:h-9 md:text-xs md:font-semibold md:uppercase md:tracking-widest md:flex md:items-center">
                             <ShareIcon className="w-4 h-4" />
+                            <span className="hidden md:inline">Share</span>
                         </button>
-                        <div className="relative">
+                        <button onClick={handleCopyLink} className="p-2 bg-muted/40 hover:bg-primary/10 rounded-lg transition-all text-muted-foreground hover:text-primary border border-border/50 md:px-3 md:gap-2 md:h-9 md:text-xs md:font-semibold md:uppercase md:tracking-widest md:flex md:items-center">
+                            <LinkIcon className="w-4 h-4" />
+                            <span className="hidden md:inline">Copy link</span>
+                        </button>
+                        <div className="relative" ref={reportMenuRef}>
                             <button
                                 onClick={() => setShowReports(!showReports)}
                                 className={cn(
@@ -277,9 +322,18 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                     <h1 className="text-lg md:text-2xl font-bold tracking-tight text-foreground leading-tight">
                                         {opp.title}
                                     </h1>
+                                    {!user && (
+                                        <Link
+                                            href={`/login?redirect=${encodeURIComponent(detailPath)}`}
+                                            className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-primary hover:underline"
+                                        >
+                                            Sign up to save & get alerts
+                                        </Link>
+                                    )}
                                     <div className="flex items-center gap-3">
                                         <CompanyLogo
                                             companyName={opp.company}
+                                            companyWebsite={opp.companyWebsite}
                                             applyLink={opp.applyLink}
                                             className="w-9 h-9 md:w-10 md:h-10 rounded-lg"
                                         />
@@ -338,7 +392,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                         )}
 
                         {/* Description Section */}
-                        <div className="bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3">
+                        <div className="hidden md:block bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3">
                             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border pb-2">Description</h3>
                             <div className="prose prose-sm max-w-none">
                                 <p className="text-foreground/80 font-medium text-sm leading-relaxed whitespace-pre-wrap">
@@ -371,45 +425,58 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
 
                         {/* Walk-in Drive */}
                         {opp.type === 'WALKIN' && (
-                            <div className="bg-amber-500/3 border border-amber-500/10 p-4 md:p-5 rounded-xl space-y-4">
-                                <h2 className="text-xs font-bold uppercase tracking-wider text-amber-600 border-b border-amber-500/10 pb-2">Walk-in Details</h2>
+                            <div className="bg-card border border-border p-4 md:p-5 rounded-xl space-y-4">
+                                <h2 className="text-xs font-bold uppercase tracking-wider text-primary border-b border-border pb-2">Walk-in Details</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-1">
-                                        <p className="text-[9px] font-bold text-amber-600/70 uppercase">Date & Time</p>
-                                        <p className="text-sm font-bold text-amber-800">{opp.walkInDetails?.dateRange} | {opp.walkInDetails?.timeRange || opp.walkInDetails?.reportingTime}</p>
+                                        <p className="text-[9px] font-bold text-muted-foreground uppercase">Date & Time</p>
+                                        <p className="text-sm font-semibold text-foreground">
+                                            {opp.walkInDetails?.dateRange} | {opp.walkInDetails?.timeRange || opp.walkInDetails?.reportingTime}
+                                        </p>
                                     </div>
                                     <div className="space-y-2">
-                                        <p className="text-[9px] font-bold text-amber-600/70 uppercase">Venue</p>
-                                        <p className="text-xs font-medium text-amber-900 leading-relaxed">{opp.walkInDetails?.venueAddress}</p>
+                                        <p className="text-[9px] font-bold text-muted-foreground uppercase">Venue</p>
+                                        <p className="text-xs font-medium text-foreground leading-relaxed">{opp.walkInDetails?.venueAddress}</p>
                                         {opp.walkInDetails?.venueLink && (
                                             <Button
                                                 variant="outline"
                                                 onClick={() => window.open(opp.walkInDetails?.venueLink, '_blank')}
-                                                className="h-8 bg-amber-500 hover:bg-amber-600 border-none text-white font-bold uppercase text-[9px] px-3 shadow-sm"
+                                                className="h-8 bg-primary hover:bg-primary/90 border-none text-primary-foreground font-bold uppercase text-[9px] px-3 shadow-sm"
                                             >
                                                 View on Maps
                                             </Button>
                                         )}
                                     </div>
                                 </div>
+                                {(opp.walkInDetails?.requiredDocuments?.length || opp.walkInDetails?.contactPerson || opp.walkInDetails?.contactPhone) && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {opp.walkInDetails?.requiredDocuments?.length ? (
+                                            <div className="space-y-1">
+                                                <p className="text-[9px] font-bold text-muted-foreground uppercase">Documents</p>
+                                                <ul className="text-xs text-foreground space-y-1 list-disc list-inside">
+                                                    {opp.walkInDetails.requiredDocuments.map((doc) => (
+                                                        <li key={doc}>{doc}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        ) : null}
+                                        {(opp.walkInDetails?.contactPerson || opp.walkInDetails?.contactPhone) && (
+                                            <div className="space-y-1">
+                                                <p className="text-[9px] font-bold text-muted-foreground uppercase">Contact</p>
+                                                {opp.walkInDetails?.contactPerson && (
+                                                    <p className="text-xs font-medium text-foreground">{opp.walkInDetails.contactPerson}</p>
+                                                )}
+                                                {opp.walkInDetails?.contactPhone && (
+                                                    <p className="text-xs font-medium text-foreground">{opp.walkInDetails.contactPhone}</p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         )}
                         <div className="lg:hidden bg-card p-4 rounded-xl border border-border space-y-3">
                             <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Quick actions</h4>
-                            <div className="grid grid-cols-2 gap-2">
-                                <button
-                                    onClick={handleShare}
-                                    className="h-9 rounded-lg border border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 transition-all text-[10px] font-bold uppercase"
-                                >
-                                    Share
-                                </button>
-                                <button
-                                    onClick={handleCopyLink}
-                                    className="h-9 rounded-lg border border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 transition-all text-[10px] font-bold uppercase"
-                                >
-                                    Copy link
-                                </button>
-                            </div>
                             <button
                                 onClick={() => {
                                     setShowReports(true);
@@ -441,18 +508,90 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                 </Link>
                             </div>
                         )}
-                        <div className="bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3">
-                            <div className="space-y-2">
-                                <Button
-                                    onClick={handleApply}
-                                    className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg flex items-center justify-center gap-2 text-sm font-bold uppercase tracking-tight shadow-md"
-                                >
-                                    Apply Now
-                                    <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                                </Button>
+                        {opp.type === 'WALKIN' && (
+                            <div className="hidden lg:block bg-card p-4 rounded-xl border border-border shadow-sm space-y-3">
+                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Walk-in snapshot</h4>
+                                <div className="space-y-2 text-xs text-muted-foreground">
+                                    <div>
+                                        <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Date & Time</p>
+                                        <p className="text-foreground font-semibold">
+                                            {opp.walkInDetails?.dateRange} {opp.walkInDetails?.timeRange ? `• ${opp.walkInDetails.timeRange}` : ''}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Venue</p>
+                                        <p className="text-foreground">{opp.walkInDetails?.venueAddress}</p>
+                                    </div>
+                                    {opp.walkInDetails?.requiredDocuments?.length ? (
+                                        <div>
+                                            <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Documents</p>
+                                            <ul className="list-disc list-inside text-foreground space-y-1">
+                                                {opp.walkInDetails.requiredDocuments.map((doc) => (
+                                                    <li key={doc}>{doc}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    ) : null}
+                                </div>
+                                {opp.walkInDetails?.venueLink && (
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => window.open(opp.walkInDetails?.venueLink, '_blank')}
+                                        className="h-9 w-full bg-primary hover:bg-primary/90 border-none text-primary-foreground font-bold uppercase text-[10px] tracking-widest"
+                                    >
+                                        Open Maps
+                                    </Button>
+                                )}
                             </div>
+                        )}
+                        <div className="hidden lg:block bg-card p-4 rounded-xl border border-border shadow-sm space-y-3">
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Eligibility snapshot</h4>
+                            <div className="space-y-2 text-xs text-muted-foreground">
+                                <div>
+                                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Education</p>
+                                    <p className="text-foreground font-semibold">
+                                        {(opp.allowedDegrees && opp.allowedDegrees.length > 0) ? opp.allowedDegrees.join(', ') : 'Any Graduate'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Experience</p>
+                                    <p className="text-foreground">
+                                        {opp.experienceMax != null ? `${opp.experienceMin || 0}-${opp.experienceMax} yrs` : 'Fresher+ (no cap)'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Skills</p>
+                                    <div className="flex flex-wrap gap-1">
+                                        {(opp.requiredSkills || []).length > 0 ? (
+                                            opp.requiredSkills.slice(0, 6).map((skill) => (
+                                                <span key={skill} className="px-1.5 py-0.5 bg-muted/50 border border-border rounded text-[9px] font-semibold text-foreground">
+                                                    {skill}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span className="text-foreground">Not specified</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className={cn(
+                            "bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3",
+                            user ? "hidden md:block" : ""
+                        )}>
+                            {hasApplyLink && (
+                                <div className="space-y-2">
+                                    <Button
+                                        onClick={handleApply}
+                                        className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg flex items-center justify-center gap-2 text-sm font-bold uppercase tracking-tight shadow-md"
+                                    >
+                                        Apply Now
+                                        <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            )}
 
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-1 gap-2">
                                 <button
                                     onClick={handleToggleSave}
                                     className={cn(
@@ -462,13 +601,6 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                 >
                                     {opp.isSaved ? <BookmarkSolidIcon className="w-3.5 h-3.5" /> : <BookmarkIcon className="w-3.5 h-3.5" />}
                                     {opp.isSaved ? 'Saved' : 'Save'}
-                                </button>
-                                <button
-                                    onClick={handleShare}
-                                    className="flex items-center justify-center gap-2 h-9 rounded-lg border border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 transition-all text-[10px] font-bold uppercase"
-                                >
-                                    <ShareIcon className="w-3.5 h-3.5" />
-                                    Share
                                 </button>
                             </div>
 
@@ -486,27 +618,6 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                             <p className="text-[10px] font-medium text-muted-foreground leading-relaxed">
                                 <span className="text-foreground font-bold">{opp?.company}</span> is actively recruiting for this role.
                             </p>
-                        </div>
-
-                        <div className="hidden lg:block bg-card p-4 rounded-xl border border-border shadow-sm space-y-3">
-                            <h4 className="text-[9px] font-bold uppercase tracking-widest text-primary">Share this listing</h4>
-                            <p className="text-[10px] font-medium text-muted-foreground leading-relaxed">
-                                Send this opportunity to a friend in one tap.
-                            </p>
-                            <div className="grid grid-cols-2 gap-2">
-                                <button
-                                    onClick={handleShare}
-                                    className="h-9 rounded-lg border border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 transition-all text-[10px] font-bold uppercase"
-                                >
-                                    Share
-                                </button>
-                                <button
-                                    onClick={handleCopyLink}
-                                    className="h-9 rounded-lg border border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 transition-all text-[10px] font-bold uppercase"
-                                >
-                                    Copy link
-                                </button>
-                            </div>
                         </div>
 
                         <div className="hidden lg:flex p-3.5 items-start gap-3 bg-muted/10 border border-border border-dashed rounded-xl">
@@ -537,17 +648,19 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
             {/* Mobile Actions - Floating Bottom (Logged In Users Only) */}
             {user ? (
                 <div className="md:hidden fixed bottom-4 left-3 right-3 z-40 flex gap-2 animate-in slide-in-from-bottom-4 duration-500">
-                    <Button
-                        onClick={handleApply}
-                        className="flex-1 h-11 bg-primary text-primary-foreground hover:bg-primary/90 font-bold uppercase tracking-tight shadow-xl rounded-xl flex items-center justify-center gap-2"
-                    >
-                        Apply Now
-                        <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                    </Button>
+                    {hasApplyLink && (
+                        <Button
+                            onClick={handleApply}
+                            className="flex-1 h-11 bg-primary text-primary-foreground hover:bg-primary/90 font-bold uppercase tracking-tight shadow-xl rounded-xl flex items-center justify-center gap-2"
+                        >
+                            Apply Now
+                            <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                        </Button>
+                    )}
                     <button
                         onClick={handleToggleSave}
                         className={cn(
-                            "w-11 h-11 rounded-xl shadow-lg flex items-center justify-center transition-all border",
+                            `w-11 h-11 rounded-xl shadow-lg flex items-center justify-center transition-all border ${!hasApplyLink ? 'flex-1' : ''}`,
                             opp.isSaved ? "bg-primary text-white border-primary" : "bg-card text-muted-foreground border-border"
                         )}
                     >

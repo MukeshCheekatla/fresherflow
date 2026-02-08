@@ -66,6 +66,7 @@ export const opportunitySchema = z.object({
 
     title: z.string().min(1, 'Title is required'),
     company: z.string().min(1, 'Company is required'),
+    companyWebsite: z.string().url().optional(),
     description: z.string().min(10, 'Description must be at least 10 characters').optional(),
 
     // Core Filters

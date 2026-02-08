@@ -34,6 +34,7 @@ export default function EditOpportunityPage() {
     const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED' | 'ARCHIVED'>('PUBLISHED');
     const [title, setTitle] = useState('');
     const [company, setCompany] = useState('');
+    const [companyWebsite, setCompanyWebsite] = useState('');
     const [description, setDescription] = useState('');
     const [locations, setLocations] = useState('');
     const [requiredSkills, setRequiredSkills] = useState('');
@@ -41,8 +42,8 @@ export default function EditOpportunityPage() {
     const [allowedCourses, setAllowedCourses] = useState<string[]>([]);
     const [passoutYears, setPassoutYears] = useState<number[]>([]);
     const [workMode, setWorkMode] = useState<'ONSITE' | 'HYBRID' | 'REMOTE'>('ONSITE');
-    const [salaryMin, setSalaryMin] = useState('');
-    const [salaryMax, setSalaryMax] = useState('');
+    const [salaryRange, setSalaryRange] = useState('');
+    const [salaryAmount, setSalaryAmount] = useState('');
     const [applyLink, setApplyLink] = useState('');
     const [expiresAt, setExpiresAt] = useState('');
     const [jobFunction, setJobFunction] = useState('');
@@ -116,6 +117,7 @@ export default function EditOpportunityPage() {
             setStatus(opp.status === 'DRAFT' ? 'PUBLISHED' : opp.status);
             setTitle(opp.title);
             setCompany(opp.company);
+            setCompanyWebsite(opp.companyWebsite || '');
             setDescription(opp.description || '');
             setLocations(opp.locations.join(', '));
             setRequiredSkills(opp.requiredSkills.join(', '));
@@ -123,8 +125,10 @@ export default function EditOpportunityPage() {
             setAllowedCourses(opp.allowedCourses || []);
             setPassoutYears(opp.allowedPassoutYears);
             setWorkMode(opp.workMode || 'ONSITE');
-            setSalaryMin(opp.salaryMin?.toString() || '');
-            setSalaryMax(opp.salaryMax?.toString() || '');
+            setSalaryRange(opp.salaryRange || '');
+            if (!opp.salaryRange && opp.salaryMin != null && opp.salaryMax != null) {
+                setSalaryRange(`${opp.salaryMin}-${opp.salaryMax}`);
+            }
             setJobFunction(opp.jobFunction || '');
             setIncentives(opp.incentives || '');
             setSalaryPeriod(opp.salaryPeriod || 'YEARLY');
@@ -211,6 +215,15 @@ export default function EditOpportunityPage() {
         setExpiresAt(`${date}T${newTime}`);
     };
 
+    const formatSalaryRange = (amount: string, period: 'YEARLY' | 'MONTHLY') => {
+        const raw = parseFloat(String(amount).replace(/[^0-9.]/g, ''));
+        if (!raw || Number.isNaN(raw)) return '';
+        if (period === 'YEARLY') {
+            return `${raw} LPA`;
+        }
+        return `₹${raw.toLocaleString('en-IN')}/mo`;
+    };
+
     const getFriendlyExpiry = () => {
         if (!expiresAt) return null;
         try {
@@ -277,6 +290,7 @@ export default function EditOpportunityPage() {
                 status,
                 title,
                 company,
+                companyWebsite: companyWebsite || undefined,
                 description,
                 allowedDegrees,
                 allowedCourses,
@@ -284,8 +298,7 @@ export default function EditOpportunityPage() {
                 requiredSkills: requiredSkills.split(',').map(s => s.trim()).filter(Boolean),
                 locations: locations.split(',').map(s => s.trim()).filter(Boolean),
                 workMode: type === 'WALKIN' ? undefined : workMode,
-                salaryMin: salaryMin ? parseInt(String(salaryMin).replace(/[^0-9]/g, '')) : undefined,
-                salaryMax: salaryMax ? parseInt(String(salaryMax).replace(/[^0-9]/g, '')) : undefined,
+                salaryRange: salaryRange || formatSalaryRange(salaryAmount, salaryPeriod) || undefined,
                 salaryPeriod,
                 incentives: incentives || undefined,
                 jobFunction: jobFunction || undefined,
@@ -463,6 +476,16 @@ export default function EditOpportunityPage() {
                             />
                         </div>
                         <div className="space-y-2">
+                            <label className="text-xs font-medium text-muted-foreground tracking-wide">Company Website (logo)</label>
+                            <input
+                                type="url"
+                                value={companyWebsite}
+                                onChange={(e) => setCompanyWebsite(e.target.value)}
+                                placeholder="https://wipro.com"
+                                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                            />
+                        </div>
+                        <div className="space-y-2">
                             <label className="text-xs font-medium text-muted-foreground tracking-wide uppercase flex items-center gap-2">
                                 Incentives
                             </label>
@@ -488,25 +511,23 @@ export default function EditOpportunityPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
                         <div className="space-y-2">
                             <label className="text-xs font-medium text-muted-foreground tracking-wide flex items-center gap-2 uppercase">
-                                <CurrencyRupeeIcon className="w-4 h-4" /> Min Salary
+                                <CurrencyRupeeIcon className="w-4 h-4" /> Salary amount ({salaryPeriod === 'YEARLY' ? 'LPA' : 'Monthly'})
                             </label>
                             <input
-                                type="text"
-                                value={salaryMin}
-                                onChange={(e) => setSalaryMin(e.target.value)}
-                                placeholder="e.g. 15,000"
+                                type="number"
+                                value={salaryAmount}
+                                onChange={(e) => setSalaryAmount(e.target.value)}
+                                placeholder={salaryPeriod === 'YEARLY' ? 'e.g. 2' : 'e.g. 20000'}
                                 className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-xs font-medium text-muted-foreground tracking-wide flex items-center gap-2 uppercase">
-                                <CurrencyRupeeIcon className="w-4 h-4" /> Max Salary
-                            </label>
+                            <label className="text-xs font-medium text-muted-foreground tracking-wide uppercase">Salary note (optional)</label>
                             <input
                                 type="text"
-                                value={salaryMax}
-                                onChange={(e) => setSalaryMax(e.target.value)}
-                                placeholder="e.g. 40,000"
+                                value={salaryRange}
+                                onChange={(e) => setSalaryRange(e.target.value)}
+                                placeholder="e.g. 2 LPA or 20k-30k"
                                 className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                             />
                         </div>
@@ -782,31 +803,62 @@ export default function EditOpportunityPage() {
                                     <p className="text-[9px] font-bold text-amber-600/60 uppercase">Preview: {formatTime(startTime)} - {formatTime(endTime)}</p>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-medium text-amber-700 dark:text-amber-400 tracking-wide uppercase">Venue Address *</label>
-                                    <textarea
-                                        required
-                                        value={venueAddress}
-                                        onChange={(e) => setVenueAddress(e.target.value)}
-                                        rows={2}
-                                        className="flex min-h-11 w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 resize-none"
-                                        placeholder="Complete street address..."
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-medium text-amber-700 dark:text-amber-400 tracking-wide uppercase">Venue Link (Maps URL)</label>
-                                    <input
-                                        value={venueLink}
-                                        onChange={(e) => setVenueLink(e.target.value)}
-                                        className="flex h-10 w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
-                                        placeholder="Google Maps or location link..."
-                                    />
-                                </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-amber-700 dark:text-amber-400 tracking-wide uppercase">Venue Address *</label>
+                                <textarea
+                                    required
+                                    value={venueAddress}
+                                    onChange={(e) => setVenueAddress(e.target.value)}
+                                    rows={2}
+                                    className="flex min-h-11 w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 resize-none"
+                                    placeholder="Complete street address..."
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-amber-700 dark:text-amber-400 tracking-wide uppercase">Venue Link (Maps URL)</label>
+                                <input
+                                    value={venueLink}
+                                    onChange={(e) => setVenueLink(e.target.value)}
+                                    className="flex h-10 w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                                    placeholder="Google Maps or location link..."
+                                />
                             </div>
                         </div>
-                    )
-                        : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-amber-700 dark:text-amber-400 tracking-wide uppercase">Documents to carry</label>
+                                <input
+                                    value={requiredDocuments}
+                                    onChange={(e) => setRequiredDocuments(e.target.value)}
+                                    className="flex h-10 w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                                    placeholder="Resume, Photo, PAN, Provisional certificate"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-amber-700 dark:text-amber-400 tracking-wide uppercase">Contact person</label>
+                                <input
+                                    value={contactPerson}
+                                    onChange={(e) => setContactPerson(e.target.value)}
+                                    className="flex h-10 w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                                    placeholder="Wipro TA Team"
+                                />
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-amber-700 dark:text-amber-400 tracking-wide uppercase">Contact phone</label>
+                                <input
+                                    value={contactPhone}
+                                    onChange={(e) => setContactPhone(e.target.value)}
+                                    className="flex h-10 w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                                    placeholder="Optional phone number"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )
+                    : (
                             <div className="space-y-2">
                                 <label className="text-xs font-medium text-muted-foreground tracking-wide">Apply URL *</label>
                                 <input

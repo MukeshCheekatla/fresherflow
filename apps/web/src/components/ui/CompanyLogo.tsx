@@ -17,11 +17,12 @@ const getDomainFromUrl = (url: string): string | null => {
 
 interface CompanyLogoProps {
     companyName: string;
+    companyWebsite?: string;
     applyLink?: string;
     className?: string;
 }
 
-export default function CompanyLogo({ companyName, applyLink, className }: CompanyLogoProps) {
+export default function CompanyLogo({ companyName, companyWebsite, applyLink, className }: CompanyLogoProps) {
     const [imgError, setImgError] = useState(false);
 
     // candidate domains strategy
@@ -48,12 +49,42 @@ export default function CompanyLogo({ companyName, applyLink, className }: Compa
         return tokens.join('');
     };
 
+    const knownDomains: Record<string, string> = {
+        wipro: 'wipro.com',
+        infosys: 'infosys.com',
+        tcs: 'tcs.com',
+        'tata consultancy services': 'tcs.com',
+        accenture: 'accenture.com',
+        deloitte: 'deloitte.com',
+        cognizant: 'cognizant.com',
+        capgemini: 'capgemini.com',
+        'tech mahindra': 'techmahindra.com',
+        hcl: 'hcltech.com',
+        'hcl technologies': 'hcltech.com',
+        ibm: 'ibm.com',
+        oracle: 'oracle.com',
+        sap: 'sap.com',
+        'amazon': 'amazon.com',
+        'google': 'google.com',
+        'microsoft': 'microsoft.com',
+        'meta': 'meta.com',
+        'atlassian': 'atlassian.com'
+    };
+
+    const normalizedCompany = companyName
+        ? companyName.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim()
+        : '';
+
+    const knownDomain = normalizedCompany ? knownDomains[normalizedCompany] : undefined;
+
     const constructedDomain = companyName
         ? `${normalizeCompanyName(companyName)}.com`
         : null;
 
+    const websiteDomain = companyWebsite ? getDomainFromUrl(companyWebsite) : null;
     const linkDomain = applyLink ? getDomainFromUrl(applyLink) : null;
     const normalizedLinkDomain = linkDomain?.startsWith('www.') ? linkDomain.slice(4) : linkDomain;
+    const normalizedWebsiteDomain = websiteDomain?.startsWith('www.') ? websiteDomain.slice(4) : websiteDomain;
     const blockedDomains = new Set([
         'boards.greenhouse.io',
         'greenhouse.io',
@@ -90,6 +121,14 @@ export default function CompanyLogo({ companyName, applyLink, className }: Compa
     const [attemptIndex, setAttemptIndex] = useState(0);
 
     const candidates = [];
+    if (normalizedWebsiteDomain) {
+        candidates.push(`https://logo.clearbit.com/${normalizedWebsiteDomain}?size=80`);
+        candidates.push(`https://logo.clearbit.com/www.${normalizedWebsiteDomain}?size=80`);
+    }
+    if (knownDomain) {
+        candidates.push(`https://logo.clearbit.com/${knownDomain}?size=80`);
+        candidates.push(`https://logo.clearbit.com/www.${knownDomain}?size=80`);
+    }
     if (normalizedLinkDomain && !isBlockedDomain) {
         candidates.push(`https://logo.clearbit.com/${normalizedLinkDomain}?size=80`);
         candidates.push(`https://logo.clearbit.com/www.${normalizedLinkDomain}?size=80`);

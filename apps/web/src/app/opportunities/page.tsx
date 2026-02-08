@@ -60,8 +60,10 @@ function OpportunitiesContent() {
         filteredOpps,
         totalCount,
         isLoading,
+        error,
         profileIncomplete,
-        toggleSave
+        toggleSave,
+        reload
     } = useOpportunitiesFeed({
         type: selectedType,
         selectedLoc,
@@ -279,6 +281,20 @@ function OpportunitiesContent() {
                             ) : isLoading ? (
                                 <div className="h-100 relative">
                                     <LoadingScreen message="Loading listings..." fullScreen={false} />
+                                </div>
+                            ) : error ? (
+                                <div className="p-12 text-center rounded-2xl border border-dashed border-border bg-card">
+                                    <h3 className="text-lg font-bold text-foreground tracking-tight">Feed unavailable</h3>
+                                    <p className="text-sm font-medium text-muted-foreground mt-2 max-w-sm mx-auto">
+                                        {error}
+                                    </p>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => reload()}
+                                        className="mt-6 h-10 px-6 text-xs font-bold uppercase tracking-widest"
+                                    >
+                                        Retry
+                                    </Button>
                                 </div>
                             ) : filteredOpps.length === 0 ? (
                                 <div className="p-16 text-center rounded-3xl border border-dashed border-border bg-card/80">

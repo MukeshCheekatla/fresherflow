@@ -11,13 +11,15 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function AdminLoginPage() {
-    const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL!;
+    const ADMIN_EMAIL = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || '').toLowerCase();
+    const adminEmailConfigured = ADMIN_EMAIL.length > 0;
     const [email, setEmail] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showOtherOptions, setShowOtherOptions] = useState(false);
 
     // Check if user has passkeys on mount
     useEffect(() => {
+        if (!adminEmailConfigured) return;
         const checkPasskeys = async () => {
             try {
                 await adminAuthApi.getLoginOptions(ADMIN_EMAIL);
@@ -27,7 +29,7 @@ export default function AdminLoginPage() {
             }
         };
         checkPasskeys();
-    }, [ADMIN_EMAIL]);
+    }, [ADMIN_EMAIL, adminEmailConfigured]);
 
     const handleRegisterNewPasskey = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -35,16 +37,16 @@ export default function AdminLoginPage() {
             toast.error('Enter admin email to register device');
             return;
         }
-        if (email !== ADMIN_EMAIL) {
+        if (adminEmailConfigured && email.toLowerCase() !== ADMIN_EMAIL) {
             toast.error('Unauthorized email');
             return;
         }
 
         setIsLoading(true);
         try {
-            const options = await adminAuthApi.getRegistrationOptions(email);
+            const options = await adminAuthApi.getRegistrationOptions(email.toLowerCase());
             const regResp = await startRegistration({ optionsJSON: options as unknown as Parameters<typeof startRegistration>[0]['optionsJSON'] });
-            const verification = await adminAuthApi.verifyRegistration(email, regResp);
+            const verification = await adminAuthApi.verifyRegistration(email.toLowerCase(), regResp);
 
             if (verification.verified) {
                 toast.success('Passkey registered! Now use Quick Login to enter.');
@@ -61,7 +63,14 @@ export default function AdminLoginPage() {
     const handleQuickLogin = async () => {
         setIsLoading(true);
         try {
-            const options = await adminAuthApi.getLoginOptions(ADMIN_EMAIL);
+            const effectiveEmail = adminEmailConfigured ? ADMIN_EMAIL : email.toLowerCase();
+            if (!effectiveEmail) {
+                toast.error('Enter admin email to continue');
+                setShowOtherOptions(true);
+                setIsLoading(false);
+                return;
+            }
+            const options = await adminAuthApi.getLoginOptions(effectiveEmail);
 
             if ('registrationRequired' in options && options.registrationRequired) {
                 toast.error('No passkey found. Please use Other Options to create one.');
@@ -71,7 +80,7 @@ export default function AdminLoginPage() {
             }
 
             const asseResp = await startAuthentication({ optionsJSON: options as unknown as Parameters<typeof startAuthentication>[0]['optionsJSON'] });
-            const verification = await adminAuthApi.verifyLogin(ADMIN_EMAIL, asseResp);
+            const verification = await adminAuthApi.verifyLogin(effectiveEmail, asseResp);
 
             if (verification.verified) {
                 toast.success('Access Granted');
@@ -99,6 +108,11 @@ export default function AdminLoginPage() {
                     </div>
                     <h1 className="text-2xl font-bold tracking-tight uppercase text-foreground">Admin Portal</h1>
                     <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest opacity-60">Passkey Required</p>
+                    {!adminEmailConfigured && (
+                        <p className="text-[9px] text-muted-foreground uppercase tracking-widest opacity-50">
+                            Admin email not configured in client env
+                        </p>
+                    )}
                 </div>
 
                 <div className="space-y-4">
@@ -125,7 +139,7 @@ export default function AdminLoginPage() {
                                 </label>
                                 <input
                                     type="email"
-                                    placeholder={ADMIN_EMAIL}
+                                    placeholder={adminEmailConfigured ? ADMIN_EMAIL : 'admin@yourdomain.com'}
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"

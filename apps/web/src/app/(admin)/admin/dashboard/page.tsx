@@ -1,160 +1,181 @@
 'use client';
 
-import { useAdmin } from '@/contexts/AdminContext';
+import { useEffect, useState } from 'react';
 import { adminApi } from '@/lib/api/admin';
-import Link from 'next/link';
-import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import toast from 'react-hot-toast';
+import { cn } from '@/lib/utils';
 import {
     BriefcaseIcon,
-    ClockIcon,
-    GlobeAltIcon,
-    ChevronRightIcon,
-    ArrowUpRightIcon,
-    PlusIcon,
+    MapPinIcon,
+    PlusCircleIcon,
+    ArrowRightIcon,
     ChartBarIcon,
-    CalendarIcon,
-    ChatBubbleBottomCenterTextIcon
+    ClockIcon
 } from '@heroicons/react/24/outline';
+import Link from 'next/link';
+import toast from 'react-hot-toast';
+import LoadingScreen from '@/components/ui/LoadingScreen';
 
-export default function AdminDashboardPage() {
-    const { isAuthenticated } = useAdmin();
-    const router = useRouter();
-
-    // Stats state
+export default function AdminDashboardHome() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [recent, setRecent] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
-        total: 0,
-        active: 0,
+        jobs: 0,
         walkins: 0,
-        expired: 0,
-        loading: true
+        total: 0,
+        recent24h: 0
     });
 
-    const fetchStats = useCallback(async () => {
-        if (!isAuthenticated) return;
-
-        try {
-            const data = await adminApi.getOpportunitiesSummary();
-            const summary = data.summary || {};
-
-            setStats({
-                total: summary.total || 0,
-                active: summary.active || 0,
-                walkins: summary.walkins || 0,
-                expired: summary.expired || 0,
-                loading: false
-            });
-        } catch (err: unknown) {
-            const error = err as Error;
-            console.error('Error fetching stats:', error);
-            toast.error(`Error: Failed to load stats: ${error.message}`);
-            setStats(prev => ({ ...prev, loading: false }));
-        }
-    }, [isAuthenticated]);
-
     useEffect(() => {
-        if (!isAuthenticated) {
-            router.push('/admin/login');
-            return;
-        }
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        void fetchStats();
-    }, [isAuthenticated, router, fetchStats]);
+        const load = async () => {
+            setLoading(true);
+            try {
+                const [summaryRes, recentRes] = await Promise.all([
+                    adminApi.getOpportunitiesSummary(),
+                    adminApi.getOpportunities({ limit: 5 })
+                ]);
 
-    if (!isAuthenticated) return null;
+                const summary = summaryRes.summary || {};
+                const opportunities = recentRes.opportunities || [];
 
-    const cards = [
-        { label: 'Total Listings', value: stats.total, icon: ChartBarIcon, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-        { label: 'Active Jobs', value: stats.active, icon: BriefcaseIcon, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-        { label: 'Walk-ins', value: stats.walkins, icon: CalendarIcon, color: 'text-orange-500', bg: 'bg-orange-500/10' },
-        { label: 'Expired', value: stats.expired, icon: ClockIcon, color: 'text-muted-foreground', bg: 'bg-muted' },
+                setRecent(opportunities);
+                setStats({
+                    jobs: (summary.total || 0) - (summary.walkins || 0),
+                    walkins: summary.walkins || 0,
+                    total: summary.total || 0,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    recent24h: opportunities.filter((o: any) => {
+                        const posted = new Date(o.postedAt).getTime();
+                        return posted > Date.now() - 24 * 60 * 60 * 1000;
+                    }).length
+                });
+            } catch (err: unknown) {
+                const error = err as Error;
+                toast.error(`Failed to load dashboard: ${error.message || 'Unknown error'}`);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        load();
+    }, []);
+
+    const statsCards = [
+        { label: 'Live listings', value: stats.jobs, icon: BriefcaseIcon, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+        { label: 'Walk-ins', value: stats.walkins, icon: MapPinIcon, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+        { label: 'Total listings', value: stats.total, icon: ChartBarIcon, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+        { label: 'New (24h)', value: stats.recent24h, icon: ClockIcon, color: 'text-amber-500', bg: 'bg-amber-500/10' },
     ];
 
+    if (loading) {
+        return <LoadingScreen message="Loading admin overview..." fullScreen={false} />;
+    }
+
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-4">
-            {/* Header - Sticky on Mobile */}
-            <div className="sticky top-0 z-20 -mx-4 px-4 py-2 bg-background/95 backdrop-blur-md md:relative md:top-auto md:z-auto md:mx-0 md:px-0 md:py-0 md:bg-transparent mb-4">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Overview</h1>
-                        <p className="text-sm text-muted-foreground">Listings, activity, and health at a glance.</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => fetchStats()}
-                            className="p-2.5 text-muted-foreground bg-card border border-border rounded-xl hover:bg-muted/50 transition-all active:scale-95"
-                        >
-                            <ClockIcon className="w-5 h-5" />
-                        </button>
-                        <Link href="/admin/opportunities/create" className="premium-button flex items-center gap-2">
-                            <PlusIcon className="w-5 h-5" />
-                            Add listing
-                        </Link>
-                    </div>
-                </div>
-            </div>
+        <div className="space-y-4 md:space-y-6 animate-in fade-in duration-700 pb-8 text-foreground">
+            <header className="space-y-0.5">
+                <h1 className="text-xl md:text-2xl font-semibold tracking-tight">Admin overview</h1>
+                <p className="text-xs md:text-sm text-muted-foreground">Quick summary and shortcuts.</p>
+            </header>
 
-            {/* Stat Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                {cards.map((card, idx) => {
-                    const Icon = card.icon;
-                    return (
-                        <div key={idx} className="bg-card p-3.5 md:p-5 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all duration-300 group">
-                            <div className="flex items-center justify-between mb-3 md:mb-4">
-                                <div className={`p-2.5 md:p-3 rounded-xl ${card.bg} ${card.color} group-hover:scale-110 transition-transform duration-300`}>
-                                    <Icon className="w-5 h-5 md:w-6 md:h-6" />
-                                </div>
-                                <span className="text-[10px] md:text-xs font-bold text-muted-foreground uppercase tracking-[0.12em]">{card.label}</span>
-                            </div>
-                            <div className="flex items-baseline gap-2">
-                                <h2 className="text-2xl md:text-3xl font-bold text-foreground leading-none">
-                                    {stats.loading ? (
-                                        <div className="h-7 w-10 md:h-8 md:w-12 bg-muted animate-pulse rounded" />
-                                    ) : card.value}
-                                </h2>
-                                <div className="text-[10px] md:text-xs font-semibold text-emerald-500 flex items-center gap-0.5">
-                                    <ArrowUpRightIcon className="w-2.5 h-2.5 md:w-3 md:h-3" />
-                                </div>
-                            </div>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                {statsCards.map((stat) => (
+                    <div key={stat.label} className="bg-card p-4 md:p-5 rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-medium text-muted-foreground tracking-wide truncate pr-2">
+                                {stat.label}
+                            </span>
+                            <stat.icon className={cn("w-3.5 h-3.5 md:w-4 md:h-4 shrink-0", stat.color)} />
                         </div>
-                    );
-                })}
+                        <p className="text-xl font-semibold tracking-tight">{stat.value}</p>
+                    </div>
+                ))}
             </div>
 
-            {/* Quick Shortcuts */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-3 bg-card rounded-3xl border border-border p-5 md:p-7">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-bold text-foreground">Quick actions</h3>
-                        <Link href="/admin/opportunities" className="text-sm font-semibold text-blue-500 hover:underline">View all</Link>
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                <Link
+                    href="/admin/opportunities/create"
+                    className="group bg-card p-4 md:p-5 rounded-lg border border-border shadow-sm flex items-center justify-between transition-all hover:border-primary/50 hover:shadow-md"
+                >
+                    <div className="space-y-0.5">
+                        <div className="flex items-center gap-2 text-primary">
+                            <PlusCircleIcon className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                            <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider">Listings</span>
+                        </div>
+                        <h3 className="text-sm md:text-base font-semibold">Create listing</h3>
+                        <p className="text-[11px] md:text-xs text-muted-foreground font-medium">Add jobs, internships, or walk-ins.</p>
                     </div>
+                    <div className="w-9 h-9 md:w-10 md:h-10 bg-primary/10 rounded-md flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                        <ArrowRightIcon className="w-4 h-4 text-primary" />
+                    </div>
+                </Link>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {[
-                            { title: 'New job listing', desc: 'Add a full-time role', icon: GlobeAltIcon, href: '/admin/opportunities/create' },
-                            { title: 'New internship', desc: 'Add a student opportunity', icon: ChartBarIcon, href: '/admin/opportunities/create' },
-                            { title: 'Review feedback', desc: 'Check user reports', icon: ChatBubbleBottomCenterTextIcon, href: '/admin/feedback' },
-                            { title: 'Manage listings', desc: 'Update or remove listings', icon: BriefcaseIcon, href: '/admin/opportunities' },
-                        ].map((action, i) => (
-                            <Link
-                                key={i}
-                                href={action.href}
-                                className="flex items-center gap-4 p-4 rounded-2xl border border-border bg-card/50 hover:border-primary/50 hover:bg-muted/30 transition-all group"
-                            >
-                                <div className="p-3 bg-muted rounded-xl group-hover:bg-background transition-colors">
-                                    <action.icon className="w-6 h-6 text-muted-foreground group-hover:text-foreground" />
-                                </div>
-                                <div className="flex-1">
-                                    <h4 className="text-base font-bold text-foreground group-hover:text-blue-500">{action.title}</h4>
-                                    <p className="text-sm text-muted-foreground">{action.desc}</p>
-                                </div>
-                                <ChevronRightIcon className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
-                            </Link>
-                        ))}
+                <Link
+                    href="/admin/feedback"
+                    className="group bg-card p-4 md:p-5 rounded-lg border border-border shadow-sm flex items-center justify-between transition-all hover:border-primary/50 hover:shadow-md"
+                >
+                    <div className="space-y-0.5">
+                        <div className="flex items-center gap-2 text-emerald-500">
+                            <ChartBarIcon className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                            <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider">Reports</span>
+                        </div>
+                        <h3 className="text-sm md:text-base font-semibold">Review feedback</h3>
+                        <p className="text-[11px] md:text-xs text-muted-foreground font-medium">Review user reports.</p>
                     </div>
+                    <div className="w-9 h-9 md:w-10 md:h-10 bg-muted rounded-md flex items-center justify-center group-hover:bg-muted/80 transition-colors">
+                        <ArrowRightIcon className="w-4 h-4 text-foreground/70" />
+                    </div>
+                </Link>
+            </div>
+
+            {/* Recent Postings Simple List */}
+            <div className="bg-card dark:bg-card/40 rounded-lg border border-border shadow-sm overflow-hidden w-full">
+                <div className="px-4 py-3 md:px-5 md:py-4 border-b border-border flex justify-between items-center bg-muted/20 md:bg-transparent">
+                    <h3 className="text-sm md:text-base font-semibold tracking-tight">Recent listings</h3>
+                    <Link href="/admin/opportunities" className="text-[10px] md:text-xs font-medium text-primary hover:underline">View all</Link>
+                </div>
+                <div className="divide-y divide-border">
+                    {recent.map((item) => {
+                        const isWalkin = item.type === 'WALKIN';
+                        return (
+                            <Link
+                                key={item.id}
+                                href={`/admin/opportunities/edit/${item.id}`}
+                                className="px-4 py-2.5 md:px-5 md:py-3 flex items-center justify-between hover:bg-muted/50 transition-colors"
+                            >
+                                <div className="min-w-0 flex-1 pr-2">
+                                    <p className="text-xs md:text-sm font-medium truncate">
+                                        {item.company}
+                                    </p>
+                                    <p className="text-[10px] md:text-xs text-muted-foreground truncate font-medium">
+                                        {item.title || item.normalizedRole}
+                                    </p>
+                                </div>
+                                <div className="shrink-0 text-right space-y-0.5 md:space-y-1">
+                                    <span className="text-[9px] md:text-xs text-muted-foreground font-medium block">
+                                        {new Date(item.postedAt).toLocaleDateString()}
+                                    </span>
+                                    <span className={cn(
+                                        "inline-flex items-center rounded-md px-1 py-0.5 md:px-1.5 md:py-0.5 text-[9px] md:text-xs font-medium ring-1 ring-inset",
+                                        isWalkin ? "bg-amber-500/10 text-amber-500 ring-amber-500/20" : "bg-blue-500/10 text-blue-500 ring-blue-500/20"
+                                    )}>
+                                        {item.type}
+                                    </span>
+                                </div>
+                            </Link>
+                        );
+                    })}
+                    {recent.length === 0 && (
+                        <div className="px-5 py-6 text-center text-xs md:text-sm text-muted-foreground">
+                            No recent listings yet.
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     );
 }
+
+

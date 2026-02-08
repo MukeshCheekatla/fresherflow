@@ -2,6 +2,18 @@ import morgan, { TokenIndexer } from 'morgan';
 import chalk from 'chalk';
 import { IncomingMessage, ServerResponse } from 'http';
 
+const noisyProbePatterns = [
+    /\.env/i,
+    /phpinfo|wp-|xmlrpc|wlwmanifest|phpmyadmin|server-status|\.php/i,
+    /sitemap\.xml|robots\.txt|favicon\.ico/i,
+    /node_modules|vendor|storage|config|\.yml|\.ini|\.log/i
+];
+
+const isNoisyProbe = (url: string, status: number) => {
+    if (status !== 404) return false;
+    return noisyProbePatterns.some((pattern) => pattern.test(url));
+};
+
 // Custom Morgan format with colors
 export const httpLogger = morgan((tokens: TokenIndexer<IncomingMessage, ServerResponse>, req: IncomingMessage, res: ServerResponse) => {
     const method = tokens.method(req, res) || '';
@@ -41,6 +53,8 @@ export const httpLogger = morgan((tokens: TokenIndexer<IncomingMessage, ServerRe
         chalk.white(url),
         timeColor(`${responseTimeMs.toFixed(0)}ms`)
     ].join(' ');
+}, {
+    skip: (req, res) => isNoisyProbe(req.url || '', res.statusCode || 0)
 });
 
 export default httpLogger;

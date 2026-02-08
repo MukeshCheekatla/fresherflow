@@ -15,7 +15,6 @@ import Bars3Icon from '@heroicons/react/24/outline/Bars3Icon';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import AcademicCapIcon from '@heroicons/react/24/outline/AcademicCapIcon';
 import QuestionMarkCircleIcon from '@heroicons/react/24/outline/QuestionMarkCircleIcon';
-import UserGroupIcon from '@heroicons/react/24/outline/UserGroupIcon';
 import { ThemeToggle } from './ThemeToggle';
 
 export function Navbar() {
@@ -146,7 +145,7 @@ export function Navbar() {
                                 { href: '/opportunities', label: 'Search Feed', icon: MagnifyingGlassIcon },
                                 { href: '/jobs', label: 'Latest Jobs', icon: BriefcaseIcon },
                                 { href: '/internships', label: 'Internships', icon: AcademicCapIcon },
-                                { href: '/walk-ins', label: 'Walk-in Drives', icon: UserGroupIcon },
+                                { href: '/walk-ins', label: 'Walk-in Drives', icon: BriefcaseIcon },
                                 { href: '/account/saved', label: 'My Saved', icon: BookmarkIcon },
                                 { href: '/profile/edit', label: 'My Profile', icon: UserIcon },
                             ].map((item) => (
@@ -234,7 +233,7 @@ export function MobileNav() {
         { href: '/opportunities', label: 'Search', icon: MagnifyingGlassIcon },
         { href: '/jobs', label: 'Jobs', icon: BriefcaseIcon },
         { href: '/internships', label: 'Intern', icon: AcademicCapIcon },
-        { href: '/walk-ins', label: 'Drives', icon: UserGroupIcon },
+        { href: '/walk-ins', label: 'Drives', icon: BriefcaseIcon },
         { href: '/account/saved', label: 'Saved', icon: BookmarkIcon },
     ];
 

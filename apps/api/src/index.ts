@@ -137,6 +137,23 @@ app.get(['/health', '/api/health'], (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Quiet fallback endpoints for bot hits that commonly target the API domain
+app.get('/', (_req, res) => {
+    res.status(200).send('FresherFlow API');
+});
+
+app.get('/favicon.ico', (_req, res) => {
+    res.status(204).end();
+});
+
+app.get('/robots.txt', (_req, res) => {
+    res.type('text/plain').send('User-agent: *\nDisallow: /');
+});
+
+app.get('/sitemap.xml', (_req, res) => {
+    res.type('application/xml').send('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>');
+});
+
 // User routes
 app.use('/api/auth/register', registerLimiter);
 app.use('/api/auth/login', authLimiter);

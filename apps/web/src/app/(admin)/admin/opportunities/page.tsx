@@ -48,6 +48,8 @@ export default function OpportunitiesListPage() {
     const pageSize = 20;
     const debouncedSearch = useDebounce(search, 300);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [bulkActionPending, setBulkActionPending] = useState(false);
+    const [bulkActionLabel, setBulkActionLabel] = useState('');
     const exportUrl = useMemo(() => {
         const params = new URLSearchParams();
         if (typeFilter) params.set('type', enumToTypeParam(typeFilter));
@@ -254,6 +256,8 @@ export default function OpportunitiesListPage() {
             action: async () => {
                 const loadingToast = toast.loading(` Processing bulk ${action.toLowerCase()}...`);
                 try {
+                    setBulkActionPending(true);
+                    setBulkActionLabel(actionNames[action]);
                     const res = await bulkOpportunityAction(selectedIds, action);
                     if (!res.success) throw new Error(res.error);
 
@@ -263,6 +267,9 @@ export default function OpportunitiesListPage() {
                     setConfirmModal(prev => ({ ...prev, show: false }));
                 } catch (err: unknown) {
                     toast.error(` Failed: ${(err as Error).message}`, { id: loadingToast });
+                } finally {
+                    setBulkActionPending(false);
+                    setBulkActionLabel('');
                 }
             }
         });
@@ -333,32 +340,42 @@ export default function OpportunitiesListPage() {
                                 {selectedIds.length}
                             </div>
                             <span className="text-sm font-medium text-primary">Selected listings</span>
+                            {bulkActionPending && (
+                                <span className="text-xs font-semibold text-muted-foreground inline-flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                                    Working on {bulkActionLabel || 'update'}...
+                                </span>
+                            )}
                         </div>
                         <div className="h-4 w-[1px] bg-primary/20" />
                         <div className="flex items-center gap-1">
                             <button
                                 onClick={() => handleBulkAction('PUBLISH')}
-                                className="h-8 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-100/50 rounded-md transition-colors"
+                                disabled={bulkActionPending}
+                                className="h-8 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-100/50 rounded-md transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                             >
-                                Publish all
+                                {bulkActionPending ? 'Working...' : 'Publish all'}
                             </button>
                             <button
                                 onClick={() => handleBulkAction('ARCHIVE')}
-                                className="h-8 px-3 text-xs font-semibold text-amber-700 hover:bg-amber-100/50 rounded-md transition-colors"
+                                disabled={bulkActionPending}
+                                className="h-8 px-3 text-xs font-semibold text-amber-700 hover:bg-amber-100/50 rounded-md transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                             >
-                                Archive all
+                                {bulkActionPending ? 'Working...' : 'Archive all'}
                             </button>
                             <button
                                 onClick={() => handleBulkAction('DELETE')}
-                                className="h-8 px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100/50 rounded-md transition-colors"
+                                disabled={bulkActionPending}
+                                className="h-8 px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100/50 rounded-md transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                             >
-                                Delete all
+                                {bulkActionPending ? 'Working...' : 'Delete all'}
                             </button>
                         </div>
                     </div>
                     <button
                         onClick={() => setSelectedIds([])}
-                        className="text-xs font-medium text-muted-foreground hover:text-foreground px-2"
+                        disabled={bulkActionPending}
+                        className="text-xs font-medium text-muted-foreground hover:text-foreground px-2 disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                         Clear selection
                     </button>
@@ -583,8 +600,8 @@ export default function OpportunitiesListPage() {
                                 <tr className="border-b border-border bg-muted/50">
                                     <th className="group px-5 py-3 w-10">
                                         <div
-                                            onClick={toggleSelectAll}
-                                            className={`w-4 h-4 rounded border transition-colors cursor-pointer flex items-center justify-center ${selectedIds.length === displayOpportunities.length && displayOpportunities.length > 0
+                                            onClick={bulkActionPending ? undefined : toggleSelectAll}
+                                            className={`w-4 h-4 rounded border transition-colors flex items-center justify-center ${bulkActionPending ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'} ${selectedIds.length === displayOpportunities.length && displayOpportunities.length > 0
                                                 ? 'bg-primary border-primary'
                                                 : 'border-muted-foreground/30 hover:border-primary'
                                                 }`}
@@ -605,8 +622,8 @@ export default function OpportunitiesListPage() {
                                     <tr key={opp.id} className={`hover:bg-muted/50 transition-colors group ${selectedIds.includes(opp.id) ? 'bg-primary/5' : ''}`}>
                                         <td className="px-5 py-4">
                                             <div
-                                                onClick={() => toggleSelect(opp.id)}
-                                                className={`w-4 h-4 rounded border transition-colors cursor-pointer flex items-center justify-center ${selectedIds.includes(opp.id)
+                                                onClick={bulkActionPending ? undefined : () => toggleSelect(opp.id)}
+                                                className={`w-4 h-4 rounded border transition-colors flex items-center justify-center ${bulkActionPending ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'} ${selectedIds.includes(opp.id)
                                                     ? 'bg-primary border-primary'
                                                     : 'border-muted-foreground/30 hover:border-primary'
                                                     }`}
@@ -711,7 +728,7 @@ export default function OpportunitiesListPage() {
                         Previous
                     </button>
                     <span className="text-xs font-medium text-muted-foreground">
-                        Page {page} of {effectiveTotalPages} · {totalCount} results
+                        Page {page} of {effectiveTotalPages} - {totalCount} results
                     </span>
                     <button
                         onClick={() => setPage(p => p + 1)}

@@ -123,6 +123,7 @@ export interface Opportunity {
     // Basic Info
     title: string;
     company: string;
+    companyWebsite?: string;
     description: string;
 
     // Eligibility

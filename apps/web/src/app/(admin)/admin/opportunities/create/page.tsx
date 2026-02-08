@@ -24,12 +24,14 @@ export default function CreateOpportunityPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [isParsing, setIsParsing] = useState(false);
     const [pastedText, setPastedText] = useState('');
+    const [pastedJson, setPastedJson] = useState('');
     const [showParser, setShowParser] = useState(false);
 
     // Form state
     const [type, setType] = useState<'JOB' | 'INTERNSHIP' | 'WALKIN'>('JOB');
     const [title, setTitle] = useState('');
     const [company, setCompany] = useState('');
+    const [companyWebsite, setCompanyWebsite] = useState('');
     const [description, setDescription] = useState('');
     const [allowedDegrees, setAllowedDegrees] = useState<string[]>([]);
     const [allowedCourses, setAllowedCourses] = useState<string[]>([]);
@@ -37,8 +39,8 @@ export default function CreateOpportunityPage() {
     const [requiredSkills, setRequiredSkills] = useState<string>('');
     const [locations, setLocations] = useState<string>('');
     const [workMode, setWorkMode] = useState<'ONSITE' | 'HYBRID' | 'REMOTE'>('ONSITE');
-    const [salaryMin, setSalaryMin] = useState('');
-    const [salaryMax, setSalaryMax] = useState('');
+    const [salaryRange, setSalaryRange] = useState('');
+    const [salaryAmount, setSalaryAmount] = useState('');
     const [applyLink, setApplyLink] = useState('');
     const [expiresAt, setExpiresAt] = useState('');
     const [jobFunction, setJobFunction] = useState('');
@@ -52,6 +54,9 @@ export default function CreateOpportunityPage() {
     const [walkInDateRange, setWalkInDateRange] = useState('');
     const [walkInTimeRange, setWalkInTimeRange] = useState('');
     const [venueLink, setVenueLink] = useState('');
+    const [requiredDocuments, setRequiredDocuments] = useState('');
+    const [contactPerson, setContactPerson] = useState('');
+    const [contactPhone, setContactPhone] = useState('');
 
     // Picker states for simpler UI
     const [startDate, setStartDate] = useState('');
@@ -145,13 +150,16 @@ export default function CreateOpportunityPage() {
 
             if (parsed.title) setTitle(parsed.title);
             if (parsed.company) setCompany(parsed.company);
+            if (parsed.companyWebsite) setCompanyWebsite(parsed.companyWebsite);
             if (parsed.type) setType(parsed.type);
             if (parsed.locations?.length) setLocations(parsed.locations.join(', '));
             if (parsed.skills?.length) setRequiredSkills(parsed.skills.join(', '));
             if (parsed.experienceMin !== undefined) setExperienceMin(String(parsed.experienceMin));
             if (parsed.experienceMax !== undefined) setExperienceMax(String(parsed.experienceMax));
-            if (parsed.salaryMin !== undefined) setSalaryMin(String(parsed.salaryMin));
-            if (parsed.salaryMax !== undefined) setSalaryMax(String(parsed.salaryMax));
+            if (parsed.salaryRange) setSalaryRange(parsed.salaryRange);
+            if (parsed.salaryMin !== undefined && parsed.salaryMax !== undefined) {
+                setSalaryRange(`${parsed.salaryMin}-${parsed.salaryMax}`);
+            }
             if (parsed.salaryPeriod) setSalaryPeriod(parsed.salaryPeriod);
             if (parsed.jobFunction) setJobFunction(parsed.jobFunction);
             if (parsed.incentives) setIncentives(parsed.incentives);
@@ -166,6 +174,9 @@ export default function CreateOpportunityPage() {
                 if (parsed.venueLink) setVenueLink(parsed.venueLink);
                 if (parsed.dateRange) setWalkInDateRange(parsed.dateRange);
                 if (parsed.timeRange) setWalkInTimeRange(parsed.timeRange);
+                if (parsed.requiredDocuments?.length) setRequiredDocuments(parsed.requiredDocuments.join(', '));
+                if (parsed.contactPerson) setContactPerson(parsed.contactPerson);
+                if (parsed.contactPhone) setContactPhone(parsed.contactPhone);
             }
 
             toast.success('Form updated from text.', { id: toastId });
@@ -174,6 +185,134 @@ export default function CreateOpportunityPage() {
             toast.error('Failed to parse text. Please fill manually.', { id: toastId });
         } finally {
             setIsParsing(false);
+        }
+    };
+
+    const JOB_TEMPLATE = `{
+  "type": "JOB",
+  "title": "Software Engineer",
+  "company": "Company Name",
+  "companyWebsite": "https://company.com",
+  "description": "Role summary...",
+  "allowedDegrees": ["DEGREE"],
+  "allowedCourses": [],
+  "allowedPassoutYears": [2024, 2025],
+  "requiredSkills": ["React", "Node.js"],
+  "locations": ["Bangalore"],
+  "workMode": "ONSITE",
+  "experienceMin": 0,
+  "experienceMax": 2,
+  "salaryRange": "6-8 LPA",
+  "salaryPeriod": "YEARLY",
+  "employmentType": "Full Time, Permanent",
+  "jobFunction": "Engineering",
+  "applyLink": "https://company.com/careers/job-id"
+}`;
+
+    const INTERNSHIP_TEMPLATE = `{
+  "type": "INTERNSHIP",
+  "title": "Frontend Intern",
+  "company": "Company Name",
+  "companyWebsite": "https://company.com",
+  "description": "Internship summary...",
+  "allowedDegrees": ["DEGREE"],
+  "allowedCourses": [],
+  "allowedPassoutYears": [2025],
+  "requiredSkills": ["HTML", "CSS", "JavaScript"],
+  "locations": ["Hyderabad"],
+  "workMode": "HYBRID",
+  "experienceMin": 0,
+  "experienceMax": 0,
+  "salaryRange": "20k-30k",
+  "salaryPeriod": "MONTHLY",
+  "employmentType": "Internship",
+  "jobFunction": "Engineering",
+  "applyLink": "https://company.com/careers/internship-id"
+}`;
+
+    const WALKIN_TEMPLATE = `{
+  "type": "WALKIN",
+  "title": "Walk-in Drive – Role",
+  "company": "Company Name",
+  "companyWebsite": "https://company.com",
+  "description": "Walk-in details and eligibility...",
+  "allowedDegrees": ["DEGREE"],
+  "allowedCourses": [],
+  "allowedPassoutYears": [],
+  "requiredSkills": ["Communication Skills"],
+  "locations": ["Hyderabad"],
+  "experienceMin": 0,
+  "experienceMax": 0,
+  "salaryRange": "2 LPA",
+  "salaryPeriod": "YEARLY",
+  "employmentType": "Full Time, Permanent",
+  "jobFunction": "Operations",
+  "walkInDetails": {
+    "dateRange": "9 Feb - 13 Feb",
+    "timeRange": "9:30 AM - 12:30 PM",
+    "reportingTime": "9:30 AM",
+    "venueAddress": "Full venue address...",
+    "venueLink": "https://maps.google.com/...",
+    "requiredDocuments": [
+      "Updated Resume",
+      "Photo (last 3 months)",
+      "PAN card",
+      "Provisional certificate"
+    ],
+    "contactPerson": "TA Team",
+    "contactPhone": ""
+  }
+}`;
+
+    const applyJsonToForm = () => {
+        if (!pastedJson.trim()) {
+            toast.error('Please paste JSON first');
+            return;
+        }
+
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const data: any = JSON.parse(pastedJson);
+
+            if (data.type) setType(data.type);
+            if (data.title) setTitle(data.title);
+            if (data.company) setCompany(data.company);
+            if (data.companyWebsite) setCompanyWebsite(data.companyWebsite);
+            if (data.description) setDescription(data.description);
+            if (Array.isArray(data.allowedDegrees)) setAllowedDegrees(data.allowedDegrees);
+            if (Array.isArray(data.allowedCourses)) setAllowedCourses(data.allowedCourses);
+            if (Array.isArray(data.allowedPassoutYears)) setPassoutYears(data.allowedPassoutYears);
+            if (Array.isArray(data.requiredSkills)) setRequiredSkills(data.requiredSkills.join(', '));
+            if (Array.isArray(data.locations)) setLocations(data.locations.join(', '));
+            if (data.workMode) setWorkMode(data.workMode);
+            if (data.salaryRange) setSalaryRange(data.salaryRange);
+            if (data.salaryMin !== undefined && data.salaryMax !== undefined) {
+                setSalaryRange(`${data.salaryMin}-${data.salaryMax}`);
+            }
+            if (data.salaryPeriod) setSalaryPeriod(data.salaryPeriod);
+            if (data.jobFunction) setJobFunction(data.jobFunction);
+            if (data.incentives) setIncentives(data.incentives);
+            if (data.experienceMin !== undefined) setExperienceMin(String(data.experienceMin));
+            if (data.experienceMax !== undefined) setExperienceMax(String(data.experienceMax));
+            if (data.applyLink) setApplyLink(data.applyLink);
+            if (data.expiresAt) setExpiresAt(data.expiresAt);
+
+            if (data.walkInDetails) {
+                if (data.walkInDetails.dateRange) setWalkInDateRange(data.walkInDetails.dateRange);
+                if (data.walkInDetails.timeRange) setWalkInTimeRange(data.walkInDetails.timeRange);
+                if (data.walkInDetails.venueAddress) setVenueAddress(data.walkInDetails.venueAddress);
+                if (data.walkInDetails.venueLink) setVenueLink(data.walkInDetails.venueLink);
+                if (Array.isArray(data.walkInDetails.requiredDocuments)) {
+                    setRequiredDocuments(data.walkInDetails.requiredDocuments.join(', '));
+                }
+                if (data.walkInDetails.contactPerson) setContactPerson(data.walkInDetails.contactPerson);
+                if (data.walkInDetails.contactPhone) setContactPhone(data.walkInDetails.contactPhone);
+            }
+
+            toast.success('Form updated from JSON.');
+            setShowParser(false);
+        } catch {
+            toast.error('Invalid JSON. Please paste a valid JSON payload.');
         }
     };
 
@@ -189,6 +328,15 @@ export default function CreateOpportunityPage() {
 
         const newTime = `${String(h).padStart(2, '0')}:${minutes}`;
         setExpiresAt(`${date}T${newTime}`);
+    };
+
+    const formatSalaryRange = (amount: string, period: 'YEARLY' | 'MONTHLY') => {
+        const raw = parseFloat(String(amount).replace(/[^0-9.]/g, ''));
+        if (!raw || Number.isNaN(raw)) return '';
+        if (period === 'YEARLY') {
+            return `${raw} LPA`;
+        }
+        return `₹${raw.toLocaleString('en-IN')}/mo`;
     };
 
 
@@ -210,6 +358,7 @@ export default function CreateOpportunityPage() {
                 type,
                 title,
                 company,
+                companyWebsite: companyWebsite || undefined,
                 description,
                 allowedDegrees,
                 allowedCourses,
@@ -217,8 +366,7 @@ export default function CreateOpportunityPage() {
                 requiredSkills: requiredSkills.split(',').map(s => s.trim()).filter(Boolean),
                 locations: locations.split(',').map(s => s.trim()).filter(Boolean),
                 workMode: type === 'WALKIN' ? undefined : workMode,
-                salaryMin: salaryMin ? parseInt(String(salaryMin).replace(/[^0-9]/g, '')) : undefined,
-                salaryMax: salaryMax ? parseInt(String(salaryMax).replace(/[^0-9]/g, '')) : undefined,
+                salaryRange: salaryRange || formatSalaryRange(salaryAmount, salaryPeriod) || undefined,
                 salaryPeriod,
                 incentives: incentives || undefined,
                 jobFunction: jobFunction || undefined,
@@ -239,6 +387,9 @@ export default function CreateOpportunityPage() {
                     venueAddress,
                     venueLink: venueLink || undefined,
                     reportingTime: autoTimeRange || undefined,
+                    requiredDocuments: requiredDocuments.split(',').map(s => s.trim()).filter(Boolean),
+                    contactPerson: contactPerson || undefined,
+                    contactPhone: contactPhone || undefined
                 };
             }
 
@@ -294,24 +445,68 @@ export default function CreateOpportunityPage() {
                                 Close
                             </button>
                         </div>
-                        <textarea
-                            value={pastedText}
-                            onChange={(e) => setPastedText(e.target.value)}
-                            placeholder="Paste the job description here..."
-                            className="w-full min-h-35 p-3 text-sm rounded-md border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                        />
-                        <button
-                            onClick={handleAutoFill}
-                            disabled={isParsing || !pastedText.trim()}
-                            className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-md transition-all shadow-sm active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                            {isParsing ? (
-                                <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                            ) : (
-                                <BoltIcon className="w-4 h-4" />
-                            )}
-                            {isParsing ? 'Processing...' : 'Apply to form'}
-                        </button>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Paste raw text</label>
+                                <textarea
+                                    value={pastedText}
+                                    onChange={(e) => setPastedText(e.target.value)}
+                                    placeholder="Paste the job description here..."
+                                    className="w-full min-h-32 p-3 text-sm rounded-md border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                />
+                                <button
+                                    onClick={handleAutoFill}
+                                    disabled={isParsing || !pastedText.trim()}
+                                    className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-md transition-all shadow-sm active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {isParsing ? (
+                                        <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                                    ) : (
+                                        <BoltIcon className="w-4 h-4" />
+                                    )}
+                                    {isParsing ? 'Processing...' : 'Apply text'}
+                                </button>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Paste JSON payload</label>
+                                <textarea
+                                    value={pastedJson}
+                                    onChange={(e) => setPastedJson(e.target.value)}
+                                    placeholder='{"type":"WALKIN","title":"...","company":"..."}'
+                                    className="w-full min-h-32 p-3 text-sm rounded-md border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-mono"
+                                />
+                                <div className="flex flex-wrap gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPastedJson(JOB_TEMPLATE)}
+                                        className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-muted/60 border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                                    >
+                                        Insert Job
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPastedJson(INTERNSHIP_TEMPLATE)}
+                                        className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-muted/60 border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                                    >
+                                        Insert Internship
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPastedJson(WALKIN_TEMPLATE)}
+                                        className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-muted/60 border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                                    >
+                                        Insert Walk-in
+                                    </button>
+                                </div>
+                                <button
+                                    onClick={applyJsonToForm}
+                                    disabled={!pastedJson.trim()}
+                                    className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-md transition-all shadow-sm active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    Apply JSON
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
@@ -373,6 +568,18 @@ export default function CreateOpportunityPage() {
                             />
                         </div>
                     </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Company website (logo)</label>
+                            <input
+                                type="url"
+                                value={companyWebsite}
+                                onChange={(e) => setCompanyWebsite(e.target.value)}
+                                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all shadow-sm"
+                                placeholder="https://wipro.com"
+                            />
+                        </div>
+                    </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
@@ -425,28 +632,35 @@ export default function CreateOpportunityPage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Floor</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                Salary amount ({salaryPeriod === 'YEARLY' ? 'LPA' : 'Monthly'})
+                            </label>
                             <input
                                 type="number"
-                                value={salaryMin}
-                                onChange={(e) => setSalaryMin(e.target.value)}
+                                value={salaryAmount}
+                                onChange={(e) => setSalaryAmount(e.target.value)}
                                 className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all shadow-sm"
-                                placeholder="3,00,000"
+                                placeholder={salaryPeriod === 'YEARLY' ? 'e.g. 2' : 'e.g. 20000'}
                             />
+                            <p className="text-[10px] text-muted-foreground">
+                                {salaryPeriod === 'YEARLY'
+                                    ? 'Enter LPA (e.g. 2 = 2 LPA)'
+                                    : 'Enter monthly salary (e.g. 20000)'}
+                            </p>
                         </div>
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ceiling</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Salary note (optional)</label>
                             <input
-                                type="number"
-                                value={salaryMax}
-                                onChange={(e) => setSalaryMax(e.target.value)}
+                                type="text"
+                                value={salaryRange}
+                                onChange={(e) => setSalaryRange(e.target.value)}
                                 className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all shadow-sm"
-                                placeholder="12,00,000"
+                                placeholder="e.g. 2 LPA or 20k-30k"
                             />
                         </div>
-                        <div className="space-y-1.5 relative group">
+                        <div className="space-y-1.5 relative group md:col-span-2">
                             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                                 Expiration Node
                             </label>
@@ -698,6 +912,37 @@ export default function CreateOpportunityPage() {
                                         onChange={(e) => setVenueLink(e.target.value)}
                                         className="flex h-11 w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all shadow-sm"
                                         placeholder="Google Maps link..."
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Documents to carry</label>
+                                    <input
+                                        value={requiredDocuments}
+                                        onChange={(e) => setRequiredDocuments(e.target.value)}
+                                        className="flex h-11 w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all shadow-sm"
+                                        placeholder="Resume, Photo, PAN, Provisional certificate"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Contact person</label>
+                                    <input
+                                        value={contactPerson}
+                                        onChange={(e) => setContactPerson(e.target.value)}
+                                        className="flex h-11 w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all shadow-sm"
+                                        placeholder="Wipro TA Team"
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Contact phone</label>
+                                    <input
+                                        value={contactPhone}
+                                        onChange={(e) => setContactPhone(e.target.value)}
+                                        className="flex h-11 w-full rounded-md border border-amber-500/30 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all shadow-sm"
+                                        placeholder="Optional phone number"
                                     />
                                 </div>
                             </div>

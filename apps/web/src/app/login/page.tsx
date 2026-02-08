@@ -32,6 +32,7 @@ export default function LoginPage() {
     const [step, setStep] = useState<LoginStep>('email');
     const [isProcessing, setIsProcessing] = useState(false);
     const [googleScriptLoaded, setGoogleScriptLoaded] = useState(false);
+    const [googleScriptBlocked, setGoogleScriptBlocked] = useState(false);
 
     const { sendOtp, verifyOtp, loginWithGoogle, user, isLoading } = useAuth();
     const router = useRouter();
@@ -50,14 +51,31 @@ export default function LoginPage() {
 
     // Check if Google script is loaded
     useEffect(() => {
+        let retries = 0;
+        const maxRetries = 50; // ~5 seconds
+        let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
         const checkGoogleScript = () => {
             if (typeof window !== 'undefined' && window.google?.accounts?.id) {
                 setGoogleScriptLoaded(true);
-            } else {
-                setTimeout(checkGoogleScript, 100);
+                setGoogleScriptBlocked(false);
+                return;
             }
+
+            retries += 1;
+            if (retries >= maxRetries) {
+                setGoogleScriptBlocked(true);
+                return;
+            }
+
+            timeoutId = setTimeout(checkGoogleScript, 100);
         };
+
         checkGoogleScript();
+
+        return () => {
+            if (timeoutId) clearTimeout(timeoutId);
+        };
     }, []);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -231,6 +249,11 @@ export default function LoginPage() {
                                 </div>
 
                                 <div id="google-login-btn" className="w-full min-h-[44px] overflow-hidden rounded-lg flex justify-center"></div>
+                                {googleScriptBlocked && (
+                                    <p className="text-[11px] text-muted-foreground text-center">
+                                        Google sign-in appears blocked by browser extension/privacy settings. Use email OTP or disable blocking for this site.
+                                    </p>
+                                )}
                             </form>
                         )}
 
