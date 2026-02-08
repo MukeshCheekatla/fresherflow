@@ -8,6 +8,7 @@ import { NavigationWrapper } from "@/components/providers/NavigationWrapper";
 import ServiceWorkerRegister from "@/components/providers/ServiceWorkerRegister";
 import { ThemeScript } from "@/components/providers/ThemeScript";
 import OfflineNotification from "@/components/ui/OfflineNotification";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -90,6 +91,7 @@ export default function RootLayout({
         <ServiceWorkerRegister />
         <SmartToaster />
         <OfflineNotification />
+        <Analytics />
       </body>
     </html>
   );
