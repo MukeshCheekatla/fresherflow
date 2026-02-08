@@ -33,6 +33,7 @@ export default function AdminDashboardHome() {
         avgLatencyMs: 0,
         p95LatencyMs: 0
     });
+    const errorBudgetBreached = observability.errorRatePct > 2 || observability.p95LatencyMs > 1500;
 
     const loadDashboard = useCallback(async () => {
         setLoading(true);
@@ -168,7 +169,17 @@ export default function AdminDashboardHome() {
             <div className="bg-card rounded-lg border border-border shadow-sm p-4 md:p-5">
                 <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm md:text-base font-semibold tracking-tight">Request health</h3>
-                    <SignalIcon className="w-4 h-4 text-muted-foreground" />
+                    <div className="inline-flex items-center gap-2">
+                        <span className={cn(
+                            'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider',
+                            errorBudgetBreached
+                                ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300'
+                                : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                        )}>
+                            {errorBudgetBreached ? 'Degraded' : 'Healthy'}
+                        </span>
+                        <SignalIcon className="w-4 h-4 text-muted-foreground" />
+                    </div>
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                     <div className="rounded-md border border-border bg-muted/20 px-3 py-2">
