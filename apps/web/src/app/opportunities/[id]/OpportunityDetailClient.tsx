@@ -415,8 +415,8 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                         <p className="font-bold text-xs text-foreground truncate">{formatSalary(opp)}</p>
                                     </div>
                                     <div className="space-y-0.5">
-                                        <p className="text-[9px] font-bold text-muted-foreground uppercase">Mode</p>
-                                        <p className="font-bold text-xs text-foreground truncate">{opp.workMode || 'ONSITE'}</p>
+                                        <p className="text-[9px] font-bold text-muted-foreground uppercase">Employment</p>
+                                        <p className="font-bold text-xs text-foreground truncate">{opp.employmentType || 'Not specified'}</p>
                                     </div>
                                     <div className="space-y-0.5">
                                         <p className="text-[9px] font-bold text-muted-foreground uppercase">Batch</p>
@@ -467,6 +467,10 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                     <p className="text-xs font-semibold text-foreground">{(opp.allowedDegrees || []).join(', ') || 'Any Graduate'}</p>
                                 </div>
                                     <div className="space-y-0.5 p-2.5 bg-muted/20 border border-border rounded-lg">
+                                    <p className="text-[9px] font-bold text-muted-foreground uppercase">Courses</p>
+                                    <p className="text-xs font-semibold text-foreground">{(opp.allowedCourses || []).join(', ') || 'Any / Not restricted'}</p>
+                                </div>
+                                    <div className="space-y-0.5 p-2.5 bg-muted/20 border border-border rounded-lg">
                                     <p className="text-[9px] font-bold text-muted-foreground uppercase">Key Skills</p>
                                     <div className="flex flex-wrap gap-1 mt-0.5">
                                         {(opp.requiredSkills || []).map((s: string) => (
@@ -476,6 +480,15 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                         ))}
                                     </div>
                                 </div>
+                                    {(opp.jobFunction || opp.incentives) && (
+                                        <div className="space-y-0.5 p-2.5 bg-muted/20 border border-border rounded-lg">
+                                            <p className="text-[9px] font-bold text-muted-foreground uppercase">Role details</p>
+                                            <p className="text-xs font-semibold text-foreground">{opp.jobFunction || 'General'}</p>
+                                            {opp.incentives ? (
+                                                <p className="text-[10px] text-muted-foreground">Incentives: {opp.incentives}</p>
+                                            ) : null}
+                                        </div>
+                                    )}
                             </div>
                         </div>
 
@@ -610,11 +623,23 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                     </p>
                                 </div>
                                 <div>
+                                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Courses</p>
+                                    <p className="text-foreground">
+                                        {(opp.allowedCourses && opp.allowedCourses.length > 0) ? opp.allowedCourses.join(', ') : 'Not restricted'}
+                                    </p>
+                                </div>
+                                <div>
                                     <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Experience</p>
                                     <p className="text-foreground">
                                         {opp.experienceMax != null ? `${opp.experienceMin || 0}-${opp.experienceMax} yrs` : 'Fresher+ (no cap)'}
                                     </p>
                                 </div>
+                                {opp.employmentType ? (
+                                    <div>
+                                        <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Employment</p>
+                                        <p className="text-foreground">{opp.employmentType}</p>
+                                    </div>
+                                ) : null}
                                 <div>
                                     <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Skills</p>
                                     <div className="flex flex-wrap gap-1">

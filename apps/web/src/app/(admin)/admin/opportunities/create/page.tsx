@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { adminApi } from '@/lib/api/admin';
+import { buildOpportunityPayload } from '../opportunityPayload';
 import {
     ArrowLeftIcon,
     InformationCircleIcon,
@@ -17,10 +18,16 @@ import {
     PaperAirplaneIcon
 } from '@heroicons/react/24/outline';
 
-export default function CreateOpportunityPage() {
+type OpportunityFormPageProps = {
+    mode?: 'create' | 'edit';
+    opportunityId?: string;
+};
+
+export function OpportunityFormPage({ mode = 'create', opportunityId }: OpportunityFormPageProps) {
     const { isAuthenticated } = useAdmin();
     const router = useRouter();
     const searchParams = useSearchParams();
+    const isEditMode = mode === 'edit' && !!opportunityId;
     const [isLoading, setIsLoading] = useState(false);
     const [isParsing, setIsParsing] = useState(false);
     const [pastedText, setPastedText] = useState('');
@@ -65,34 +72,11 @@ export default function CreateOpportunityPage() {
     const [startTime, setStartTime] = useState('10:00');
     const [endTime, setEndTime] = useState('13:00');
 
-    // Simple formatting utilities
-    const getOrdinalNum = (n: number) => {
-        return n + (n > 0 ? ['th', 'st', 'nd', 'rd'][(n > 10 && n < 14) ? 0 : (n % 10 < 4 ? n % 10 : 0)] : '');
-    };
-
-    const formatDateRange = (start: string, end: string) => {
-        if (!start) return '';
-        const d1 = new Date(start);
-        const m1 = d1.toLocaleString('en-IN', { month: 'short' });
-        const day1 = getOrdinalNum(d1.getDate());
-
-        if (!end || start === end) return `${day1} ${m1}`;
-
-        const d2 = new Date(end);
-        const m2 = d2.toLocaleString('en-IN', { month: 'short' });
-        const day2 = getOrdinalNum(d2.getDate());
-
-        if (m1 === m2) return `${day1} - ${day2} ${m1}`;
-        return `${day1} ${m1} - ${day2} ${m2}`;
-    };
-
-    const formatTime = (time: string) => {
-        if (!time) return '';
-        const [h, m] = time.split(':');
-        let hours = parseInt(h);
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12 || 12;
-        return `${hours}:${m} ${ampm}`;
+    const toLocalISOString = (dateInput: Date | string) => {
+        const date = new Date(dateInput);
+        const tzOffset = date.getTimezoneOffset() * 60000;
+        const localTime = new Date(date.getTime() - tzOffset);
+        return localTime.toISOString().slice(0, 16);
     };
 
     const typeParamToEnum = (value: string) => {
@@ -110,13 +94,68 @@ export default function CreateOpportunityPage() {
     }, [isAuthenticated, router]);
 
     useEffect(() => {
+        if (isEditMode) return;
         const typeParam = searchParams.get('type');
         if (!typeParam) return;
         const normalized = typeParamToEnum(typeParam);
         if (normalized === 'JOB' || normalized === 'INTERNSHIP' || normalized === 'WALKIN') {
             setType(normalized as 'JOB' | 'INTERNSHIP' | 'WALKIN');
         }
-    }, [searchParams]);
+    }, [searchParams, isEditMode]);
+
+    const fetchOpportunityForEdit = useCallback(async () => {
+        if (!opportunityId) return;
+        try {
+            const data = await adminApi.getOpportunity(opportunityId);
+            const opp = data.opportunity;
+
+            setType(opp.type);
+            setTitle(opp.title);
+            setCompany(opp.company);
+            setCompanyWebsite(opp.companyWebsite || '');
+            setDescription(opp.description || '');
+            setLocations((opp.locations || []).join(', '));
+            setRequiredSkills((opp.requiredSkills || []).join(', '));
+            setAllowedDegrees(opp.allowedDegrees || []);
+            setAllowedCourses(opp.allowedCourses || []);
+            setPassoutYears(opp.allowedPassoutYears || []);
+            setWorkMode(opp.workMode || 'ONSITE');
+            setSalaryRange(opp.salaryRange || '');
+            setJobFunction(opp.jobFunction || '');
+            setEmploymentType(opp.employmentType || '');
+            setIncentives(opp.incentives || '');
+            setSalaryPeriod(opp.salaryPeriod || 'YEARLY');
+            setExperienceMin(opp.experienceMin?.toString() || '');
+            setExperienceMax(opp.experienceMax?.toString() || '');
+            setApplyLink(opp.applyLink || '');
+            setExpiresAt(opp.expiresAt ? toLocalISOString(opp.expiresAt) : '');
+
+            if (opp.walkInDetails) {
+                setVenueAddress(opp.walkInDetails.venueAddress || '');
+                setWalkInDateRange(opp.walkInDetails.dateRange || '');
+                setWalkInTimeRange(opp.walkInDetails.timeRange || opp.walkInDetails.reportingTime || '');
+                setVenueLink(opp.walkInDetails.venueLink || '');
+                setRequiredDocuments((opp.walkInDetails.requiredDocuments || []).join(', '));
+                setContactPerson(opp.walkInDetails.contactPerson || '');
+                setContactPhone(opp.walkInDetails.contactPhone || '');
+
+                if (opp.walkInDetails.dates?.length) {
+                    const sorted = [...opp.walkInDetails.dates].sort((a: string, b: string) => new Date(a).getTime() - new Date(b).getTime());
+                    setStartDate(new Date(sorted[0]).toISOString().split('T')[0]);
+                    setEndDate(new Date(sorted[sorted.length - 1]).toISOString().split('T')[0]);
+                }
+            }
+        } catch (err: unknown) {
+            const error = err as Error;
+            toast.error(`Failed to load listing: ${error.message}`);
+            router.push('/admin/opportunities');
+        }
+    }, [opportunityId, router]);
+
+    useEffect(() => {
+        if (!isAuthenticated || !isEditMode) return;
+        void fetchOpportunityForEdit();
+    }, [isAuthenticated, isEditMode, fetchOpportunityForEdit]);
 
     const handleDegreeToggle = (degree: string) => {
         setAllowedDegrees(prev =>
@@ -490,14 +529,6 @@ export default function CreateOpportunityPage() {
         setExpiresAt(`${date}T${newTime}`);
     };
 
-    const formatSalaryRange = (amount: string, period: 'YEARLY' | 'MONTHLY') => {
-        const raw = parseFloat(String(amount).replace(/[^0-9.]/g, ''));
-        if (!raw || Number.isNaN(raw)) return '';
-        if (period === 'YEARLY') {
-            return `${raw} LPA`;
-        }
-        return `₹${raw.toLocaleString('en-IN')}/mo`;
-    };
 
 
 
@@ -514,52 +545,51 @@ export default function CreateOpportunityPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        const loadingToast = toast.loading('Publishing listing...');
+        const loadingToast = toast.loading(isEditMode ? 'Updating listing...' : 'Publishing listing...');
 
         try {
-            const payload: Record<string, unknown> = {
+            const payload = buildOpportunityPayload({
                 type,
                 title,
                 company,
-                companyWebsite: companyWebsite || undefined,
+                companyWebsite,
                 description,
                 allowedDegrees,
                 allowedCourses,
-                allowedPassoutYears: passoutYears,
-                requiredSkills: requiredSkills.split(',').map(s => s.trim()).filter(Boolean),
-                locations: locations.split(',').map(s => s.trim()).filter(Boolean),
-                workMode: type === 'WALKIN' ? undefined : workMode,
-                salaryRange: salaryRange || formatSalaryRange(salaryAmount, salaryPeriod) || undefined,
+                passoutYears,
+                requiredSkills,
+                locations,
+                workMode,
+                salaryRange,
+                salaryAmount,
                 salaryPeriod,
-                employmentType: employmentType || undefined,
-                incentives: incentives || undefined,
-                jobFunction: jobFunction || undefined,
-                experienceMin: experienceMin ? parseInt(String(experienceMin).replace(/[^0-9]/g, '')) : undefined,
-                experienceMax: experienceMax ? parseInt(String(experienceMax).replace(/[^0-9]/g, '')) : undefined,
-                applyLink: type === 'WALKIN' ? undefined : applyLink,
-                expiresAt: expiresAt || undefined,
-            };
+                employmentType,
+                incentives,
+                jobFunction,
+                experienceMin,
+                experienceMax,
+                applyLink,
+                expiresAt,
+                venueAddress,
+                walkInDateRange,
+                walkInTimeRange,
+                venueLink,
+                requiredDocuments,
+                contactPerson,
+                contactPhone,
+                startDate,
+                endDate,
+                startTime,
+                endTime,
+            });
 
-
-            if (type === 'WALKIN') {
-                const autoDateRange = formatDateRange(startDate, endDate);
-                const autoTimeRange = `${formatTime(startTime)} - ${formatTime(endTime)}`;
-
-                payload.walkInDetails = {
-                    dateRange: autoDateRange || walkInDateRange || undefined,
-                    timeRange: autoTimeRange || walkInTimeRange || undefined,
-                    venueAddress,
-                    venueLink: venueLink || undefined,
-                    reportingTime: autoTimeRange || undefined,
-                    requiredDocuments: requiredDocuments.split(',').map(s => s.trim()).filter(Boolean),
-                    contactPerson: contactPerson || undefined,
-                    contactPhone: contactPhone || undefined
-                };
+            if (isEditMode && opportunityId) {
+                await adminApi.updateOpportunity(opportunityId, payload);
+            } else {
+                await adminApi.createOpportunity(payload);
             }
 
-            await adminApi.createOpportunity(payload);
-
-            toast.success('Listing published.', { id: loadingToast });
+            toast.success(isEditMode ? 'Listing updated.' : 'Listing published.', { id: loadingToast });
             router.push('/admin/opportunities');
         } catch (err: unknown) {
             const error = err as Error;
@@ -583,7 +613,7 @@ export default function CreateOpportunityPage() {
                     <div>
                         <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground">New listing</h1>
                         <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
-                            Create and publish a verified listing.
+                            {isEditMode ? 'Update and republish a verified listing.' : 'Create and publish a verified listing.'}
                         </p>
                     </div>
                     <button
@@ -1187,10 +1217,14 @@ export default function CreateOpportunityPage() {
                         ) : (
                             <PaperAirplaneIcon className="w-4 h-4 mr-2" />
                         )}
-                        {isLoading ? 'Publishing...' : 'Publish listing'}
+                        {isLoading ? (isEditMode ? 'Updating...' : 'Publishing...') : (isEditMode ? 'Update listing' : 'Publish listing')}
                     </button>
                 </div>
             </form>
         </div>
     );
+}
+
+export default function CreateOpportunityPage() {
+    return <OpportunityFormPage mode="create" />;
 }
