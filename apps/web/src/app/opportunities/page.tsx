@@ -17,8 +17,7 @@ import ClockIcon from '@heroicons/react/24/outline/ClockIcon';
 import BookmarkIcon from '@heroicons/react/24/outline/BookmarkIcon';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import LoadingScreen from '@/components/ui/LoadingScreen';
-import { FeedPageSkeleton } from '@/components/ui/Skeleton';
+import { FeedPageSkeleton, SkeletonJobCard } from '@/components/ui/Skeleton';
 import { useOpportunitiesFeed } from '@/features/jobs/hooks/useOpportunitiesFeed';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatSyncTime } from '@/lib/offline/syncStatus';
@@ -478,8 +477,10 @@ function OpportunitiesContent() {
                                     </div>
                                 </div>
                             ) : isLoading ? (
-                                <div className="h-100 relative">
-                                    <LoadingScreen message="Loading listings..." fullScreen={false} />
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                                    {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
+                                        <SkeletonJobCard key={item} />
+                                    ))}
                                 </div>
                             ) : error ? (
                                 <div className="p-12 text-center rounded-2xl border border-dashed border-border bg-card">

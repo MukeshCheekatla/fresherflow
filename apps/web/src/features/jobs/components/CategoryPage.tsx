@@ -21,8 +21,7 @@ import AcademicCapIcon from '@heroicons/react/24/outline/AcademicCapIcon';
 import UserGroupIcon from '@heroicons/react/24/outline/UserGroupIcon';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import LoadingScreen from '@/components/ui/LoadingScreen';
-import { FeedPageSkeleton } from '@/components/ui/Skeleton';
+import { FeedPageSkeleton, SkeletonJobCard } from '@/components/ui/Skeleton';
 import { useOpportunitiesFeed } from '@/features/jobs/hooks/useOpportunitiesFeed';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -412,8 +411,13 @@ function CategoryPageContent({ type }: CategoryPageProps) {
                                     </div>
                                 </div>
                             ) : isLoading ? (
-                                <div className="h-100 relative">
-                                    <LoadingScreen message="Loading listings..." fullScreen={false} />
+                                <div className={cn(
+                                    "grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6",
+                                    isFilterOpen ? "lg:grid-cols-2 xl:grid-cols-3" : "lg:grid-cols-3 xl:grid-cols-4"
+                                )}>
+                                    {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
+                                        <SkeletonJobCard key={item} />
+                                    ))}
                                 </div>
                             ) : error ? (
                                 <div className="p-12 text-center rounded-2xl border border-dashed border-border bg-card">
