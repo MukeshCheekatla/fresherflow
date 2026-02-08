@@ -105,6 +105,41 @@ class TelegramService {
         await this.sendMessage(message);
     }
 
+    async notifyLinkArchived(title: string, company: string, opportunityId: string, failures: number): Promise<void> {
+        const message = [
+            '<b>Link Verification Alert</b>',
+            '------------------------',
+            `<b>Company:</b> ${company}`,
+            `<b>Role:</b> ${title}`,
+            `<b>Status:</b> Auto-archived after broken-link checks`,
+            `<b>Failures:</b> ${failures}`,
+            `<b>ID:</b> ${opportunityId}`,
+            '------------------------',
+            '<i>FresherFlow Verification Bot</i>'
+        ].join('\n');
+        await this.sendMessage(message);
+    }
+
+    async notifyExpirySummary(summary: {
+        jobsInternshipsExpired: number;
+        walkInsExpired: number;
+        staleWarnings: number;
+        totalExpired: number;
+    }): Promise<void> {
+        if (summary.totalExpired === 0 && summary.staleWarnings === 0) return;
+        const message = [
+            '<b>Daily Expiry Summary</b>',
+            '------------------------',
+            `<b>Total expired:</b> ${summary.totalExpired}`,
+            `<b>Jobs/Internships:</b> ${summary.jobsInternshipsExpired}`,
+            `<b>Walk-ins:</b> ${summary.walkInsExpired}`,
+            `<b>Stale warnings:</b> ${summary.staleWarnings}`,
+            '------------------------',
+            '<i>FresherFlow Expiry Cron</i>'
+        ].join('\n');
+        await this.sendMessage(message);
+    }
+
     async broadcastToChannel(channelUsername: string, text: string): Promise<string | null> {
         if (!this.botToken) return null;
 

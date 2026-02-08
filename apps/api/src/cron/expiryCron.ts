@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { PrismaClient, OpportunityStatus, OpportunityType } from '@prisma/client';
 import logger from '../utils/logger';
+import TelegramService from '../services/telegram.service';
 
 const prisma = new PrismaClient();
 
@@ -174,6 +175,13 @@ export function startExpiryCron() {
 
             logger.info('Expiry cron job completed successfully', {
                 durationMs,
+                totalExpired: expiredJobsResult.count + expiredWalkInsResult.count,
+                jobsInternshipsExpired: expiredJobsResult.count,
+                walkInsExpired: expiredWalkInsResult.count,
+                staleWarnings: staleListings.length
+            });
+
+            await TelegramService.notifyExpirySummary({
                 totalExpired: expiredJobsResult.count + expiredWalkInsResult.count,
                 jobsInternshipsExpired: expiredJobsResult.count,
                 walkInsExpired: expiredWalkInsResult.count,

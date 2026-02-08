@@ -1,5 +1,6 @@
-﻿import { PrismaClient, OpportunityStatus, LinkHealth } from '@prisma/client';
+import { PrismaClient, OpportunityStatus, LinkHealth } from '@prisma/client';
 import logger from '../utils/logger';
+import TelegramService from './telegram.service';
 
 const prisma = new PrismaClient();
 
@@ -130,6 +131,15 @@ export async function runLinkVerification() {
                     ...(shouldArchive ? { status: OpportunityStatus.ARCHIVED } : {})
                 }
             });
+
+            if (shouldArchive) {
+                await TelegramService.notifyLinkArchived(
+                    opp.title,
+                    opp.company,
+                    opp.id,
+                    newFailures
+                );
+            }
         }
 
         const duration = (Date.now() - startTime) / 1000;
@@ -209,3 +219,4 @@ async function pingUrl(url: string): Promise<LinkCheckResult> {
         }
     }
 }
+
