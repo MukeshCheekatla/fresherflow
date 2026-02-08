@@ -162,18 +162,14 @@ export default function DashboardPage() {
     };
 
     const activeRecentOpps = recentOpps.filter((o) => !o.expiresAt || new Date(o.expiresAt) > new Date());
-    const rankedActive = [...activeRecentOpps].sort((a, b) => {
-        const aExp = a.expiresAt ? new Date(a.expiresAt).getTime() : Number.MAX_SAFE_INTEGER;
-        const bExp = b.expiresAt ? new Date(b.expiresAt).getTime() : Number.MAX_SAFE_INTEGER;
-        if (aExp !== bExp) return aExp - bExp;
-        return new Date(b.postedAt as string | Date).getTime() - new Date(a.postedAt as string | Date).getTime();
-    });
+    // Keep API-provided personalized ordering for best-match sections.
+    const bestMatchList = [...activeRecentOpps];
     const closingSoon = activeRecentOpps
         .filter((o) => o.expiresAt)
         .sort((a, b) => new Date(a.expiresAt as string).getTime() - new Date(b.expiresAt as string).getTime())
         .slice(0, 8);
     const newCutoff = lastSeenAt || (Date.now() - (72 * 60 * 60 * 1000));
-    const newSinceLastVisit = rankedActive
+    const newSinceLastVisit = bestMatchList
         .filter((o) => new Date(o.postedAt as string | Date).getTime() > newCutoff)
         .slice(0, 6);
 
@@ -183,12 +179,12 @@ export default function DashboardPage() {
     const walkinsCount = activeRecentOpps.filter((o) => o.type === 'WALKIN').length;
 
     const sections = [
-        { key: 'best', title: 'Best matches', href: '/opportunities', items: rankedActive.slice(0, 6) },
+        { key: 'best', title: 'Best matches', href: '/opportunities', items: bestMatchList.slice(0, 6) },
         { key: 'expiring', title: 'Expiring soon', href: '/opportunities?closingSoon=true', items: closingSoon.slice(0, 4) },
         { key: 'new', title: 'New since last visit', href: '/opportunities', items: newSinceLastVisit },
-        { key: 'jobs', title: 'Jobs', href: '/jobs', items: rankedActive.filter((o) => o.type === 'JOB').slice(0, 4) },
-        { key: 'internships', title: 'Internships', href: '/internships', items: rankedActive.filter((o) => o.type === 'INTERNSHIP').slice(0, 4) },
-        { key: 'walkins', title: 'Walk-ins', href: '/walk-ins', items: rankedActive.filter((o) => o.type === 'WALKIN').slice(0, 4) },
+        { key: 'jobs', title: 'Jobs', href: '/jobs', items: bestMatchList.filter((o) => o.type === 'JOB').slice(0, 4) },
+        { key: 'internships', title: 'Internships', href: '/internships', items: bestMatchList.filter((o) => o.type === 'INTERNSHIP').slice(0, 4) },
+        { key: 'walkins', title: 'Walk-ins', href: '/walk-ins', items: bestMatchList.filter((o) => o.type === 'WALKIN').slice(0, 4) },
     ];
 
     return (

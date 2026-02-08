@@ -162,6 +162,17 @@ function isLikelyFresher(profile: Profile): boolean {
     return (currentYear - baseYear) <= 1;
 }
 
+function getProfileStrength(profile: Profile): number {
+    const completion = Math.max(0, Math.min(100, profile.completionPercentage || 0)) / 100;
+    const skillsCount = Math.min(1, (profile.skills?.length || 0) / 8);
+    const preferenceDepth = Math.min(
+        1,
+        ((profile.preferredCities?.length || 0) + (profile.workModes?.length || 0) + (profile.interestedIn?.length || 0)) / 9
+    );
+    // Completion remains primary; skills and preferences refine personalization confidence.
+    return (completion * 0.6) + (skillsCount * 0.25) + (preferenceDepth * 0.15);
+}
+
 function getExperienceRelevance(opportunity: Opportunity, fresher: boolean): number {
     const minExp = Math.max(0, opportunity.experienceMin ?? 0);
     if (!fresher) {
@@ -240,35 +251,49 @@ function getFreshnessBoost(opportunity: Opportunity): number {
     const now = Date.now();
     const ageInDays = (now - postedAt) / (24 * 60 * 60 * 1000);
     if (ageInDays <= 1) return 1;
-    if (ageInDays <= 3) return 0.7;
-    if (ageInDays <= 7) return 0.4;
-    return 0;
+    if (ageInDays <= 3) return 0.85;
+    if (ageInDays <= 7) return 0.6;
+    if (ageInDays <= 14) return 0.3;
+    return 0.1;
 }
 
 function getUrgencyBoost(opportunity: Opportunity): number {
-    if (!opportunity.expiresAt) return 0;
+    if (!opportunity.expiresAt) return 0.15;
     const expiry = new Date(opportunity.expiresAt).getTime();
     const now = Date.now();
     const remainingInDays = (expiry - now) / (24 * 60 * 60 * 1000);
     if (remainingInDays < 0) return 0;
     if (remainingInDays <= 1) return 1;
-    if (remainingInDays <= 3) return 0.7;
-    if (remainingInDays <= 5) return 0.4;
-    return 0;
+    if (remainingInDays <= 3) return 0.85;
+    if (remainingInDays <= 7) return 0.6;
+    if (remainingInDays <= 14) return 0.35;
+    return 0.15;
 }
 
 function computeRelevanceBreakdown(opportunity: Opportunity, profile: Profile): RelevanceBreakdown {
     const fresher = isLikelyFresher(profile);
+    const profileStrength = getProfileStrength(profile);
+    // Strong profiles get higher fit-weight; weaker profiles get slightly more urgency/freshness support.
+    const experienceWeight = 24 + Math.round(profileStrength * 8);
+    const skillsWeight = 16 + Math.round(profileStrength * 8);
+    const passoutWeight = 10 + Math.round(profileStrength * 4);
+    const educationWeight = 8 + Math.round(profileStrength * 4);
+    const courseWeight = 6 + Math.round(profileStrength * 3);
+    const locationWeight = 6 + Math.round(profileStrength * 3);
+    const workModeWeight = 4 + Math.round(profileStrength * 2);
+    const freshnessWeight = 4 + Math.round((1 - profileStrength) * 3);
+    const urgencyWeight = 4 + Math.round((1 - profileStrength) * 5);
+
     return {
-        experience: Math.round(getExperienceRelevance(opportunity, fresher) * 30),
-        skills: Math.round(getSkillOverlapScore(opportunity, profile) * 20),
-        passoutYear: Math.round(getPassoutExactness(opportunity, profile) * 12),
-        educationLevel: Math.round(getEducationLevelScore(opportunity, profile) * 10),
-        course: Math.round(getCourseMatchScore(opportunity, profile) * 8),
-        location: Math.round(getLocationPreferenceScore(opportunity, profile) * 8),
-        workMode: Math.round(getWorkModeScore(opportunity, profile) * 4),
-        freshness: Math.round(getFreshnessBoost(opportunity) * 5),
-        urgency: Math.round(getUrgencyBoost(opportunity) * 3),
+        experience: Math.round(getExperienceRelevance(opportunity, fresher) * experienceWeight),
+        skills: Math.round(getSkillOverlapScore(opportunity, profile) * skillsWeight),
+        passoutYear: Math.round(getPassoutExactness(opportunity, profile) * passoutWeight),
+        educationLevel: Math.round(getEducationLevelScore(opportunity, profile) * educationWeight),
+        course: Math.round(getCourseMatchScore(opportunity, profile) * courseWeight),
+        location: Math.round(getLocationPreferenceScore(opportunity, profile) * locationWeight),
+        workMode: Math.round(getWorkModeScore(opportunity, profile) * workModeWeight),
+        freshness: Math.round(getFreshnessBoost(opportunity) * freshnessWeight),
+        urgency: Math.round(getUrgencyBoost(opportunity) * urgencyWeight),
     };
 }
 
