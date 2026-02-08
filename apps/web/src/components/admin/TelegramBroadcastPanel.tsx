@@ -19,9 +19,20 @@ type BroadcastItem = {
     sentAt: string | null;
     createdAt: string;
     opportunity: {
+        id: string;
+        slug: string;
         title: string;
         company: string;
     } | null;
+};
+
+type TopPost = {
+    key: string;
+    title: string;
+    company: string;
+    slug: string;
+    sends: number;
+    latestSentAt: number;
 };
 
 export default function TelegramBroadcastPanel() {
@@ -30,6 +41,7 @@ export default function TelegramBroadcastPanel() {
     const [loading, setLoading] = useState(true);
     const [retryingId, setRetryingId] = useState<string | null>(null);
     const [items, setItems] = useState<BroadcastItem[]>([]);
+    const [topPosts, setTopPosts] = useState<TopPost[]>([]);
     const [summary, setSummary] = useState<{ sent: number; failed: number; skipped: number }>({
         sent: 0,
         failed: 0,
@@ -39,13 +51,42 @@ export default function TelegramBroadcastPanel() {
     const load = async () => {
         setLoading(true);
         try {
-            const response = await adminApi.getTelegramBroadcasts(
-                statusFilter === "ALL" ? undefined : statusFilter,
-                50,
-                windowFilter
-            );
+            const [response, sentOnly] = await Promise.all([
+                adminApi.getTelegramBroadcasts(
+                    statusFilter === "ALL" ? undefined : statusFilter,
+                    50,
+                    windowFilter
+                ),
+                adminApi.getTelegramBroadcasts("SENT", 200, windowFilter)
+            ]);
             setItems(response.broadcasts || []);
             setSummary(response.summary || { sent: 0, failed: 0, skipped: 0 });
+
+            const grouped = new Map<string, TopPost>();
+            for (const row of (sentOnly.broadcasts || []) as BroadcastItem[]) {
+                if (!row.opportunity) continue;
+                const key = row.opportunity.id || row.opportunity.slug || row.id;
+                const sentAt = row.sentAt ? new Date(row.sentAt).getTime() : new Date(row.createdAt).getTime();
+                const existing = grouped.get(key);
+                if (!existing) {
+                    grouped.set(key, {
+                        key,
+                        title: row.opportunity.title,
+                        company: row.opportunity.company,
+                        slug: row.opportunity.slug || row.opportunity.id,
+                        sends: 1,
+                        latestSentAt: sentAt,
+                    });
+                    continue;
+                }
+                existing.sends += 1;
+                if (sentAt > existing.latestSentAt) existing.latestSentAt = sentAt;
+            }
+
+            const nextTopPosts = Array.from(grouped.values())
+                .sort((a, b) => (b.sends - a.sends) || (b.latestSentAt - a.latestSentAt))
+                .slice(0, 3);
+            setTopPosts(nextTopPosts);
         } catch {
             toast.error("Failed to load Telegram broadcast logs");
         } finally {
@@ -165,6 +206,35 @@ export default function TelegramBroadcastPanel() {
                 <div className="rounded-lg border p-2">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Delivery success rate ({windowFilter})</p>
                     <p className="text-lg font-bold text-foreground">{successRate}%</p>
+                </div>
+                <div className="rounded-lg border p-3 space-y-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        Top posts {windowFilter === "7d" ? "this week" : `(${windowFilter})`}
+                    </p>
+                    {topPosts.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">No sent posts in this window.</p>
+                    ) : (
+                        <div className="space-y-2">
+                            {topPosts.map((post, index) => (
+                                <div key={post.key} className="flex items-center justify-between gap-3 rounded-md border p-2">
+                                    <div className="min-w-0">
+                                        <p className="text-xs font-semibold text-foreground truncate">
+                                            {index + 1}. {post.title}
+                                        </p>
+                                        <p className="text-[10px] text-muted-foreground truncate">{post.company}</p>
+                                    </div>
+                                    <div className="shrink-0 flex items-center gap-2">
+                                        <Badge variant="outline">{post.sends}x</Badge>
+                                        <Button asChild size="sm" variant="outline" className="h-7 px-2 text-[10px]">
+                                            <a href={`/opportunities/${post.slug}`} target="_blank" rel="noreferrer">
+                                                Open
+                                            </a>
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </CardHeader>
             <CardContent className="space-y-3">
