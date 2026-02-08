@@ -7,7 +7,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { adminApi } from '@/lib/api/admin';
 import { buildOpportunityPayload } from '../opportunityPayload';
-import { buildShareUrl } from '@/lib/share';
+import { buildShareUrl, type SharePlatform } from '@/lib/share';
 import {
     ArrowLeftIcon,
     InformationCircleIcon,
@@ -34,6 +34,12 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
     const [pastedText, setPastedText] = useState('');
     const [pastedJson, setPastedJson] = useState('');
     const [showParser, setShowParser] = useState(false);
+    const [publishedListing, setPublishedListing] = useState<{
+        title: string;
+        company: string;
+        type: 'JOB' | 'INTERNSHIP' | 'WALKIN';
+        slugOrId: string;
+    } | null>(null);
 
     // Form state
     const [type, setType] = useState<'JOB' | 'INTERNSHIP' | 'WALKIN'>('JOB');
@@ -105,6 +111,34 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
             '',
             '#FresherJobs #OffCampus #Hiring',
         ].join('\n');
+    };
+
+    const buildPlatformCaption = (platform: SharePlatform, payload: {
+        title: string;
+        company: string;
+        type: 'JOB' | 'INTERNSHIP' | 'WALKIN';
+        slugOrId: string;
+    }) => {
+        const publicUrl = getPublicOpportunityUrl(payload.slugOrId);
+        const tracked = buildShareUrl(publicUrl, { platform, ref: 'admin_share', campaign: 'job_share' });
+        const label = payload.type === 'WALKIN' ? 'Walk-in' : payload.type === 'INTERNSHIP' ? 'Internship' : 'Job';
+
+        return [
+            `${payload.title} at ${payload.company}`,
+            `${label} listing on FresherFlow`,
+            tracked,
+            '#FresherJobs #OffCampus #Hiring',
+        ].join('\n');
+    };
+
+    const copyCaption = async (platform: SharePlatform) => {
+        if (!publishedListing) return;
+        try {
+            await navigator.clipboard.writeText(buildPlatformCaption(platform, publishedListing));
+            toast.success(`${platform.toUpperCase()} caption copied.`);
+        } catch {
+            toast.error('Could not copy caption.');
+        }
     };
 
     const toLocalISOString = (dateInput: Date | string) => {
@@ -625,18 +659,20 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
                 const response = await adminApi.createOpportunity(payload);
                 const created = response?.opportunity;
                 if (created?.id || created?.slug) {
-                    const sharePack = buildAdminSharePack({
+                    const listingData = {
                         title: created.title || title,
                         company: created.company || company,
                         type: created.type || type,
                         slugOrId: created.slug || created.id,
-                    });
+                    };
+                    const sharePack = buildAdminSharePack(listingData);
                     try {
                         await navigator.clipboard.writeText(sharePack);
                         sharePackCopied = true;
                     } catch {
                         sharePackCopied = false;
                     }
+                    setPublishedListing(listingData);
                 }
             }
 
@@ -644,7 +680,9 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
                 ? 'Listing updated.'
                 : (sharePackCopied ? 'Listing published. Share pack copied.' : 'Listing published.');
             toast.success(successMessage, { id: loadingToast });
-            router.push('/admin/opportunities');
+            if (isEditMode) {
+                router.push('/admin/opportunities');
+            }
         } catch (err: unknown) {
             const error = err as Error;
             toast.error(`Error: ${error.message}`, { id: loadingToast });
@@ -679,6 +717,67 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
                     </button>
                 </div>
             </div>
+
+            {publishedListing && (
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 md:p-5 space-y-3">
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <div>
+                            <h3 className="text-sm font-semibold text-foreground">Listing published</h3>
+                            <p className="text-xs text-muted-foreground mt-1">Copy platform captions or open the listings page.</p>
+                        </div>
+                        <Link
+                            href="/admin/opportunities"
+                            className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            Back to listings
+                        </Link>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            onClick={() => void copyCaption('telegram')}
+                            className="inline-flex h-8 items-center justify-center rounded-md bg-primary px-3 text-[10px] font-bold uppercase tracking-widest text-primary-foreground hover:bg-primary/90 transition-colors"
+                        >
+                            Copy Telegram
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => void copyCaption('linkedin')}
+                            className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            Copy LinkedIn
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => void copyCaption('x')}
+                            className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            Copy X
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => void copyCaption('instagram')}
+                            className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            Copy Instagram
+                        </button>
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                try {
+                                    await navigator.clipboard.writeText(buildAdminSharePack(publishedListing));
+                                    toast.success('Full share pack copied.');
+                                } catch {
+                                    toast.error('Could not copy share pack.');
+                                }
+                            }}
+                            className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            Copy full pack
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Auto-Fill Section */}
             {showParser && (
