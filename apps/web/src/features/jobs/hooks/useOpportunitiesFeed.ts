@@ -4,6 +4,7 @@ import { opportunitiesApi, savedApi } from '@/lib/api/client';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { readFeedCache, saveFeedCache } from '@/lib/offline/opportunitiesFeedCache';
 
 interface UseOpportunitiesFeedOptions {
     type?: string | null;
@@ -25,6 +26,8 @@ export function useOpportunitiesFeed({
     const [totalCount, setTotalCount] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [usingCachedFeed, setUsingCachedFeed] = useState(false);
+    const [cachedAt, setCachedAt] = useState<number | null>(null);
     const [profileIncomplete, setProfileIncomplete] = useState<{ percentage: number; message: string } | null>(null);
     const debouncedSearch = useDebounce(search, 300);
 
@@ -33,6 +36,7 @@ export function useOpportunitiesFeed({
         setIsLoading(true);
         setProfileIncomplete(null);
         setError(null);
+        setUsingCachedFeed(false);
         try {
             let data;
             if (showOnlySaved) {
@@ -48,6 +52,10 @@ export function useOpportunitiesFeed({
             }
             setOpportunities(data.opportunities || []);
             setTotalCount(data.count || data.opportunities?.length || 0);
+            if (!showOnlySaved) {
+                saveFeedCache(data.opportunities || [], data.count || data.opportunities?.length || 0);
+                setCachedAt(Date.now());
+            }
         } catch (err: unknown) {
             const error = err as { code?: string; completionPercentage?: number; message?: string };
             if (error.code === 'PROFILE_INCOMPLETE') {
@@ -56,9 +64,18 @@ export function useOpportunitiesFeed({
                     message: error.message || 'Complete your profile to access job listings'
                 });
             } else {
-                const message = error.message || 'Failed to load feed';
-                setError(message);
-                toast.error(message);
+                const cached = readFeedCache();
+                if (cached && !showOnlySaved) {
+                    setOpportunities(cached.opportunities);
+                    setTotalCount(cached.count || cached.opportunities.length);
+                    setUsingCachedFeed(true);
+                    setCachedAt(cached.cachedAt);
+                    toast.success('Offline mode: showing cached feed.');
+                } else {
+                    const message = error.message || 'Failed to load feed';
+                    setError(message);
+                    toast.error(message);
+                }
             }
         } finally {
             setIsLoading(false);
@@ -110,6 +127,8 @@ export function useOpportunitiesFeed({
         totalCount,
         isLoading,
         error,
+        usingCachedFeed,
+        cachedAt,
         profileIncomplete,
         toggleSave,
         setOpportunities,

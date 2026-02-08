@@ -20,6 +20,7 @@ import LoadingScreen from '@/components/ui/LoadingScreen';
 import { FeedPageSkeleton } from '@/components/ui/Skeleton';
 import { useOpportunitiesFeed } from '@/features/jobs/hooks/useOpportunitiesFeed';
 import { useAuth } from '@/contexts/AuthContext';
+import { formatSyncTime } from '@/lib/offline/syncStatus';
 
 const FILTERS = {
     location: ['Bangalore', 'Mumbai', 'Delhi', 'Hyderabad', 'Pune', 'Remote'],
@@ -62,6 +63,8 @@ function OpportunitiesContent() {
         totalCount,
         isLoading,
         error,
+        usingCachedFeed,
+        cachedAt,
         profileIncomplete,
         toggleSave,
         reload
@@ -102,12 +105,17 @@ function OpportunitiesContent() {
                                 <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">Browse the live feed</h1>
                                 <p className="text-xs text-muted-foreground">Verified posts only.</p>
                             </div>
-                            <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-1 rounded-full border border-border uppercase tracking-wider">
-                                    {filteredOpps.length} results
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-1 rounded-full border border-border uppercase tracking-wider">
+                                {filteredOpps.length} results
+                            </span>
+                            {usingCachedFeed && (
+                                <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-500/10 px-2 py-1 rounded-full border border-amber-500/30 uppercase tracking-wider">
+                                    Offline cache • {formatSyncTime(cachedAt)}
                                 </span>
-                                {selectedType && (
-                                    <button
+                            )}
+                            {selectedType && (
+                                <button
                                         onClick={() => updateType(null)}
                                         className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest"
                                     >

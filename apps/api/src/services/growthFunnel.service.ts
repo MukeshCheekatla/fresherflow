@@ -1,8 +1,15 @@
-type FunnelEvent = 'DETAIL_VIEW' | 'LOGIN_VIEW' | 'AUTH_SUCCESS' | 'SIGNUP_SUCCESS';
+import { GrowthFunnelEvent, PrismaClient } from '@prisma/client';
+import logger from '../utils/logger';
+
+const prisma = new PrismaClient();
+
+export type FunnelEvent = 'DETAIL_VIEW' | 'LOGIN_VIEW' | 'AUTH_SUCCESS' | 'SIGNUP_SUCCESS';
+export type GrowthWindow = '24h' | '7d' | '30d' | 'all';
 
 type SourceCounters = Record<FunnelEvent, number>;
 
-const sourceMetrics = new Map<string, SourceCounters>();
+// Safety fallback when DB migration is pending/unavailable.
+const fallbackSourceMetrics = new Map<string, SourceCounters>();
 
 function emptyCounters(): SourceCounters {
     return {
@@ -19,25 +26,30 @@ function sanitizeSource(source?: string): string {
     return value.replace(/[^a-z0-9_-]/g, '').slice(0, 64) || 'unknown';
 }
 
-export function recordGrowthEvent(source?: string, event?: string) {
-    const sanitizedSource = sanitizeSource(source);
-    const normalizedEvent = (event || '').trim().toUpperCase() as FunnelEvent;
-    if (!['DETAIL_VIEW', 'LOGIN_VIEW', 'AUTH_SUCCESS', 'SIGNUP_SUCCESS'].includes(normalizedEvent)) return;
-
-    const existing = sourceMetrics.get(sanitizedSource) || emptyCounters();
-    existing[normalizedEvent] += 1;
-    sourceMetrics.set(sanitizedSource, existing);
-}
-
-export function recordAuthSuccess(source?: string, isSignup = false) {
-    recordGrowthEvent(source, 'AUTH_SUCCESS');
-    if (isSignup) {
-        recordGrowthEvent(source, 'SIGNUP_SUCCESS');
+function normalizeEvent(event?: string): FunnelEvent | null {
+    const normalized = (event || '').trim().toUpperCase() as FunnelEvent;
+    if (!['DETAIL_VIEW', 'LOGIN_VIEW', 'AUTH_SUCCESS', 'SIGNUP_SUCCESS'].includes(normalized)) {
+        return null;
     }
+    return normalized;
 }
 
-export function getGrowthFunnelMetrics() {
-    const rows = Array.from(sourceMetrics.entries()).map(([source, counters]) => {
+function fallbackRecord(source: string, event: FunnelEvent) {
+    const existing = fallbackSourceMetrics.get(source) || emptyCounters();
+    existing[event] += 1;
+    fallbackSourceMetrics.set(source, existing);
+}
+
+function toDateRange(window: GrowthWindow): Date | null {
+    if (window === 'all') return null;
+    const now = Date.now();
+    if (window === '24h') return new Date(now - 24 * 60 * 60 * 1000);
+    if (window === '7d') return new Date(now - 7 * 24 * 60 * 60 * 1000);
+    return new Date(now - 30 * 24 * 60 * 60 * 1000);
+}
+
+function formatRows(rows: Array<{ source: string; counters: SourceCounters }>) {
+    const sources = rows.map(({ source, counters }) => {
         const detailToLoginPct = counters.DETAIL_VIEW > 0
             ? Number(((counters.LOGIN_VIEW / counters.DETAIL_VIEW) * 100).toFixed(2))
             : 0;
@@ -51,18 +63,68 @@ export function getGrowthFunnelMetrics() {
             detailToLoginPct,
             loginToAuthPct
         };
-    });
+    }).sort((a, b) => b.AUTH_SUCCESS - a.AUTH_SUCCESS);
 
-    rows.sort((a, b) => b.AUTH_SUCCESS - a.AUTH_SUCCESS);
+    const totals = sources.reduce((acc, row) => {
+        acc.DETAIL_VIEW += row.DETAIL_VIEW;
+        acc.LOGIN_VIEW += row.LOGIN_VIEW;
+        acc.AUTH_SUCCESS += row.AUTH_SUCCESS;
+        acc.SIGNUP_SUCCESS += row.SIGNUP_SUCCESS;
+        return acc;
+    }, emptyCounters());
 
-    return {
-        totals: rows.reduce((acc, row) => {
-            acc.DETAIL_VIEW += row.DETAIL_VIEW;
-            acc.LOGIN_VIEW += row.LOGIN_VIEW;
-            acc.AUTH_SUCCESS += row.AUTH_SUCCESS;
-            acc.SIGNUP_SUCCESS += row.SIGNUP_SUCCESS;
-            return acc;
-        }, emptyCounters()),
-        sources: rows
-    };
+    return { totals, sources };
+}
+
+export async function recordGrowthEvent(source?: string, event?: string) {
+    const sanitizedSource = sanitizeSource(source);
+    const normalizedEvent = normalizeEvent(event);
+    if (!normalizedEvent) return;
+
+    try {
+        await prisma.growthEvent.create({
+            data: {
+                source: sanitizedSource,
+                event: normalizedEvent as GrowthFunnelEvent
+            }
+        });
+    } catch (error) {
+        fallbackRecord(sanitizedSource, normalizedEvent);
+        logger.warn('Growth event persisted to fallback store', { source: sanitizedSource, event: normalizedEvent, error });
+    }
+}
+
+export async function recordAuthSuccess(source?: string, isSignup = false) {
+    await recordGrowthEvent(source, 'AUTH_SUCCESS');
+    if (isSignup) {
+        await recordGrowthEvent(source, 'SIGNUP_SUCCESS');
+    }
+}
+
+export async function getGrowthFunnelMetrics(window: GrowthWindow = '30d') {
+    const since = toDateRange(window);
+    const fallbackRows = Array.from(fallbackSourceMetrics.entries()).map(([source, counters]) => ({ source, counters }));
+
+    try {
+        const grouped = await prisma.growthEvent.groupBy({
+            by: ['source', 'event'],
+            ...(since ? { where: { createdAt: { gte: since } } } : {}),
+            _count: { _all: true }
+        });
+
+        const bySource = new Map<string, SourceCounters>();
+
+        for (const row of grouped) {
+            const source = row.source || 'unknown';
+            const counters = bySource.get(source) || emptyCounters();
+            counters[row.event as FunnelEvent] = row._count._all;
+            bySource.set(source, counters);
+        }
+
+        const dbRows = Array.from(bySource.entries()).map(([source, counters]) => ({ source, counters }));
+        return formatRows([...dbRows, ...fallbackRows]);
+    } catch (error) {
+        logger.warn('Growth metrics served from fallback store', { error });
+        return formatRows(fallbackRows);
+    }
 }

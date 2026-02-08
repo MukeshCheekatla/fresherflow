@@ -95,7 +95,7 @@ router.post('/otp/verify', validate(verifyOtpSchema), async (req: Request, res: 
         const { user, isNewUser } = await AuthService.verifyOtp(email, code);
 
         await setAuthCookies(user, res);
-        recordAuthSuccess(source, isNewUser);
+        await recordAuthSuccess(source, isNewUser);
 
         res.json({
             user: { id: user.id, email: user.email, fullName: user.fullName },
@@ -115,7 +115,7 @@ router.post('/google', async (req: Request, res: Response, next: NextFunction) =
         const { user, isNewUser } = await AuthService.verifyGoogleIdToken(token);
 
         await setAuthCookies(user, res);
-        recordAuthSuccess(source, isNewUser);
+        await recordAuthSuccess(source, isNewUser);
 
         res.json({
             user: { id: user.id, email: user.email, fullName: user.fullName },

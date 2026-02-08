@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { requireAdmin } from '../../middleware/auth';
 import { runLinkVerification } from '../../services/verificationBot';
 import { getObservabilityMetrics } from '../../middleware/observability';
-import { getGrowthFunnelMetrics } from '../../services/growthFunnel.service';
+import { getGrowthFunnelMetrics, GrowthWindow } from '../../services/growthFunnel.service';
 import { PrismaClient } from '@prisma/client';
 
 const router = Router();
@@ -75,9 +75,15 @@ router.get('/metrics', requireAdmin, async (_req: Request, res: Response, next: 
  * Get growth funnel metrics by source
  * GET /api/admin/system/growth-funnel
  */
-router.get('/growth-funnel', requireAdmin, async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/growth-funnel', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const metrics = getGrowthFunnelMetrics();
+        const rawWindow = String(req.query.window || '30d').toLowerCase();
+        const allowedWindows: GrowthWindow[] = ['24h', '7d', '30d', 'all'];
+        const window = allowedWindows.includes(rawWindow as GrowthWindow)
+            ? (rawWindow as GrowthWindow)
+            : '30d';
+
+        const metrics = await getGrowthFunnelMetrics(window);
         res.json({ metrics });
     } catch (error) {
         next(error);

@@ -76,6 +76,13 @@ enum LinkHealth {
   RETRYING
 }
 
+enum GrowthFunnelEvent {
+  DETAIL_VIEW
+  LOGIN_VIEW
+  AUTH_SUCCESS
+  SIGNUP_SUCCESS
+}
+
 // ============================================================================
 // USER MODELS
 // ============================================================================
@@ -343,4 +350,14 @@ model ListingFeedback {
   opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
 
   @@unique([userId, opportunityId]) // One feedback per user per listing
+}
+
+model GrowthEvent {
+  id        String            @id @default(uuid())
+  source    String            @default("unknown")
+  event     GrowthFunnelEvent
+  createdAt DateTime          @default(now())
+
+  @@index([createdAt])
+  @@index([source, event])
 }

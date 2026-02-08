@@ -34,6 +34,7 @@ type GrowthSourceMetric = {
     detailToLoginPct: number;
     loginToAuthPct: number;
 };
+type GrowthWindow = '24h' | '7d' | '30d' | 'all';
 
 export default function AdminDashboardHome() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -55,6 +56,7 @@ export default function AdminDashboardHome() {
     const [topSlowRoutes, setTopSlowRoutes] = useState<RouteMetric[]>([]);
     const [topErrorRoutes, setTopErrorRoutes] = useState<RouteMetric[]>([]);
     const [growthSources, setGrowthSources] = useState<GrowthSourceMetric[]>([]);
+    const [growthWindow, setGrowthWindow] = useState<GrowthWindow>('7d');
     const errorBudgetBreached = observability.errorRatePct > 2 || observability.p95LatencyMs > 1500;
 
     const loadDashboard = useCallback(async () => {
@@ -65,7 +67,7 @@ export default function AdminDashboardHome() {
                 adminApi.getOpportunitiesSummary(),
                 adminApi.getOpportunities({ limit: 5 }),
                 adminApi.getSystemMetrics(),
-                adminApi.getGrowthFunnelMetrics()
+                adminApi.getGrowthFunnelMetrics(growthWindow)
             ]);
 
             const summary = summaryRes.summary || {};
@@ -120,7 +122,7 @@ export default function AdminDashboardHome() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [growthWindow]);
 
     useEffect(() => {
         void loadDashboard();
@@ -287,9 +289,28 @@ export default function AdminDashboardHome() {
             <div className="bg-card rounded-lg border border-border shadow-sm p-4 md:p-5">
                 <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm md:text-base font-semibold tracking-tight">Growth funnel (by source)</h3>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        Detail {'>'} Login {'>'} Auth
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            Detail {'>'} Login {'>'} Auth
+                        </span>
+                        <div className="flex items-center gap-1">
+                            {(['24h', '7d', '30d', 'all'] as GrowthWindow[]).map((windowValue) => (
+                                <button
+                                    key={windowValue}
+                                    type="button"
+                                    onClick={() => setGrowthWindow(windowValue)}
+                                    className={cn(
+                                        'h-6 px-2 rounded-md text-[10px] font-semibold uppercase tracking-wider border transition-colors',
+                                        growthWindow === windowValue
+                                            ? 'bg-primary text-primary-foreground border-primary'
+                                            : 'bg-muted/40 text-muted-foreground border-border hover:text-foreground'
+                                    )}
+                                >
+                                    {windowValue}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
                 {growthSources.length > 0 ? (
                     <div className="space-y-2">
