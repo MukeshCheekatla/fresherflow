@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fresherflow-pwa-v1.4.4';
+const CACHE_NAME = 'fresherflow-pwa-v1.4.5';
 const OFFLINE_URL = '/offline.html';
 
 // Assets that should be cached on install

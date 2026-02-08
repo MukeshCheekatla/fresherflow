@@ -24,6 +24,7 @@ import LoadingScreen from '@/components/ui/LoadingScreen';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import CompanyLogo from '@/components/ui/CompanyLogo';
+import { getRecentViewedByIdOrSlug, saveRecentViewed } from '@/lib/offline/recentViewed';
 
 export default function OpportunityDetailClient({ id, initialData }: { id: string; initialData?: Opportunity | null }) {
     const router = useRouter();
@@ -62,7 +63,17 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                 ...sanitized,
                 isSaved: opportunity.isSaved || false
             });
+            saveRecentViewed({
+                ...sanitized,
+                isSaved: opportunity.isSaved || false
+            });
         } catch {
+            const cachedOpportunity = getRecentViewedByIdOrSlug(id);
+            if (cachedOpportunity) {
+                setOpp(cachedOpportunity);
+                toast.success('Offline mode: loaded cached listing.');
+                return;
+            }
             toast.error('Listing not found.');
             router.push('/opportunities');
         } finally {
@@ -78,6 +89,12 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
             void loadOpportunity();
         }
     }, [id, initialData, loadOpportunity]); // Added deps
+
+    useEffect(() => {
+        if (opp) {
+            saveRecentViewed(opp);
+        }
+    }, [opp]);
 
     useEffect(() => {
         if (!showReports) return;

@@ -25,7 +25,7 @@ export default function ServiceWorkerRegister() {
 
         const register = async () => {
             try {
-                const registration = await navigator.serviceWorker.register('/sw.js?v=1.4.4');
+                const registration = await navigator.serviceWorker.register('/sw.js?v=1.4.5');
                 await registration.update();
 
                 if (registration.waiting) {

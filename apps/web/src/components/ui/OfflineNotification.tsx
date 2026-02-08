@@ -2,6 +2,8 @@
 
 import { useSyncExternalStore } from 'react';
 import WifiIcon from '@heroicons/react/24/outline/WifiIcon';
+import Link from 'next/link';
+import { getRecentViewedCount } from '@/lib/offline/recentViewed';
 
 export default function OfflineNotification() {
     const isOffline = useSyncExternalStore(
@@ -18,6 +20,7 @@ export default function OfflineNotification() {
     );
 
     if (!isOffline) return null;
+    const cachedCount = getRecentViewedCount();
 
     return (
         <div className="fixed bottom-20 left-4 right-4 z-50 animate-in slide-in-from-bottom-2 duration-300 md:bottom-8 md:right-8 md:left-auto md:max-w-xs">
@@ -27,7 +30,16 @@ export default function OfflineNotification() {
                 </div>
                 <div className="flex-1">
                     <p className="text-sm font-semibold">You&apos;re Offline</p>
-                    <p className="text-[10px] opacity-90 leading-tight">Viewing cached listings. Connect to see new updates.</p>
+                    <p className="text-[10px] opacity-90 leading-tight">
+                        {cachedCount > 0
+                            ? `${cachedCount} recently viewed listing${cachedCount > 1 ? 's are' : ' is'} available offline.`
+                            : 'Viewing cached pages only. Connect to load fresh listings.'}
+                    </p>
+                    {cachedCount > 0 && (
+                        <Link href="/opportunities" className="inline-block mt-1 text-[10px] font-semibold underline">
+                            Open opportunities
+                        </Link>
+                    )}
                 </div>
             </div>
         </div>

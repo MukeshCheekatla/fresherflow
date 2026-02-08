@@ -30,9 +30,22 @@ export async function apiClient<T = any>(
         cache: 'no-store', // CRITICAL: Prevent caching of API responses
         next: { revalidate: 0 }
     };
+    const requestUrl = `${API_URL}${endpoint}`;
+    const method = (fetchOptions.method || 'GET').toUpperCase();
+    const canRetry = method === 'GET';
+
+    const fetchWithRetry = async () => {
+        try {
+            return await fetch(requestUrl, fetchOptions);
+        } catch (error) {
+            if (!canRetry) throw error;
+            await new Promise((resolve) => setTimeout(resolve, 300));
+            return await fetch(requestUrl, fetchOptions);
+        }
+    };
 
     try {
-        let response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
+        let response = await fetchWithRetry();
 
         // If 401, handle token refresh with a singleton lock (mutex)
         const isLoggingOut = typeof window !== 'undefined' && (window as unknown as { __isLoggingOut?: boolean }).__isLoggingOut;
@@ -72,7 +85,7 @@ export async function apiClient<T = any>(
                 await isRefreshing;
                 // Retry original request
                 // Retry original request
-                response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
+                response = await fetchWithRetry();
             } catch {
                 console.error('[Auth] Refresh failed, session expired.');
                 throw new Error('Session expired');

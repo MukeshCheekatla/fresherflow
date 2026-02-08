@@ -1,6 +1,7 @@
 {
     "name": "FresherFlow Admin",
     "short_name": "FF Admin",
+    "version": "1.4.5",
     "icons": [
         {
             "src": "/icon-192x192.png",
