@@ -34,6 +34,7 @@ export default function DashboardPage() {
     const [activityError, setActivityError] = useState<string | null>(null);
     const [isOnline, setIsOnline] = useState(true);
     const [feedLastSyncAt, setFeedLastSyncAt] = useState<number | null>(null);
+    const [lastSeenAt, setLastSeenAt] = useState<number | null>(null);
 
     useEffect(() => {
         // Only load once when auth is confirmed and user exists
@@ -60,6 +61,14 @@ export default function DashboardPage() {
             window.removeEventListener('offline', handleOffline);
         };
     }, []);
+
+    useEffect(() => {
+        if (typeof window === 'undefined' || !user) return;
+        const storageKey = 'ff_dashboard_last_seen_at';
+        const previous = Number(window.localStorage.getItem(storageKey) || '0');
+        setLastSeenAt(previous > 0 ? previous : null);
+        window.localStorage.setItem(storageKey, String(Date.now()));
+    }, [user]);
 
     const loadHighlights = async () => {
         setHighlightsError(null);
@@ -153,10 +162,20 @@ export default function DashboardPage() {
     };
 
     const activeRecentOpps = recentOpps.filter((o) => !o.expiresAt || new Date(o.expiresAt) > new Date());
+    const rankedActive = [...activeRecentOpps].sort((a, b) => {
+        const aExp = a.expiresAt ? new Date(a.expiresAt).getTime() : Number.MAX_SAFE_INTEGER;
+        const bExp = b.expiresAt ? new Date(b.expiresAt).getTime() : Number.MAX_SAFE_INTEGER;
+        if (aExp !== bExp) return aExp - bExp;
+        return new Date(b.postedAt as string | Date).getTime() - new Date(a.postedAt as string | Date).getTime();
+    });
     const closingSoon = activeRecentOpps
         .filter((o) => o.expiresAt)
         .sort((a, b) => new Date(a.expiresAt as string).getTime() - new Date(b.expiresAt as string).getTime())
         .slice(0, 8);
+    const newCutoff = lastSeenAt || (Date.now() - (72 * 60 * 60 * 1000));
+    const newSinceLastVisit = rankedActive
+        .filter((o) => new Date(o.postedAt as string | Date).getTime() > newCutoff)
+        .slice(0, 6);
 
     const totalActive = activeRecentOpps.length || 1;
     const jobsCount = activeRecentOpps.filter((o) => o.type === 'JOB').length;
@@ -164,10 +183,12 @@ export default function DashboardPage() {
     const walkinsCount = activeRecentOpps.filter((o) => o.type === 'WALKIN').length;
 
     const sections = [
-        { key: 'all', title: 'All relevant', href: '/opportunities', items: activeRecentOpps.slice(0, 6) },
-        { key: 'jobs', title: 'Jobs', href: '/jobs', items: activeRecentOpps.filter((o) => o.type === 'JOB').slice(0, 4) },
-        { key: 'internships', title: 'Internships', href: '/internships', items: activeRecentOpps.filter((o) => o.type === 'INTERNSHIP').slice(0, 4) },
-        { key: 'walkins', title: 'Walk-ins', href: '/walk-ins', items: activeRecentOpps.filter((o) => o.type === 'WALKIN').slice(0, 4) },
+        { key: 'best', title: 'Best matches', href: '/opportunities', items: rankedActive.slice(0, 6) },
+        { key: 'expiring', title: 'Expiring soon', href: '/opportunities?closingSoon=true', items: closingSoon.slice(0, 4) },
+        { key: 'new', title: 'New since last visit', href: '/opportunities', items: newSinceLastVisit },
+        { key: 'jobs', title: 'Jobs', href: '/jobs', items: rankedActive.filter((o) => o.type === 'JOB').slice(0, 4) },
+        { key: 'internships', title: 'Internships', href: '/internships', items: rankedActive.filter((o) => o.type === 'INTERNSHIP').slice(0, 4) },
+        { key: 'walkins', title: 'Walk-ins', href: '/walk-ins', items: rankedActive.filter((o) => o.type === 'WALKIN').slice(0, 4) },
     ];
 
     return (
