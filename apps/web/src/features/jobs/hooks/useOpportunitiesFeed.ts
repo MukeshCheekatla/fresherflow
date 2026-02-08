@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Opportunity } from '@fresherflow/types';
 import { opportunitiesApi, savedApi } from '@/lib/api/client';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { readFeedCache, saveFeedCache } from '@/lib/offline/opportunitiesFeedCache';
+import { mergeFeedCache, readFeedCache, saveFeedCache } from '@/lib/offline/opportunitiesFeedCache';
 
 interface UseOpportunitiesFeedOptions {
     type?: string | null;
@@ -29,6 +29,7 @@ export function useOpportunitiesFeed({
     const [usingCachedFeed, setUsingCachedFeed] = useState(false);
     const [cachedAt, setCachedAt] = useState<number | null>(null);
     const [profileIncomplete, setProfileIncomplete] = useState<{ percentage: number; message: string } | null>(null);
+    const hydratedFullCacheRef = useRef(false);
     const debouncedSearch = useDebounce(search, 300);
 
     const loadOpportunities = useCallback(async () => {
@@ -54,6 +55,17 @@ export function useOpportunitiesFeed({
             setTotalCount(data.count || data.opportunities?.length || 0);
             if (!showOnlySaved) {
                 saveFeedCache(data.opportunities || [], data.count || data.opportunities?.length || 0);
+                // Deep offline catalog: merge full feed snapshot so offline search/filter works beyond current view.
+                const hasActiveQuery = Boolean(type || selectedLoc);
+                if (hasActiveQuery && !hydratedFullCacheRef.current && typeof navigator !== 'undefined' && navigator.onLine) {
+                    try {
+                        const fullData = await opportunitiesApi.list();
+                        mergeFeedCache(fullData.opportunities || [], fullData.count || fullData.opportunities?.length || 0);
+                        hydratedFullCacheRef.current = true;
+                    } catch {
+                        // Keep primary fetch successful even if catalog hydration fails.
+                    }
+                }
                 setCachedAt(Date.now());
             }
         } catch (err: unknown) {
@@ -94,7 +106,7 @@ export function useOpportunitiesFeed({
                 opp.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
                 opp.company.toLowerCase().includes(debouncedSearch.toLowerCase());
 
-            const matchesLoc = !selectedLoc || opp.locations.includes(selectedLoc);
+            const matchesLoc = !selectedLoc || (opp.locations || []).some((loc) => loc.toLowerCase().includes(selectedLoc.toLowerCase()));
 
             const matchesClosingSoon = !closingSoon || (() => {
                 if (!opp.expiresAt) return false;

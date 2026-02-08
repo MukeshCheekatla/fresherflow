@@ -1,7 +1,7 @@
 import type { Opportunity } from '@fresherflow/types';
 
-const FEED_CACHE_KEY = 'ff_feed_cache_v1';
-const MAX_ITEMS = 80;
+const FEED_CACHE_KEY = 'ff_feed_cache_v2';
+const MAX_ITEMS = 250;
 
 type FeedCachePayload = {
     cachedAt: number;
@@ -9,12 +9,51 @@ type FeedCachePayload = {
     count: number;
 };
 
+function getOppSortTime(opp: Opportunity) {
+    const updated = (opp as Opportunity & { updatedAt?: string | Date }).updatedAt;
+    if (updated) return new Date(updated).getTime();
+    return new Date(opp.postedAt).getTime();
+}
+
+function mergeUnique(existing: Opportunity[], incoming: Opportunity[]) {
+    const byId = new Map<string, Opportunity>();
+    for (const opp of [...existing, ...incoming]) {
+        const current = byId.get(opp.id);
+        if (!current) {
+            byId.set(opp.id, opp);
+            continue;
+        }
+        if (getOppSortTime(opp) >= getOppSortTime(current)) {
+            byId.set(opp.id, opp);
+        }
+    }
+    return [...byId.values()]
+        .sort((a, b) => getOppSortTime(b) - getOppSortTime(a))
+        .slice(0, MAX_ITEMS);
+}
+
 export function saveFeedCache(opportunities: Opportunity[], count: number) {
     if (typeof window === 'undefined') return;
     const payload: FeedCachePayload = {
         cachedAt: Date.now(),
         opportunities: opportunities.slice(0, MAX_ITEMS),
         count
+    };
+    try {
+        localStorage.setItem(FEED_CACHE_KEY, JSON.stringify(payload));
+    } catch {
+        // Ignore storage failures in private mode/quota pressure.
+    }
+}
+
+export function mergeFeedCache(opportunities: Opportunity[], count: number) {
+    if (typeof window === 'undefined') return;
+    const existing = readFeedCache();
+    const merged = mergeUnique(existing?.opportunities || [], opportunities);
+    const payload: FeedCachePayload = {
+        cachedAt: Date.now(),
+        opportunities: merged,
+        count: Math.max(count, existing?.count || 0, merged.length)
     };
     try {
         localStorage.setItem(FEED_CACHE_KEY, JSON.stringify(payload));
