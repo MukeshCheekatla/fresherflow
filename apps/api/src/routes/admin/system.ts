@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { requireAdmin } from '../../middleware/auth';
 import { runLinkVerification } from '../../services/verificationBot';
+import { getObservabilityMetrics } from '../../middleware/observability';
 import { PrismaClient } from '@prisma/client';
 
 const router = Router();
@@ -51,6 +52,19 @@ router.get('/health-stats', requireAdmin, async (req: Request, res: Response, ne
         });
 
         res.json({ stats });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * Get request observability metrics
+ * GET /api/admin/system/metrics
+ */
+router.get('/metrics', requireAdmin, async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+        const metrics = getObservabilityMetrics();
+        res.json({ metrics });
     } catch (error) {
         next(error);
     }

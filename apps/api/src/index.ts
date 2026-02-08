@@ -10,6 +10,7 @@ import cookieParser from 'cookie-parser';
 // import * as Sentry from '@sentry/node'; // Disabled for first run
 import { requestIdMiddleware } from './middleware/requestId';
 import { errorHandler } from './middleware/errorHandler';
+import { observabilityMiddleware } from './middleware/observability';
 import logger from './utils/logger';
 import httpLogger from './middleware/httpLogger';
 import { startExpiryCron } from './cron/expiryCron';
@@ -91,6 +92,9 @@ app.use(cors({
 // Body parsing
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// In-memory request metrics (latency + error rate)
+app.use(observabilityMiddleware);
 
 // Rate Limiting - Stricter on auth routes
 // Rate Limiting - Stricter on auth routes
