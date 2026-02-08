@@ -127,7 +127,13 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
         const token = req.cookies.accessToken;
         const userId = token ? verifyAccessToken(token) : null;
 
-        // Try finding by slug first, then by ID
+        const extractSlugSuffix = (value: string) => {
+            const parts = value.split('-').filter(Boolean);
+            const last = parts[parts.length - 1] || '';
+            return /^[a-f0-9]{6,12}$/i.test(last) ? last.toLowerCase() : '';
+        };
+
+        // Try finding by current slug first, then by full ID.
         let opportunity = await prisma.opportunity.findFirst({
             where: {
                 OR: [
@@ -152,6 +158,35 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
                 } : {})
             }
         });
+
+        // Backward-compatible slug resolution:
+        // if title/company changed, slug changes; preserve old shared links by matching UUID suffix.
+        if (!opportunity) {
+            const suffix = extractSlugSuffix(id);
+            if (suffix) {
+                opportunity = await prisma.opportunity.findFirst({
+                    where: {
+                        id: { endsWith: suffix }
+                    },
+                    include: {
+                        walkInDetails: true,
+                        user: {
+                            select: {
+                                fullName: true
+                            }
+                        },
+                        ...(userId ? {
+                            actions: {
+                                where: { userId }
+                            },
+                            savedBy: {
+                                where: { userId }
+                            }
+                        } : {})
+                    }
+                });
+            }
+        }
 
         if (!opportunity) {
             return next(new AppError('Opportunity not found', 404));

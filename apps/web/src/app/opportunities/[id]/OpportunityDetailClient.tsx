@@ -39,20 +39,13 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
     const [showReports, setShowReports] = useState(false);
     const reportMenuRef = useRef<HTMLDivElement | null>(null);
     const hasTrackedDetailViewRef = useRef(false);
+    const hasShownNotFoundRef = useRef(false);
+    const hasAttemptedLoadRef = useRef(false);
     const [isOnline, setIsOnline] = useState(true);
     const [detailLastSyncAt, setDetailLastSyncAt] = useState<number | null>(null);
 
     const loadOpportunity = useCallback(async () => {
-        // If we already have data (from server), we might not need to fetch again immediately
-        // But if we want to ensure fresh data or if we navigated here client-side without data:
-        if (initialData && !isLoading) {
-            // Optional: Background revalidation or just skip. 
-            // For now, let's skip re-fetching if we have initialData to avoid flicker/double-fetch
-            // unless we want to support soft-navigation updates.
-            // Let's stick to: Fetch only if we don't have data, or if we want to refresh.
-            // Given the current architecture, let's interpret initialData as "the data".
-            return;
-        }
+        if (initialData) return;
 
         setIsLoading(true);
         try {
@@ -81,21 +74,22 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                 toast.success('Offline mode: loaded cached listing.');
                 return;
             }
-            toast.error('Listing not found.');
+            if (!hasShownNotFoundRef.current) {
+                hasShownNotFoundRef.current = true;
+                toast.error('Listing not found.');
+            }
             router.push('/opportunities');
         } finally {
             setIsLoading(false);
         }
-    }, [id, router, initialData, isLoading]); // Added deps
+    }, [id, router, initialData]);
 
     useEffect(() => {
-        // If we have initialData, we might not need to fetch. 
-        // But typically we might want to "hydrate" or check for updates.
-        // However, to fix the double fetch logic:
-        if (!initialData && id) {
+        if (!initialData && id && !hasAttemptedLoadRef.current) {
+            hasAttemptedLoadRef.current = true;
             void loadOpportunity();
         }
-    }, [id, initialData, loadOpportunity]); // Added deps
+    }, [id, initialData, loadOpportunity]);
 
     useEffect(() => {
         if (opp) {
