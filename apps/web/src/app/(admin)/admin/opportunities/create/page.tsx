@@ -7,6 +7,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { adminApi } from '@/lib/api/admin';
 import { buildOpportunityPayload } from '../opportunityPayload';
+import { buildShareUrl } from '@/lib/share';
 import {
     ArrowLeftIcon,
     InformationCircleIcon,
@@ -71,6 +72,40 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
     const [endDate, setEndDate] = useState('');
     const [startTime, setStartTime] = useState('10:00');
     const [endTime, setEndTime] = useState('13:00');
+
+    const getPublicOpportunityUrl = (slugOrId: string) => {
+        const origin = typeof window !== 'undefined' ? window.location.origin : 'https://fresherflow.in';
+        return `${origin}/opportunities/${slugOrId}`;
+    };
+
+    const buildAdminSharePack = (payload: {
+        title: string;
+        company: string;
+        type: 'JOB' | 'INTERNSHIP' | 'WALKIN';
+        slugOrId: string;
+    }) => {
+        const publicUrl = getPublicOpportunityUrl(payload.slugOrId);
+        const telegramUrl = buildShareUrl(publicUrl, { platform: 'telegram', ref: 'admin_share' });
+        const linkedinUrl = buildShareUrl(publicUrl, { platform: 'linkedin', ref: 'admin_share' });
+        const xUrl = buildShareUrl(publicUrl, { platform: 'x', ref: 'admin_share' });
+        const instagramUrl = buildShareUrl(publicUrl, { platform: 'instagram', ref: 'admin_share' });
+
+        const label = payload.type === 'WALKIN' ? 'Walk-in' : payload.type === 'INTERNSHIP' ? 'Internship' : 'Job';
+
+        return [
+            `${payload.title} at ${payload.company}`,
+            `Type: ${label}`,
+            '',
+            `View details: ${publicUrl}`,
+            '',
+            `Telegram: ${telegramUrl}`,
+            `LinkedIn: ${linkedinUrl}`,
+            `X: ${xUrl}`,
+            `Instagram: ${instagramUrl}`,
+            '',
+            '#FresherJobs #OffCampus #Hiring',
+        ].join('\n');
+    };
 
     const toLocalISOString = (dateInput: Date | string) => {
         const date = new Date(dateInput);
@@ -583,13 +618,32 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
                 endTime,
             });
 
+            let sharePackCopied = false;
             if (isEditMode && opportunityId) {
                 await adminApi.updateOpportunity(opportunityId, payload);
             } else {
-                await adminApi.createOpportunity(payload);
+                const response = await adminApi.createOpportunity(payload);
+                const created = response?.opportunity;
+                if (created?.id || created?.slug) {
+                    const sharePack = buildAdminSharePack({
+                        title: created.title || title,
+                        company: created.company || company,
+                        type: created.type || type,
+                        slugOrId: created.slug || created.id,
+                    });
+                    try {
+                        await navigator.clipboard.writeText(sharePack);
+                        sharePackCopied = true;
+                    } catch {
+                        sharePackCopied = false;
+                    }
+                }
             }
 
-            toast.success(isEditMode ? 'Listing updated.' : 'Listing published.', { id: loadingToast });
+            const successMessage = isEditMode
+                ? 'Listing updated.'
+                : (sharePackCopied ? 'Listing published. Share pack copied.' : 'Listing published.');
+            toast.success(successMessage, { id: loadingToast });
             router.push('/admin/opportunities');
         } catch (err: unknown) {
             const error = err as Error;

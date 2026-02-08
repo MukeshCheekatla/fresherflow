@@ -26,6 +26,7 @@ import CompanyLogo from '@/components/ui/CompanyLogo';
 import { getRecentViewedByIdOrSlug, saveRecentViewed } from '@/lib/offline/recentViewed';
 import { formatSyncTime, getDetailLastSyncAt } from '@/lib/offline/syncStatus';
 import { OpportunityDetailSkeleton } from '@/components/ui/Skeleton';
+import { buildShareUrl } from '@/lib/share';
 
 export default function OpportunityDetailClient({ id, initialData }: { id: string; initialData?: Opportunity | null }) {
     const router = useRouter();
@@ -174,17 +175,13 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
     };
 
     const getShareUrl = () => {
-        try {
-            const url = new URL(window.location.href);
-            url.searchParams.set('ref', 'share');
-            url.searchParams.set('source', 'opportunity_share');
-            url.searchParams.set('utm_source', 'fresherflow');
-            url.searchParams.set('utm_medium', 'share');
-            url.searchParams.set('utm_campaign', 'opportunity_share');
-            return url.toString();
-        } catch {
-            return window.location.href;
-        }
+        return buildShareUrl(window.location.href, {
+            platform: 'other',
+            source: 'opportunity_share',
+            medium: 'share',
+            campaign: 'opportunity_share',
+            ref: 'share',
+        });
     };
 
     const handleShare = async () => {
