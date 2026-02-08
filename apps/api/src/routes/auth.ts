@@ -17,11 +17,30 @@ import { EmailService } from '../services/email.service';
 const router: Router = express.Router();
 const prisma = new PrismaClient();
 
+function resolveCookieDomain(): string | undefined {
+    const explicit = process.env.COOKIE_DOMAIN?.trim();
+    if (explicit) return explicit.startsWith('.') ? explicit : `.${explicit}`;
+
+    const frontendUrl = process.env.FRONTEND_URL;
+    if (!frontendUrl) return undefined;
+
+    try {
+        const hostname = new URL(frontendUrl).hostname.toLowerCase();
+        if (hostname === 'localhost' || /^[0-9.]+$/.test(hostname)) return undefined;
+        return `.${hostname.replace(/^\./, '')}`;
+    } catch {
+        return undefined;
+    }
+}
+
+const COOKIE_DOMAIN = resolveCookieDomain();
+
 const COOKIE_OPTIONS = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' as 'none' | 'lax' | 'strict',
-    path: '/'
+    path: '/',
+    ...(COOKIE_DOMAIN ? { domain: COOKIE_DOMAIN } : {})
 };
 
 /**
