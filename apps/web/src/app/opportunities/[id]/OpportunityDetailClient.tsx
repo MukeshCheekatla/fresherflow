@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { opportunitiesApi, actionsApi, feedbackApi, savedApi, growthApi } from '@/lib/api/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,6 +29,7 @@ import { OpportunityDetailSkeleton } from '@/components/ui/Skeleton';
 
 export default function OpportunityDetailClient({ id, initialData }: { id: string; initialData?: Opportunity | null }) {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { user } = useAuth();
     // Use initialData if available, otherwise start null
     const [opp, setOpp] = useState<Opportunity | null>(initialData || null);
@@ -176,6 +177,10 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
         try {
             const url = new URL(window.location.href);
             url.searchParams.set('ref', 'share');
+            url.searchParams.set('source', 'opportunity_share');
+            url.searchParams.set('utm_source', 'fresherflow');
+            url.searchParams.set('utm_medium', 'share');
+            url.searchParams.set('utm_campaign', 'opportunity_share');
             return url.toString();
         } catch {
             return window.location.href;
@@ -267,7 +272,10 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
 
     const detailPath = `/opportunities/${opp.slug || opp.id}`;
     const hasApplyLink = !!opp.applyLink;
-    const loginFromDetailHref = `/login?redirect=${encodeURIComponent(detailPath)}&source=opportunity_detail`;
+    const sourceParam = searchParams.get('source');
+    const fromShare = searchParams.get('ref') === 'share' || sourceParam === 'opportunity_share';
+    const loginSource = fromShare ? 'opportunity_share' : 'opportunity_detail';
+    const loginFromDetailHref = `/login?redirect=${encodeURIComponent(detailPath)}&source=${encodeURIComponent(loginSource)}`;
 
     return (
         <div className="min-h-screen bg-background pb-16 selection:bg-primary/20">
