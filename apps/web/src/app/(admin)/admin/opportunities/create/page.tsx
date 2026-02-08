@@ -24,6 +24,25 @@ type OpportunityFormPageProps = {
     opportunityId?: string;
 };
 
+const normalizeKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const tokenSet = (value: string) => new Set(normalizeKey(value).split(' ').filter(Boolean));
+const overlapRatio = (a: Set<string>, b: Set<string>) => {
+    if (a.size === 0 || b.size === 0) return 0;
+    let matches = 0;
+    for (const token of a) {
+        if (b.has(token)) matches += 1;
+    }
+    return matches / Math.max(a.size, b.size);
+};
+const extractDomain = (value?: string | null) => {
+    if (!value) return '';
+    try {
+        return new URL(value).hostname.replace(/^www\./, '').toLowerCase();
+    } catch {
+        return '';
+    }
+};
+
 export function OpportunityFormPage({ mode = 'create', opportunityId }: OpportunityFormPageProps) {
     const { isAuthenticated } = useAdmin();
     const router = useRouter();
@@ -40,6 +59,14 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
         type: 'JOB' | 'INTERNSHIP' | 'WALKIN';
         slugOrId: string;
     } | null>(null);
+    const [duplicateCandidates, setDuplicateCandidates] = useState<Array<{
+        id: string;
+        title: string;
+        company: string;
+        status: string;
+        updatedAt: string;
+    }>>([]);
+    const [checkingDuplicates, setCheckingDuplicates] = useState(false);
 
     // Form state
     const [type, setType] = useState<'JOB' | 'INTERNSHIP' | 'WALKIN'>('JOB');
@@ -171,6 +198,62 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
             setType(normalized as 'JOB' | 'INTERNSHIP' | 'WALKIN');
         }
     }, [searchParams, isEditMode]);
+
+    useEffect(() => {
+        const trimmedTitle = title.trim();
+        const trimmedCompany = company.trim();
+        if (trimmedTitle.length < 3 || trimmedCompany.length < 2) {
+            setDuplicateCandidates([]);
+            setCheckingDuplicates(false);
+            return;
+        }
+
+        const timeoutId = setTimeout(async () => {
+            try {
+                setCheckingDuplicates(true);
+                const response = await adminApi.getOpportunities({ q: trimmedCompany, limit: 25 });
+                const opportunities = (response?.opportunities || []) as Array<{
+                    id: string;
+                    title: string;
+                    company: string;
+                    applyLink?: string;
+                    status: string;
+                    updatedAt: string;
+                }>;
+                const titleTokens = tokenSet(trimmedTitle);
+                const companyTokens = tokenSet(trimmedCompany);
+                const currentApplyDomain = extractDomain(applyLink);
+
+                const scored = opportunities
+                    .filter((opp) => opp.id !== opportunityId)
+                    .map((opp) => {
+                        const titleScore = overlapRatio(titleTokens, tokenSet(opp.title || ''));
+                        const companyScore = overlapRatio(companyTokens, tokenSet(opp.company || ''));
+                        const candidateDomain = extractDomain(opp.applyLink);
+                        const applyDomainScore = currentApplyDomain && candidateDomain && currentApplyDomain === candidateDomain ? 1 : 0;
+                        const score = (titleScore * 0.5) + (companyScore * 0.35) + (applyDomainScore * 0.15);
+                        return { ...opp, score };
+                    })
+                    .filter((opp) => opp.score >= 0.45)
+                    .sort((a, b) => b.score - a.score)
+                    .slice(0, 4)
+                    .map((opp) => ({
+                        id: opp.id,
+                        title: opp.title,
+                        company: opp.company,
+                        status: `${opp.status} • ${Math.round(opp.score * 100)}%`,
+                        updatedAt: opp.updatedAt
+                    }));
+                setDuplicateCandidates(scored);
+            } catch {
+                setDuplicateCandidates([]);
+            } finally {
+                setCheckingDuplicates(false);
+            }
+        }, 450);
+
+        return () => clearTimeout(timeoutId);
+    }, [title, company, applyLink, opportunityId]);
 
     const fetchOpportunityForEdit = useCallback(async () => {
         if (!opportunityId) return;
@@ -936,6 +1019,37 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
                             />
                         </div>
                     </div>
+                    {(checkingDuplicates || duplicateCandidates.length > 0) && (
+                        <div className="rounded-lg border border-amber-300/50 bg-amber-50/70 dark:bg-amber-500/10 p-3 space-y-2">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300">
+                                Potential duplicate check
+                            </p>
+                            {checkingDuplicates ? (
+                                <p className="text-xs text-muted-foreground">Scanning existing listings...</p>
+                            ) : (
+                                <div className="space-y-2">
+                                    <p className="text-xs text-muted-foreground">
+                                        Found {duplicateCandidates.length} similar listing{duplicateCandidates.length > 1 ? 's' : ''}. Review before publish.
+                                    </p>
+                                    <div className="space-y-1.5">
+                                        {duplicateCandidates.map((dup) => (
+                                            <Link
+                                                key={dup.id}
+                                                href={`/admin/opportunities/edit/${dup.id}`}
+                                                className="flex items-center justify-between rounded-md border border-border bg-card px-2.5 py-2 hover:bg-muted/30 transition-colors"
+                                            >
+                                                <div className="min-w-0">
+                                                    <p className="text-xs font-semibold text-foreground truncate">{dup.title}</p>
+                                                    <p className="text-[11px] text-muted-foreground truncate">{dup.company}</p>
+                                                </div>
+                                                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{dup.status}</span>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Company website (logo)</label>
