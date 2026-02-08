@@ -17,6 +17,7 @@ import BookmarkIcon from '@heroicons/react/24/outline/BookmarkIcon';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import LoadingScreen from '@/components/ui/LoadingScreen';
+import { FeedPageSkeleton } from '@/components/ui/Skeleton';
 import { useOpportunitiesFeed } from '@/features/jobs/hooks/useOpportunitiesFeed';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -370,7 +371,7 @@ function OpportunitiesContent() {
 
 export default function OpportunitiesPage() {
     return (
-        <Suspense fallback={<LoadingScreen />}>
+        <Suspense fallback={<FeedPageSkeleton />}>
             <OpportunitiesContent />
         </Suspense>
     );

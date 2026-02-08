@@ -20,11 +20,11 @@ import ExclamationTriangleIcon from '@heroicons/react/24/outline/ExclamationTria
 import ShieldCheckIcon from '@heroicons/react/24/outline/ShieldCheckIcon';
 
 import Link from 'next/link';
-import LoadingScreen from '@/components/ui/LoadingScreen';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import CompanyLogo from '@/components/ui/CompanyLogo';
 import { getRecentViewedByIdOrSlug, saveRecentViewed } from '@/lib/offline/recentViewed';
+import { OpportunityDetailSkeleton } from '@/components/ui/Skeleton';
 
 export default function OpportunityDetailClient({ id, initialData }: { id: string; initialData?: Opportunity | null }) {
     const router = useRouter();
@@ -235,7 +235,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
         }
     };
 
-    if (isLoading) return <LoadingScreen message="Loading opportunity..." />;
+    if (isLoading) return <OpportunityDetailSkeleton />;
     if (!opp) return null;
 
     const detailPath = `/opportunities/${opp.slug || opp.id}`;

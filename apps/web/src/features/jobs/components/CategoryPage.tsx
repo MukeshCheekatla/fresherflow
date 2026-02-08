@@ -21,6 +21,7 @@ import UserGroupIcon from '@heroicons/react/24/outline/UserGroupIcon';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import LoadingScreen from '@/components/ui/LoadingScreen';
+import { FeedPageSkeleton } from '@/components/ui/Skeleton';
 import { useOpportunitiesFeed } from '@/features/jobs/hooks/useOpportunitiesFeed';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -347,7 +348,7 @@ function CategoryPageContent({ type }: CategoryPageProps) {
 
 export default function CategoryPage({ type }: CategoryPageProps) {
     return (
-        <Suspense fallback={<LoadingScreen />}>
+        <Suspense fallback={<FeedPageSkeleton />}>
             <CategoryPageContent type={type} />
         </Suspense>
     );
