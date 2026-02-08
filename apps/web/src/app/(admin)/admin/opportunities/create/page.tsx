@@ -146,6 +146,7 @@ export default function CreateOpportunityPage() {
 
     const uniqueValues = (items: string[]) => Array.from(new Set(items.map(normalizeTextValue).filter(Boolean)));
 
+    const DEGREE_ENUMS = ['DIPLOMA', 'DEGREE', 'PG'] as const;
     const normalizeDegreeValue = (degree: string) => {
         const value = normalizeTextValue(degree).toLowerCase();
         if (
@@ -161,7 +162,7 @@ export default function CreateOpportunityPage() {
             value === 'pg'
         ) return 'PG';
         if (value.includes('diploma') || value.includes('polytechnic') || value.includes('iti')) return 'DIPLOMA';
-        return normalizeTextValue(degree);
+        return '';
     };
 
     const toStringArray = (values: unknown) => {
@@ -173,11 +174,32 @@ export default function CreateOpportunityPage() {
     };
 
     const normalizeDegrees = (values: unknown) => {
-        return uniqueValues(toStringArray(values).map((value) => normalizeDegreeValue(value)));
+        return uniqueValues(
+            toStringArray(values)
+                .map((value) => normalizeDegreeValue(value))
+                .filter((value): value is (typeof DEGREE_ENUMS)[number] => DEGREE_ENUMS.includes(value as (typeof DEGREE_ENUMS)[number]))
+        );
     };
 
     const normalizeCourses = (values: unknown) => {
         return uniqueValues(toStringArray(values));
+    };
+
+    const normalizeEducationPayload = (degreesInput: unknown, coursesInput: unknown) => {
+        const rawDegrees = toStringArray(degreesInput);
+        const normalizedDegrees = normalizeDegrees(rawDegrees);
+        const inferredCoursesFromDegrees = rawDegrees.filter((value) => !normalizeDegreeValue(value));
+        const normalizedCourses = normalizeCourses([
+            ...toStringArray(coursesInput),
+            ...inferredCoursesFromDegrees,
+        ]);
+
+        // If only degree specializations were provided in allowedDegrees, keep eligibility broad as UG.
+        const degrees = normalizedDegrees.length > 0
+            ? normalizedDegrees
+            : (inferredCoursesFromDegrees.length > 0 ? ['DEGREE'] : []);
+
+        return { degrees, courses: normalizedCourses };
     };
 
     const normalizeWorkModeValue = (value: unknown): 'ONSITE' | 'HYBRID' | 'REMOTE' | undefined => {
@@ -238,8 +260,9 @@ export default function CreateOpportunityPage() {
             if (parsed.jobFunction) setJobFunction(parsed.jobFunction);
             if (parsed.employmentType) setEmploymentType(parsed.employmentType);
             if (parsed.incentives) setIncentives(parsed.incentives);
-            if (parsed.allowedDegrees?.length) setAllowedDegrees(normalizeDegrees(parsed.allowedDegrees));
-            if (parsed.allowedCourses?.length) setAllowedCourses(normalizeCourses(parsed.allowedCourses));
+            const parsedEducation = normalizeEducationPayload(parsed.allowedDegrees, parsed.allowedCourses);
+            setAllowedDegrees(parsedEducation.degrees);
+            setAllowedCourses(parsedEducation.courses);
             if (parsed.allowedPassoutYears?.length) setPassoutYears(normalizePassoutYears(parsed.allowedPassoutYears));
             if (parsed.applyLink) setApplyLink(parsed.applyLink);
             if (parsed.expiresAt) setExpiresAt(parsed.expiresAt);
@@ -403,8 +426,9 @@ export default function CreateOpportunityPage() {
             if (data.company) setCompany(data.company);
             if (data.companyWebsite) setCompanyWebsite(data.companyWebsite);
             if (data.description) setDescription(String(data.description));
-            setAllowedDegrees(normalizeDegrees(data.allowedDegrees));
-            setAllowedCourses(normalizeCourses(data.allowedCourses));
+            const parsedEducation = normalizeEducationPayload(data.allowedDegrees, data.allowedCourses);
+            setAllowedDegrees(parsedEducation.degrees);
+            setAllowedCourses(parsedEducation.courses);
             setPassoutYears(normalizePassoutYears(data.allowedPassoutYears));
             const requiredSkillsValues = toStringArray(data.requiredSkills);
             if (requiredSkillsValues.length > 0) setRequiredSkills(requiredSkillsValues.join(', '));

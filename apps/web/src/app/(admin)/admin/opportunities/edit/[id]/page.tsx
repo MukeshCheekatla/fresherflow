@@ -127,6 +127,7 @@ export default function EditOpportunityPage() {
 
     const uniqueValues = (items: string[]) => Array.from(new Set(items.map(normalizeTextValue).filter(Boolean)));
 
+    const DEGREE_ENUMS = ['DIPLOMA', 'DEGREE', 'PG'] as const;
     const normalizeDegreeValue = (degree: string) => {
         const value = normalizeTextValue(degree).toLowerCase();
         if (
@@ -142,7 +143,7 @@ export default function EditOpportunityPage() {
             value === 'pg'
         ) return 'PG';
         if (value.includes('diploma') || value.includes('polytechnic') || value.includes('iti')) return 'DIPLOMA';
-        return normalizeTextValue(degree);
+        return '';
     };
 
     const toStringArray = (values: unknown) => {
@@ -153,8 +154,25 @@ export default function EditOpportunityPage() {
         return [];
     };
 
-    const normalizeDegrees = (values: unknown) => uniqueValues(toStringArray(values).map((value) => normalizeDegreeValue(value)));
+    const normalizeDegrees = (values: unknown) => uniqueValues(
+        toStringArray(values)
+            .map((value) => normalizeDegreeValue(value))
+            .filter((value): value is (typeof DEGREE_ENUMS)[number] => DEGREE_ENUMS.includes(value as (typeof DEGREE_ENUMS)[number]))
+    );
     const normalizeCourses = (values: unknown) => uniqueValues(toStringArray(values));
+    const normalizeEducationPayload = (degreesInput: unknown, coursesInput: unknown) => {
+        const rawDegrees = toStringArray(degreesInput);
+        const normalizedDegrees = normalizeDegrees(rawDegrees);
+        const inferredCoursesFromDegrees = rawDegrees.filter((value) => !normalizeDegreeValue(value));
+        const normalizedCourses = normalizeCourses([
+            ...toStringArray(coursesInput),
+            ...inferredCoursesFromDegrees,
+        ]);
+        const degrees = normalizedDegrees.length > 0
+            ? normalizedDegrees
+            : (inferredCoursesFromDegrees.length > 0 ? ['DEGREE'] : []);
+        return { degrees, courses: normalizedCourses };
+    };
 
     const normalizePassoutYears = (values: unknown) => {
         return toStringArray(values)
@@ -373,8 +391,9 @@ export default function EditOpportunityPage() {
             if (data.company) setCompany(String(data.company));
             if (data.companyWebsite) setCompanyWebsite(String(data.companyWebsite));
             if (data.description) setDescription(String(data.description));
-            setAllowedDegrees(normalizeDegrees(data.allowedDegrees));
-            setAllowedCourses(normalizeCourses(data.allowedCourses));
+            const parsedEducation = normalizeEducationPayload(data.allowedDegrees, data.allowedCourses);
+            setAllowedDegrees(parsedEducation.degrees);
+            setAllowedCourses(parsedEducation.courses);
             setPassoutYears(normalizePassoutYears(data.allowedPassoutYears));
 
             const requiredSkillsValues = toStringArray(data.requiredSkills);

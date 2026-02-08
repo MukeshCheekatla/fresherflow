@@ -36,7 +36,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         const description = `${opportunity.title} position at ${opportunity.company} in ${location}. Open to ${eligibility}. Apply now on FresherFlow.`.substring(0, 155);
 
         // Canonical URL
-        const url = `https://fresherflow.in/opportunities/${opportunity.slug}`;
+        const canonicalId = opportunity.slug || opportunity.id;
+        const url = `https://fresherflow.in/opportunities/${canonicalId}`;
+        const ogImageUrl = `https://fresherflow.in/api/og/job/${encodeURIComponent(opportunity.id)}`;
 
         return {
             title: seoTitle,
@@ -49,7 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                 type: 'website',
                 images: [
                     {
-                        url: 'https://fresherflow.in/main.png',
+                        url: ogImageUrl,
                         width: 1200,
                         height: 630,
                         alt: `${opportunity.title} at ${opportunity.company}`,
@@ -60,7 +62,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                 card: 'summary_large_image',
                 title: seoTitle,
                 description,
-                images: ['https://fresherflow.in/main.png'],
+                images: [ogImageUrl],
             },
             alternates: {
                 canonical: url,
