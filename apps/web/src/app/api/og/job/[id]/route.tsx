@@ -139,9 +139,9 @@ const getDaysUntilExpiry = (opportunity: OpportunityDto) => {
 };
 
 const formatDeadline = (opportunity: OpportunityDto) => {
-  if (!opportunity.expiresAt) return "Rolling";
+  if (!opportunity.expiresAt) return "Open";
   const dt = new Date(opportunity.expiresAt);
-  if (Number.isNaN(dt.getTime())) return "Rolling";
+  if (Number.isNaN(dt.getTime())) return "Open";
   return dt.toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
