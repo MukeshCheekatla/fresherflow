@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { adminApi } from '@/lib/api/admin';
 import {
     ChartBarIcon,
     ExclamationTriangleIcon,
@@ -14,6 +14,7 @@ import {
     DocumentTextIcon
 } from '@heroicons/react/24/outline';
 import { AdminAnalyticsSkeleton } from '@/components/ui/Skeleton';
+import { Button } from '@/components/ui/Button';
 
 interface AnalyticsOverview {
     linkHealth: {
@@ -46,51 +47,33 @@ interface HealthStats {
 }
 
 export default function AdminAnalyticsPage() {
-    const router = useRouter();
     const [analytics, setAnalytics] = useState<AnalyticsOverview | null>(null);
     const [healthStats, setHealthStats] = useState<HealthStats | null>(null);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
 
     const loadAnalytics = useCallback(async () => {
+        setLoading(true);
+        setLoadError(null);
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/analytics/overview`, {
-                credentials: 'include'
-            });
+            const [analyticsData, healthData] = await Promise.all([
+                adminApi.getAnalyticsOverview(),
+                adminApi.getHealthStats()
+            ]);
 
-            if (!response.ok) {
-                if (response.status === 401 || response.status === 403) {
-                    router.push('/admin/login');
-                    return;
-                }
-                throw new Error('Failed to load analytics');
-            }
-
-            const data = await response.json();
-            setAnalytics(data);
+            setAnalytics(analyticsData as AnalyticsOverview);
+            setHealthStats((healthData as { stats?: HealthStats })?.stats || null);
         } catch (error) {
-            console.error('Analytics load failure:', error);
+            const message = (error as Error)?.message || 'Failed to load analytics';
+            setLoadError(message);
         } finally {
             setLoading(false);
-        }
-    }, [router]);
-
-    const loadHealthStats = useCallback(async () => {
-        try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/system/health-stats`, {
-                credentials: 'include'
-            });
-            if (!response.ok) return;
-            const data = await response.json();
-            setHealthStats(data.stats || null);
-        } catch {
-            // Silent fail
         }
     }, []);
 
     useEffect(() => {
-        loadAnalytics();
-        loadHealthStats();
-    }, [loadAnalytics, loadHealthStats]);
+        void loadAnalytics();
+    }, [loadAnalytics]);
 
     if (loading) {
         return <AdminAnalyticsSkeleton />;
@@ -98,8 +81,18 @@ export default function AdminAnalyticsPage() {
 
     if (!analytics) {
         return (
-            <div className="max-w-7xl mx-auto p-8 text-center">
-                <p className="text-muted-foreground">Failed to load analytics</p>
+            <div className="max-w-7xl mx-auto p-8">
+                <div className="rounded-xl border border-dashed border-border bg-card p-6 text-center">
+                    <p className="text-muted-foreground text-sm">Failed to load analytics.</p>
+                    {loadError && <p className="text-xs text-muted-foreground mt-2">{loadError}</p>}
+                    <Button
+                        variant="outline"
+                        onClick={() => void loadAnalytics()}
+                        className="mt-4 h-8 px-3 text-[10px] font-bold uppercase tracking-widest"
+                    >
+                        Retry
+                    </Button>
+                </div>
             </div>
         );
     }
@@ -200,6 +193,11 @@ export default function AdminAnalyticsPage() {
                         Healthy links
                     </p>
                 </div>
+                {loadError && (
+                    <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[10px] font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
+                        Partial data mode
+                    </div>
+                )}
             </div>
 
             {/* Detailed Breakdowns */}

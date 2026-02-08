@@ -2,6 +2,14 @@ import { apiClient } from './client';
 
 // Admin API methods using the centralized client (cookie-based auth)
 export const adminApi = {
+    // Analytics overview
+    getAnalyticsOverview: () =>
+        apiClient('/api/admin/analytics/overview'),
+
+    // System health stats
+    getHealthStats: () =>
+        apiClient('/api/admin/system/health-stats'),
+
     // Summary stats
     getOpportunitiesSummary: () =>
         apiClient('/api/admin/opportunities/summary'),
