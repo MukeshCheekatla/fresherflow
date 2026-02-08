@@ -80,6 +80,129 @@ router.post('/parse', async (req: Request, res: Response, next: NextFunction) =>
     }
 });
 
+// POST /api/admin/opportunities/ingest-draft
+// Automation-safe entrypoint: always creates DRAFT for admin review.
+router.post(
+    '/ingest-draft',
+    adminRateLimit,
+    withAdminAudit('CREATE'),
+    validate(opportunitySchema as any),
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const data = req.body;
+
+            let type = data.type;
+            if (data.category) {
+                const map: Record<string, OpportunityType> = {
+                    job: OpportunityType.JOB,
+                    internship: OpportunityType.INTERNSHIP,
+                    'walk-in': OpportunityType.WALKIN
+                };
+                type = map[data.category] || OpportunityType.JOB;
+            }
+
+            const applyLink = (typeof data.applyLink === 'string' && data.applyLink.trim().length > 0)
+                ? data.applyLink.trim()
+                : undefined;
+
+            // Lightweight de-duplication for automated ingestion.
+            if (applyLink) {
+                const existing = await prisma.opportunity.findFirst({
+                    where: {
+                        deletedAt: null,
+                        applyLink
+                    },
+                    select: { id: true, slug: true, status: true, title: true }
+                });
+
+                if (existing) {
+                    return res.status(409).json({
+                        message: 'Duplicate listing detected by applyLink',
+                        duplicate: existing
+                    });
+                }
+            }
+
+            let walkInCreate = undefined;
+            if (type === OpportunityType.WALKIN && data.walkInDetails) {
+                const dates = data.walkInDetails.dates || (data.walkInDetails.date ? [data.walkInDetails.date] : []);
+                const venueAddress = data.walkInDetails.venueAddress || data.walkInDetails.venue;
+                const reportingTime = data.walkInDetails.reportingTime || data.walkInDetails.startTime;
+
+                if (venueAddress) {
+                    walkInCreate = {
+                        create: {
+                            dates: dates.map((d: string) => new Date(d)),
+                            dateRange: data.walkInDetails.dateRange,
+                            timeRange: data.walkInDetails.timeRange,
+                            venueAddress,
+                            venueLink: data.walkInDetails.venueLink,
+                            reportingTime: reportingTime || 'Contact for timing',
+                            requiredDocuments: data.walkInDetails.requiredDocuments || [],
+                            contactPerson: data.walkInDetails.contactPerson,
+                            contactPhone: data.walkInDetails.contactPhone
+                        }
+                    };
+                }
+            }
+
+            const tempId = crypto.randomUUID();
+            const slug = generateSlug(data.title, data.company, tempId);
+
+            const opportunity = await prisma.opportunity.create({
+                data: {
+                    id: tempId,
+                    slug,
+                    type: type as OpportunityType,
+                    title: data.title,
+                    company: data.company,
+                    companyWebsite: data.companyWebsite,
+                    description: data.description,
+                    allowedDegrees: data.allowedDegrees,
+                    allowedCourses: data.allowedCourses || [],
+                    allowedPassoutYears: data.allowedPassoutYears,
+                    requiredSkills: data.requiredSkills || [],
+                    locations: data.locations,
+                    workMode: data.workMode,
+                    salaryRange: data.salaryRange,
+                    stipend: data.stipend,
+                    employmentType: data.employmentType,
+                    salaryMin: data.salaryMin || (data.salaryRange ? parseInt(data.salaryRange) : undefined),
+                    salaryMax: data.salaryMax,
+                    salaryPeriod: data.salaryPeriod,
+                    incentives: data.incentives,
+                    jobFunction: data.jobFunction,
+                    experienceMin: data.experienceMin,
+                    experienceMax: data.experienceMax,
+                    applyLink,
+                    expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
+                    postedByUserId: req.adminId!,
+                    status: OpportunityStatus.DRAFT,
+                    ...(walkInCreate && { walkInDetails: walkInCreate })
+                },
+                include: {
+                    walkInDetails: true
+                }
+            });
+
+            // Notify admin only; no public broadcast for draft ingestion.
+            TelegramService.notifyNewJob(
+                opportunity.title,
+                opportunity.company,
+                opportunity.id,
+                false
+            ).catch(() => { });
+
+            res.status(201).json({
+                opportunity,
+                message: 'Draft ingested successfully. Review and publish from admin.'
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+);
+
 // POST /api/admin/opportunities/bulk
 router.post(
     '/bulk',

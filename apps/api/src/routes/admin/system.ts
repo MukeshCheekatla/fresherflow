@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { requireAdmin } from '../../middleware/auth';
-import { runLinkVerification } from '../../services/verificationBot';
+import { getVerificationStats, runLinkVerification } from '../../services/verificationBot';
 import { getObservabilityMetrics } from '../../middleware/observability';
 import { getGrowthFunnelMetrics, GrowthWindow } from '../../services/growthFunnel.service';
 import { PrismaClient } from '@prisma/client';
@@ -53,6 +53,21 @@ router.get('/health-stats', requireAdmin, async (req: Request, res: Response, ne
         });
 
         res.json({ stats });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * Get Link Verification Bot run stats
+ * GET /api/admin/system/verify-links/stats
+ */
+router.get('/verify-links/stats', requireAdmin, async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+        res.json({
+            success: true,
+            stats: getVerificationStats()
+        });
     } catch (error) {
         next(error);
     }
