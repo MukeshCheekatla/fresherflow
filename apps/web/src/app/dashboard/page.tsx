@@ -28,6 +28,9 @@ export default function DashboardPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isLoadingHighlights, setIsLoadingHighlights] = useState(true);
     const [hasLoaded, setHasLoaded] = useState(false);
+    const [recentError, setRecentError] = useState<string | null>(null);
+    const [highlightsError, setHighlightsError] = useState<string | null>(null);
+    const [activityError, setActivityError] = useState<string | null>(null);
 
     useEffect(() => {
         // Only load once when auth is confirmed and user exists
@@ -40,11 +43,13 @@ export default function DashboardPage() {
     }, [authLoading, user, hasLoaded]);
 
     const loadHighlights = async () => {
+        setHighlightsError(null);
         try {
             const data = await dashboardApi.getHighlights();
             setHighlights(data);
-        } catch {
-            console.error('Failed to load highlights');
+        } catch (err: unknown) {
+            const message = (err as Error)?.message || 'Unable to load highlights';
+            setHighlightsError(message);
         } finally {
             setIsLoadingHighlights(false);
         }
@@ -74,6 +79,7 @@ export default function DashboardPage() {
     };
 
     const loadRecentOpportunities = async () => {
+        setRecentError(null);
         try {
             const data = await opportunitiesApi.list();
             const sanitized = (data.opportunities || []).slice(0, 3).map((o: Opportunity) => ({
@@ -82,23 +88,35 @@ export default function DashboardPage() {
                 requiredSkills: o.requiredSkills || []
             }));
             setRecentOpps(sanitized);
-        } catch {
-            console.error('Failed to load recs');
+        } catch (err: unknown) {
+            const message = (err as Error)?.message || 'Unable to load recommended listings';
+            setRecentError(message);
         } finally {
             setIsLoadingOpps(false);
         }
     };
 
     const loadDashboardData = async () => {
+        setActivityError(null);
         try {
             const data = await actionsApi.summary();
             setActionsSummary(data.summary || null);
         } catch (err: unknown) {
             const error = err as Error;
             toast.error(`Couldn't load activity: ${error.message}`);
+            setActivityError(error.message || 'Unable to load activity');
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const retryAll = () => {
+        setIsLoading(true);
+        setIsLoadingOpps(true);
+        setIsLoadingHighlights(true);
+        loadDashboardData();
+        loadRecentOpportunities();
+        loadHighlights();
     };
 
     return (
@@ -151,6 +169,23 @@ export default function DashboardPage() {
                             <div className="h-24 bg-muted/20 rounded-xl animate-pulse" />
                             <div className="h-24 bg-muted/20 rounded-xl animate-pulse" />
                             <div className="h-24 bg-muted/20 rounded-xl animate-pulse" />
+                        </div>
+                    ) : highlightsError ? (
+                        <div className="rounded-xl border border-dashed border-border bg-card p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div>
+                                <h3 className="text-sm font-semibold text-foreground">Could not load highlights</h3>
+                                <p className="text-xs text-muted-foreground mt-1">{highlightsError}</p>
+                            </div>
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setIsLoadingHighlights(true);
+                                    loadHighlights();
+                                }}
+                                className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest"
+                            >
+                                Retry highlights
+                            </Button>
                         </div>
                     ) : highlights && (
                         /* Filter out expired items on the fly */
@@ -230,6 +265,20 @@ export default function DashboardPage() {
 
                         {/* Recent Opportunities */}
                         <div className="lg:col-span-8 space-y-3 md:space-y-6">
+                            {(recentError || highlightsError || activityError) && (
+                                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                    <div className="text-xs text-amber-700 dark:text-amber-300">
+                                        Some dashboard data is unavailable. You can still browse listings.
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        onClick={retryAll}
+                                        className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest border-amber-500/40 text-amber-700 dark:text-amber-300"
+                                    >
+                                        Retry all
+                                    </Button>
+                                </div>
+                            )}
                             <div className="flex items-center justify-between pb-1.5 border-b border-border/50">
                                 <div className="flex items-center gap-2">
                                     <h2 className="text-sm md:text-base font-bold tracking-tight text-foreground/90">Active Stream</h2>
@@ -241,6 +290,21 @@ export default function DashboardPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {isLoadingOpps ? (
                                     [1, 2].map(i => <SkeletonJobCard key={i} />)
+                                ) : recentError ? (
+                                    <div className="col-span-full bg-card rounded-xl text-center p-8 md:p-10 border border-dashed border-border">
+                                        <h3 className="font-semibold text-foreground text-sm">Could not load recommendations</h3>
+                                        <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">{recentError}</p>
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => {
+                                                setIsLoadingOpps(true);
+                                                loadRecentOpportunities();
+                                            }}
+                                            className="mt-5 h-8 px-3 text-[10px] font-bold uppercase tracking-widest"
+                                        >
+                                            Retry
+                                        </Button>
+                                    </div>
                                 ) : recentOpps.length === 0 ? (
                                     <div className="col-span-full bg-card rounded-xl text-center p-8 md:p-12 border border-dashed border-border">
                                         <h3 className="font-semibold text-foreground text-sm">No recommended jobs yet</h3>
@@ -288,9 +352,25 @@ export default function DashboardPage() {
                                         <ChartBarIcon className="w-4 h-4 text-primary" />
                                         <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Snapshot</h4>
                                     </div>
-                                    <p className="text-sm text-muted-foreground leading-snug">
-                                        {actionsSummary?.appliedCount || 0} applications tracked. Keep your profile sharp to unlock better matches.
-                                    </p>
+                                    {activityError ? (
+                                        <>
+                                            <p className="text-sm text-muted-foreground leading-snug">{activityError}</p>
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => {
+                                                    setIsLoading(true);
+                                                    loadDashboardData();
+                                                }}
+                                                className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest"
+                                            >
+                                                Retry activity
+                                            </Button>
+                                        </>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground leading-snug">
+                                            {actionsSummary?.appliedCount || 0} applications tracked. Keep your profile sharp to unlock better matches.
+                                        </p>
+                                    )}
                                     <div className="flex items-center gap-2">
                                         <Button asChild className="h-9 px-3 text-[10px] font-bold uppercase tracking-widest">
                                             <Link href="/opportunities">Open feed</Link>
