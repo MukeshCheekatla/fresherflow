@@ -38,7 +38,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         // Canonical URL
         const canonicalId = opportunity.slug || opportunity.id;
         const url = `https://fresherflow.in/opportunities/${canonicalId}`;
-        const ogImageUrl = `https://fresherflow.in/api/og/job/${encodeURIComponent(opportunity.id)}`;
+        const ogImageVersion = process.env.NEXT_PUBLIC_OG_IMAGE_VERSION || '1';
+        const ogUpdatedAt = opportunity.updatedAt || opportunity.postedAt || '';
+        const ogImageUrl = `https://fresherflow.in/api/og/job/${encodeURIComponent(opportunity.id)}?v=${encodeURIComponent(ogImageVersion)}&t=${encodeURIComponent(String(ogUpdatedAt))}`;
 
         return {
             title: seoTitle,

@@ -12,6 +12,7 @@ type OpportunityDto = {
   title: string;
   company: string;
   type?: "JOB" | "INTERNSHIP" | "WALKIN";
+  status?: string;
   locations?: string[];
   companyWebsite?: string | null;
   applyLink?: string | null;
@@ -35,6 +36,23 @@ const sanitizeDomain = (raw: string) => {
   }
 };
 
+const fetchWithTimeout = async (url: string, timeoutMs = 2500) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    return response;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
 const inferDomain = (opportunity: OpportunityDto) => {
   const fromWebsite = sanitizeDomain(opportunity.companyWebsite || "");
   if (fromWebsite) return fromWebsite;
@@ -50,10 +68,27 @@ const inferDomain = (opportunity: OpportunityDto) => {
   return fromCompany ? `${fromCompany}.com` : "";
 };
 
-const getLogoUrl = (opportunity: OpportunityDto) => {
+const getLogoCandidates = (opportunity: OpportunityDto) => {
   const domain = inferDomain(opportunity);
-  if (!domain) return "";
-  return `https://logo.clearbit.com/${domain}?size=200`;
+  if (!domain) return [];
+
+  return [
+    `https://logo.clearbit.com/${domain}?size=200`,
+    `https://icons.duckduckgo.com/ip3/${domain}.ico`,
+    `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
+  ];
+};
+
+const resolveLogoUrl = async (opportunity: OpportunityDto) => {
+  const candidates = getLogoCandidates(opportunity);
+  for (const candidate of candidates) {
+    const response = await fetchWithTimeout(candidate);
+    if (!response || !response.ok) continue;
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.startsWith("image/")) continue;
+    return candidate;
+  }
+  return "";
 };
 
 const getTypeLabel = (type?: string) => {
@@ -63,7 +98,67 @@ const getTypeLabel = (type?: string) => {
 };
 
 const truncate = (value: string, max: number) =>
-  value.length > max ? `${value.slice(0, max - 1)}…` : value;
+  value.length > max ? `${value.slice(0, max - 3)}...` : value;
+
+const renderFallbackCard = (title: string, subtitle: string) =>
+  new ImageResponse(
+    (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          background:
+            "linear-gradient(135deg, #0b1329 0%, #132b55 48%, #1e3a78 100%)",
+          color: "#f8fafc",
+          padding: "52px",
+          fontFamily:
+            "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <div
+            style={{
+              borderRadius: "999px",
+              border: "1px solid rgba(148, 163, 184, 0.35)",
+              background: "rgba(15, 23, 42, 0.4)",
+              padding: "10px 18px",
+              fontSize: "20px",
+              color: "#bfdbfe",
+            }}
+          >
+            FresherFlow
+          </div>
+          <div
+            style={{
+              borderRadius: "999px",
+              border: "1px solid rgba(251, 191, 36, 0.45)",
+              background: "rgba(120, 53, 15, 0.38)",
+              color: "#fde68a",
+              fontSize: "18px",
+              fontWeight: 700,
+              letterSpacing: "0.04em",
+              padding: "10px 16px",
+            }}
+          >
+            PREVIEW
+          </div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+          <div style={{ fontSize: "58px", lineHeight: 1.08, fontWeight: 800 }}>
+            {title}
+          </div>
+          <div style={{ fontSize: "28px", color: "#cbd5e1" }}>{subtitle}</div>
+        </div>
+        <div style={{ fontSize: "22px", color: "#bfdbfe" }}>
+          Explore active opportunities at fresherflow.in
+        </div>
+      </div>
+    ),
+    size
+  );
 
 export async function GET(
   _: Request,
@@ -84,20 +179,27 @@ export async function GET(
     );
 
     if (!response.ok) {
-      return new Response("Opportunity not found", { status: 404 });
+      return renderFallbackCard("Opportunity preview", "This listing is unavailable.");
     }
 
     const payload = await response.json();
     opportunity = payload?.opportunity || null;
   } catch {
-    return new Response("Failed to generate image", { status: 500 });
+    return renderFallbackCard("Opportunity preview", "Unable to load listing details right now.");
   }
 
   if (!opportunity) {
-    return new Response("Opportunity not found", { status: 404 });
+    return renderFallbackCard("Opportunity preview", "This listing is unavailable.");
   }
 
-  const logoUrl = getLogoUrl(opportunity);
+  if (opportunity.status === "EXPIRED") {
+    return renderFallbackCard(
+      "Listing archived",
+      "This opportunity has expired. Discover active roles on FresherFlow."
+    );
+  }
+
+  const logoUrl = await resolveLogoUrl(opportunity);
   const title = truncate(opportunity.title || "Opportunity", 88);
   const company = truncate(opportunity.company || "Company", 42);
   const location = truncate(opportunity.locations?.[0] || "India", 28);
