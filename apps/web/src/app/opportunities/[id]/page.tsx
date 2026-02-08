@@ -77,9 +77,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 const generateJsonLd = (opportunity: Opportunity) => {
     let logoUrl = 'https://fresherflow.in/logo.png';
     try {
-        if (opportunity.applyLink) {
-            const hostname = new URL(opportunity.applyLink).hostname;
-            logoUrl = `https://logo.clearbit.com/${hostname}`;
+        const sourceUrl = opportunity.companyWebsite || opportunity.applyLink;
+        if (sourceUrl) {
+            const hostname = new URL(sourceUrl).hostname.toLowerCase().replace(/^www\./, '');
+            const parts = hostname.split('.').filter(Boolean);
+            const domain =
+                parts.length > 2
+                    ? parts.slice(-2).join('.')
+                    : hostname;
+            logoUrl = `https://logo.clearbit.com/${domain}`;
         }
     } catch {
         // Fallback to default

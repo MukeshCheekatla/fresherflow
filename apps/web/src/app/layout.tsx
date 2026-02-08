@@ -26,7 +26,10 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://fresherflow.in"),
-  title: "FresherFlow | Premium Career Feed for Freshers",
+  title: {
+    default: "FresherFlow",
+    template: "%s | FresherFlow",
+  },
   description: "A verified feed of jobs, internships, and walk-ins. Engineering the future of entry-level hiring with direct access to official company portals.",
   alternates: {
     canonical: "./",

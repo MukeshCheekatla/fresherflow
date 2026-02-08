@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useAdmin } from '@/contexts/AdminContext';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import LoadingScreen from '@/components/ui/LoadingScreen';
+import { AdminFormSkeleton } from '@/components/ui/Skeleton';
 import {
     ArrowLeftIcon,
     BriefcaseIcon,
@@ -338,7 +338,7 @@ export default function EditOpportunityPage() {
     };
 
     if (loading) {
-        return <LoadingScreen message="Loading listing..." fullScreen={false} />;
+        return <AdminFormSkeleton />;
     }
 
     return (

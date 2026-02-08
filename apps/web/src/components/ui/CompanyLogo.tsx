@@ -8,11 +8,21 @@ import { cn } from '@/lib/utils';
 // Helper to extract root domain from URL
 const getDomainFromUrl = (url: string): string | null => {
     try {
-        const hostname = new URL(url).hostname;
-        return hostname;
+        const hostname = new URL(url).hostname.toLowerCase();
+        return hostname.startsWith('www.') ? hostname.slice(4) : hostname;
     } catch {
         return null; // Return null if invalid URL
     }
+};
+
+const getRootDomain = (domain: string) => {
+    const parts = domain.split('.').filter(Boolean);
+    if (parts.length <= 2) return domain;
+    const tld = `${parts[parts.length - 2]}.${parts[parts.length - 1]}`;
+    if (tld === 'co.in' || tld === 'com.au') {
+        return parts.slice(-3).join('.');
+    }
+    return parts.slice(-2).join('.');
 };
 
 interface CompanyLogoProps {
@@ -83,8 +93,8 @@ export default function CompanyLogo({ companyName, companyWebsite, applyLink, cl
 
     const websiteDomain = companyWebsite ? getDomainFromUrl(companyWebsite) : null;
     const linkDomain = applyLink ? getDomainFromUrl(applyLink) : null;
-    const normalizedLinkDomain = linkDomain?.startsWith('www.') ? linkDomain.slice(4) : linkDomain;
-    const normalizedWebsiteDomain = websiteDomain?.startsWith('www.') ? websiteDomain.slice(4) : websiteDomain;
+    const normalizedLinkDomain = linkDomain ? getRootDomain(linkDomain) : null;
+    const normalizedWebsiteDomain = websiteDomain ? getRootDomain(websiteDomain) : null;
     const blockedDomains = new Set([
         'boards.greenhouse.io',
         'greenhouse.io',
@@ -103,6 +113,10 @@ export default function CompanyLogo({ companyName, companyWebsite, applyLink, cl
     ]);
 
     const isBlockedDomain = normalizedLinkDomain ? blockedDomains.has(normalizedLinkDomain) : false;
+    const linkDomainFallback =
+        linkDomain && linkDomain.includes('.myworkdayjobs.com')
+            ? `${linkDomain.split('.')[0]}.com`
+            : null;
 
     // Prioritize link domain, fallback to constructed
     // Note: If linkDomain is something generic like "boards.greenhouse.io", this might fail to get the company logo.
@@ -120,28 +134,35 @@ export default function CompanyLogo({ companyName, companyWebsite, applyLink, cl
 
     const [attemptIndex, setAttemptIndex] = useState(0);
 
-    const candidates = [];
+    const candidates: string[] = [];
+    const addLogoProviders = (domain: string) => {
+        candidates.push(`https://logo.clearbit.com/${domain}?size=80`);
+        candidates.push(`https://icons.duckduckgo.com/ip3/${domain}.ico`);
+        candidates.push(`https://www.google.com/s2/favicons?sz=128&domain_url=${domain}`);
+    };
+
     if (normalizedWebsiteDomain) {
-        candidates.push(`https://logo.clearbit.com/${normalizedWebsiteDomain}?size=80`);
-        candidates.push(`https://logo.clearbit.com/www.${normalizedWebsiteDomain}?size=80`);
+        addLogoProviders(normalizedWebsiteDomain);
     }
     if (knownDomain) {
-        candidates.push(`https://logo.clearbit.com/${knownDomain}?size=80`);
-        candidates.push(`https://logo.clearbit.com/www.${knownDomain}?size=80`);
+        addLogoProviders(knownDomain);
     }
     if (normalizedLinkDomain && !isBlockedDomain) {
-        candidates.push(`https://logo.clearbit.com/${normalizedLinkDomain}?size=80`);
-        candidates.push(`https://logo.clearbit.com/www.${normalizedLinkDomain}?size=80`);
+        addLogoProviders(normalizedLinkDomain);
+    }
+    if (linkDomainFallback) {
+        addLogoProviders(linkDomainFallback);
     }
     if (constructedDomain) {
-        candidates.push(`https://logo.clearbit.com/${constructedDomain}?size=80`);
-        candidates.push(`https://logo.clearbit.com/www.${constructedDomain}?size=80`);
+        addLogoProviders(constructedDomain);
     }
 
-    const currentSrc = candidates[attemptIndex];
+    const dedupedCandidates = Array.from(new Set(candidates));
+
+    const currentSrc = dedupedCandidates[attemptIndex];
 
     const handleError = () => {
-        if (attemptIndex < candidates.length - 1) {
+        if (attemptIndex < dedupedCandidates.length - 1) {
             setAttemptIndex(prev => prev + 1);
         } else {
             setImgError(true);

@@ -6,7 +6,7 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { adminApi } from '@/lib/api/admin';
 import toast from 'react-hot-toast';
-import LoadingScreen from '@/components/ui/LoadingScreen';
+import { AdminOpportunitiesSkeleton } from '@/components/ui/Skeleton';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import {
     PlusCircleIcon,
@@ -520,7 +520,7 @@ export default function OpportunitiesListPage() {
 
             {/* Table/List */}
             {isLoading ? (
-                <LoadingScreen message="Loading listings..." fullScreen={false} />
+                <AdminOpportunitiesSkeleton />
             ) : opportunities.length === 0 ? (
                 <div className="bg-card border border-dashed border-border rounded-lg p-12 text-center space-y-3">
                     <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto text-muted-foreground">

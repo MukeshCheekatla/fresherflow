@@ -13,7 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import LoadingScreen from '@/components/ui/LoadingScreen';
+import { AdminOverviewSkeleton } from '@/components/ui/Skeleton';
 
 export default function AdminDashboardHome() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -68,7 +68,7 @@ export default function AdminDashboardHome() {
     ];
 
     if (loading) {
-        return <LoadingScreen message="Loading admin overview..." fullScreen={false} />;
+        return <AdminOverviewSkeleton />;
     }
 
     return (

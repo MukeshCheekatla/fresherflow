@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { adminApi } from '@/lib/api/admin';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
-import LoadingScreen from '@/components/ui/LoadingScreen';
+import { AdminFeedbackSkeleton } from '@/components/ui/Skeleton';
 import {
     ChatBubbleBottomCenterTextIcon,
     ExclamationTriangleIcon,
@@ -123,7 +123,7 @@ export default function FeedbackPage() {
 
             {/* List */}
             {isLoading ? (
-                <LoadingScreen message="Loading feedback..." fullScreen={false} />
+                <AdminFeedbackSkeleton />
             ) : Object.keys(groupedFeedback).length === 0 ? (
                 <div className="bg-card border border-dashed border-border rounded-lg p-8 md:p-12 text-center space-y-3">
                     <div className="w-10 h-10 md:w-12 md:h-12 bg-muted rounded-full flex items-center justify-center mx-auto text-muted-foreground">

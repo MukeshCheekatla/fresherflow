@@ -13,7 +13,7 @@ import {
     BriefcaseIcon,
     DocumentTextIcon
 } from '@heroicons/react/24/outline';
-import LoadingScreen from '@/components/ui/LoadingScreen';
+import { AdminAnalyticsSkeleton } from '@/components/ui/Skeleton';
 
 interface AnalyticsOverview {
     linkHealth: {
@@ -93,7 +93,7 @@ export default function AdminAnalyticsPage() {
     }, [loadAnalytics, loadHealthStats]);
 
     if (loading) {
-        return <LoadingScreen message="Loading analytics..." fullScreen={false} />;
+        return <AdminAnalyticsSkeleton />;
     }
 
     if (!analytics) {

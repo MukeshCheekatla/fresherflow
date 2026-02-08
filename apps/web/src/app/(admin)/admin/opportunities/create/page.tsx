@@ -44,6 +44,7 @@ export default function CreateOpportunityPage() {
     const [applyLink, setApplyLink] = useState('');
     const [expiresAt, setExpiresAt] = useState('');
     const [jobFunction, setJobFunction] = useState('');
+    const [employmentType, setEmploymentType] = useState('');
     const [incentives, setIncentives] = useState('');
     const [salaryPeriod, setSalaryPeriod] = useState<'YEARLY' | 'MONTHLY'>('YEARLY');
     const [experienceMin, setExperienceMin] = useState('');
@@ -136,6 +137,70 @@ export default function CreateOpportunityPage() {
         setLocations(prev => prev ? `${prev}, ${loc}` : loc);
     };
 
+    const normalizeTextValue = (value: string) =>
+        value
+            .replace(/[\u2018\u2019]/g, "'")
+            .replace(/[\u201C\u201D]/g, '"')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+    const uniqueValues = (items: string[]) => Array.from(new Set(items.map(normalizeTextValue).filter(Boolean)));
+
+    const normalizeDegreeValue = (degree: string) => {
+        const value = normalizeTextValue(degree).toLowerCase();
+        if (
+            value.includes('bachelor') ||
+            value.includes('undergraduate') ||
+            value === 'ug' ||
+            value.includes('degree')
+        ) return 'DEGREE';
+        if (
+            value.includes('master') ||
+            value.includes('postgraduate') ||
+            value.includes('post graduate') ||
+            value === 'pg'
+        ) return 'PG';
+        if (value.includes('diploma') || value.includes('polytechnic') || value.includes('iti')) return 'DIPLOMA';
+        return normalizeTextValue(degree);
+    };
+
+    const toStringArray = (values: unknown) => {
+        if (Array.isArray(values)) return values.map((value) => String(value));
+        if (typeof values === 'string') {
+            return values.split(',').map((value) => value.trim()).filter(Boolean);
+        }
+        return [];
+    };
+
+    const normalizeDegrees = (values: unknown) => {
+        return uniqueValues(toStringArray(values).map((value) => normalizeDegreeValue(value)));
+    };
+
+    const normalizeCourses = (values: unknown) => {
+        return uniqueValues(toStringArray(values));
+    };
+
+    const normalizeWorkModeValue = (value: unknown): 'ONSITE' | 'HYBRID' | 'REMOTE' | undefined => {
+        const normalized = String(value || '').toLowerCase().replace(/[\s_-]/g, '');
+        if (normalized === 'onsite' || normalized === 'office') return 'ONSITE';
+        if (normalized === 'hybrid') return 'HYBRID';
+        if (normalized === 'remote' || normalized === 'wfh') return 'REMOTE';
+        return undefined;
+    };
+
+    const normalizeSalaryPeriodValue = (value: unknown): 'YEARLY' | 'MONTHLY' | undefined => {
+        const normalized = String(value || '').toLowerCase();
+        if (normalized.includes('month')) return 'MONTHLY';
+        if (normalized.includes('year') || normalized.includes('annum') || normalized.includes('lpa')) return 'YEARLY';
+        return undefined;
+    };
+
+    const normalizePassoutYears = (values: unknown) => {
+        return toStringArray(values)
+            .map((value) => parseInt(String(value).replace(/[^0-9]/g, ''), 10))
+            .filter((value) => Number.isFinite(value));
+    };
+
     const handleAutoFill = async () => {
         if (!pastedText.trim()) {
             toast.error('Please paste some job content first');
@@ -151,20 +216,33 @@ export default function CreateOpportunityPage() {
             if (parsed.title) setTitle(parsed.title);
             if (parsed.company) setCompany(parsed.company);
             if (parsed.companyWebsite) setCompanyWebsite(parsed.companyWebsite);
-            if (parsed.type) setType(parsed.type);
+            if (parsed.type) {
+                const normalizedType = typeParamToEnum(String(parsed.type));
+                if (normalizedType === 'JOB' || normalizedType === 'INTERNSHIP' || normalizedType === 'WALKIN') {
+                    setType(normalizedType as 'JOB' | 'INTERNSHIP' | 'WALKIN');
+                }
+            }
             if (parsed.locations?.length) setLocations(parsed.locations.join(', '));
             if (parsed.skills?.length) setRequiredSkills(parsed.skills.join(', '));
+            if (parsed.requiredSkills?.length) setRequiredSkills(parsed.requiredSkills.join(', '));
             if (parsed.experienceMin !== undefined) setExperienceMin(String(parsed.experienceMin));
             if (parsed.experienceMax !== undefined) setExperienceMax(String(parsed.experienceMax));
             if (parsed.salaryRange) setSalaryRange(parsed.salaryRange);
             if (parsed.salaryMin !== undefined && parsed.salaryMax !== undefined) {
                 setSalaryRange(`${parsed.salaryMin}-${parsed.salaryMax}`);
             }
-            if (parsed.salaryPeriod) setSalaryPeriod(parsed.salaryPeriod);
+            if (parsed.salaryPeriod) {
+                const normalizedSalaryPeriod = normalizeSalaryPeriodValue(parsed.salaryPeriod);
+                if (normalizedSalaryPeriod) setSalaryPeriod(normalizedSalaryPeriod);
+            }
             if (parsed.jobFunction) setJobFunction(parsed.jobFunction);
+            if (parsed.employmentType) setEmploymentType(parsed.employmentType);
             if (parsed.incentives) setIncentives(parsed.incentives);
-            if (parsed.allowedDegrees?.length) setAllowedDegrees(parsed.allowedDegrees);
-            if (parsed.allowedPassoutYears?.length) setPassoutYears(parsed.allowedPassoutYears);
+            if (parsed.allowedDegrees?.length) setAllowedDegrees(normalizeDegrees(parsed.allowedDegrees));
+            if (parsed.allowedCourses?.length) setAllowedCourses(normalizeCourses(parsed.allowedCourses));
+            if (parsed.allowedPassoutYears?.length) setPassoutYears(normalizePassoutYears(parsed.allowedPassoutYears));
+            if (parsed.applyLink) setApplyLink(parsed.applyLink);
+            if (parsed.expiresAt) setExpiresAt(parsed.expiresAt);
 
             // Set description to the raw text for reference
             setDescription(pastedText);
@@ -274,37 +352,54 @@ export default function CreateOpportunityPage() {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const data: any = JSON.parse(pastedJson);
 
-            if (data.type) setType(data.type);
+            if (data.type) {
+                const normalizedType = typeParamToEnum(String(data.type));
+                if (normalizedType === 'JOB' || normalizedType === 'INTERNSHIP' || normalizedType === 'WALKIN') {
+                    setType(normalizedType as 'JOB' | 'INTERNSHIP' | 'WALKIN');
+                }
+            }
             if (data.title) setTitle(data.title);
             if (data.company) setCompany(data.company);
             if (data.companyWebsite) setCompanyWebsite(data.companyWebsite);
-            if (data.description) setDescription(data.description);
-            if (Array.isArray(data.allowedDegrees)) setAllowedDegrees(data.allowedDegrees);
-            if (Array.isArray(data.allowedCourses)) setAllowedCourses(data.allowedCourses);
-            if (Array.isArray(data.allowedPassoutYears)) setPassoutYears(data.allowedPassoutYears);
-            if (Array.isArray(data.requiredSkills)) setRequiredSkills(data.requiredSkills.join(', '));
-            if (Array.isArray(data.locations)) setLocations(data.locations.join(', '));
-            if (data.workMode) setWorkMode(data.workMode);
-            if (data.salaryRange) setSalaryRange(data.salaryRange);
+            if (data.description) setDescription(String(data.description));
+            setAllowedDegrees(normalizeDegrees(data.allowedDegrees));
+            setAllowedCourses(normalizeCourses(data.allowedCourses));
+            setPassoutYears(normalizePassoutYears(data.allowedPassoutYears));
+            const requiredSkillsValues = toStringArray(data.requiredSkills);
+            if (requiredSkillsValues.length > 0) setRequiredSkills(requiredSkillsValues.join(', '));
+            const locationsValues = toStringArray(data.locations);
+            if (locationsValues.length > 0) setLocations(locationsValues.join(', '));
+            if (data.workMode) {
+                const normalizedWorkMode = normalizeWorkModeValue(data.workMode);
+                if (normalizedWorkMode) setWorkMode(normalizedWorkMode);
+            }
+            if (data.salaryRange) setSalaryRange(String(data.salaryRange));
             if (data.salaryMin !== undefined && data.salaryMax !== undefined) {
                 setSalaryRange(`${data.salaryMin}-${data.salaryMax}`);
             }
-            if (data.salaryPeriod) setSalaryPeriod(data.salaryPeriod);
-            if (data.jobFunction) setJobFunction(data.jobFunction);
-            if (data.incentives) setIncentives(data.incentives);
+            if (data.salaryPeriod) {
+                const normalizedSalaryPeriod = normalizeSalaryPeriodValue(data.salaryPeriod);
+                if (normalizedSalaryPeriod) setSalaryPeriod(normalizedSalaryPeriod);
+            }
+            if (data.jobFunction) setJobFunction(String(data.jobFunction));
+            if (data.employmentType) setEmploymentType(String(data.employmentType));
+            if (data.incentives) setIncentives(String(data.incentives));
             if (data.experienceMin !== undefined) setExperienceMin(String(data.experienceMin));
             if (data.experienceMax !== undefined) setExperienceMax(String(data.experienceMax));
             if (data.applyLink) setApplyLink(data.applyLink);
             if (data.expiresAt) setExpiresAt(data.expiresAt);
+            if (data.venueAddress) setVenueAddress(String(data.venueAddress));
+            if (data.venueLink) setVenueLink(String(data.venueLink));
+            if (data.dateRange) setWalkInDateRange(String(data.dateRange));
+            if (data.timeRange) setWalkInTimeRange(String(data.timeRange));
 
             if (data.walkInDetails) {
                 if (data.walkInDetails.dateRange) setWalkInDateRange(data.walkInDetails.dateRange);
                 if (data.walkInDetails.timeRange) setWalkInTimeRange(data.walkInDetails.timeRange);
                 if (data.walkInDetails.venueAddress) setVenueAddress(data.walkInDetails.venueAddress);
                 if (data.walkInDetails.venueLink) setVenueLink(data.walkInDetails.venueLink);
-                if (Array.isArray(data.walkInDetails.requiredDocuments)) {
-                    setRequiredDocuments(data.walkInDetails.requiredDocuments.join(', '));
-                }
+                const requiredDocumentsValues = toStringArray(data.walkInDetails.requiredDocuments);
+                if (requiredDocumentsValues.length > 0) setRequiredDocuments(requiredDocumentsValues.join(', '));
                 if (data.walkInDetails.contactPerson) setContactPerson(data.walkInDetails.contactPerson);
                 if (data.walkInDetails.contactPhone) setContactPhone(data.walkInDetails.contactPhone);
             }
@@ -345,6 +440,9 @@ export default function CreateOpportunityPage() {
         'B.Tech / B.E.', 'B.Sc.', 'BCA', 'BBA', 'B.Com', 'B.A.',
         'M.Tech / M.E.', 'M.Sc.', 'MCA', 'MBA', 'M.Com', 'M.A.'
     ];
+    const COMMON_DEGREES = ['DIPLOMA', 'DEGREE', 'PG'];
+    const visibleCourseOptions = Array.from(new Set([...COMMON_COURSES, ...allowedCourses]));
+    const customDegrees = allowedDegrees.filter((degree) => !COMMON_DEGREES.includes(degree));
 
 
 
@@ -368,6 +466,7 @@ export default function CreateOpportunityPage() {
                 workMode: type === 'WALKIN' ? undefined : workMode,
                 salaryRange: salaryRange || formatSalaryRange(salaryAmount, salaryPeriod) || undefined,
                 salaryPeriod,
+                employmentType: employmentType || undefined,
                 incentives: incentives || undefined,
                 jobFunction: jobFunction || undefined,
                 experienceMin: experienceMin ? parseInt(String(experienceMin).replace(/[^0-9]/g, '')) : undefined,
@@ -581,7 +680,7 @@ export default function CreateOpportunityPage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-1.5">
                             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Function</label>
                             <input
@@ -589,6 +688,15 @@ export default function CreateOpportunityPage() {
                                 onChange={(e) => setJobFunction(e.target.value)}
                                 className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all shadow-sm"
                                 placeholder="e.g. Sales, Banking, IT"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Employment type</label>
+                            <input
+                                value={employmentType}
+                                onChange={(e) => setEmploymentType(e.target.value)}
+                                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all shadow-sm"
+                                placeholder="e.g. Full Time, Permanent"
                             />
                         </div>
                         <div className="space-y-1.5">
@@ -705,7 +813,7 @@ export default function CreateOpportunityPage() {
                             <span className="ml-2 text-[10px] font-normal lowercase opacity-70 italic">(optional)</span>
                         </label>
                         <div className="flex flex-wrap gap-2">
-                            {['DIPLOMA', 'DEGREE', 'PG'].map((deg) => (
+                            {COMMON_DEGREES.map((deg) => (
                                 <button
                                     key={deg}
                                     type="button"
@@ -722,6 +830,18 @@ export default function CreateOpportunityPage() {
                                 </button>
                             ))}
                         </div>
+                        {customDegrees.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 pt-2">
+                                {customDegrees.map((degree) => (
+                                    <span
+                                        key={degree}
+                                        className="px-2 py-1 rounded-md text-[10px] font-bold border bg-primary/5 text-primary border-primary/20"
+                                    >
+                                        {degree}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -752,7 +872,7 @@ export default function CreateOpportunityPage() {
                             Courses
                         </label>
                         <div className="flex flex-wrap gap-1.5">
-                            {COMMON_COURSES.map((course) => (
+                            {visibleCourseOptions.map((course) => (
                                 <button
                                     key={course}
                                     type="button"
