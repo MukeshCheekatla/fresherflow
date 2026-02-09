@@ -28,11 +28,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         }
     }, []);
 
+    const setThemeColor = (color: string) => {
+        const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+        if (metaThemeColor) {
+            metaThemeColor.setAttribute('content', color);
+        }
+    };
+
     const toggleTheme = () => {
         const newTheme = theme === 'light' ? 'dark' : 'light';
         setTheme(newTheme);
         localStorage.setItem('theme', newTheme);
         document.documentElement.classList.toggle('dark', newTheme === 'dark');
+        // Update PWA status bar color
+        setThemeColor(newTheme === 'dark' ? '#0b1220' : '#ffffff');
     };
 
     return (

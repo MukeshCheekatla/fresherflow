@@ -18,7 +18,6 @@ const inter = Inter({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#f8fafc",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -59,6 +58,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <ThemeScript />
+        {/* Dynamic theme-color for light/dark mode */}
+        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)" />
         <script src="https://accounts.google.com/gsi/client" async defer></script>
         {/* Dynamic Manifest Loader for Admin PWA */}
         <script
