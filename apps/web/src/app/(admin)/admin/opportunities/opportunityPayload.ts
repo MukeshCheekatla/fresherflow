@@ -43,11 +43,13 @@ const toCsvList = (value: string) =>
         .map((item) => item.trim())
         .filter(Boolean);
 
-const toInt = (value: string) => {
+
+const toFloat = (value: string) => {
     if (!value) return undefined;
-    const parsed = parseInt(value.replace(/[^0-9]/g, ''), 10);
+    const parsed = parseFloat(value.replace(/[^0-9.]/g, ''));
     return Number.isFinite(parsed) ? parsed : undefined;
 };
+
 
 const getOrdinalNum = (n: number) => {
     if (n <= 0) return String(n);
@@ -105,8 +107,8 @@ export const buildOpportunityPayload = (values: OpportunityFormValues): Record<s
         employmentType: values.employmentType || undefined,
         incentives: values.incentives || undefined,
         jobFunction: values.jobFunction || undefined,
-        experienceMin: toInt(values.experienceMin),
-        experienceMax: toInt(values.experienceMax),
+        experienceMin: toFloat(values.experienceMin),
+        experienceMax: toFloat(values.experienceMax),
         applyLink: values.type === 'WALKIN' ? undefined : values.applyLink,
         expiresAt: values.expiresAt || undefined,
     };

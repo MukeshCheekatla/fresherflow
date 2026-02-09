@@ -928,38 +928,38 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
                                         Insert Walk-in
                                     </button>
                                 </div>
-                                  <button
-                                      onClick={applyJsonToForm}
-                                      disabled={!pastedJson.trim()}
-                                      className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-md transition-all shadow-sm active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
-                                  >
-                                      Apply JSON
-                                  </button>
-                                  {jsonReport && (
-                                      <div className={`rounded-md border p-3 text-[10px] space-y-2 ${jsonReport.valid ? 'border-border bg-muted/40' : 'border-destructive/30 bg-destructive/5 text-destructive'}`}>
-                                          {!jsonReport.valid ? (
-                                              <p className="font-bold uppercase tracking-wider">Invalid JSON format</p>
-                                          ) : (
-                                              <>
-                                                  <p className="font-bold uppercase tracking-wider text-muted-foreground">
-                                                      JSON report • {jsonReport.type}
-                                                  </p>
-                                                  <div className="text-muted-foreground">
-                                                      Present: {jsonReport.present.join(', ') || 'none'}
-                                                  </div>
-                                                  <div className={jsonReport.missing.length > 0 ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-emerald-600 dark:text-emerald-400 font-semibold'}>
-                                                      {jsonReport.missing.length > 0
-                                                          ? `Missing required: ${jsonReport.missing.join(', ')}`
-                                                          : 'All required fields found'}
-                                                  </div>
-                                              </>
-                                          )}
-                                      </div>
-                                  )}
-                              </div>
-                          </div>
-                      </div>
-                  </div>
+                                <button
+                                    onClick={applyJsonToForm}
+                                    disabled={!pastedJson.trim()}
+                                    className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-md transition-all shadow-sm active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    Apply JSON
+                                </button>
+                                {jsonReport && (
+                                    <div className={`rounded-md border p-3 text-[10px] space-y-2 ${jsonReport.valid ? 'border-border bg-muted/40' : 'border-destructive/30 bg-destructive/5 text-destructive'}`}>
+                                        {!jsonReport.valid ? (
+                                            <p className="font-bold uppercase tracking-wider">Invalid JSON format</p>
+                                        ) : (
+                                            <>
+                                                <p className="font-bold uppercase tracking-wider text-muted-foreground">
+                                                    JSON report • {jsonReport.type}
+                                                </p>
+                                                <div className="text-muted-foreground">
+                                                    Present: {jsonReport.present.join(', ') || 'none'}
+                                                </div>
+                                                <div className={jsonReport.missing.length > 0 ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-emerald-600 dark:text-emerald-400 font-semibold'}>
+                                                    {jsonReport.missing.length > 0
+                                                        ? `Missing required: ${jsonReport.missing.join(', ')}`
+                                                        : 'All required fields found'}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
 
 
@@ -1229,9 +1229,11 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Min Exp</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Min Exp (years)</label>
                             <input
                                 type="number"
+                                step="0.1"
+                                min="0"
                                 value={experienceMin}
                                 onChange={(e) => setExperienceMin(e.target.value)}
                                 className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all shadow-sm"
@@ -1239,9 +1241,11 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Max Exp</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Max Exp (years)</label>
                             <input
                                 type="number"
+                                step="0.1"
+                                min="0"
                                 value={experienceMax}
                                 onChange={(e) => setExperienceMax(e.target.value)}
                                 className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all shadow-sm"
@@ -1327,7 +1331,7 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
 
                     {type !== 'WALKIN' && (
                         <div className="space-y-2.5">
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Work mode</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Work mode</label>
                             <div className="grid grid-cols-3 gap-2">
                                 {(['ONSITE', 'HYBRID', 'REMOTE'] as const).map((mode) => (
                                     <button

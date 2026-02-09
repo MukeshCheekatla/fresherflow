@@ -249,8 +249,8 @@ model Opportunity {
   allowedAvailability Availability[] // When candidate should be available
   requiredSkills      String[]
   locations           String[] // For DB-level filtering
-  experienceMin       Int?     // Experience in years (e.g. 0)
-  experienceMax       Int?     // Experience in years (e.g. 3)
+  experienceMin       Float?   // Experience in years (e.g. 0, 0.5, 1.5)
+  experienceMax       Float?   // Experience in years (e.g. 3, 5.5)
 
   // Job/Internship Specific
   workMode       WorkMode?

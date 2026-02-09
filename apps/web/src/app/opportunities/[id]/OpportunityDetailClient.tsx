@@ -263,6 +263,38 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
         });
     };
 
+    const formatEducationLevel = (degree: string): string => {
+        switch (degree) {
+            case 'DIPLOMA': return 'Diploma';
+            case 'DEGREE': return 'Any Graduate';
+            case 'PG': return 'Postgraduate';
+            default: return degree;
+        }
+    };
+
+    const formatEducationDisplay = (degrees: string[], courses: string[]): string => {
+        const degreeLabels = degrees.map(formatEducationLevel);
+
+        // If specific courses are provided, show them with degree level context
+        if (courses.length > 0) {
+            if (degrees.length > 0) {
+                // Show both degree level and specific courses
+                return `${degreeLabels.join(', ')} (${courses.join(', ')})`;
+            }
+            // Only specific courses, no degree level
+            return courses.join(', ');
+        }
+
+        // If only degree levels, show friendly names
+        if (degrees.length > 0) {
+            return degreeLabels.join(', ');
+        }
+
+        // No restrictions
+        return 'Any Graduate';
+    };
+
+
     const handleReport = async (reason: string) => {
         if (!user) {
             toast.error('Identity required to file report.');
@@ -321,7 +353,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                 <FlagIcon className="w-4 h-4" />
                             </button>
                             {showReports && (
-                                    <div className="absolute top-full right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-xl z-50 p-1.5 space-y-0.5 animate-in slide-in-from-top-1 duration-200">
+                                <div className="absolute top-full right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-xl z-50 p-1.5 space-y-0.5 animate-in slide-in-from-top-1 duration-200">
                                     {[
                                         { id: 'LINK_BROKEN', label: 'Broken Link', icon: ArrowTopRightOnSquareIcon },
                                         { id: 'EXPIRED', label: 'Listing Expired', icon: ClockIcon },
@@ -512,15 +544,13 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border pb-2">Requirements</h3>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <div className="space-y-0.5 p-2.5 bg-muted/20 border border-border rounded-lg">
+                                <div className="space-y-0.5 p-2.5 bg-muted/20 border border-border rounded-lg">
                                     <p className="text-[9px] font-bold text-muted-foreground uppercase">Education</p>
-                                    <p className="text-sm font-semibold text-foreground">{(opp.allowedDegrees || []).join(', ') || 'Any Graduate'}</p>
+                                    <p className="text-sm font-semibold text-foreground">
+                                        {formatEducationDisplay(opp.allowedDegrees || [], opp.allowedCourses || [])}
+                                    </p>
                                 </div>
-                                    <div className="space-y-0.5 p-2.5 bg-muted/20 border border-border rounded-lg">
-                                    <p className="text-[9px] font-bold text-muted-foreground uppercase">Courses</p>
-                                    <p className="text-sm font-semibold text-foreground">{(opp.allowedCourses || []).join(', ') || 'Any / Not restricted'}</p>
-                                </div>
-                                    <div className="space-y-0.5 p-2.5 bg-muted/20 border border-border rounded-lg">
+                                <div className="space-y-0.5 p-2.5 bg-muted/20 border border-border rounded-lg">
                                     <p className="text-[9px] font-bold text-muted-foreground uppercase">Key Skills</p>
                                     <div className="flex flex-wrap gap-1 mt-0.5">
                                         {(opp.requiredSkills || []).map((s: string) => (
@@ -530,15 +560,15 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                         ))}
                                     </div>
                                 </div>
-                                    {(opp.jobFunction || opp.incentives) && (
-                                        <div className="space-y-0.5 p-2.5 bg-muted/20 border border-border rounded-lg">
-                                            <p className="text-[9px] font-bold text-muted-foreground uppercase">Role details</p>
-                                            <p className="text-sm font-semibold text-foreground">{opp.jobFunction || 'General'}</p>
-                                            {opp.incentives ? (
-                                                <p className="text-xs text-muted-foreground">Incentives: {opp.incentives}</p>
-                                            ) : null}
-                                        </div>
-                                    )}
+                                {(opp.jobFunction || opp.incentives) && (
+                                    <div className="space-y-0.5 p-2.5 bg-muted/20 border border-border rounded-lg">
+                                        <p className="text-[9px] font-bold text-muted-foreground uppercase">Role details</p>
+                                        <p className="text-sm font-semibold text-foreground">{opp.jobFunction || 'General'}</p>
+                                        {opp.incentives ? (
+                                            <p className="text-xs text-muted-foreground">Incentives: {opp.incentives}</p>
+                                        ) : null}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -669,13 +699,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                 <div>
                                     <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Education</p>
                                     <p className="text-foreground font-semibold">
-                                        {(opp.allowedDegrees && opp.allowedDegrees.length > 0) ? opp.allowedDegrees.join(', ') : 'Any Graduate'}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Courses</p>
-                                    <p className="text-foreground">
-                                        {(opp.allowedCourses && opp.allowedCourses.length > 0) ? opp.allowedCourses.join(', ') : 'Not restricted'}
+                                        {formatEducationDisplay(opp.allowedDegrees || [], opp.allowedCourses || [])}
                                     </p>
                                 </div>
                                 <div>
