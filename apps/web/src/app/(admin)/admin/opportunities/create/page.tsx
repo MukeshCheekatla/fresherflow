@@ -118,10 +118,10 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
         slugOrId: string;
     }) => {
         const publicUrl = getPublicOpportunityUrl(payload.slugOrId);
-        const telegramUrl = buildShareUrl(publicUrl, { platform: 'telegram', ref: 'admin_share' });
-        const linkedinUrl = buildShareUrl(publicUrl, { platform: 'linkedin', ref: 'admin_share' });
-        const xUrl = buildShareUrl(publicUrl, { platform: 'x', ref: 'admin_share' });
-        const instagramUrl = buildShareUrl(publicUrl, { platform: 'instagram', ref: 'admin_share' });
+        // const telegramUrl = buildShareUrl(publicUrl, { platform: 'telegram', ref: 'admin_share' });
+        // const linkedinUrl = buildShareUrl(publicUrl, { platform: 'linkedin', ref: 'admin_share' });
+        // const xUrl = buildShareUrl(publicUrl, { platform: 'x', ref: 'admin_share' });
+        // const instagramUrl = buildShareUrl(publicUrl, { platform: 'instagram', ref: 'admin_share' });
 
         const label = payload.type === 'WALKIN' ? 'Walk-in' : payload.type === 'INTERNSHIP' ? 'Internship' : 'Job';
 
@@ -131,12 +131,12 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
             '',
             `View details: ${publicUrl}`,
             '',
-            `Telegram: ${telegramUrl}`,
-            `LinkedIn: ${linkedinUrl}`,
-            `X: ${xUrl}`,
-            `Instagram: ${instagramUrl}`,
-            '',
-            '#FresherJobs #OffCampus #Hiring',
+            // `Telegram: ${telegramUrl}`,
+            // `LinkedIn: ${linkedinUrl}`,
+            // `X: ${xUrl}`,
+            // `Instagram: ${instagramUrl}`,
+            // '',
+            '#FresherFlow #FresherJobs #OffCampus #Hiring ',
         ].join('\n');
     };
 
@@ -154,7 +154,7 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
             `${payload.title} at ${payload.company}`,
             `${label} listing on FresherFlow`,
             tracked,
-            '#FresherJobs #OffCampus #Hiring',
+            '#FresherFlow #FresherJobs #OffCampus #Hiring',
         ].join('\n');
     };
 

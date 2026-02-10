@@ -211,7 +211,7 @@ class TelegramService {
             `<b>Location:</b> ${locationText}`,
             `<b>View details:</b> <a href="${jobUrl}">fresherflow.in</a>`,
             '',
-            '<i>#FresherJobs #OffCampus #Hiring</i>'
+            '<i>#FresherFlow #FresherJobs #OffCampus #Hiring</i>'
         ].join('\n');
 
         const messageId = await this.broadcastToChannel(publicChannel, message);
