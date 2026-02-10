@@ -1,245 +1,136 @@
-<![CDATA[<div align="center">
-
-![FresherFlow Banner](./apps/web/public/main.png)
-
 # 🌊 FresherFlow
 
-### **Stop Searching. Start Applying.**
+<p align="center">
+  <img src="./apps/web/public/main.png" alt="FresherFlow" width="600">
+</p>
 
-**The definitive career portal for fresh graduates.** Verified opportunities, zero noise, maximum impact.
+<p align="center">
+  <strong>Stop Searching. Start Applying.</strong>
+</p>
 
-[![Website](https://img.shields.io/badge/Website-fresherflow.in-0ea5e9?style=for-the-badge&logo=google-chrome&logoColor=white)](https://fresherflow.in)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-FresherFlow-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/company/fresherflow-in)
-[![Twitter](https://img.shields.io/badge/Twitter-@Fresherflow-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://twitter.com/Fresherflow)
+<p align="center">
+  <a href="https://fresherflow.in">
+    <img src="https://img.shields.io/badge/🌐_Website-fresherflow.in-0ea5e9" alt="Website">
+  </a>
+  <a href="https://www.linkedin.com/company/fresherflow-in">
+    <img src="https://img.shields.io/badge/LinkedIn-FresherFlow-0077B5?logo=linkedin" alt="LinkedIn">
+  </a>
+  <a href="https://twitter.com/Fresherflow">
+    <img src="https://img.shields.io/badge/Twitter-@Fresherflow-1DA1F2?logo=twitter" alt="Twitter">
+  </a>
+</p>
 
-[![WhatsApp](https://img.shields.io/badge/WhatsApp-Channel-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://whatsapp.com/channel/0029VbCkZu6FHWq0qJOOU73D)
-[![Telegram](https://img.shields.io/badge/Telegram-Join-26A5E4?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/fresherflowin)
-[![Facebook](https://img.shields.io/badge/Facebook-FresherFlow-1877F2?style=for-the-badge&logo=facebook&logoColor=white)](https://www.facebook.com/FresherFlow.in)
-[![Instagram](https://img.shields.io/badge/Instagram-@fresherflow-E4405F?style=for-the-badge&logo=instagram&logoColor=white)](https://instagram.com/fresherflow)
-
-</div>
+<p align="center">
+  <a href="https://whatsapp.com/channel/0029VbCkZu6FHWq0qJOOU73D">
+    <img src="https://img.shields.io/badge/WhatsApp-Channel-25D366?logo=whatsapp" alt="WhatsApp">
+  </a>
+  <a href="https://t.me/fresherflowin">
+    <img src="https://img.shields.io/badge/Telegram-Join-26A5E4?logo=telegram" alt="Telegram">
+  </a>
+  <a href="https://www.facebook.com/FresherFlow.in">
+    <img src="https://img.shields.io/badge/Facebook-FresherFlow-1877F2?logo=facebook" alt="Facebook">
+  </a>
+  <a href="https://instagram.com/fresherflow">
+    <img src="https://img.shields.io/badge/Instagram-@fresherflow-E4405F?logo=instagram" alt="Instagram">
+  </a>
+</p>
 
 ---
 
-## 🎯 **Mission**
-
-The transition from college to career is broken. Fresh graduates spend **70% of their time** filtering through expired listings, duplicate posts, and predatory "pay-for-training" scams.
+## 🎯 Our Mission
+The transition from college to career is broken. Freshers spend **70% of their time** filtering through outdated listings and predatory "training-plus-job" scams. 
 
 **FresherFlow changes the stream:**
-- ✅ **Zero Noise** – Every listing is manually verified through our strict Flow Protocol
-- ✅ **Direct Access** – One-click redirection to official application portals
-- ✅ **Speed First** – Distraction-free interface built for ultra-fast discovery
-- ✅ **Smart Matching** – Personalized feed based on your degree, batch, skills, and location
+*   **Zero Noise:** Every listing is manually verified through our strict "Flow Protocol."
+*   **Direct Access:** One-click redirection to official application portals.
+*   **Speed First:** A distraction-free, 8pt-grid-based interface designed for ultra-fast discovery.
 
 ---
 
-## 🔥 **Key Features**
+## 🔥 Key Product Features
 
-### 📋 **Verified Opportunity Feed**
-- **Curated Pipeline** – Only genuine jobs, internships, and walk-in drives
-- **Smart Urgency** – Visual badges and "Closing Soon" filters for jobs expiring within 72 hours
-- **Eligibility Engine** – Real-time matching based on degree, pass-out year, and skill set
-- **Category Filters** – Browse by Jobs, Internships, or Walk-ins with advanced search
+### 🏢 Intelligent Feed
+*   **Verified Pipeline:** Only genuine jobs, internships, and walk-in drives are synced to your feed.
+*   **Smart Urgency:** Visual amber badges and "Closing Soon" filters for jobs expiring within 72 hours.
+*   **Eligibility Engine:** Real-time matching based on your degree, pass-out year, and skill set.
 
-### 📱 **Progressive Web App (PWA)**
-- **Installable** – Add FresherFlow to your home screen for a native app feel
-- **Ultra-Lightweight** – Sub-100ms page transitions with optimized asset loading
-- **Offline Ready** – View bookmarked opportunities even without internet
+### 📱 Premium PWA Experience
+*   **Installable:** Add FresherFlow to your home screen for a native app feel.
+*   **Ultra-Lightweight:** Sub-100ms transitions and optimized asset loading.
+*   **Offline Ready:** View your bookmarked opportunities even without an internet connection.
 
-### 👤 **Profile-First Experience**
-- **Smart Onboarding** – Complete your profile once, unlock all relevant opportunities
-- **Action Tracking** – Mark jobs as Applied, Planning, Attended, or Not Eligible
-- **Saved Jobs** – Bookmark listings and track your application pipeline
-- **Profile Completeness** – Get matched to better opportunities with a complete profile
-
-### 🛡️ **Secure & Modern Auth**
-- **Passwordless** – Google OAuth 2.0 + Magic Links (OTP)
-- **Session Management** – Secure JWT-based authentication with refresh tokens
-
-### 👨‍💼 **Admin Operations**
-- **Content Management** – Create, edit, and publish opportunities with full audit trail
-- **Link Health Tracking** – Automated verification to detect broken application links
-- **Analytics Dashboard** – Monitor user engagement, application trends, and system health
-- **Bulk Actions** – Efficiently manage multiple listings with CSV export
+### �️ Secure Discovery
+*   **Passwordless Logic:** Modern auth including Google OAuth 2.0 and Magic Links.
+*   **Identity First:** Verified profiles ensure you only see what you are eligible for.
 
 ---
 
-## 🛠️ **Technology Stack**
-
-> **Engineering Philosophy:** Modern, type-safe, highly performant monorepo
-
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Frontend** | Next.js 15 (App Router) | Server-side rendering, SEO optimization, fast page loads |
-| **Styling** | Tailwind CSS v4 | Modern utility-first design with custom premium palette |
-| **Backend** | Express + Node.js | Scalable REST API with middleware pipeline |
-| **Database** | PostgreSQL + Prisma | Type-safe ORM with migration management |
-| **Auth** | JWT + WebAuthn | Secure session handling with passkey support |
-| **Monorepo** | Turbo + npm Workspaces | Blazing fast parallel builds and shared packages |
-| **Deployment** | Vercel + Render | Web on Vercel, API on Render, PostgreSQL on Neon |
+## � The Workflow
+1.  **Initialize Identity:** Complete your profile with academic records.
+2.  **Discover:** Toggle between Jobs, Internships, and Walk-ins.
+3.  **Track:** Bookmark interesting listings and track your application status.
+4.  **Execute:** Switch to the official portal and apply.
 
 ---
 
-## 📦 **Project Structure**
+## 🛠 Technical Architecture
 
+> **Engineering Philosophy:** Modern, type-safe, and highly performant monorepo.
+
+| Layer | Technology | Significance |
+| :--- | :--- | :--- |
+| **Frontend** | Next.js 15 (App) | Server-side rendering & SEO by default |
+| **Styling** | Tailwind CSS v4 | Cutting-edge utility-first design enforcement |
+| **Backend** | Express + Node.js | Scalable, event-driven API architecture |
+| **Database** | PostgreSQL + Prisma | Robust relational data with safe migrations |
+| **Monorepo** | TurboRepo | Blazing fast parallel build pipelines |
+
+### 📦 Project Structure
 ```bash
 fresherflow/
 ├── apps/
-│   ├── api/              # Express + Prisma Backend
-│   │   ├── src/
-│   │   │   ├── routes/   # API endpoints (auth, opportunities, admin)
-│   │   │   ├── middleware/ # Auth, rate limiting, error handling
-│   │   │   └── cron/     # Background jobs (expiry tracking)
-│   │   └── prisma/       # Database schema and migrations
-│   ├── web/              # Next.js Frontend
-│       ├── src/
-│       │   ├── app/      # App Router pages
-│       │   ├── components/ # Reusable UI components
-│       │   ├── features/ # Feature-specific modules
-│       │   └── lib/      # API client, utilities
-│       └── public/       # Static assets, PWA manifest
-│   
+│   ├── api/          # Express + Prisma Backend
+│   └── web/          # Next.js Frontend
 ├── packages/
-│   ├── types/            # Shared TypeScript types
-│   ├── schemas/          # Zod validation schemas
-│   ├── constants/        # Shared constants and enums
-│   └── auth/             # JWT helper utilities
-└── docs/                 # Technical specs & deployment guides
+│   ├── types/        # Shared Type Definitions
+│   └── schemas/      # Shared Zod Validations
+└── docs/             # Technical Specs & Design System
 ```
 
 ---
 
-## 🚀 **Getting Started**
+## 🚀 Getting Started
 
-### **Prerequisites**
-- Node.js `>=20.0.0`
-- npm `>=9.0.0`
-- PostgreSQL database (local or hosted)
-
-### **1. Clone the Repository**
+### 1. Development Sync
 ```bash
-git clone https://github.com/yourusername/fresherflow.git
-cd fresherflow
-```
-
-### **2. Install Dependencies**
-```bash
+git clone https://github.com/krish/fresherflow.git
 npm install
 ```
 
-### **3. Environment Setup**
-Create `.env` files in `apps/api` and `apps/web`:
+### 2. Environment Configuration
+Create `.env` files in `apps/api` and `apps/web` (refer to `docs/SETUP.md` for secrets).
 
-**`apps/api/.env`**
-```env
-DATABASE_URL=postgresql://user:password@localhost:5432/fresherflow
-DIRECT_DATABASE_URL=postgresql://user:password@localhost:5432/fresherflow
-JWT_SECRET=your-secure-secret
-REFRESH_SECRET=your-refresh-secret
-FRONTEND_URL=http://localhost:3000
-RESEND_API_KEY=your-resend-api-key
-RP_ID=localhost
-```
-
-**`apps/web/.env.local`**
-```env
-NEXT_PUBLIC_API_URL=http://localhost:5000
-```
-
-### **4. Database Setup**
+### 3. Initialize & Launch
 ```bash
-# Generate Prisma client
-npm run db:generate
-
-# Push schema to database
-npm run db:push
-```
-
-### **5. Start Development**
-```bash
-# Start both web and API concurrently
-npm run dev
-
-# Or start individually:
-npm run dev:web   # Next.js on http://localhost:3000
-npm run dev:api   # Express on http://localhost:5000
-```
-
-### **6. Open Prisma Studio (Optional)**
-```bash
-npm run db:studio
+npm run db:generate  # Sync Prisma Client
+npm run dev          # Start Monorepo Stream
 ```
 
 ---
 
-## 📚 **Documentation**
-
-- **[Deployment Guide](./docs/DEPLOY.md)** – Deploy to Vercel + Render
-- **[API Templates](./docs/templates.md)** – Job posting JSON structures
-- **[Privacy Policy](./docs/privacy-policy.md)** – Data handling practices
-- **[Terms of Service](./docs/terms-of-service.md)** – User agreement
+## � Discipline & Standards
+*   **Design:** Strict adherence to `docs/DESIGN_SYSTEM.md`.
+*   **UX:** 48px minimum touch targets and 8pt spacing grid.
+*   **Security:** JWT-based stateless auth with HttpOnly cookies.
 
 ---
 
-## 🤝 **Contributing**
+## � Support
 
-We welcome contributions! Please follow these guidelines:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+- � Email: [support@fresherflow.in](mailto:support@fresherflow.in)
+- 🌐 Website: [fresherflow.in](https://fresherflow.in)
+- 💼 LinkedIn: [FresherFlow Company](https://www.linkedin.com/company/fresherflow-in)
 
 ---
 
-## 📋 **Discipline & Standards**
-
-- **Design System** – 8pt spacing grid, 48px minimum touch targets
-- **Type Safety** – Strict TypeScript with Zod validation
-- **Security** – JWT-based stateless auth with HttpOnly cookies
-- **Performance** – Lazy loading, image optimization, code splitting
-- **SEO** – Dynamic metadata, JSON-LD structured data, sitemaps
-
----
-
-## 🔒 **Security**
-
-- Found a security vulnerability? Please email **security@fresherflow.in**
-- Do not open public issues for security concerns
-- We follow responsible disclosure practices
-
----
-
-## 📞 **Support**
-
-- **Email:** [support@fresherflow.in](mailto:support@fresherflow.in)
-- **LinkedIn:** [FresherFlow Company](https://www.linkedin.com/company/fresherflow-in)
-- **Twitter:** [@Fresherflow](https://twitter.com/Fresherflow)
-- **Telegram:** [Join Community](https://t.me/fresherflowin)
-- **WhatsApp:** [Updates Channel](https://whatsapp.com/channel/0029VbCkZu6FHWq0qJOOU73D)
-
----
-
-## 📜 **License**
-
-This project is licensed under the **MIT License** – see the [LICENSE](./LICENSE) file for details.
-
----
-
-## 🌟 **Acknowledgments**
-
-Built with discipline. Optimized for students. Trusted by thousands of fresh graduates.
-
-**FresherFlow** – Where verified opportunities meet ambitious talent.
-
----
-
-<div align="center">
-
-**[Visit FresherFlow →](https://fresherflow.in)**
-
-Made with 💙 by the FresherFlow Team
-
-</div>
-]]>
+**Built with discipline. Optimized for students.**
