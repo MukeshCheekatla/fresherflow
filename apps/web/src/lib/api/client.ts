@@ -104,7 +104,13 @@ export async function apiClient<T = any>(
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
             } catch (jsonError) {
                 // Fallback if response is not JSON
-                errorMessage = `System Error (${response.status})`;
+                if (response.status === 429) {
+                    errorMessage = 'Too many requests. Please wait a moment and try again.';
+                } else if (response.status >= 500) {
+                    errorMessage = 'Server is temporarily unavailable. Please try again.';
+                } else {
+                    errorMessage = `Request failed (${response.status})`;
+                }
             }
 
             // Special handling for 403 profile incomplete errors

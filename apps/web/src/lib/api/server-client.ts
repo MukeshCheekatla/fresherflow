@@ -26,7 +26,13 @@ export async function serverApiClient<T = any>(endpoint: string, options: Reques
                 const errorData = await response.json();
                 errorMessage = errorData.error?.message || errorData.error || errorMessage;
             } catch {
-                errorMessage = `System Error (${response.status})`;
+                if (response.status === 429) {
+                    errorMessage = 'Too many requests. Please wait a moment and try again.';
+                } else if (response.status >= 500) {
+                    errorMessage = 'Server is temporarily unavailable. Please try again.';
+                } else {
+                    errorMessage = `Request failed (${response.status})`;
+                }
             }
             throw new Error(errorMessage);
         }

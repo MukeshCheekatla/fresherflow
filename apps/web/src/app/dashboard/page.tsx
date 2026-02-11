@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthGate, ProfileGate } from '@/components/gates/ProfileGate';
-import { actionsApi, opportunitiesApi, dashboardApi, savedApi } from '@/lib/api/client';
+import { opportunitiesApi, dashboardApi, savedApi } from '@/lib/api/client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -30,7 +30,6 @@ export default function DashboardPage() {
     const [hasLoaded, setHasLoaded] = useState(false);
     const [recentError, setRecentError] = useState<string | null>(null);
     const [highlightsError, setHighlightsError] = useState<string | null>(null);
-    const [activityError, setActivityError] = useState<string | null>(null);
     const [isOnline, setIsOnline] = useState(true);
     const [feedLastSyncAt, setFeedLastSyncAt] = useState<number | null>(null);
     const [lastSeenAt, setLastSeenAt] = useState<number | null>(null);
@@ -40,7 +39,6 @@ export default function DashboardPage() {
         // Only load once when auth is confirmed and user exists
         if (!authLoading && user && !hasLoaded) {
             setHasLoaded(true);
-            loadDashboardData();
             loadRecentOpportunities();
             loadHighlights();
         }
@@ -75,7 +73,6 @@ export default function DashboardPage() {
         const interval = window.setInterval(() => {
             loadRecentOpportunities();
             loadHighlights();
-            loadDashboardData();
         }, 60_000);
         return () => window.clearInterval(interval);
     }, [hasLoaded, user]);
@@ -137,23 +134,9 @@ export default function DashboardPage() {
         }
     };
 
-    const loadDashboardData = async () => {
-        setActivityError(null);
-        try {
-            await actionsApi.summary();
-        } catch (err: unknown) {
-            const error = err as Error;
-            toast.error(`Couldn't load activity: ${error.message}`);
-            setActivityError(error.message || 'Unable to load activity');
-        } finally {
-            setFeedLastSyncAt(getFeedLastSyncAt());
-        }
-    };
-
     const retryAll = () => {
         setIsLoadingOpps(true);
         setIsLoadingHighlights(true);
-        loadDashboardData();
         loadRecentOpportunities();
         loadHighlights();
     };
@@ -365,7 +348,7 @@ export default function DashboardPage() {
 
                         {/* Recent Opportunities */}
                         <div className="lg:col-span-8 space-y-3 md:space-y-6">
-                            {(recentError || highlightsError || activityError) && (
+                            {(recentError || highlightsError) && (
                                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                     <div className="text-xs text-amber-700 dark:text-amber-300">
                                         Some dashboard data is unavailable. You can still browse listings.
@@ -516,24 +499,9 @@ export default function DashboardPage() {
                                         <ChartBarIcon className="w-4 h-4 text-primary" />
                                         <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Snapshot</h4>
                                     </div>
-                                    {activityError ? (
-                                        <>
-                                            <p className="text-sm text-muted-foreground leading-snug">{activityError}</p>
-                                            <Button
-                                                variant="outline"
-                                                onClick={() => {
-                                                    loadDashboardData();
-                                                }}
-                                                className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest"
-                                            >
-                                                Retry activity
-                                            </Button>
-                                        </>
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground leading-snug">
-                                            New uploads and close-deadline listings are prioritized to reduce missed opportunities.
-                                        </p>
-                                    )}
+                                    <p className="text-sm text-muted-foreground leading-snug">
+                                        New uploads and close-deadline listings are prioritized to reduce missed opportunities.
+                                    </p>
                                 </div>
 
                                 <div className="p-5 rounded-2xl border border-border bg-card/70 space-y-3">
