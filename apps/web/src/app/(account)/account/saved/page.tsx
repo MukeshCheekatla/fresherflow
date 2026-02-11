@@ -52,10 +52,10 @@ export default function SavedJobsPage() {
     const getProgressLabel = (job: Opportunity): string | null => {
         const actionType = (job.actions?.[0]?.actionType as ActionType | undefined);
         if (!actionType) return null;
-        if (actionType === 'PLANNED' || actionType === 'PLANNING') return 'Planned';
-        if (actionType === 'INTERVIEWED' || actionType === 'ATTENDED') return 'Interviewed';
-        if (actionType === 'SELECTED') return 'Selected';
-        if (actionType === 'APPLIED') return 'Applied';
+        if (actionType === ActionType.PLANNED || actionType === ActionType.PLANNING) return 'Planned';
+        if (actionType === ActionType.INTERVIEWED || actionType === ActionType.ATTENDED) return 'Interviewed';
+        if (actionType === ActionType.SELECTED) return 'Selected';
+        if (actionType === ActionType.APPLIED) return 'Applied';
         return null;
     };
 
@@ -105,8 +105,8 @@ export default function SavedJobsPage() {
                             </svg>
                         </div>
                         <div className="space-y-2">
-                        <h2 className="text-xl font-bold tracking-tight text-foreground">No saved opportunities yet</h2>
-                        <p className="text-muted-foreground text-sm font-medium max-w-sm mx-auto">Bookmark listings from the feed to keep them here.</p>
+                            <h2 className="text-xl font-bold tracking-tight text-foreground">No saved opportunities yet</h2>
+                            <p className="text-muted-foreground text-sm font-medium max-w-sm mx-auto">Bookmark listings from the feed to keep them here.</p>
                         </div>
                         <Link
                             href="/opportunities"

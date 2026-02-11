@@ -1,4 +1,4 @@
-const SW_VERSION = '1.4.6';
+const SW_VERSION = '1.4.7';
 const STATIC_CACHE = `fresherflow-static-${SW_VERSION}`;
 const API_CACHE = `fresherflow-api-${SW_VERSION}`;
 const OFFLINE_URL = '/offline.html';
@@ -14,6 +14,9 @@ const API_CACHE_PREFIXES = [
   '/api/opportunities',
   '/api/dashboard/highlights',
   '/api/dashboard/deadlines',
+  '/api/saved',
+  '/api/actions',
+  '/api/alerts',
 ];
 
 function isCacheableApiRequest(url) {
