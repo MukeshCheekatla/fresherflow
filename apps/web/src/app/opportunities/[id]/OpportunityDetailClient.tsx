@@ -43,6 +43,8 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
     const hasAttemptedLoadRef = useRef(false);
     const [isOnline, setIsOnline] = useState(true);
     const [detailLastSyncAt, setDetailLastSyncAt] = useState<number | null>(null);
+    const [relatedOpps, setRelatedOpps] = useState<Opportunity[]>([]);
+    const [isLoadingRelated, setIsLoadingRelated] = useState(false);
 
     const loadOpportunity = useCallback(async () => {
         if (initialData) return;
@@ -118,6 +120,48 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
         hasTrackedDetailViewRef.current = true;
         growthApi.trackEvent('DETAIL_VIEW', 'opportunity_detail').catch(() => undefined);
     }, [opp, user]);
+
+    useEffect(() => {
+        if (!opp) return;
+
+        const loadRelated = async () => {
+            setIsLoadingRelated(true);
+            try {
+                const data = await opportunitiesApi.list({ type: opp.type });
+                const currentSkillSet = new Set((opp.requiredSkills || []).map((s) => s.toLowerCase()));
+                const currentLocations = new Set((opp.locations || []).map((l) => l.toLowerCase()));
+
+                const scored = (data.opportunities || [])
+                    .filter((item: Opportunity) => item.id !== opp.id)
+                    .filter((item: Opportunity) => !item.expiresAt || new Date(item.expiresAt) > new Date())
+                    .map((item: Opportunity) => {
+                        let score = 0;
+                        if (item.company === opp.company) score += 5;
+
+                        const itemLocations = (item.locations || []).map((l) => l.toLowerCase());
+                        if (itemLocations.some((l) => currentLocations.has(l))) score += 3;
+
+                        const itemSkills = (item.requiredSkills || []).map((s) => s.toLowerCase());
+                        const sharedSkills = itemSkills.filter((s) => currentSkillSet.has(s)).length;
+                        score += Math.min(sharedSkills, 4);
+
+                        if (item.workMode && item.workMode === opp.workMode) score += 1;
+                        return { item, score };
+                    })
+                    .sort((a: { item: Opportunity; score: number }, b: { item: Opportunity; score: number }) => b.score - a.score)
+                    .slice(0, 6)
+                    .map((x: { item: Opportunity; score: number }) => x.item);
+
+                setRelatedOpps(scored);
+            } catch {
+                setRelatedOpps([]);
+            } finally {
+                setIsLoadingRelated(false);
+            }
+        };
+
+        void loadRelated();
+    }, [opp]);
 
     useEffect(() => {
         if (!showReports) return;
@@ -624,6 +668,33 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                 )}
                             </div>
                         )}
+                        <div className="bg-card border border-border p-4 md:p-5 rounded-xl space-y-3">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-xs font-bold uppercase tracking-wider text-primary">Related opportunities</h2>
+                                <Link href="/opportunities" className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline">
+                                    Explore all
+                                </Link>
+                            </div>
+                            {isLoadingRelated ? (
+                                <p className="text-xs text-muted-foreground">Finding related roles...</p>
+                            ) : relatedOpps.length === 0 ? (
+                                <p className="text-xs text-muted-foreground">No close matches yet. Check full feed for more roles.</p>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    {relatedOpps.map((item) => (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => router.push(`/opportunities/${item.slug || item.id}`)}
+                                            className="text-left rounded-lg border border-border bg-muted/20 hover:bg-muted/40 p-3 transition-colors"
+                                        >
+                                            <p className="text-xs font-semibold text-foreground line-clamp-2">{item.title}</p>
+                                            <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{item.company}</p>
+                                            <p className="text-[10px] text-primary font-semibold mt-1 line-clamp-1">{(item.locations || []).join(', ') || 'Location not specified'}</p>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                         <div className="lg:hidden bg-card p-4 rounded-xl border border-border space-y-3">
                             <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Quick actions</h4>
                             <button

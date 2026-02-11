@@ -133,9 +133,9 @@ function OpportunitiesContent() {
     return (
         <AuthGate>
             <ProfileGate>
-                <div className="w-full max-w-7xl mx-auto px-4 md:px-6 pb-12 md:pb-20 space-y-6 md:space-y-8">
-                    {/* Page Header */}
-                    <div className="flex flex-col gap-3 border-b border-border/60 pb-4">
+                <div className="w-full max-w-7xl mx-auto px-3 md:px-6 pb-10 md:pb-20 space-y-4 md:space-y-8">
+                    {/* Desktop Header */}
+                    <div className="hidden md:flex flex-col gap-2.5 border-b border-border/60 pb-3">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                             <div className="space-y-1">
                                 <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">Browse the live feed</h1>
@@ -196,25 +196,32 @@ function OpportunitiesContent() {
                                     className="pl-10 h-10 text-sm bg-background"
                                 />
                             </div>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex gap-2 overflow-x-auto pb-1">
+                                <Button
+                                    variant={!selectedType ? "default" : "outline"}
+                                    onClick={() => updateType(null)}
+                                    className="h-9 px-3 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
+                                >
+                                    All
+                                </Button>
                                 <Button
                                     variant={selectedType === 'JOB' ? "default" : "outline"}
                                     onClick={() => updateType('JOB')}
-                                    className="h-9 px-3 text-[10px] font-bold uppercase tracking-widest"
+                                    className="h-9 px-3 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
                                 >
                                     Jobs
                                 </Button>
                                 <Button
                                     variant={selectedType === 'INTERNSHIP' ? "default" : "outline"}
                                     onClick={() => updateType('INTERNSHIP')}
-                                    className="h-9 px-3 text-[10px] font-bold uppercase tracking-widest"
+                                    className="h-9 px-3 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
                                 >
                                     Internships
                                 </Button>
                                 <Button
                                     variant={selectedType === 'WALKIN' ? "default" : "outline"}
                                     onClick={() => updateType('WALKIN')}
-                                    className="h-9 px-3 text-[10px] font-bold uppercase tracking-widest"
+                                    className="h-9 px-3 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
                                 >
                                     Walk-ins
                                 </Button>
@@ -265,6 +272,59 @@ function OpportunitiesContent() {
                             >
                                 Saved
                             </button>
+                        </div>
+                    </div>
+
+                    {/* Mobile Compact Search */}
+                    <div className="md:hidden mt-2 space-y-2 border-b border-border/60 pb-3">
+                        <div className="flex items-center gap-2">
+                            <div className="relative flex-1">
+                                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                <Input
+                                    type="text"
+                                    placeholder="Search role or company..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="pl-10 h-10 text-sm bg-background"
+                                />
+                            </div>
+                            <button
+                                onClick={openMobileFilters}
+                                className="inline-flex h-10 items-center justify-center rounded-lg border px-3 text-[10px] font-bold uppercase tracking-widest transition-all bg-background border-border text-muted-foreground hover:bg-muted"
+                            >
+                                <FunnelIcon className="w-4 h-4 mr-1.5" />
+                                {activeFilterCount > 0 ? `${activeFilterCount}` : 'Filters'}
+                            </button>
+                        </div>
+                        <div className="flex gap-2 overflow-x-auto pb-1">
+                            <Button
+                                variant={!selectedType ? "default" : "outline"}
+                                onClick={() => updateType(null)}
+                                className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
+                            >
+                                All
+                            </Button>
+                            <Button
+                                variant={selectedType === 'JOB' ? "default" : "outline"}
+                                onClick={() => updateType('JOB')}
+                                className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
+                            >
+                                Jobs
+                            </Button>
+                            <Button
+                                variant={selectedType === 'INTERNSHIP' ? "default" : "outline"}
+                                onClick={() => updateType('INTERNSHIP')}
+                                className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
+                            >
+                                Internships
+                            </Button>
+                            <Button
+                                variant={selectedType === 'WALKIN' ? "default" : "outline"}
+                                onClick={() => updateType('WALKIN')}
+                                className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
+                            >
+                                Walk-ins
+                            </Button>
                         </div>
                     </div>
 
@@ -360,7 +420,7 @@ function OpportunitiesContent() {
                         </div>
                     )}
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8 items-start">
                         {/* Control Panel (Sticky) */}
                         <aside className={cn(
                             "hidden lg:col-span-3 lg:space-y-6 lg:sticky lg:top-24",
@@ -520,7 +580,7 @@ function OpportunitiesContent() {
                                     </Button>
                                 </div>
                             ) : (
-                                <div className="space-y-6">
+                                <div className="space-y-4 md:space-y-6">
                                     <div className="flex items-center justify-between pb-2 border-b border-border/50">
                                         <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground/80">Listings</h2>
                                         <div className="flex items-center gap-2">
@@ -529,7 +589,7 @@ function OpportunitiesContent() {
                                         </div>
                                     </div>
                                     <div className={cn(
-                                        "grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6",
+                                        "grid grid-cols-1 md:grid-cols-2 gap-3.5 md:gap-6",
                                         isFilterOpen ? "lg:grid-cols-2 xl:grid-cols-3" : "lg:grid-cols-3 xl:grid-cols-4"
                                     )}>
                                         {filteredOpps.map((opp) => (
@@ -554,7 +614,7 @@ function OpportunitiesContent() {
 
                             {/* Feed Footer */}
                             {!isLoading && !profileIncomplete && filteredOpps.length > 0 && (
-                                <div className="mt-12 text-center pb-8 border-t border-border pt-8">
+                                <div className="mt-8 md:mt-12 text-center pb-6 md:pb-8 border-t border-border pt-6 md:pt-8">
                                     <p className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em]">
                                         Verified &bull; {totalCount} listings active
                                     </p>

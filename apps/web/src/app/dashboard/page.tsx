@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthGate, ProfileGate } from '@/components/gates/ProfileGate';
@@ -6,7 +6,7 @@ import { actionsApi, opportunitiesApi, dashboardApi, savedApi } from '@/lib/api/
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Opportunity, UserStatsResponse } from '@fresherflow/types';
+import { Opportunity } from '@fresherflow/types';
 import toast from 'react-hot-toast';
 import UserIcon from '@heroicons/react/24/outline/UserIcon';
 import ChevronRightIcon from '@heroicons/react/24/outline/ChevronRightIcon';
@@ -20,13 +20,12 @@ import { Button } from '@/components/ui/Button';
 import { formatSyncTime, getFeedLastSyncAt } from '@/lib/offline/syncStatus';
 
 export default function DashboardPage() {
-    const { user, profile, isLoading: authLoading } = useAuth();
+    const { user, isLoading: authLoading } = useAuth();
     const router = useRouter();
     const [recentOpps, setRecentOpps] = useState<Opportunity[]>([]);
     const [isLoadingOpps, setIsLoadingOpps] = useState(true);
-    const [actionsSummary, setActionsSummary] = useState<UserStatsResponse | null>(null);
+
     const [highlights, setHighlights] = useState<{ urgent: { walkins: Opportunity[]; others: Opportunity[] }; newlyAdded: Opportunity[] } | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
     const [isLoadingHighlights, setIsLoadingHighlights] = useState(true);
     const [hasLoaded, setHasLoaded] = useState(false);
     const [recentError, setRecentError] = useState<string | null>(null);
@@ -35,6 +34,7 @@ export default function DashboardPage() {
     const [isOnline, setIsOnline] = useState(true);
     const [feedLastSyncAt, setFeedLastSyncAt] = useState<number | null>(null);
     const [lastSeenAt, setLastSeenAt] = useState<number | null>(null);
+    const [mobileFeedTab, setMobileFeedTab] = useState<'featured' | 'latest' | 'expiring' | 'all' | 'applied' | 'archived'>('featured');
 
     useEffect(() => {
         // Only load once when auth is confirmed and user exists
@@ -69,6 +69,16 @@ export default function DashboardPage() {
         setLastSeenAt(previous > 0 ? previous : null);
         window.localStorage.setItem(storageKey, String(Date.now()));
     }, [user]);
+
+    useEffect(() => {
+        if (!hasLoaded || !user) return;
+        const interval = window.setInterval(() => {
+            loadRecentOpportunities();
+            loadHighlights();
+            loadDashboardData();
+        }, 60_000);
+        return () => window.clearInterval(interval);
+    }, [hasLoaded, user]);
 
     const loadHighlights = async () => {
         setHighlightsError(null);
@@ -129,20 +139,17 @@ export default function DashboardPage() {
     const loadDashboardData = async () => {
         setActivityError(null);
         try {
-            const data = await actionsApi.summary();
-            setActionsSummary(data.summary || null);
+            await actionsApi.summary();
         } catch (err: unknown) {
             const error = err as Error;
             toast.error(`Couldn't load activity: ${error.message}`);
             setActivityError(error.message || 'Unable to load activity');
         } finally {
-            setIsLoading(false);
             setFeedLastSyncAt(getFeedLastSyncAt());
         }
     };
 
     const retryAll = () => {
-        setIsLoading(true);
         setIsLoadingOpps(true);
         setIsLoadingHighlights(true);
         loadDashboardData();
@@ -186,21 +193,41 @@ export default function DashboardPage() {
         { key: 'internships', title: 'Internships', href: '/internships', items: bestMatchList.filter((o) => o.type === 'INTERNSHIP').slice(0, 4) },
         { key: 'walkins', title: 'Walk-ins', href: '/walk-ins', items: bestMatchList.filter((o) => o.type === 'WALKIN').slice(0, 4) },
     ];
+    const archivedList = recentOpps.filter((o) => o.status === 'ARCHIVED' || (!!o.expiresAt && new Date(o.expiresAt) <= new Date()));
+    const appliedList = recentOpps.filter((o) =>
+        (o.actions || []).some((action) =>
+            action.actionType === 'APPLIED' || action.actionType === 'ATTENDED' || action.actionType === 'PLANNING'
+        )
+    );
+    const featuredList = [
+        ...closingSoon.slice(0, 4),
+        ...newSinceLastVisit.filter((candidate) => !closingSoon.some((soon) => soon.id === candidate.id)).slice(0, 4),
+    ].slice(0, 8);
+
+    const mobileSections = [
+        { key: 'featured', title: 'Featured', href: '/opportunities', items: featuredList },
+        { key: 'latest', title: 'Latest', href: '/opportunities', items: bestMatchList.slice(0, 8) },
+        { key: 'expiring', title: 'Expiring Soon', href: '/opportunities?closingSoon=true', items: closingSoon.slice(0, 8) },
+        { key: 'all', title: 'All Jobs', href: '/opportunities', items: bestMatchList.slice(0, 8) },
+        { key: 'applied', title: 'Applied', href: '/account/saved', items: appliedList.slice(0, 8) },
+        { key: 'archived', title: 'Archived', href: '/opportunities', items: archivedList.slice(0, 8) },
+    ] as const;
+    const activeMobileSection = mobileSections.find((section) => section.key === mobileFeedTab) || mobileSections[0];
 
     return (
         <AuthGate>
             <ProfileGate>
-                <div className="w-full max-w-7xl mx-auto space-y-5 md:space-y-8 pb-12 md:pb-20 px-4 md:px-6">
+                <div className="w-full max-w-7xl mx-auto space-y-4 md:space-y-8 pb-12 md:pb-20 px-3 md:px-6">
                     {/* Compact Header */}
-                    <div className="flex flex-col gap-3 border-b border-border/60 pb-4">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div className="flex flex-col gap-1.5 md:gap-3 border-b border-border/60 pb-2.5 md:pb-4">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-3">
                             <div className="space-y-1">
                                 <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
                                     Welcome back, {user?.fullName?.split(' ')[0] || 'candidate'}.
                                 </h1>
-                                <p className="text-xs text-muted-foreground">Move fast on verified listings.</p>
+                                <p className="text-[11px] md:text-xs text-muted-foreground">Move fast on verified listings.</p>
                             </div>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="hidden md:flex flex-wrap gap-2">
                                 <Button asChild className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest">
                                     <Link href="/opportunities">
                                         <MagnifyingGlassIcon className="w-4 h-4 mr-2" />
@@ -215,21 +242,9 @@ export default function DashboardPage() {
                                 </Button>
                             </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-widest text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
                             <span className="px-2 py-1 rounded-full border border-border bg-muted/50">
                                 {isOnline ? 'Online' : 'Offline'} {'•'} Sync {formatSyncTime(feedLastSyncAt)}
-                            </span>
-                            <span className="px-2 py-1 rounded-full border border-border bg-muted/50">
-                                Readiness {profile?.completionPercentage ?? 0}%
-                            </span>
-                            <span className="px-2 py-1 rounded-full border border-border bg-muted/50">
-                                Applied {isLoading ? '-' : actionsSummary?.appliedCount || 0}
-                            </span>
-                            <span className="px-2 py-1 rounded-full border border-border bg-muted/50">
-                                Planned {isLoading ? '-' : actionsSummary?.planningCount || 0}
-                            </span>
-                            <span className="px-2 py-1 rounded-full border border-border bg-muted/50">
-                                Interviews {isLoading ? '-' : actionsSummary?.attendedCount || 0}
                             </span>
                         </div>
                     </div>
@@ -350,12 +365,78 @@ export default function DashboardPage() {
                                     </Button>
                                 </div>
                             )}
+                            <div className="md:hidden space-y-3">
+                                <div className="border-b border-border/60">
+                                    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                                        {mobileSections.map((section) => {
+                                            const isActive = mobileFeedTab === section.key;
+                                            return (
+                                                <button
+                                                    key={`mobile-tab-${section.key}`}
+                                                    onClick={() => setMobileFeedTab(section.key)}
+                                                    className={`relative whitespace-nowrap px-3 py-2 text-[11px] font-semibold tracking-tight transition-colors ${isActive
+                                                        ? 'text-foreground'
+                                                        : 'text-muted-foreground'
+                                                        }`}
+                                                >
+                                                    {section.title}
+                                                    {isActive && (
+                                                        <>
+                                                            <span className="absolute left-1/2 -translate-x-1/2 bottom-0 h-0.5 w-7 rounded-full bg-primary" />
+                                                        </>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between pb-1.5 border-b border-border/50">
+                                    <h2 className="text-sm font-bold tracking-tight text-foreground/90">{activeMobileSection.title}</h2>
+                                    <Link href={activeMobileSection.href} className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline">View all</Link>
+                                </div>
+                                {isLoadingOpps ? (
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {[1, 2].map(i => <SkeletonJobCard key={`mobile-loading-${i}`} />)}
+                                    </div>
+                                ) : activeMobileSection.items.length === 0 ? (
+                                    <div className="rounded-xl border border-dashed border-border bg-card p-4 text-xs text-muted-foreground space-y-3">
+                                        <p>
+                                            {activeMobileSection.key === 'applied'
+                                                ? 'No applied listings yet.'
+                                                : activeMobileSection.key === 'archived'
+                                                    ? 'No archived listings yet.'
+                                                    : 'No listings in this section yet.'}
+                                        </p>
+                                        {recentOpps.length === 0 && (activeMobileSection.key === 'featured' || activeMobileSection.key === 'all') && (
+                                            <Button asChild className="h-9 px-4 text-xs font-medium">
+                                                <Link href="/profile/edit">Setup Profile</Link>
+                                            </Button>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {activeMobileSection.items.map((opp) => (
+                                            <JobCard
+                                                key={`mobile-${activeMobileSection.key}-${opp.id}`}
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                job={opp as any}
+                                                jobId={opp.id}
+                                                isApplied={false}
+                                                isSaved={opp.isSaved}
+                                                onToggleSave={() => toggleSave(opp.id)}
+                                                onClick={() => router.push(`/opportunities/${opp.slug || opp.id}`)}
+                                                isAdmin={user?.role === 'ADMIN'}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                             {isLoadingOpps ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="hidden md:grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {[1, 2, 3, 4].map(i => <SkeletonJobCard key={i} />)}
                                 </div>
                             ) : recentError ? (
-                                <div className="col-span-full bg-card rounded-xl text-center p-8 md:p-10 border border-dashed border-border">
+                                <div className="hidden md:block col-span-full bg-card rounded-xl text-center p-8 md:p-10 border border-dashed border-border">
                                     <h3 className="font-semibold text-foreground text-sm">Could not load recommendations</h3>
                                     <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">{recentError}</p>
                                     <Button
@@ -370,7 +451,7 @@ export default function DashboardPage() {
                                     </Button>
                                 </div>
                             ) : recentOpps.length === 0 ? (
-                                <div className="col-span-full bg-card rounded-xl text-center p-8 md:p-12 border border-dashed border-border">
+                                <div className="hidden md:block col-span-full bg-card rounded-xl text-center p-8 md:p-12 border border-dashed border-border">
                                     <h3 className="font-semibold text-foreground text-sm">No recommended jobs yet</h3>
                                     <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">Update your profile parameters to see matching jobs.</p>
                                     <Button asChild className="mt-6 h-9 px-4 text-xs font-medium">
@@ -378,7 +459,7 @@ export default function DashboardPage() {
                                     </Button>
                                 </div>
                             ) : (
-                                <div className="space-y-7">
+                                <div className="hidden md:block space-y-7">
                                     {sections.map((section) => (
                                         <div key={section.key} className="space-y-3">
                                             <div className="flex items-center justify-between pb-1.5 border-b border-border/50">
@@ -427,7 +508,6 @@ export default function DashboardPage() {
                                             <Button
                                                 variant="outline"
                                                 onClick={() => {
-                                                    setIsLoading(true);
                                                     loadDashboardData();
                                                 }}
                                                 className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest"
@@ -437,17 +517,9 @@ export default function DashboardPage() {
                                         </>
                                     ) : (
                                         <p className="text-sm text-muted-foreground leading-snug">
-                                            {actionsSummary?.appliedCount || 0} applications tracked. Keep your profile sharp to unlock better matches.
+                                            New uploads and close-deadline listings are prioritized to reduce missed opportunities.
                                         </p>
                                     )}
-                                    <div className="flex items-center gap-2">
-                                        <Button asChild className="h-9 px-3 text-[10px] font-bold uppercase tracking-widest">
-                                            <Link href="/opportunities">Open feed</Link>
-                                        </Button>
-                                        <Button asChild variant="outline" className="h-9 px-3 text-[10px] font-bold uppercase tracking-widest">
-                                            <Link href="/account/saved">Saved</Link>
-                                        </Button>
-                                    </div>
                                 </div>
 
                                 <div className="p-5 rounded-2xl border border-border bg-card/70 space-y-3">
@@ -526,4 +598,8 @@ export default function DashboardPage() {
         </AuthGate>
     );
 }
+
+
+
+
 

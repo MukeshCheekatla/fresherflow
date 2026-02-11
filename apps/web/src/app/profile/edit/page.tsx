@@ -262,7 +262,7 @@ export default function EditProfilePage() {
     return (
         <AuthGate>
             <ProfileGate>
-                <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6 pb-16 space-y-4 md:space-y-5">
+                <div className="max-w-7xl mx-auto px-3 md:px-6 py-4 md:py-6 pb-16 space-y-4 md:space-y-5">
                     {/* Header */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-border">
                         <div className="flex items-center gap-3">
@@ -320,7 +320,7 @@ export default function EditProfilePage() {
                                                         type="text"
                                                         value={fullName}
                                                         onChange={(e) => setFullName(e.target.value)}
-                                                        className="premium-input !h-9 text-sm"
+                                                        className="premium-input h-9! text-sm"
                                                         placeholder="Rahul Sharma"
                                                     />
                                                 </div>
@@ -330,7 +330,7 @@ export default function EditProfilePage() {
                                                         type="email"
                                                         value={user?.email || ''}
                                                         disabled
-                                                        className="premium-input !h-9 text-sm bg-muted cursor-not-allowed"
+                                                        className="premium-input h-9! text-sm bg-muted cursor-not-allowed"
                                                     />
                                                 </div>
                                             </div>
@@ -376,11 +376,11 @@ export default function EditProfilePage() {
                                             <div className="grid grid-cols-2 gap-3">
                                                 <div className="space-y-1.5">
                                                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">10th Year</label>
-                                                    <input type="text" maxLength={4} value={tenthYear} onChange={(e) => setTenthYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-9 text-sm" placeholder="2018" />
+                                                    <input type="text" maxLength={4} value={tenthYear} onChange={(e) => setTenthYear(e.target.value.replace(/\D/g, ''))} className="premium-input h-9! text-sm" placeholder="Year" />
                                                 </div>
                                                 <div className="space-y-1.5">
                                                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">12th Year</label>
-                                                    <input type="text" maxLength={4} value={twelfthYear} onChange={(e) => setTwelfthYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-9 text-sm" placeholder="2020" />
+                                                    <input type="text" maxLength={4} value={twelfthYear} onChange={(e) => setTwelfthYear(e.target.value.replace(/\D/g, ''))} className="premium-input h-9! text-sm" placeholder="Year" />
                                                 </div>
                                             </div>
 
@@ -412,21 +412,21 @@ export default function EditProfilePage() {
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                     <div className="space-y-1.5">
                                                         <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">UG Course</label>
-                                                        <select value={gradCourse} onChange={(e) => { setGradCourse(e.target.value); setGradSpecialization(''); }} className="premium-input !h-9 text-sm">
+                                                        <select value={gradCourse} onChange={(e) => { setGradCourse(e.target.value); setGradSpecialization(''); }} className="premium-input h-9! text-sm">
                                                             <option value="">Select</option>
                                                             {(educationLevel === 'DIPLOMA' ? DIPLOMA_DEGREES : educationLevel === 'DEGREE' ? UG_DEGREES : educationLevel === 'PG' ? PG_DEGREES : []).map(d => <option key={d}>{d}</option>)}
                                                         </select>
                                                     </div>
                                                     <div className="space-y-1.5">
                                                         <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Field</label>
-                                                        <select value={gradSpecialization} onChange={(e) => setGradSpecialization(e.target.value)} className="premium-input !h-9 text-sm" disabled={!gradCourse}>
+                                                        <select value={gradSpecialization} onChange={(e) => setGradSpecialization(e.target.value)} className="premium-input h-9! text-sm" disabled={!gradCourse}>
                                                             <option value="">Select</option>
                                                             {getSpecializations(gradCourse).map(s => <option key={s}>{s}</option>)}
                                                         </select>
                                                     </div>
                                                     <div className="space-y-1.5">
                                                         <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">UG Year</label>
-                                                        <input type="text" maxLength={4} value={gradYear} onChange={(e) => setGradYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-9 text-sm" placeholder="2024" />
+                                                        <input type="text" maxLength={4} value={gradYear} onChange={(e) => setGradYear(e.target.value.replace(/\D/g, ''))} className="premium-input h-9! text-sm" placeholder="2024" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -443,21 +443,21 @@ export default function EditProfilePage() {
                                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                         <div className="space-y-1.5">
                                                             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">PG Course</label>
-                                                            <select value={pgCourse} onChange={(e) => setPgCourse(e.target.value)} className="premium-input !h-9 text-sm">
+                                                            <select value={pgCourse} onChange={(e) => setPgCourse(e.target.value)} className="premium-input h-9! text-sm">
                                                                 <option value="">Select</option>
                                                                 {PG_DEGREES.map(d => <option key={d}>{d}</option>)}
                                                             </select>
                                                         </div>
                                                         <div className="space-y-1.5">
                                                             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Specialization</label>
-                                                            <select value={pgSpecialization} onChange={(e) => setPgSpecialization(e.target.value)} className="premium-input !h-9 text-sm">
+                                                            <select value={pgSpecialization} onChange={(e) => setPgSpecialization(e.target.value)} className="premium-input h-9! text-sm">
                                                                 <option value="">Select</option>
                                                                 {getSpecializations(pgCourse).map(s => <option key={s}>{s}</option>)}
                                                             </select>
                                                         </div>
                                                         <div className="space-y-1.5">
                                                             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">PG Year</label>
-                                                            <input type="text" maxLength={4} value={pgYear} onChange={(e) => setPgYear(e.target.value.replace(/\D/g, ''))} className="premium-input !h-9 text-sm" placeholder="2026" />
+                                                            <input type="text" maxLength={4} value={pgYear} onChange={(e) => setPgYear(e.target.value.replace(/\D/g, ''))} className="premium-input h-9! text-sm" placeholder="2026" />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -573,7 +573,7 @@ export default function EditProfilePage() {
                                             <div className="space-y-3 pt-3 border-t border-border">
                                                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Technical Skills</p>
                                                 <div className="flex gap-2">
-                                                    <input value={skillInput} onChange={(e) => setSkillInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && addSkill()} className="premium-input !h-9 text-sm" placeholder="e.g. React" />
+                                                    <input value={skillInput} onChange={(e) => setSkillInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && addSkill()} className="premium-input h-9! text-sm" placeholder="e.g. React" />
                                                     <Button onClick={addSkill} variant="outline" className="shrink-0 px-3 h-9"><PlusIcon className="w-4 h-4" /></Button>
                                                 </div>
                                                 <div className="flex flex-wrap gap-1.5 min-h-6">
@@ -669,7 +669,7 @@ export default function EditProfilePage() {
                                                     value={cityInput}
                                                     onChange={(e) => setCityInput(e.target.value)}
                                                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCity())}
-                                                    className="premium-input !h-9 text-[11px] flex-1"
+                                                    className="premium-input h-9! text-[11px] flex-1"
                                                     placeholder="Add city..."
                                                 />
                                             </div>

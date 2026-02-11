@@ -218,7 +218,7 @@ export default function ProfileCompletePage() {
 
     return (
         <AuthGate>
-            <div className="max-w-7xl mx-auto px-4 md:px-6 py-5 md:py-10">
+            <div className="max-w-7xl mx-auto px-3 md:px-6 py-5 md:py-10">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start">
 
                     {/* Sticky Sidebar */}
@@ -270,17 +270,17 @@ export default function ProfileCompletePage() {
                                             key={s.id}
                                             className={cn(
                                                 "p-3 rounded-2xl flex items-center gap-3 transition-all border",
-                                                isActive ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-[1.02]" :
+                                                isActive ? "bg-primary/15 text-foreground border-primary/35 shadow-lg shadow-primary/10 scale-[1.02]" :
                                                     isDone ? "bg-primary/5 border-primary/20 text-primary" :
                                                         "bg-card border-border text-muted-foreground"
                                             )}
                                         >
-                                            <div className={cn("p-2 rounded-xl", isActive ? "bg-primary-foreground/20" : "bg-muted/50")}>
+                                            <div className={cn("p-2 rounded-xl", isActive ? "bg-primary/15" : "bg-muted/50")}>
                                                 <s.icon className="w-5 h-5" />
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="text-[10px] font-bold uppercase tracking-widest leading-none mb-1">{s.label}</p>
-                                                <p className={cn("text-[10px] font-medium opacity-70 truncate", isActive ? "text-primary-foreground/80" : "text-muted-foreground")}>{s.desc}</p>
+                                                <p className={cn("text-[10px] font-medium opacity-70 truncate", isActive ? "text-foreground/80" : "text-muted-foreground")}>{s.desc}</p>
                                             </div>
                                             {isDone && !isActive && <CheckCircleIcon className="w-5 h-5 ml-auto text-primary" />}
                                         </div>
@@ -355,7 +355,7 @@ export default function ProfileCompletePage() {
                                                 </div>
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Year of Passing</label>
-                                                    <Input type="text" maxLength={4} value={tenthYear} onChange={(e) => setTenthYear(e.target.value.replace(/\D/g, ''))} placeholder="2018" />
+                                                    <Input type="text" maxLength={4} value={tenthYear} onChange={(e) => setTenthYear(e.target.value.replace(/\D/g, ''))} placeholder="Year" />
                                                 </div>
                                             </div>
 
@@ -455,7 +455,7 @@ export default function ProfileCompletePage() {
                                             </div>
                                         )}
 
-                                        <Button onClick={handleEducationSubmit} disabled={isLoading} className="w-full h-11 text-sm shadow-xl shadow-primary/20 font-bold uppercase tracking-widest">
+                                        <Button onClick={handleEducationSubmit} disabled={isLoading} className="w-full h-11 text-sm bg-primary/15 text-foreground border border-primary/30 hover:bg-primary/20 shadow-xl shadow-primary/10 font-bold uppercase tracking-widest">
                                             {isLoading ? <ArrowPathIcon className="w-6 h-6 animate-spin" /> : <span>Save Education</span>}
                                         </Button>
                                     </div>
@@ -506,7 +506,7 @@ export default function ProfileCompletePage() {
                                                             if (val) { toggleArrayItem(preferredCities, setPreferredCities, val); (e.target as HTMLInputElement).value = ''; }
                                                         }
                                                     }}
-                                                    className="premium-input !h-9 text-[11px]"
+                                                    className="premium-input h-9! text-[11px]"
                                                 />
                                             </div>
                                             <div className="flex flex-wrap gap-2 min-h-6">
@@ -519,7 +519,7 @@ export default function ProfileCompletePage() {
                                             </div>
                                         </div>
 
-                                        <Button onClick={handlePreferencesSubmit} disabled={isLoading} className="w-full h-11 text-sm shadow-xl shadow-primary/20 font-bold uppercase tracking-widest">
+                                        <Button onClick={handlePreferencesSubmit} disabled={isLoading} className="w-full h-11 text-sm bg-primary/15 text-foreground border border-primary/30 hover:bg-primary/20 shadow-xl shadow-primary/10 font-bold uppercase tracking-widest">
                                             {isLoading ? <ArrowPathIcon className="w-6 h-6 animate-spin" /> : <span>Save Preferences</span>}
                                         </Button>
                                     </div>
@@ -545,8 +545,8 @@ export default function ProfileCompletePage() {
                                         <div className="space-y-4">
                                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Skills</p>
                                             <div className="flex gap-2">
-                                                <input value={skillInput} onChange={(e) => setSkillInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && addSkill()} className="premium-input !h-9 text-[11px]" placeholder="e.g. React, Node.js" />
-                                                <button onClick={addSkill} className="premium-button shrink-0 px-4 !h-9"><PlusIcon className="w-4 h-4" /></button>
+                                                <input value={skillInput} onChange={(e) => setSkillInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && addSkill()} className="premium-input h-9! text-[11px]" placeholder="e.g. React, Node.js" />
+                                                <button onClick={addSkill} className="premium-button shrink-0 px-4 h-9!"><PlusIcon className="w-4 h-4" /></button>
                                             </div>
                                             <div className="flex flex-wrap gap-2 min-h-6">
                                                 {skills.map(s => (

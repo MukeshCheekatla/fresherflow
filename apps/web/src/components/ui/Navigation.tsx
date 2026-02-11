@@ -12,19 +12,65 @@ import ArrowRightOnRectangleIcon from '@heroicons/react/24/outline/ArrowRightOnR
 import MagnifyingGlassIcon from '@heroicons/react/24/outline/MagnifyingGlassIcon';
 import BookmarkIcon from '@heroicons/react/24/outline/BookmarkIcon';
 import Bars3Icon from '@heroicons/react/24/outline/Bars3Icon';
-import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import AcademicCapIcon from '@heroicons/react/24/outline/AcademicCapIcon';
-import QuestionMarkCircleIcon from '@heroicons/react/24/outline/QuestionMarkCircleIcon';
+import BellIcon from '@heroicons/react/24/outline/BellIcon';
+import PaperAirplaneIcon from '@heroicons/react/24/outline/PaperAirplaneIcon';
 import { ThemeToggle } from './ThemeToggle';
+
+function TelegramBrandIcon({ className }: { className?: string }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+            <path d="M12 0C5.371 0 0 5.372 0 12s5.371 12 12 12 12-5.372 12-12S18.629 0 12 0Zm5.861 8.233-1.97 9.294c-.149.657-.538.818-1.088.51l-3.009-2.219-1.451 1.396c-.16.16-.295.295-.603.295l.213-3.049 5.549-5.012c.24-.213-.053-.333-.373-.12L8.27 13.65l-2.957-.922c-.642-.203-.656-.642.135-.949l11.557-4.456c.536-.198 1.006.12.856.91Z" />
+        </svg>
+    );
+}
+
+function LinkedInBrandIcon({ className }: { className?: string }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+            <path d="M20.447 20.452h-3.554V14.87c0-1.332-.026-3.046-1.858-3.046-1.86 0-2.145 1.45-2.145 2.95v5.678H9.338V9h3.414v1.561h.049c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286ZM5.337 7.433a2.063 2.063 0 1 1 0-4.126 2.063 2.063 0 0 1 0 4.126ZM7.114 20.452H3.558V9h3.556v11.452ZM22.225 0H1.771C.792 0 0 .773 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .773 23.2 0 22.222 0h.003Z" />
+        </svg>
+    );
+}
+
+function XBrandIcon({ className }: { className?: string }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+            <path d="M18.901 1.153h3.68l-8.04 9.188L24 22.847h-7.406l-5.8-7.584-6.64 7.584H.47l8.6-9.83L0 1.154h7.594l5.243 6.932 6.064-6.933ZM17.61 20.644h2.039L6.486 3.24H4.298L17.61 20.644Z" />
+        </svg>
+    );
+}
+
+function InstagramBrandIcon({ className }: { className?: string }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+            <path d="M7.75 2h8.5A5.756 5.756 0 0 1 22 7.75v8.5A5.756 5.756 0 0 1 16.25 22h-8.5A5.756 5.756 0 0 1 2 16.25v-8.5A5.756 5.756 0 0 1 7.75 2Zm-.25 2A3.5 3.5 0 0 0 4 7.5v9A3.5 3.5 0 0 0 7.5 20h9a3.5 3.5 0 0 0 3.5-3.5v-9A3.5 3.5 0 0 0 16.5 4h-9Zm10.75 1.5a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" />
+        </svg>
+    );
+}
+
+function FacebookBrandIcon({ className }: { className?: string }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+            <path d="M24 12.073C24 5.404 18.627 0 12 0S0 5.404 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.438H7.078v-3.49h3.047V9.412c0-3.022 1.792-4.694 4.533-4.694 1.313 0 2.687.236 2.687.236v2.969H15.83c-1.491 0-1.956.928-1.956 1.881v2.26h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073Z" />
+        </svg>
+    );
+}
+
+function WhatsAppBrandIcon({ className }: { className?: string }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+            <path d="M20.52 3.48A11.86 11.86 0 0 0 12.06 0C5.5 0 .14 5.34.14 11.92c0 2.1.55 4.16 1.6 5.98L0 24l6.25-1.63a11.84 11.84 0 0 0 5.81 1.49h.01c6.57 0 11.93-5.35 11.93-11.93 0-3.18-1.24-6.17-3.48-8.45ZM12.07 21.8h-.01a9.86 9.86 0 0 1-5.03-1.38l-.36-.22-3.71.97.99-3.62-.24-.37a9.84 9.84 0 0 1-1.5-5.26c0-5.44 4.42-9.87 9.86-9.87 2.63 0 5.1 1.02 6.96 2.9a9.78 9.78 0 0 1 2.89 6.97c0 5.44-4.42 9.88-9.85 9.88Zm5.42-7.41c-.3-.15-1.79-.88-2.07-.98-.28-.1-.48-.15-.68.15-.2.3-.78.98-.95 1.18-.18.2-.35.23-.65.08-.3-.15-1.25-.46-2.38-1.48a8.96 8.96 0 0 1-1.65-2.05c-.17-.3-.02-.46.13-.61.14-.14.3-.35.45-.53.15-.18.2-.3.3-.5.1-.2.05-.38-.02-.53-.08-.15-.68-1.64-.94-2.24-.25-.6-.5-.5-.68-.51h-.58c-.2 0-.53.08-.8.38-.28.3-1.06 1.03-1.06 2.5s1.08 2.9 1.23 3.1c.15.2 2.1 3.2 5.08 4.48.71.3 1.27.48 1.7.61.72.23 1.38.2 1.89.12.58-.09 1.79-.73 2.04-1.43.25-.7.25-1.3.18-1.43-.08-.13-.28-.2-.58-.35Z" />
+        </svg>
+    );
+}
 
 export function Navbar() {
     const context = useContext(AuthContext);
     const user = context?.user;
     const isLoading = context?.isLoading;
-    const logout = context?.logout;
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const navLinks = [
         { href: '/dashboard', label: 'Dashboard' },
@@ -38,7 +84,7 @@ export function Navbar() {
     return (
         <>
             <nav suppressHydrationWarning
-                className="fixed top-0 left-0 right-0 z-100 border-b bg-card border-border py-2 shadow-sm translate-y-0 opacity-100"
+                className="fixed top-0 left-0 right-0 z-100 border-b bg-card border-border py-2 shadow-sm translate-y-0 opacity-100 hidden md:block"
             >
                 <div className="w-full px-4 md:px-6 max-w-7xl mx-auto flex items-center justify-between">
                     {/* Brand */}
@@ -81,6 +127,62 @@ export function Navbar() {
 
                     {/* Right Actions */}
                     <div className="flex items-center gap-2 md:gap-4">
+                        <div className="hidden md:flex items-center gap-1.5">
+                            <a
+                                href="https://t.me/fresherflowin"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="h-8 w-8 rounded-lg border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40"
+                                aria-label="Telegram"
+                            >
+                                <TelegramBrandIcon className="w-4 h-4" />
+                            </a>
+                            <a
+                                href="https://whatsapp.com/channel/0029VbCkZu6FHWq0qJOOU73D"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="h-8 w-8 rounded-lg border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40"
+                                aria-label="WhatsApp"
+                            >
+                                <WhatsAppBrandIcon className="w-4 h-4" />
+                            </a>
+                            <a
+                                href="https://www.linkedin.com/company/fresherflow-in"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="h-8 w-8 rounded-lg border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40"
+                                aria-label="LinkedIn"
+                            >
+                                <LinkedInBrandIcon className="w-4 h-4" />
+                            </a>
+                            <a
+                                href="https://twitter.com/Fresherflow"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="h-8 w-8 rounded-lg border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40"
+                                aria-label="Twitter"
+                            >
+                                <XBrandIcon className="w-4 h-4" />
+                            </a>
+                            <a
+                                href="https://instagram.com/fresherflow"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="h-8 w-8 rounded-lg border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40"
+                                aria-label="Instagram"
+                            >
+                                <InstagramBrandIcon className="w-4 h-4" />
+                            </a>
+                            <a
+                                href="https://www.facebook.com/FresherFlow.in"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="h-8 w-8 rounded-lg border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40"
+                                aria-label="Facebook"
+                            >
+                                <FacebookBrandIcon className="w-4 h-4" />
+                            </a>
+                        </div>
                         <ThemeToggle />
 
                         {!isLoading && (
@@ -101,14 +203,6 @@ export function Navbar() {
                                             <ArrowRightOnRectangleIcon className="w-5 h-5" />
                                         </Link>
 
-                                        {/* Mobile Hamburger Button */}
-                                        <button
-                                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                                            className="md:hidden p-2 text-muted-foreground hover:text-foreground transition-colors"
-                                            aria-label="Toggle menu"
-                                        >
-                                            {mobileMenuOpen ? <XMarkIcon className="w-6 h-6" /> : <Bars3Icon className="w-6 h-6" />}
-                                        </button>
                                     </div>
                                 ) : (
                                     <div className="flex items-center gap-2">
@@ -122,68 +216,6 @@ export function Navbar() {
                     </div>
                 </div>
             </nav>
-
-            {/* User Mobile Hamburger Menu */}
-            {mobileMenuOpen && user && (
-                <div className="md:hidden fixed inset-0 top-14 z-90 bg-background/95 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-card border-b border-border shadow-2xl overflow-y-auto max-h-[calc(100vh-4rem)]">
-                        <div className="p-4 border-b border-border bg-muted/30">
-                            <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-                                    <UserIcon className="w-5 h-5" />
-                                </div>
-                                <div className="space-y-0.5">
-                                    <h3 className="text-sm font-bold uppercase tracking-tight italic">{user.fullName || 'User Identity'}</h3>
-                                    <p className="text-[10px] font-semibold text-muted-foreground uppercase opacity-60 tracking-wider truncate max-w-50">{user.email}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <nav className="p-3 space-y-1">
-                            {[
-                                { href: '/dashboard', label: 'Dashboard', icon: HomeIcon },
-                                { href: '/opportunities', label: 'Search Feed', icon: MagnifyingGlassIcon },
-                                { href: '/jobs', label: 'Latest Jobs', icon: BriefcaseIcon },
-                                { href: '/internships', label: 'Internships', icon: AcademicCapIcon },
-                                { href: '/walk-ins', label: 'Walk-in Drives', icon: BriefcaseIcon },
-                                { href: '/account/saved', label: 'My Saved', icon: BookmarkIcon },
-                                { href: '/profile/edit', label: 'My Profile', icon: UserIcon },
-                            ].map((item) => (
-                                <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    onClick={() => setMobileMenuOpen(false)}
-                                    className="flex items-center gap-3 px-3 py-3 rounded-lg text-[11px] font-bold uppercase tracking-wider text-muted-foreground hover:bg-muted hover:text-foreground"
-                                >
-                                    <item.icon className="w-4 h-4 text-primary" />
-                                    <span>{item.label}</span>
-                                </Link>
-                            ))}
-
-                            <div className="pt-3 mt-3 border-t border-border">
-                                <button
-                                    onClick={() => {
-                                        setMobileMenuOpen(false);
-                                        logout?.();
-                                    }}
-                                    className="flex items-center gap-3 w-full px-3 py-3 rounded-lg text-[11px] font-bold uppercase tracking-wider text-destructive hover:bg-destructive/10 transition-all"
-                                >
-                                    <ArrowRightOnRectangleIcon className="w-4 h-4" />
-                                    <span>Sign Out Securely</span>
-                                </button>
-                            </div>
-
-                            <div className="mt-6 p-3 bg-muted/50 rounded-lg border border-border">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <QuestionMarkCircleIcon className="w-4 h-4 text-muted-foreground" />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Support & Info</span>
-                                </div>
-                                <p className="text-[9px] font-bold text-muted-foreground/60 leading-relaxed uppercase">Need help? Contact our verification team for priority eligibility support at verified@fresherflow.in</p>
-                            </div>
-                        </nav>
-                    </div>
-                </div>
-            )}
         </>
     );
 }
@@ -195,6 +227,7 @@ export function MobileNav() {
     const user = context?.user;
     const isLoading = context?.isLoading;
     const [isVisible, setIsVisible] = useState(true);
+    const [menuOpen, setMenuOpen] = useState(false);
     const lastScrollYRef = useRef(0);
     const tickingRef = useRef(false);
 
@@ -226,54 +259,221 @@ export function MobileNav() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, [isLoading, user]);
 
+    useEffect(() => {
+        if (!menuOpen) return;
+        const onEsc = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setMenuOpen(false);
+        };
+        document.addEventListener('keydown', onEsc);
+        return () => document.removeEventListener('keydown', onEsc);
+    }, [menuOpen]);
+
     if (isLoading || !user) return null;
+
+    const getMobileTitle = (path: string) => {
+        if (path === '/dashboard') return 'FresherFlow';
+        if (path === '/opportunities') return 'Search';
+        if (path === '/jobs') return 'Jobs';
+        if (path === '/internships') return 'Internships';
+        if (path === '/walk-ins') return 'Walk-ins';
+        if (path === '/account/saved') return 'Saved';
+        if (path === '/profile/edit') return 'Profile';
+        if (path === '/alerts' || path === '/account/alerts') return 'Alerts';
+        if (path === '/account/feedback') return 'Feedback';
+        if (path.startsWith('/opportunities/')) return 'Opportunity';
+        return 'FresherFlow';
+    };
+
+    const mobileTitle = getMobileTitle(pathname);
 
     const tabs = [
         { href: '/dashboard', label: 'Home', icon: HomeIcon },
         { href: '/opportunities', label: 'Search', icon: MagnifyingGlassIcon },
         { href: '/jobs', label: 'Jobs', icon: BriefcaseIcon },
-        { href: '/internships', label: 'Intern', icon: AcademicCapIcon },
-        { href: '/walk-ins', label: 'Drives', icon: BriefcaseIcon },
-        { href: '/account/saved', label: 'Saved', icon: BookmarkIcon },
+        { href: '/internships', label: 'Internships', icon: AcademicCapIcon },
+        { href: '/walk-ins', label: 'Walk-ins', icon: BriefcaseIcon },
     ];
 
     return (
-        <div className={cn(
-            "md:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border z-50 pb-safe transition-transform duration-200",
-            isVisible ? "translate-y-0" : "translate-y-full"
-        )}>
-            <div className="flex justify-between items-center h-12 px-0.5">
-                {tabs.map((tab) => {
-                    const currentSearchParams = searchParams.toString();
-                    const fullPath = pathname + (currentSearchParams ? `?${currentSearchParams}` : '');
-                    const isActive = fullPath === tab.href;
-
-                    return (
-                        <Link
-                            key={tab.href}
-                            href={tab.href}
+        <>
+            <div className="md:hidden fixed top-0 left-0 right-0 z-[70] h-16 bg-background/95 backdrop-blur-md border-b border-border">
+                <div className="h-full px-4 flex items-center justify-between">
+                    <Link href="/dashboard" className="flex items-center gap-2">
+                        <div
+                            suppressHydrationWarning
+                            className="w-6 h-6 bg-contain bg-center bg-no-repeat"
+                            style={{ backgroundImage: 'var(--logo-image)' }}
+                        />
+                        <span className="text-sm font-bold tracking-tight text-foreground">{mobileTitle}</span>
+                    </Link>
+                    <div className="flex items-center gap-2">
+                        <ThemeToggle />
+                        <button
+                            onClick={() => setMenuOpen(true)}
                             className={cn(
-                                "flex flex-col items-center justify-center flex-1 h-full gap-0",
-                                isActive ? "text-primary" : "text-muted-foreground"
+                                "p-2 rounded-lg border border-border bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted transition-all",
+                                menuOpen && "text-primary border-primary/30 bg-primary/10"
                             )}
+                            aria-label="Open menu"
                         >
-                            <div className={cn(
-                                "p-0.5 rounded-md",
-                                isActive && "bg-primary/10"
-                            )}>
-                                <tab.icon className={cn("w-4 h-4", isActive && "fill-primary/20")} strokeWidth={isActive ? 2 : 1.5} />
-                            </div>
-                            <span className={cn(
-                                "text-[8px] uppercase tracking-tighter",
-                                isActive ? "font-bold" : "font-medium"
-                            )}>
-                                {tab.label}
-                            </span>
-                        </Link>
-                    );
-                })}
+                            <Bars3Icon className="w-5 h-5" />
+                        </button>
+                    </div>
+                </div>
             </div>
-        </div>
+            {menuOpen && (
+                <div className="md:hidden fixed inset-0 z-[75] bg-background/95 backdrop-blur-sm animate-in fade-in duration-200">
+                    <button
+                        className="absolute inset-0"
+                        aria-label="Close menu"
+                        onClick={() => setMenuOpen(false)}
+                    />
+                    <div className="relative z-10 bg-card border-b border-border shadow-2xl overflow-y-auto max-h-[calc(100vh-4rem)]">
+                        <div className="p-4 border-b border-border bg-muted/30">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                                    <UserIcon className="w-5 h-5" />
+                                </div>
+                                <div className="space-y-0.5">
+                                    <h3 className="text-sm font-bold uppercase tracking-tight italic">{user.fullName || 'User Identity'}</h3>
+                                    <p className="text-[10px] font-semibold text-muted-foreground uppercase opacity-60 tracking-wider truncate max-w-50">{user.email}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <nav className="p-3 space-y-1">
+                            {[
+                                { href: '/profile/edit', label: 'My Profile', icon: UserIcon },
+                                { href: '/account/saved', label: 'My Saved', icon: BookmarkIcon },
+                                { href: '/alerts', label: 'Alerts', icon: BellIcon },
+                                { href: '/account/feedback', label: 'Feedback', icon: PaperAirplaneIcon },
+                            ].map((item) => (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    onClick={() => setMenuOpen(false)}
+                                    className="flex items-center gap-3 px-3 py-3 rounded-lg text-[11px] font-bold uppercase tracking-wider text-muted-foreground hover:bg-muted hover:text-foreground"
+                                >
+                                    <item.icon className="w-4 h-4 text-primary" />
+                                    <span>{item.label}</span>
+                                </Link>
+                            ))}
+
+                            <div className="pt-3 mt-3 border-t border-border">
+                                <p className="px-3 pb-2 text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">Follow us</p>
+                                <div className="flex items-center gap-2 px-3">
+                                    <a
+                                        href="https://t.me/fresherflowin"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="h-8 w-8 rounded-lg border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40"
+                                        aria-label="Telegram"
+                                    >
+                                        <TelegramBrandIcon className="w-4 h-4" />
+                                    </a>
+                                    <a
+                                        href="https://www.linkedin.com/company/fresherflow-in"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="h-8 w-8 rounded-lg border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40"
+                                        aria-label="LinkedIn"
+                                    >
+                                        <LinkedInBrandIcon className="w-4 h-4" />
+                                    </a>
+                                    <a
+                                        href="https://twitter.com/Fresherflow"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="h-8 w-8 rounded-lg border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40"
+                                        aria-label="Twitter"
+                                    >
+                                        <XBrandIcon className="w-4 h-4" />
+                                    </a>
+                                    <a
+                                        href="https://instagram.com/fresherflow"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="h-8 w-8 rounded-lg border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40"
+                                        aria-label="Instagram"
+                                    >
+                                        <InstagramBrandIcon className="w-4 h-4" />
+                                    </a>
+                                    <a
+                                        href="https://www.facebook.com/FresherFlow.in"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="h-8 w-8 rounded-lg border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40"
+                                        aria-label="Facebook"
+                                    >
+                                        <FacebookBrandIcon className="w-4 h-4" />
+                                    </a>
+                                    <a
+                                        href="https://whatsapp.com/channel/0029VbCkZu6FHWq0qJOOU73D"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="h-8 w-8 rounded-lg border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40"
+                                        aria-label="WhatsApp"
+                                    >
+                                        <WhatsAppBrandIcon className="w-4 h-4" />
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div className="pt-3 mt-3 border-t border-border">
+                                <Link
+                                    href="/logout"
+                                    onClick={() => setMenuOpen(false)}
+                                    className="flex items-center gap-3 w-full px-3 py-3 rounded-lg text-[11px] font-bold uppercase tracking-wider text-destructive hover:bg-destructive/10 transition-all"
+                                >
+                                    <ArrowRightOnRectangleIcon className="w-4 h-4" />
+                                    <span>Sign Out</span>
+                                </Link>
+                            </div>
+                        </nav>
+                    </div>
+                </div>
+            )}
+            <div className={cn(
+                "md:hidden fixed bottom-0 left-0 right-0 h-16 bg-background/95 backdrop-blur-md border-t border-border z-50 transition-transform duration-200",
+                isVisible ? "translate-y-0" : "translate-y-full"
+            )}>
+                <div className="flex justify-around items-center h-full px-0">
+                    {tabs.map((tab) => {
+                        const currentSearchParams = searchParams.toString();
+                        const fullPath = pathname + (currentSearchParams ? `?${currentSearchParams}` : '');
+                        const [tabPath, tabQuery] = tab.href.split('?');
+                        const currentView = searchParams.get('view');
+                        const tabView = tabQuery ? new URLSearchParams(tabQuery).get('view') : null;
+                        const isActive = fullPath === tab.href
+                            || (pathname === tabPath && ((tabView && currentView === tabView) || (!tabView && currentView !== 'new')));
+
+                        return (
+                            <Link
+                                key={tab.href + tab.label}
+                                href={tab.href}
+                                className={cn(
+                                    "flex flex-col items-center justify-center flex-1 h-full gap-1",
+                                    isActive ? "text-primary" : "text-muted-foreground"
+                                )}
+                            >
+                                <div className={cn(
+                                    "p-1 rounded-xl",
+                                    isActive && "bg-primary/10"
+                                )}>
+                                    <tab.icon className={cn("w-6 h-6", isActive && "fill-primary/20")} strokeWidth={isActive ? 2 : 1.5} />
+                                </div>
+                                <span className={cn(
+                                    "text-[10px]",
+                                    isActive ? "font-semibold" : "font-normal"
+                                )}>
+                                    {tab.label}
+                                </span>
+                            </Link>
+                        );
+                    })}
+                </div>
+            </div>
+        </>
     );
 }
 

@@ -110,9 +110,9 @@ function CategoryPageContent({ type }: CategoryPageProps) {
     return (
         <AuthGate>
             <ProfileGate>
-                <div className="w-full max-w-7xl mx-auto px-4 md:px-6 pb-12 md:pb-20 space-y-6 md:space-y-8">
-                    {/* Page Header - Category Specific */}
-                    <div className="flex flex-col gap-3 border-b border-border/60 pb-4">
+                <div className="w-full max-w-7xl mx-auto px-3 md:px-6 pb-12 md:pb-20 space-y-6 md:space-y-8">
+                    {/* Desktop Header - Category Specific */}
+                    <div className="hidden md:flex flex-col gap-3 border-b border-border/60 pb-4">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div className="space-y-1">
                                 <div className="flex items-center gap-2">
@@ -200,6 +200,40 @@ function CategoryPageContent({ type }: CategoryPageProps) {
                             >
                                 Saved
                             </button>
+                        </div>
+                    </div>
+
+                    {/* Mobile Compact Search */}
+                    <div className="md:hidden mt-2 space-y-2 border-b border-border/60 pb-3">
+                        <div className="flex items-center gap-2">
+                            <div className="relative flex-1">
+                                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                <Input
+                                    type="text"
+                                    placeholder="Search by role or company..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="pl-10 h-10 text-sm bg-background"
+                                />
+                            </div>
+                            <button
+                                onClick={openMobileFilters}
+                                className="inline-flex h-10 items-center justify-center rounded-lg border px-3 text-[10px] font-bold uppercase tracking-widest transition-all bg-background border-border text-muted-foreground hover:bg-muted"
+                            >
+                                <FunnelIcon className="w-4 h-4 mr-1.5" />
+                                {activeFilterCount > 0 ? `${activeFilterCount}` : 'Filters'}
+                            </button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-1 rounded-full border border-border uppercase tracking-wider">
+                                {filteredOpps.length} results
+                            </span>
+                            <Link
+                                href="/opportunities"
+                                className="text-[10px] font-semibold text-primary hover:underline uppercase tracking-widest"
+                            >
+                                View all
+                            </Link>
                         </div>
                     </div>
 

@@ -49,7 +49,7 @@ export default function WalkInsCityLandingPage({ params }: { params: { city: str
     };
 
     return (
-        <main className="min-h-screen bg-background px-4 md:px-6 py-10 md:py-14">
+        <main className="min-h-screen bg-background px-3 md:px-6 py-10 md:py-14">
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

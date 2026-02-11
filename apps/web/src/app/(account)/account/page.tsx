@@ -9,7 +9,8 @@ import {
     UserCircleIcon,
     ShieldCheckIcon,
     ArrowLeftIcon,
-    BellAlertIcon
+    BellAlertIcon,
+    ChatBubbleBottomCenterTextIcon
 } from '@heroicons/react/24/outline';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 
@@ -94,6 +95,20 @@ export default function AccountPage() {
                             <p className="text-[11px] text-muted-foreground">Digest and closing-soon notifications</p>
                         </div>
                         <span className="text-xs text-muted-foreground">Manage</span>
+                    </Link>
+                    <div className="h-px bg-border" />
+                    <Link
+                        href="/account/feedback"
+                        className="flex items-center gap-4 px-4 py-4 hover:bg-muted/40 transition-colors"
+                    >
+                        <div className="w-10 h-10 rounded-xl bg-muted text-muted-foreground flex items-center justify-center">
+                            <ChatBubbleBottomCenterTextIcon className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-sm font-semibold tracking-tight">Feedback</h3>
+                            <p className="text-[11px] text-muted-foreground">Share ideas and bug reports</p>
+                        </div>
+                        <span className="text-xs text-muted-foreground">Send</span>
                     </Link>
                     <div className="h-px bg-border" />
                     <Link

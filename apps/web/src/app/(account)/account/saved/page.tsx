@@ -67,7 +67,7 @@ export default function SavedJobsPage() {
 
     return (
         <div className="min-h-screen bg-background animate-in fade-in duration-500 pb-12 md:pb-0">
-            <main className="max-w-7xl mx-auto px-4 md:px-6 py-5 md:py-10 space-y-4 md:space-y-6">
+            <main className="max-w-7xl mx-auto px-3 md:px-6 py-5 md:py-10 space-y-4 md:space-y-6">
                 <div className="flex items-center gap-3">
                     <Link
                         href="/dashboard"

@@ -24,8 +24,8 @@ export function NavigationWrapper({ children }: { children: React.ReactNode }) {
                 </Suspense>
             )}
             <main className={cn(
-                "relative",
-                !isAuthRoute && !isAdminRoute && "pt-[72px] md:pt-[88px]",
+                "relative w-full overflow-x-hidden",
+                !isAuthRoute && !isAdminRoute && "pt-16 md:pt-[88px]",
                 !isAuthRoute && !isAdminRoute && !isHomePage && "pb-4 md:pb-8",
                 (isAuthRoute || isAdminRoute) && "min-h-screen flex flex-col"
             )}>
