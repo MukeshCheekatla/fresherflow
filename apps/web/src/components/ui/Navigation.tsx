@@ -15,6 +15,7 @@ import Bars3Icon from '@heroicons/react/24/outline/Bars3Icon';
 import AcademicCapIcon from '@heroicons/react/24/outline/AcademicCapIcon';
 import BellIcon from '@heroicons/react/24/outline/BellIcon';
 import PaperAirplaneIcon from '@heroicons/react/24/outline/PaperAirplaneIcon';
+import ClipboardDocumentCheckIcon from '@heroicons/react/24/outline/ClipboardDocumentCheckIcon';
 import { ThemeToggle } from './ThemeToggle';
 
 function TelegramBrandIcon({ className }: { className?: string }) {
@@ -277,6 +278,7 @@ export function MobileNav() {
         if (path === '/internships') return 'Internships';
         if (path === '/walk-ins') return 'Walk-ins';
         if (path === '/account/saved') return 'Saved';
+        if (path === '/account/tracker') return 'Tracker';
         if (path === '/profile/edit') return 'Profile';
         if (path === '/alerts' || path === '/account/alerts') return 'Alerts';
         if (path === '/account/feedback') return 'Feedback';
@@ -345,6 +347,7 @@ export function MobileNav() {
                             {[
                                 { href: '/profile/edit', label: 'My Profile', icon: UserIcon },
                                 { href: '/account/saved', label: 'My Saved', icon: BookmarkIcon },
+                                { href: '/account/tracker', label: 'Tracker', icon: ClipboardDocumentCheckIcon },
                                 { href: '/alerts', label: 'Alerts', icon: BellIcon },
                                 { href: '/account/feedback', label: 'Feedback', icon: PaperAirplaneIcon },
                             ].map((item) => (

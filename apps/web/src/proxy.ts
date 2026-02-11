@@ -42,6 +42,7 @@ export async function proxy(request: NextRequest) {
         '/profile/edit',
         '/account',
         '/account/saved',
+        '/account/tracker',
     ];
 
     // 1. Subdomain Handling (app.fresherflow.in)

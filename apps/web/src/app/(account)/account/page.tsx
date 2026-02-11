@@ -10,7 +10,8 @@ import {
     ShieldCheckIcon,
     ArrowLeftIcon,
     BellAlertIcon,
-    ChatBubbleBottomCenterTextIcon
+    ChatBubbleBottomCenterTextIcon,
+    ClipboardDocumentCheckIcon
 } from '@heroicons/react/24/outline';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 
@@ -81,6 +82,20 @@ export default function AccountPage() {
                             <p className="text-[11px] text-muted-foreground">Your bookmarked opportunities</p>
                         </div>
                         <span className="text-xs text-muted-foreground">View</span>
+                    </Link>
+                    <div className="h-px bg-border" />
+                    <Link
+                        href="/account/tracker"
+                        className="flex items-center gap-4 px-4 py-4 hover:bg-muted/40 transition-colors"
+                    >
+                        <div className="w-10 h-10 rounded-xl bg-muted text-muted-foreground flex items-center justify-center">
+                            <ClipboardDocumentCheckIcon className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-sm font-semibold tracking-tight">Tracker</h3>
+                            <p className="text-[11px] text-muted-foreground">Applied, planned, interviewed, selected</p>
+                        </div>
+                        <span className="text-xs text-muted-foreground">Open</span>
                     </Link>
                     <div className="h-px bg-border" />
                     <Link

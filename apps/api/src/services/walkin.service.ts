@@ -112,10 +112,10 @@ export class WalkinService {
             create: {
                 userId,
                 opportunityId: walkinId,
-                actionType: 'ATTENDED',
+                actionType: 'INTERVIEWED',
             },
             update: {
-                actionType: 'ATTENDED',
+                actionType: 'INTERVIEWED',
                 updatedAt: new Date(),
             },
         });
@@ -128,7 +128,9 @@ export class WalkinService {
         const actions = await prisma.userAction.findMany({
             where: {
                 userId,
-                actionType: 'ATTENDED',
+                actionType: {
+                    in: ['INTERVIEWED', 'ATTENDED'],
+                },
             },
             include: {
                 opportunity: {

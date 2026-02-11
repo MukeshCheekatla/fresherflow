@@ -35,6 +35,10 @@ enum OpportunityStatus {
 
 enum ActionType {
   APPLIED
+  PLANNED
+  INTERVIEWED
+  SELECTED
+  // Legacy values kept for compatibility with existing rows
   PLANNING
   ATTENDED
   NOT_ELIGIBLE

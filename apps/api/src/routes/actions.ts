@@ -14,6 +14,10 @@ router.post('/:id/action', requireAuth, validate(userActionSchema), async (req: 
     try {
         const { id: opportunityId } = req.params as { id: string };
         const { actionType } = req.body;
+        const normalizedActionType =
+            actionType === 'PLANNING' ? 'PLANNED' :
+                actionType === 'ATTENDED' ? 'INTERVIEWED' :
+                    actionType;
 
         // Fetch opportunity with walk-in details
         const opportunity = await prisma.opportunity.findUnique({
@@ -60,7 +64,7 @@ router.post('/:id/action', requireAuth, validate(userActionSchema), async (req: 
 
         // WALK-IN ATTENDED VALIDATION (Backend Only)
         // Can only mark ATTENDED after EARLIEST date has passed
-        if (opportunity.type === OpportunityType.WALKIN && actionType === 'ATTENDED') {
+        if (opportunity.type === OpportunityType.WALKIN && (normalizedActionType === 'INTERVIEWED' || normalizedActionType === 'ATTENDED')) {
             const nowUTC = new Date();
 
             if (!opportunity.walkInDetails || !opportunity.walkInDetails.dates.length) {
@@ -88,12 +92,12 @@ router.post('/:id/action', requireAuth, validate(userActionSchema), async (req: 
                 }
             },
             update: {
-                actionType
+                actionType: normalizedActionType
             },
             create: {
                 userId: req.userId!,
                 opportunityId,
-                actionType
+                actionType: normalizedActionType
             }
         });
 
@@ -127,23 +131,33 @@ router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunct
 // GET /api/actions/summary - Aggregated counts only
 router.get('/summary', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const [applied, planning, attended] = await Promise.all([
+        const [applied, planned, interviewed, selected] = await Promise.all([
             prisma.userAction.count({
                 where: { userId: req.userId, actionType: 'APPLIED' }
             }),
             prisma.userAction.count({
-                where: { userId: req.userId, actionType: 'PLANNING' }
+                where: {
+                    userId: req.userId,
+                    actionType: { in: ['PLANNED', 'PLANNING'] }
+                }
             }),
             prisma.userAction.count({
-                where: { userId: req.userId, actionType: 'ATTENDED' }
+                where: {
+                    userId: req.userId,
+                    actionType: { in: ['INTERVIEWED', 'ATTENDED'] }
+                }
+            }),
+            prisma.userAction.count({
+                where: { userId: req.userId, actionType: 'SELECTED' }
             })
         ]);
 
         res.json({
             summary: {
                 applied,
-                planning,
-                attended
+                planned,
+                interviewed,
+                selected
             }
         });
     } catch (error) {

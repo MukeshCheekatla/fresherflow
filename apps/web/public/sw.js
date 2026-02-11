@@ -1,4 +1,6 @@
-const CACHE_NAME = 'fresherflow-pwa-v1.4.5';
+const SW_VERSION = '1.4.6';
+const STATIC_CACHE = `fresherflow-static-${SW_VERSION}`;
+const API_CACHE = `fresherflow-api-${SW_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
 // Assets that should be cached on install
@@ -8,10 +10,28 @@ const PRECACHE_ASSETS = [
   '/manifest.webmanifest'
 ];
 
+const API_CACHE_PREFIXES = [
+  '/api/opportunities',
+  '/api/dashboard/highlights',
+  '/api/dashboard/deadlines',
+];
+
+function isCacheableApiRequest(url) {
+  return API_CACHE_PREFIXES.some((prefix) => url.pathname.startsWith(prefix));
+}
+
+async function cleanupOldCaches() {
+  const valid = new Set([STATIC_CACHE, API_CACHE]);
+  const keys = await caches.keys();
+  await Promise.all(
+    keys.map((key) => (valid.has(key) ? Promise.resolve() : caches.delete(key)))
+  );
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {
-      const cache = await caches.open(CACHE_NAME);
+      const cache = await caches.open(STATIC_CACHE);
       for (const url of PRECACHE_ASSETS) {
         try {
           const response = await fetch(url, { redirect: 'follow', cache: 'reload' });
@@ -28,11 +48,7 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.map((key) => (key === CACHE_NAME ? null : caches.delete(key))))
-    )
-  );
+  event.waitUntil(cleanupOldCaches());
   self.clients.claim();
 });
 
@@ -49,23 +65,64 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Cache key ignores tracking params so the same feed/search request can be reused.
+  const normalizedUrl = new URL(url.pathname + url.search, self.location.origin);
+  normalizedUrl.searchParams.delete('utm_source');
+  normalizedUrl.searchParams.delete('utm_medium');
+  normalizedUrl.searchParams.delete('utm_campaign');
+  normalizedUrl.searchParams.delete('utm_term');
+  normalizedUrl.searchParams.delete('utm_content');
+  normalizedUrl.searchParams.delete('ref');
+  const cacheKey = new Request(normalizedUrl.toString(), { method: 'GET' });
+
   // Only cache same-origin static assets
   const dest = event.request.destination;
   const isStaticAsset = isSameOrigin && ['style', 'script', 'image', 'font'].includes(dest);
 
   if (isStaticAsset && !isApiRequest) {
     event.respondWith(
-      caches.open(CACHE_NAME).then((cache) =>
-        cache.match(event.request).then((cachedResponse) => {
+      caches.open(STATIC_CACHE).then((cache) =>
+        cache.match(cacheKey).then((cachedResponse) => {
           const fetchPromise = fetch(event.request).then((networkResponse) => {
             if (networkResponse && networkResponse.status === 200) {
-              cache.put(event.request, networkResponse.clone());
+              cache.put(cacheKey, networkResponse.clone());
             }
             return networkResponse;
           });
           return cachedResponse || fetchPromise;
         })
       )
+    );
+    return;
+  }
+
+  // Deeper offline support for feed/search/deadline APIs
+  if (isSameOrigin && isApiRequest && isCacheableApiRequest(url)) {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(API_CACHE);
+
+        try {
+          const networkResponse = await fetch(event.request);
+          if (networkResponse && networkResponse.ok && networkResponse.type !== 'opaqueredirect') {
+            cache.put(cacheKey, networkResponse.clone());
+          }
+          return networkResponse;
+        } catch {
+          const cached = await cache.match(cacheKey);
+          if (cached) return cached;
+          return new Response(
+            JSON.stringify({
+              error: 'Offline and no cached data available yet',
+              offline: true,
+            }),
+            {
+              status: 503,
+              headers: { 'Content-Type': 'application/json' },
+            }
+          );
+        }
+      })()
     );
   }
 });

@@ -1,4 +1,4 @@
-import { AuthResponse, Profile, Admin } from '@fresherflow/types';
+import { AuthResponse, Profile, Admin, ActionType } from '@fresherflow/types';
 import type {
     PublicKeyCredentialCreationOptionsJSON,
     RegistrationResponseJSON,
@@ -313,7 +313,7 @@ export const actionsApi = {
     list: () => apiClient('/api/actions'),
     summary: () => apiClient('/api/actions/summary'),
 
-    track: (opportunityId: string, actionType: string) =>
+    track: (opportunityId: string, actionType: ActionType) =>
         apiClient(`/api/actions/${opportunityId}/action`, {
             method: 'POST',
             body: JSON.stringify({ actionType })

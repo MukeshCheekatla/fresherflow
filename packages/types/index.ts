@@ -47,6 +47,10 @@ export enum Availability {
 
 export enum ActionType {
     APPLIED = 'APPLIED',
+    PLANNED = 'PLANNED',
+    INTERVIEWED = 'INTERVIEWED',
+    SELECTED = 'SELECTED',
+    // Backward-compatible legacy values
     PLANNING = 'PLANNING',
     ATTENDED = 'ATTENDED',
     NOT_ELIGIBLE = 'NOT_ELIGIBLE'
@@ -263,8 +267,9 @@ export interface OpportunityDetailResponse {
 
 export interface UserStatsResponse {
     appliedCount: number;
-    planningCount: number;
-    attendedCount: number;
+    plannedCount: number;
+    interviewedCount: number;
+    selectedCount: number;
 }
 
 // ========================================

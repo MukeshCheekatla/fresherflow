@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useContext } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';
 import { savedApi } from '@/lib/api/client';
-import { Opportunity } from '@fresherflow/types';
+import type { Opportunity, ActionType } from '@fresherflow/types';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MapPinIcon, TrashIcon } from '@heroicons/react/24/outline';
@@ -47,6 +47,16 @@ export default function SavedJobsPage() {
         } catch {
             toast.error('Failed to remove', { id: loading });
         }
+    };
+
+    const getProgressLabel = (job: Opportunity): string | null => {
+        const actionType = (job.actions?.[0]?.actionType as ActionType | undefined);
+        if (!actionType) return null;
+        if (actionType === 'PLANNED' || actionType === 'PLANNING') return 'Planned';
+        if (actionType === 'INTERVIEWED' || actionType === 'ATTENDED') return 'Interviewed';
+        if (actionType === 'SELECTED') return 'Selected';
+        if (actionType === 'APPLIED') return 'Applied';
+        return null;
     };
 
 
@@ -134,6 +144,11 @@ export default function SavedJobsPage() {
                                         }`}>
                                         {job.type}
                                     </span>
+                                    {getProgressLabel(job) && (
+                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border bg-primary/10 text-primary border-primary/20">
+                                            {getProgressLabel(job)}
+                                        </span>
+                                    )}
                                     <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground/80">
                                         <MapPinIcon className="w-3.5 h-3.5" />
                                         <span className="truncate max-w-37.5">{job.locations?.[0] || 'Remote'}</span>

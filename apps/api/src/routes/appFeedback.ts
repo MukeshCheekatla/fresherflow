@@ -1,5 +1,5 @@
 import express, { Router, Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, AppFeedbackType } from '@prisma/client';
 import { requireAuth } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { appFeedbackSchema } from '../utils/validation';
@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
 router.post('/', requireAuth, validate(appFeedbackSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { type, rating, message, pageUrl } = req.body as {
-            type: string;
+            type: AppFeedbackType;
             rating?: number;
             message: string;
             pageUrl?: string;
@@ -19,7 +19,7 @@ router.post('/', requireAuth, validate(appFeedbackSchema), async (req: Request, 
 
         const feedback = await prisma.appFeedback.create({
             data: {
-                userId: req.user!.id,
+                userId: req.userId!,
                 type,
                 rating,
                 message,
