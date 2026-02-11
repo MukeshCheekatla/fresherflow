@@ -47,6 +47,13 @@ enum FeedbackReason {
   INACCURATE // Wrong information in listing
 }
 
+enum AppFeedbackType {
+  BUG
+  IDEA
+  PRAISE
+  OTHER
+}
+
 enum EducationLevel {
   DIPLOMA
   DEGREE
@@ -111,6 +118,7 @@ model User {
   refreshTokens RefreshToken[]
   actions       UserAction[]
   feedback      ListingFeedback[]
+  appFeedback   AppFeedback[]
   savedOpportunities SavedOpportunity[]
   alertPreference AlertPreference?
   alertDeliveries AlertDelivery[]
@@ -363,6 +371,21 @@ model ListingFeedback {
   opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
 
   @@unique([userId, opportunityId]) // One feedback per user per listing
+}
+
+model AppFeedback {
+  id        String          @id @default(uuid())
+  userId    String
+  type      AppFeedbackType
+  rating    Int?
+  message   String          @db.Text
+  pageUrl   String?
+  createdAt DateTime        @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([type])
+  @@index([createdAt])
 }
 
 model AlertPreference {

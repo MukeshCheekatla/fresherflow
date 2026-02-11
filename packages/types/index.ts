@@ -59,6 +59,13 @@ export enum FeedbackReason {
     INACCURATE = 'INACCURATE'
 }
 
+export enum AppFeedbackType {
+    BUG = 'BUG',
+    IDEA = 'IDEA',
+    PRAISE = 'PRAISE',
+    OTHER = 'OTHER'
+}
+
 export enum LinkHealth {
     HEALTHY = 'HEALTHY',
     BROKEN = 'BROKEN',
@@ -215,6 +222,17 @@ export interface ListingFeedback {
     createdAt: Date;
     user?: User;
     opportunity?: Opportunity;
+}
+
+export interface AppFeedback {
+    id: string;
+    userId: string;
+    type: AppFeedbackType;
+    rating?: number | null;
+    message: string;
+    pageUrl?: string | null;
+    createdAt: Date;
+    user?: User;
 }
 
 // ========================================

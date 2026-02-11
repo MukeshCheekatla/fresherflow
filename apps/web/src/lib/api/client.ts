@@ -329,6 +329,14 @@ export const feedbackApi = {
         })
 };
 
+export const appFeedbackApi = {
+    submit: (data: { type: string; rating?: number; message: string; pageUrl?: string }) =>
+        apiClient('/api/feedback', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        })
+};
+
 // Saved API calls
 export const savedApi = {
     list: () => apiClient('/api/saved'),

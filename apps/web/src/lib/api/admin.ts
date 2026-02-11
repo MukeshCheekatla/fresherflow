@@ -65,6 +65,10 @@ export const adminApi = {
     getFeedback: () =>
         apiClient('/api/admin/feedback'),
 
+    // Get app feedback
+    getAppFeedback: () =>
+        apiClient('/api/admin/app-feedback'),
+
     // System observability metrics
     getSystemMetrics: () =>
         apiClient('/api/admin/system/metrics'),

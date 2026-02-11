@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { OpportunityType, OpportunityStatus, WorkMode, EducationLevel, Availability, ActionType, FeedbackReason, SalaryPeriod } from '@fresherflow/types';
+import { OpportunityType, OpportunityStatus, WorkMode, EducationLevel, Availability, ActionType, FeedbackReason, SalaryPeriod, AppFeedbackType } from '@fresherflow/types';
 
 // Auth Schemas
 export const registerSchema = z.object({
@@ -117,6 +117,13 @@ export const userActionSchema = z.object({
 
 export const feedbackSchema = z.object({
     reason: z.nativeEnum(FeedbackReason)
+});
+
+export const appFeedbackSchema = z.object({
+    type: z.nativeEnum(AppFeedbackType),
+    rating: z.number().int().min(1).max(5).optional(),
+    message: z.string().min(10).max(2000),
+    pageUrl: z.string().max(500).optional()
 });
 
 export const alertPreferencesSchema = z.object({

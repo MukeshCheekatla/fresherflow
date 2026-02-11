@@ -35,17 +35,35 @@ interface FeedbackItem {
     };
 }
 
+interface AppFeedbackItem {
+    id: string;
+    type: string;
+    rating?: number | null;
+    message: string;
+    pageUrl?: string | null;
+    createdAt: string;
+    user?: {
+        fullName?: string;
+        email?: string;
+    };
+}
+
 export default function FeedbackPage() {
     const { isAuthenticated } = useAdmin();
     const router = useRouter();
     const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
+    const [appFeedback, setAppFeedback] = useState<AppFeedbackItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const loadFeedback = useCallback(async () => {
         setIsLoading(true);
         try {
-            const data = await adminApi.getFeedback();
-            setFeedback(data.feedback || []);
+            const [listingData, appData] = await Promise.all([
+                adminApi.getFeedback(),
+                adminApi.getAppFeedback()
+            ]);
+            setFeedback(listingData.feedback || []);
+            setAppFeedback(appData.feedback || []);
         } catch (err: unknown) {
             const error = err as Error;
             toast.error(`Error: ${error.message}`);
@@ -215,6 +233,48 @@ export default function FeedbackPage() {
                     ))}
                 </div>
             )}
+
+            {/* App Feedback Section */}
+            <div className="space-y-3 md:space-y-4">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-lg md:text-xl font-semibold text-foreground">App feedback</h2>
+                        <p className="text-[10px] md:text-xs text-muted-foreground">Ideas, bugs, and reviews from users.</p>
+                    </div>
+                    <span className="text-xs font-semibold text-muted-foreground">{appFeedback.length} total</span>
+                </div>
+
+                {isLoading ? (
+                    <AdminFeedbackSkeleton />
+                ) : appFeedback.length === 0 ? (
+                    <div className="bg-card border border-dashed border-border rounded-lg p-6 md:p-8 text-center text-muted-foreground text-sm">
+                        No app feedback yet.
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                        {appFeedback.map((item) => (
+                            <div key={item.id} className="bg-card border border-border rounded-lg p-4 space-y-3 shadow-sm">
+                                <div className="flex items-center justify-between">
+                                    <span className="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest bg-muted/60 text-foreground">
+                                        {item.type}
+                                    </span>
+                                    <div className="text-[10px] font-medium text-muted-foreground">
+                                        {new Date(item.createdAt).toLocaleDateString()}
+                                    </div>
+                                </div>
+                                <p className="text-sm text-foreground leading-relaxed">{item.message}</p>
+                                <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                                    <span>{item.user?.fullName || item.user?.email || 'User'}</span>
+                                    {item.rating ? <span>Rating: {item.rating}/5</span> : <span>Rating: n/a</span>}
+                                </div>
+                                {item.pageUrl ? (
+                                    <div className="text-[10px] text-muted-foreground truncate">Page: {item.pageUrl}</div>
+                                ) : null}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

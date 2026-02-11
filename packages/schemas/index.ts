@@ -10,7 +10,8 @@ import {
     WorkMode,
     Availability,
     ActionType,
-    FeedbackReason
+    FeedbackReason,
+    AppFeedbackType
 } from '@fresherflow/types';
 
 // ========================================
@@ -145,6 +146,13 @@ export const submitFeedbackSchema = z.object({
     reason: z.nativeEnum(FeedbackReason)
 });
 
+export const appFeedbackSchema = z.object({
+    type: z.nativeEnum(AppFeedbackType),
+    rating: z.number().int().min(1).max(5).optional(),
+    message: z.string().min(10).max(2000),
+    pageUrl: z.string().max(500).optional()
+});
+
 // ========================================
 // FILTER SCHEMAS
 // ========================================
@@ -172,5 +180,6 @@ export type ReadinessInput = z.infer<typeof readinessSchema>;
 export type OpportunityInput = z.infer<typeof opportunitySchema>;
 export type TrackActionInput = z.infer<typeof trackActionSchema>;
 export type SubmitFeedbackInput = z.infer<typeof submitFeedbackSchema>;
+export type AppFeedbackInput = z.infer<typeof appFeedbackSchema>;
 export type OpportunityFiltersInput = z.infer<typeof opportunityFiltersSchema>;
 export type AdminOpportunityFiltersInput = z.infer<typeof adminOpportunityFiltersSchema>;

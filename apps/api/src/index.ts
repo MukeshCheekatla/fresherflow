@@ -23,12 +23,14 @@ import profileRoutes from './routes/profile';
 import opportunitiesRoutes from './routes/opportunities';
 import actionsRoutes from './routes/actions';
 import feedbackRoutes from './routes/feedback';
+import appFeedbackRoutes from './routes/appFeedback';
 import savedRoutes from './routes/saved';
 import dashboardRoutes from './routes/dashboard';
 import alertsRoutes from './routes/alerts';
 import adminAuthRoutes from './routes/admin/auth';
 import adminOpportunitiesRoutes from './routes/admin/opportunities';
 import adminFeedbackRoutes from './routes/admin/feedback';
+import adminAppFeedbackRoutes from './routes/admin/appFeedback';
 import adminSystemRoutes from './routes/admin/system';
 import adminAnalyticsRoutes from './routes/admin/analytics';
 import adminTotpRoutes from './routes/admin/totp';
@@ -208,6 +210,7 @@ app.use('/api/saved', savedRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/alerts', alertsRoutes);
 app.use('/api/opportunities', feedbackRoutes);
+app.use('/api/feedback', appFeedbackRoutes);
 
 // Admin routes (isolated)
 app.use('/api/admin/auth/totp', adminTotpRoutes);
@@ -215,6 +218,7 @@ app.use('/api/admin/auth/login', authLimiter);
 app.use('/api/admin/auth', adminAuthRoutes);
 app.use('/api/admin/opportunities', adminOpportunitiesRoutes);
 app.use('/api/admin/feedback', adminFeedbackRoutes);
+app.use('/api/admin/app-feedback', adminAppFeedbackRoutes);
 app.use('/api/admin/system', adminSystemRoutes);
 app.use('/api/admin/analytics', adminAnalyticsRoutes);
 
