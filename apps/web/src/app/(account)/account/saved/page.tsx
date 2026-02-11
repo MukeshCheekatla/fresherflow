@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback, useContext } from 'react';
 import { AuthContext } from '@/contexts/AuthContext';
 import { savedApi } from '@/lib/api/client';
-import type { Opportunity, ActionType } from '@fresherflow/types';
+import type { Opportunity } from '@fresherflow/types';
+import { ActionType } from '@fresherflow/types';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MapPinIcon, TrashIcon } from '@heroicons/react/24/outline';
