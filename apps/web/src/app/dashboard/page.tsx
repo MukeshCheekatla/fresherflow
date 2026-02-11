@@ -121,7 +121,8 @@ export default function DashboardPage() {
         setRecentError(null);
         try {
             const data = await opportunitiesApi.list();
-            const sanitized = (data.opportunities || []).slice(0, 6).map((o: Opportunity) => ({
+            // Keep a broader pool so dashboard tabs can rotate fresh content.
+            const sanitized = (data.opportunities || []).slice(0, 60).map((o: Opportunity) => ({
                 ...o,
                 locations: o.locations || [],
                 requiredSkills: o.requiredSkills || []
@@ -169,6 +170,9 @@ export default function DashboardPage() {
     };
 
     const activeRecentOpps = recentOpps.filter((o) => !o.expiresAt || new Date(o.expiresAt) > new Date());
+    const latestList = [...activeRecentOpps].sort(
+        (a, b) => new Date(b.postedAt as string | Date).getTime() - new Date(a.postedAt as string | Date).getTime()
+    );
     // Keep API-provided personalized ordering for best-match sections.
     const bestMatchList = [...activeRecentOpps];
     const closingSoon = activeRecentOpps
@@ -176,9 +180,12 @@ export default function DashboardPage() {
         .sort((a, b) => new Date(a.expiresAt as string).getTime() - new Date(b.expiresAt as string).getTime())
         .slice(0, 8);
     const newCutoff = lastSeenAt || (Date.now() - (72 * 60 * 60 * 1000));
-    const newSinceLastVisit = bestMatchList
+    const newSinceLastVisit = latestList
         .filter((o) => new Date(o.postedAt as string | Date).getTime() > newCutoff)
-        .slice(0, 6);
+        .slice(0, 10);
+    const newLast24Hours = latestList
+        .filter((o) => (Date.now() - new Date(o.postedAt as string | Date).getTime()) <= (24 * 60 * 60 * 1000))
+        .slice(0, 10);
 
     const totalActive = activeRecentOpps.length || 1;
     const jobsCount = activeRecentOpps.filter((o) => o.type === 'JOB').length;
@@ -187,6 +194,8 @@ export default function DashboardPage() {
 
     const sections = [
         { key: 'best', title: 'Best matches', href: '/opportunities', items: bestMatchList.slice(0, 6) },
+        { key: 'latest', title: 'Latest uploads', href: '/opportunities', items: latestList.slice(0, 6) },
+        { key: 'new24h', title: 'Added in last 24h', href: '/opportunities', items: newLast24Hours.slice(0, 6) },
         { key: 'expiring', title: 'Expiring soon', href: '/opportunities?closingSoon=true', items: closingSoon.slice(0, 4) },
         { key: 'new', title: 'New since last visit', href: '/opportunities', items: newSinceLastVisit },
         { key: 'jobs', title: 'Jobs', href: '/jobs', items: bestMatchList.filter((o) => o.type === 'JOB').slice(0, 4) },
@@ -196,17 +205,22 @@ export default function DashboardPage() {
     const archivedList = recentOpps.filter((o) => o.status === 'ARCHIVED' || (!!o.expiresAt && new Date(o.expiresAt) <= new Date()));
     const appliedList = recentOpps.filter((o) =>
         (o.actions || []).some((action) =>
-            action.actionType === 'APPLIED' || action.actionType === 'ATTENDED' || action.actionType === 'PLANNING'
+            action.actionType === 'APPLIED'
+            || action.actionType === 'PLANNED'
+            || action.actionType === 'INTERVIEWED'
+            || action.actionType === 'SELECTED'
+            || action.actionType === 'PLANNING'
+            || action.actionType === 'ATTENDED'
         )
     );
     const featuredList = [
         ...closingSoon.slice(0, 4),
-        ...newSinceLastVisit.filter((candidate) => !closingSoon.some((soon) => soon.id === candidate.id)).slice(0, 4),
+        ...newLast24Hours.filter((candidate) => !closingSoon.some((soon) => soon.id === candidate.id)).slice(0, 4),
     ].slice(0, 8);
 
     const mobileSections = [
         { key: 'featured', title: 'Featured', href: '/opportunities', items: featuredList },
-        { key: 'latest', title: 'Latest', href: '/opportunities', items: bestMatchList.slice(0, 8) },
+        { key: 'latest', title: 'Latest', href: '/opportunities', items: latestList.slice(0, 8) },
         { key: 'expiring', title: 'Expiring Soon', href: '/opportunities?closingSoon=true', items: closingSoon.slice(0, 8) },
         { key: 'all', title: 'All Jobs', href: '/opportunities', items: bestMatchList.slice(0, 8) },
         { key: 'applied', title: 'Applied', href: '/account/saved', items: appliedList.slice(0, 8) },

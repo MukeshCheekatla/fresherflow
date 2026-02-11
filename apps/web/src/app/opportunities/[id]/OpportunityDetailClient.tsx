@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { opportunitiesApi, actionsApi, feedbackApi, savedApi, growthApi } from '@/lib/api/client';
 import { useAuth } from '@/contexts/AuthContext';
-import type { Opportunity } from '@fresherflow/types';
+import { ActionType, type Opportunity } from '@fresherflow/types';
 import BookmarkIcon from '@heroicons/react/24/outline/BookmarkIcon';
 import { BookmarkIcon as BookmarkSolidIcon } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
@@ -45,6 +45,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
     const [detailLastSyncAt, setDetailLastSyncAt] = useState<number | null>(null);
     const [relatedOpps, setRelatedOpps] = useState<Opportunity[]>([]);
     const [isLoadingRelated, setIsLoadingRelated] = useState(false);
+    const [isUpdatingAction, setIsUpdatingAction] = useState(false);
 
     const loadOpportunity = useCallback(async () => {
         if (initialData) return;
@@ -199,13 +200,60 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
         }
     };
 
+    const getCurrentActionType = (): ActionType | null => {
+        if (!opp?.actions?.length) return null;
+        const current = opp.actions[0].actionType as ActionType;
+        if (current === ActionType.PLANNING) return ActionType.PLANNED;
+        if (current === ActionType.ATTENDED) return ActionType.INTERVIEWED;
+        return current;
+    };
+
+    const handleSetAction = async (actionType: ActionType) => {
+        if (!opp) return;
+        if (!user) {
+            router.push(loginFromDetailHref);
+            return;
+        }
+        setIsUpdatingAction(true);
+        try {
+            await actionsApi.track(opp.id, actionType);
+            setOpp((prev) => {
+                if (!prev) return prev;
+                return {
+                    ...prev,
+                    actions: [
+                        {
+                            id: `local-${prev.id}`,
+                            userId: user.id,
+                            opportunityId: prev.id,
+                            actionType,
+                            createdAt: new Date(),
+                        }
+                    ]
+                };
+            });
+            const label = actionType === ActionType.PLANNED
+                ? 'Planned'
+                : actionType === ActionType.INTERVIEWED
+                    ? 'Interviewed'
+                    : actionType === ActionType.SELECTED
+                        ? 'Selected'
+                        : 'Applied';
+            toast.success(`Progress updated: ${label}`);
+        } catch {
+            toast.error('Could not update progress');
+        } finally {
+            setIsUpdatingAction(false);
+        }
+    };
+
     const handleApply = async () => {
         if (!opp || !opp.applyLink) {
             toast.error('Error: Apply link unavailable for this listing.');
             return;
         }
         try {
-            await actionsApi.track(opp.id, 'APPLIED');
+            await handleSetAction(ActionType.APPLIED);
             window.open(opp.applyLink, '_blank');
         } catch {
             window.open(opp.applyLink, '_blank');
@@ -361,6 +409,13 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
 
     const detailPath = `/opportunities/${opp.slug || opp.id}`;
     const hasApplyLink = !!opp.applyLink;
+    const currentAction = getCurrentActionType();
+    const trackerOptions: Array<{ key: ActionType; label: string }> = [
+        { key: ActionType.APPLIED, label: 'Applied' },
+        { key: ActionType.PLANNED, label: 'Planned' },
+        { key: ActionType.INTERVIEWED, label: 'Interviewed' },
+        { key: ActionType.SELECTED, label: 'Selected' },
+    ];
     const sourceParam = searchParams.get('source');
     const fromShare = searchParams.get('ref') === 'share' || sourceParam === 'opportunity_share';
     const loginSource = fromShare ? 'opportunity_share' : 'opportunity_detail';
@@ -802,6 +857,31 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                             </div>
                         </div>
                         <div className="bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3">
+                            <div className="space-y-2">
+                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Track your progress</h4>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {trackerOptions.map((option) => {
+                                        const isActive = currentAction === option.key;
+                                        return (
+                                            <button
+                                                key={option.key}
+                                                onClick={() => handleSetAction(option.key)}
+                                                disabled={isUpdatingAction}
+                                                className={cn(
+                                                    "h-8 rounded-lg border text-[10px] font-bold uppercase tracking-tight transition-colors",
+                                                    isActive
+                                                        ? "bg-primary/10 text-primary border-primary/30"
+                                                        : "bg-muted/30 border-border text-muted-foreground hover:bg-muted/50",
+                                                    isUpdatingAction && "opacity-70 cursor-not-allowed"
+                                                )}
+                                            >
+                                                {option.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
                             {hasApplyLink && (
                                 <div className="space-y-2">
                                     <Button
