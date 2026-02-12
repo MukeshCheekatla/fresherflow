@@ -27,6 +27,7 @@ import { getRecentViewedByIdOrSlug, saveRecentViewed } from '@/lib/offline/recen
 import { formatSyncTime, getDetailLastSyncAt } from '@/lib/offline/syncStatus';
 import { OpportunityDetailSkeleton } from '@/components/ui/Skeleton';
 import { buildShareUrl } from '@/lib/share';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 export default function OpportunityDetailClient({ id, initialData }: { id: string; initialData?: Opportunity | null }) {
     const router = useRouter();
@@ -433,23 +434,34 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                     </Link>
 
                     <div className="flex items-center gap-1.5">
-                        <button onClick={handleShare} className="p-2 bg-muted/40 hover:bg-primary/10 rounded-lg transition-all text-muted-foreground hover:text-primary border border-border/50 md:px-3 md:gap-2 md:h-9 md:text-xs md:font-semibold md:uppercase md:tracking-widest md:flex md:items-center">
-                            <ShareIcon className="w-4 h-4" />
+                        <button
+                            onClick={handleShare}
+                            aria-label={`Share ${opp?.title} at ${opp?.company}`}
+                            className="p-2 bg-muted/40 hover:bg-primary/10 rounded-lg transition-all text-muted-foreground hover:text-primary border border-border/50 md:px-3 md:gap-2 md:h-9 md:text-xs md:font-semibold md:uppercase md:tracking-widest md:flex md:items-center"
+                        >
+                            <ShareIcon className="w-4 h-4" aria-hidden="true" />
                             <span className="hidden md:inline">Share</span>
                         </button>
-                        <button onClick={handleCopyLink} className="p-2 bg-muted/40 hover:bg-primary/10 rounded-lg transition-all text-muted-foreground hover:text-primary border border-border/50 md:px-3 md:gap-2 md:h-9 md:text-xs md:font-semibold md:uppercase md:tracking-widest md:flex md:items-center">
-                            <LinkIcon className="w-4 h-4" />
+                        <button
+                            onClick={handleCopyLink}
+                            aria-label="Copy listing link to clipboard"
+                            className="p-2 bg-muted/40 hover:bg-primary/10 rounded-lg transition-all text-muted-foreground hover:text-primary border border-border/50 md:px-3 md:gap-2 md:h-9 md:text-xs md:font-semibold md:uppercase md:tracking-widest md:flex md:items-center"
+                        >
+                            <LinkIcon className="w-4 h-4" aria-hidden="true" />
                             <span className="hidden md:inline">Copy link</span>
                         </button>
                         <div className="relative" ref={reportMenuRef}>
                             <button
                                 onClick={() => setShowReports(!showReports)}
+                                aria-expanded={showReports}
+                                aria-haspopup="menu"
+                                aria-label="Report an issue with this listing"
                                 className={cn(
                                     "p-2 rounded-lg transition-all border",
                                     showReports ? "bg-destructive/10 text-destructive border-destructive/20" : "bg-muted/40 text-muted-foreground border-border/50 hover:bg-destructive/5 hover:text-destructive"
                                 )}
                             >
-                                <FlagIcon className="w-4 h-4" />
+                                <FlagIcon className="w-4 h-4" aria-hidden="true" />
                             </button>
                             {showReports && (
                                 <div className="absolute top-full right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-xl z-50 p-1.5 space-y-0.5 animate-in slide-in-from-top-1 duration-200">
@@ -539,7 +551,11 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                         />
                                         <div>
                                             <div className="flex flex-wrap items-center gap-1.5">
-                                                <h2 className="text-base font-semibold text-foreground tracking-tight leading-none">{opp.company}</h2>
+                                                <h2 className="text-base font-semibold text-foreground tracking-tight leading-none">
+                                                    <Link href={`/companies/${encodeURIComponent(opp.company)}`} className="hover:text-primary transition-colors">
+                                                        {opp.company}
+                                                    </Link>
+                                                </h2>
                                                 {opp.jobFunction && (
                                                     <span className="text-xs text-muted-foreground font-medium">- {opp.jobFunction}</span>
                                                 )}
@@ -631,11 +647,10 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                         {/* Description Section */}
                         <div className="hidden lg:block bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3">
                             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border pb-2">Description</h3>
-                            <div className="prose prose-sm max-w-none">
-                                <p className="text-foreground/80 font-medium text-sm md:text-base leading-relaxed whitespace-pre-wrap">
-                                    {opp.description}
-                                </p>
-                            </div>
+                            <div
+                                className="prose prose-sm max-w-none text-foreground/80 font-medium text-sm md:text-base leading-relaxed whitespace-pre-wrap"
+                                dangerouslySetInnerHTML={{ __html: sanitizeHtml(opp.description) }}
+                            />
                         </div>
 
                         {/* Requirements Section */}

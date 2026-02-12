@@ -4,27 +4,23 @@ import { AuthGate, ProfileGate } from '@/components/gates/ProfileGate';
 import { cn } from '@/lib/utils';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState, Suspense, useEffect } from 'react';
-import Link from 'next/link';
-import { Opportunity } from '@fresherflow/types';
-import JobCard from '@/features/jobs/components/JobCard';
-import MagnifyingGlassIcon from '@heroicons/react/24/outline/MagnifyingGlassIcon';
-import MapPinIcon from '@heroicons/react/24/outline/MapPinIcon';
-import ChevronRightIcon from '@heroicons/react/24/outline/ChevronRightIcon';
 import FunnelIcon from '@heroicons/react/24/outline/FunnelIcon';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import ShieldCheckIcon from '@heroicons/react/24/outline/ShieldCheckIcon';
-import ClockIcon from '@heroicons/react/24/outline/ClockIcon';
-import BookmarkIcon from '@heroicons/react/24/outline/BookmarkIcon';
-import { Button } from '@/components/ui/Button';
+import MagnifyingGlassIcon from '@heroicons/react/24/outline/MagnifyingGlassIcon';
 import { Input } from '@/components/ui/Input';
-import { FeedPageSkeleton, SkeletonJobCard } from '@/components/ui/Skeleton';
+import { FeedPageSkeleton } from '@/components/ui/Skeleton';
 import { useOpportunitiesFeed } from '@/features/jobs/hooks/useOpportunitiesFeed';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatSyncTime } from '@/lib/offline/syncStatus';
+import dynamic from 'next/dynamic';
 
-const FILTERS = {
-    location: ['Bangalore', 'Mumbai', 'Delhi', 'Hyderabad', 'Pune', 'Remote'],
-};
+const MobileFilterDrawer = dynamic(() => import('@/features/jobs/components/MobileFilterDrawer').then(m => m.MobileFilterDrawer));
+const OpportunityFilters = dynamic(() => import('@/features/jobs/components/OpportunityFilters').then(m => m.OpportunityFilters));
+const OpportunityGrid = dynamic(() => import('@/features/jobs/components/OpportunityGrid').then(m => m.OpportunityGrid));
+const ProfileReadinessRequired = dynamic(() => import('@/features/jobs/components/ProfileReadinessRequired').then(m => m.ProfileReadinessRequired));
+
+// Filters temporarily disabled
 
 const typeParamToEnum = (value: string) => {
     const v = value.toLowerCase();
@@ -48,24 +44,29 @@ function OpportunitiesContent() {
     const { user } = useAuth();
 
     const [search, setSearch] = useState('');
-    // Derived state from URL to avoid duplication and effect issues
     const typeParam = searchParams.get('type');
     const selectedType = typeParam ? typeParamToEnum(typeParam) : null;
 
     const [selectedLoc, setSelectedLoc] = useState<string | null>(null);
     const [closingSoon, setClosingSoon] = useState(false);
     const [showOnlySaved, setShowOnlySaved] = useState(false);
+    const [minSalary, setMinSalary] = useState<number | null>(null);
+    const [maxSalary, setMaxSalary] = useState<number | null>(null);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+    // Mobile Draft State
     const [draftSelectedLoc, setDraftSelectedLoc] = useState<string | null>(null);
     const [draftClosingSoon, setDraftClosingSoon] = useState(false);
     const [draftShowOnlySaved, setDraftShowOnlySaved] = useState(false);
-    const activeFilterCount = (selectedLoc ? 1 : 0) + (closingSoon ? 1 : 0) + (showOnlySaved ? 1 : 0);
+    const [draftMinSalary, setDraftMinSalary] = useState<number | null>(null);
+    const [draftMaxSalary, setDraftMaxSalary] = useState<number | null>(null);
+
+    const activeFilterCount = (selectedLoc ? 1 : 0) + (closingSoon ? 1 : 0) + (showOnlySaved ? 1 : 0) + (minSalary ? 1 : 0);
     const [isOnline, setIsOnline] = useState<boolean>(() =>
         typeof window !== 'undefined' ? window.navigator.onLine : true
     );
 
-    // Filter Logic
     const {
         filteredOpps,
         totalCount,
@@ -81,23 +82,15 @@ function OpportunitiesContent() {
         selectedLoc,
         showOnlySaved,
         closingSoon,
-        search
+        search,
+        minSalary,
+        maxSalary
     });
-
-    const isJobSaved = (opp: Opportunity) => {
-        return opp.isSaved || false;
-    };
-
-    const isJobApplied = (opp: Opportunity) => {
-        return opp.actions && opp.actions.length > 0;
-    };
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
-
         const handleOnline = () => setIsOnline(true);
         const handleOffline = () => setIsOnline(false);
-
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
         return () => {
@@ -120,6 +113,8 @@ function OpportunitiesContent() {
         setDraftSelectedLoc(selectedLoc);
         setDraftClosingSoon(closingSoon);
         setDraftShowOnlySaved(showOnlySaved);
+        setDraftMinSalary(minSalary);
+        setDraftMaxSalary(maxSalary);
         setIsMobileFilterOpen(true);
     };
 
@@ -127,496 +122,192 @@ function OpportunitiesContent() {
         setSelectedLoc(draftSelectedLoc);
         setClosingSoon(draftClosingSoon);
         setShowOnlySaved(draftShowOnlySaved);
+        setMinSalary(draftMinSalary);
+        setMaxSalary(draftMaxSalary);
         setIsMobileFilterOpen(false);
+    };
+
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        'name': 'Job Opportunities Feed',
+        'description': 'A verified list of jobs, internships, and walk-ins for freshers.',
+        'numberOfItems': filteredOpps.length,
+        'itemListElement': filteredOpps.slice(0, 10).map((opp, index) => ({
+            '@type': 'ListItem',
+            'position': index + 1,
+            'url': `https://fresherflow.in/opportunities/${opp.slug || opp.id}`,
+            'name': opp.title
+        }))
     };
 
     return (
         <AuthGate>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
             <ProfileGate>
                 <div className="w-full max-w-7xl mx-auto px-3 md:px-6 pb-10 md:pb-20 space-y-4 md:space-y-8">
-                    {/* Desktop Header */}
-                    <div className="hidden md:flex flex-col gap-2.5 border-b border-border/60 pb-3">
+                    {/* Header: Consolidated Search & Type selection */}
+                    <div className="flex flex-col gap-3.5 border-b border-border/60 pb-5">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                             <div className="space-y-1">
                                 <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">Browse the live feed</h1>
-                                <p className="text-xs text-muted-foreground">Verified posts only.</p>
+                                <p className="text-xs text-muted-foreground font-medium flex items-center gap-2">
+                                    <ShieldCheckIcon className="w-3.5 h-3.5 text-primary" />
+                                    Verified daily. {filteredOpps.length} results found.
+                                </p>
                             </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-1 rounded-full border border-border uppercase tracking-wider">
-                                {filteredOpps.length} results
-                            </span>
-                            <span className={cn(
-                                "text-[10px] font-semibold px-2 py-1 rounded-full border uppercase tracking-wider",
-                                isOnline
-                                    ? "text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border-emerald-500/30"
-                                    : "text-amber-700 dark:text-amber-300 bg-amber-500/10 border-amber-500/30"
-                            )}>
-                                {isOnline ? 'Online' : 'Offline mode'}
-                            </span>
-                            {usingCachedFeed && (
-                                <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-500/10 px-2 py-1 rounded-full border border-amber-500/30 uppercase tracking-wider">
-                                    Offline cache • {formatSyncTime(cachedAt)}
-                                </span>
-                            )}
-                            {selectedType && (
-                                <button
-                                        onClick={() => updateType(null)}
-                                        className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest"
+                            <div className="flex items-center gap-2">
+                                <div className={cn(
+                                    "px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-widest",
+                                    isOnline ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/20" : "bg-amber-500/10 text-amber-700 border-amber-500/20"
+                                )}>
+                                    {isOnline ? 'Network: Online' : 'Network: Offline'}
+                                </div>
+                                {usingCachedFeed && (
+                                    <div className="px-2.5 py-1 rounded-full border border-amber-500/20 bg-amber-500/10 text-amber-700 text-[10px] font-bold uppercase tracking-widest">
+                                        Cached {formatSyncTime(cachedAt)}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Search & Main Category Filters */}
+                        <div className="flex flex-col lg:flex-row gap-2.5">
+                            <div className="relative flex-1 group">
+                                <MagnifyingGlassIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                <Input
+                                    type="text"
+                                    placeholder="Search specific roles, skills, or companies..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="pl-10 h-11 text-sm bg-card/50 border-border/80 focus:border-primary/50 transition-all rounded-xl"
+                                    aria-label="Search job opportunities"
+                                />
+                                {search && (
+                                    <button
+                                        onClick={() => setSearch('')}
+                                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                     >
-                                        Clear
+                                        <XMarkIcon className="w-4 h-4" />
                                     </button>
                                 )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="flex gap-1.5 p-1 bg-muted/30 rounded-xl border border-border/50">
+                                    {[
+                                        { label: 'All', value: null },
+                                        { label: 'Jobs', value: 'JOB' },
+                                        { label: 'Internships', value: 'INTERNSHIP' },
+                                        { label: 'Walk-ins', value: 'WALKIN' }
+                                    ].map((cat) => (
+                                        <button
+                                            key={cat.label}
+                                            onClick={() => updateType(cat.value)}
+                                            className={cn(
+                                                "h-9 px-4 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all",
+                                                selectedType === cat.value
+                                                    ? "bg-primary text-primary-foreground shadow-sm"
+                                                    : "text-muted-foreground hover:bg-background hover:text-foreground"
+                                            )}
+                                        >
+                                            {cat.label}
+                                        </button>
+                                    ))}
+                                </div>
                                 <button
                                     onClick={() => setIsFilterOpen(!isFilterOpen)}
                                     className={cn(
-                                        "hidden lg:inline-flex h-8 items-center justify-center rounded-full border px-3 text-[10px] font-bold uppercase tracking-widest transition-all",
-                                        isFilterOpen ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border text-muted-foreground hover:bg-muted"
+                                        "hidden lg:flex h-11 items-center gap-2 px-5 rounded-xl border text-[10px] font-bold uppercase tracking-widest transition-all",
+                                        isFilterOpen ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border hover:bg-muted"
                                     )}
                                 >
-                                    <FunnelIcon className="w-4 h-4 mr-2" />
-                                    {isFilterOpen ? 'Hide' : 'Filters'}
+                                    <FunnelIcon className="w-4 h-4" />
+                                    {isFilterOpen ? 'Hide Panel' : 'Filters'}
                                 </button>
                                 <button
                                     onClick={openMobileFilters}
-                                    className="inline-flex lg:hidden h-8 items-center justify-center rounded-full border px-3 text-[10px] font-bold uppercase tracking-widest transition-all bg-background border-border text-muted-foreground hover:bg-muted"
+                                    className="lg:hidden h-11 flex items-center gap-2 px-4 rounded-xl border border-border bg-card text-[10px] font-bold uppercase tracking-widest"
                                 >
-                                    <FunnelIcon className="w-4 h-4 mr-2" />
+                                    <FunnelIcon className="w-4 h-4" />
                                     {activeFilterCount > 0 ? `Filters (${activeFilterCount})` : 'Filters'}
                                 </button>
                             </div>
                         </div>
-                        <div className="flex flex-col lg:flex-row gap-2 lg:items-center">
-                            <div className="relative w-full lg:w-80">
-                                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                <Input
-                                    type="text"
-                                    placeholder="Search role or company..."
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    className="pl-10 h-10 text-sm bg-background"
-                                />
-                            </div>
-                            <div className="flex gap-2 overflow-x-auto pb-1">
-                                <Button
-                                    variant={!selectedType ? "default" : "outline"}
-                                    onClick={() => updateType(null)}
-                                    className="h-9 px-3 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
-                                >
-                                    All
-                                </Button>
-                                <Button
-                                    variant={selectedType === 'JOB' ? "default" : "outline"}
-                                    onClick={() => updateType('JOB')}
-                                    className="h-9 px-3 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
-                                >
-                                    Jobs
-                                </Button>
-                                <Button
-                                    variant={selectedType === 'INTERNSHIP' ? "default" : "outline"}
-                                    onClick={() => updateType('INTERNSHIP')}
-                                    className="h-9 px-3 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
-                                >
-                                    Internships
-                                </Button>
-                                <Button
-                                    variant={selectedType === 'WALKIN' ? "default" : "outline"}
-                                    onClick={() => updateType('WALKIN')}
-                                    className="h-9 px-3 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
-                                >
-                                    Walk-ins
-                                </Button>
-                            </div>
-                        </div>
-                        <div className="flex flex-wrap gap-2 pt-1">
-                            <button
-                                onClick={() => setSelectedLoc(selectedLoc === 'Remote' ? null : 'Remote')}
-                                className={cn(
-                                    "h-8 px-3 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all",
-                                    selectedLoc === 'Remote'
-                                        ? "bg-primary/10 border-primary text-primary"
-                                        : "bg-background border-border text-muted-foreground hover:bg-muted"
-                                )}
-                            >
-                                Remote
-                            </button>
-                            <button
-                                onClick={() => setSelectedLoc(selectedLoc === 'Bangalore' ? null : 'Bangalore')}
-                                className={cn(
-                                    "h-8 px-3 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all",
-                                    selectedLoc === 'Bangalore'
-                                        ? "bg-primary/10 border-primary text-primary"
-                                        : "bg-background border-border text-muted-foreground hover:bg-muted"
-                                )}
-                            >
-                                Bangalore
-                            </button>
-                            <button
-                                onClick={() => setClosingSoon(!closingSoon)}
-                                className={cn(
-                                    "h-8 px-3 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all",
-                                    closingSoon
-                                        ? "bg-orange-100 border-orange-300 text-orange-900 dark:bg-amber-500/15 dark:border-amber-500/30 dark:text-amber-300"
-                                        : "bg-background border-border text-muted-foreground hover:bg-muted"
-                                )}
-                            >
-                                Closing soon
-                            </button>
-                            <button
-                                onClick={() => setShowOnlySaved(!showOnlySaved)}
-                                className={cn(
-                                    "h-8 px-3 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all",
-                                    showOnlySaved
-                                        ? "bg-primary/10 border-primary text-primary"
-                                        : "bg-background border-border text-muted-foreground hover:bg-muted"
-                                )}
-                            >
-                                Saved
-                            </button>
-                        </div>
                     </div>
 
-                    {/* Mobile Compact Search */}
-                    <div className="md:hidden mt-2 space-y-2 border-b border-border/60 pb-3">
-                        <div className="flex items-center gap-2">
-                            <div className="relative flex-1">
-                                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                <Input
-                                    type="text"
-                                    placeholder="Search role or company..."
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    className="pl-10 h-10 text-sm bg-background"
-                                />
-                            </div>
-                            <button
-                                onClick={openMobileFilters}
-                                className="inline-flex h-10 items-center justify-center rounded-lg border px-3 text-[10px] font-bold uppercase tracking-widest transition-all bg-background border-border text-muted-foreground hover:bg-muted"
-                            >
-                                <FunnelIcon className="w-4 h-4 mr-1.5" />
-                                {activeFilterCount > 0 ? `${activeFilterCount}` : 'Filters'}
-                            </button>
-                        </div>
-                        <div className="flex gap-2 overflow-x-auto pb-1">
-                            <Button
-                                variant={!selectedType ? "default" : "outline"}
-                                onClick={() => updateType(null)}
-                                className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
-                            >
-                                All
-                            </Button>
-                            <Button
-                                variant={selectedType === 'JOB' ? "default" : "outline"}
-                                onClick={() => updateType('JOB')}
-                                className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
-                            >
-                                Jobs
-                            </Button>
-                            <Button
-                                variant={selectedType === 'INTERNSHIP' ? "default" : "outline"}
-                                onClick={() => updateType('INTERNSHIP')}
-                                className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
-                            >
-                                Internships
-                            </Button>
-                            <Button
-                                variant={selectedType === 'WALKIN' ? "default" : "outline"}
-                                onClick={() => updateType('WALKIN')}
-                                className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
-                            >
-                                Walk-ins
-                            </Button>
-                        </div>
-                    </div>
-
-                    {/* Mobile Filter Popup */}
-                    {isMobileFilterOpen && (
-                        <div className="fixed inset-0 z-50 lg:hidden">
-                            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setIsMobileFilterOpen(false)} />
-                            <div className="absolute inset-x-3 top-6 bottom-6 overflow-auto rounded-2xl border border-border bg-card p-4 shadow-2xl">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-sm font-bold tracking-tight text-foreground">Filters</h3>
-                                    <button
-                                        onClick={() => setIsMobileFilterOpen(false)}
-                                        className="h-8 w-8 rounded-lg border border-border flex items-center justify-center text-muted-foreground"
-                                    >
-                                        <XMarkIcon className="w-4 h-4" />
-                                    </button>
-                                </div>
-
-                                <div className="space-y-5">
-                                    <div className="space-y-2">
-                                        <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Location</h4>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            {FILTERS.location.map((loc) => (
-                                                <button
-                                                    key={`mobile-${loc}`}
-                                                    onClick={() => setDraftSelectedLoc(draftSelectedLoc === loc ? null : loc)}
-                                                    className={cn(
-                                                        "px-3 py-2.5 rounded-xl border text-xs font-semibold transition-all uppercase tracking-wide",
-                                                        draftSelectedLoc === loc
-                                                            ? "bg-primary/10 border-primary text-primary"
-                                                            : "bg-background border-border text-muted-foreground"
-                                                    )}
-                                                >
-                                                    {loc}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Urgency</h4>
-                                        <button
-                                            onClick={() => setDraftClosingSoon(!draftClosingSoon)}
-                                            className={cn(
-                                                "w-full flex items-center justify-between px-3 py-3 rounded-xl border text-xs font-semibold transition-all uppercase tracking-wide",
-                                                draftClosingSoon
-                                                    ? "bg-orange-100 border-orange-300 text-orange-900 dark:bg-amber-500/10 dark:border-amber-500/50 dark:text-amber-300"
-                                                    : "bg-background border-border text-muted-foreground"
-                                            )}
-                                        >
-                                            <span>Closing soon</span>
-                                            {draftClosingSoon && <div className="w-1.5 h-1.5 rounded-full bg-orange-600 dark:bg-amber-500" />}
-                                        </button>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Saved</h4>
-                                        <button
-                                            onClick={() => setDraftShowOnlySaved(!draftShowOnlySaved)}
-                                            className={cn(
-                                                "w-full flex items-center justify-between px-3 py-3 rounded-xl border text-xs font-semibold transition-all uppercase tracking-wide",
-                                                draftShowOnlySaved
-                                                    ? "bg-primary/10 border-primary text-primary"
-                                                    : "bg-background border-border text-muted-foreground"
-                                            )}
-                                        >
-                                            <span>Saved only</span>
-                                            {draftShowOnlySaved && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="sticky bottom-0 bg-card pt-4 mt-6 border-t border-border flex gap-2">
-                                    <Button
-                                        variant="outline"
-                                        className="flex-1 h-10 text-[10px] font-bold uppercase tracking-widest"
-                                        onClick={() => {
-                                            setDraftSelectedLoc(null);
-                                            setDraftClosingSoon(false);
-                                            setDraftShowOnlySaved(false);
-                                        }}
-                                    >
-                                        Clear
-                                    </Button>
-                                    <Button
-                                        className="flex-1 h-10 text-[10px] font-bold uppercase tracking-widest"
-                                        onClick={applyMobileFilters}
-                                    >
-                                        Apply filters
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    <MobileFilterDrawer
+                        isOpen={isMobileFilterOpen}
+                        onClose={() => setIsMobileFilterOpen(false)}
+                        draftLoc={draftSelectedLoc}
+                        setDraftLoc={setDraftSelectedLoc}
+                        draftClosingSoon={draftClosingSoon}
+                        setDraftClosingSoon={setDraftClosingSoon}
+                        draftShowOnlySaved={draftShowOnlySaved}
+                        setDraftShowOnlySaved={setDraftShowOnlySaved}
+                        draftMinSalary={draftMinSalary}
+                        setDraftMinSalary={setDraftMinSalary}
+                        onApply={applyMobileFilters}
+                        onClear={() => {
+                            setDraftSelectedLoc(null);
+                            setDraftClosingSoon(false);
+                            setDraftShowOnlySaved(false);
+                            setDraftMinSalary(null);
+                            setDraftMaxSalary(null);
+                        }}
+                    />
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8 items-start">
-                        {/* Control Panel (Sticky) */}
-                        <aside className={cn(
-                            "hidden lg:col-span-3 lg:space-y-6 lg:sticky lg:top-24",
-                            isFilterOpen ? "lg:block" : "lg:hidden"
-                        )}>
-                            <div className="bg-card/80 rounded-2xl border border-border p-4 md:p-5 space-y-6">
+                        {isFilterOpen && (
+                            <OpportunityFilters
+                                selectedLoc={selectedLoc}
+                                setSelectedLoc={setSelectedLoc}
+                                closingSoon={closingSoon}
+                                setClosingSoon={setClosingSoon}
+                                showOnlySaved={showOnlySaved}
+                                setShowOnlySaved={setShowOnlySaved}
+                                minSalary={minSalary}
+                                setMinSalary={setMinSalary}
+                                className="lg:col-span-3 lg:sticky lg:top-24 hidden lg:block"
+                            />
+                        )}
 
-                                <div>
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Location</h3>
-                                        {selectedLoc && (
-                                            <button onClick={() => setSelectedLoc(null)} className="text-[10px] font-bold text-primary uppercase tracking-widest">Clear</button>
-                                        )}
-                                    </div>
-                                    <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
-                                        {FILTERS.location.map(loc => (
-                                            <button
-                                                key={loc}
-                                                onClick={() => setSelectedLoc(selectedLoc === loc ? null : loc)}
-                                                className={cn(
-                                                    "flex items-center gap-3 px-3 py-3 rounded-xl border text-xs font-semibold transition-all uppercase tracking-wide",
-                                                    selectedLoc === loc
-                                                        ? "bg-primary/10 border-primary text-primary shadow-sm"
-                                                        : "bg-background border-border text-muted-foreground hover:bg-muted hover:text-foreground"
-                                                )}
-                                            >
-                                                <MapPinIcon className="w-4 h-4 opacity-70" />
-                                                {loc}
-                                            </button>
-                                        ))
-                                        }
-                                    </div>
-                                </div>
-
-                                {/* Closing Soon Filter */}
-                                <div>
-                                    <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-4">Urgency</h3>
-                                    <button
-                                        onClick={() => setClosingSoon(!closingSoon)}
-                                        className={cn(
-                                            "w-full flex items-center justify-between px-3 py-3 rounded-xl border text-xs font-semibold transition-all text-left uppercase tracking-wide",
-                                            closingSoon
-                                                ? "bg-orange-100 border-orange-300 text-orange-900 dark:bg-amber-500/10 dark:border-amber-500/50 dark:text-amber-300 shadow-sm"
-                                                : "bg-background border-border text-muted-foreground hover:bg-muted hover:text-foreground"
-                                        )}
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            <ClockIcon className="w-4 h-4" />
-                                            <span>Closing Soon</span>
-                                        </div>
-                                        {closingSoon && <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />}
-                                    </button>
-                                </div>
-
-                                {/* Saved Filter */}
-                                <div>
-                                    <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-4">Saved</h3>
-                                    <button
-                                        onClick={() => setShowOnlySaved(!showOnlySaved)}
-                                        className={cn(
-                                            "w-full flex items-center justify-between px-3 py-3 rounded-xl border text-xs font-semibold transition-all text-left uppercase tracking-wide",
-                                            showOnlySaved
-                                                ? "bg-primary/10 border-primary text-primary shadow-sm"
-                                                : "bg-background border-border text-muted-foreground hover:bg-muted hover:text-foreground"
-                                        )}
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            <BookmarkIcon className="w-4 h-4" />
-                                            <span>Saved only</span>
-                                        </div>
-                                        {showOnlySaved && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
-                                    </button>
-                                </div>
-                            </div>
-                        </aside>
-
-                        {/* Opportunity Feed */}
                         <div className={cn(
                             "transition-all duration-300",
                             isFilterOpen ? "lg:col-span-9" : "lg:col-span-12"
                         )}>
-                            {/* Feed Display */}
                             {profileIncomplete ? (
-                                <div className="p-10 md:p-16 text-center rounded-3xl border border-border bg-card/80 shadow-2xl">
-                                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                                        <ShieldCheckIcon className="w-8 h-8 text-primary" />
-                                    </div>
-                                    <h3 className="text-2xl font-bold text-foreground tracking-tight mb-2">
-                                        Profile Readiness Required
-                                    </h3>
-                                    <div className="max-w-md mx-auto space-y-6">
-                                        <p className="text-sm font-medium text-muted-foreground leading-relaxed">
-                                            {profileIncomplete.message}
-                                        </p>
-                                        <div className="bg-muted/40 p-6 rounded-2xl border border-border">
-                                            <div className="flex items-center justify-center gap-6">
-                                                <div className="text-center">
-                                                    <div className="text-3xl font-bold text-primary">{profileIncomplete.percentage}%</div>
-                                                    <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.15em] mt-1">Current</div>
-                                                </div>
-                                                <div className="w-px h-10 bg-border" />
-                                                <div className="text-center">
-                                                    <div className="text-3xl font-bold text-foreground">100%</div>
-                                                    <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.15em] mt-1">Goal</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <Button asChild className="h-12 px-8 text-sm font-bold uppercase tracking-widest">
-                                            <Link href="/profile/edit">
-                                                Complete Profile
-                                                <ChevronRightIcon className="w-4 h-4 ml-2" />
-                                            </Link>
-                                        </Button>
-                                    </div>
-                                </div>
-                            ) : isLoading ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                                    {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
-                                        <SkeletonJobCard key={item} />
-                                    ))}
-                                </div>
-                            ) : error ? (
-                                <div className="p-12 text-center rounded-2xl border border-dashed border-border bg-card">
-                                    <h3 className="text-lg font-bold text-foreground tracking-tight">Feed unavailable</h3>
-                                    <p className="text-sm font-medium text-muted-foreground mt-2 max-w-sm mx-auto">
-                                        {error}
-                                    </p>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => reload()}
-                                        className="mt-6 h-10 px-6 text-xs font-bold uppercase tracking-widest"
-                                    >
-                                        Retry
-                                    </Button>
-                                </div>
-                            ) : filteredOpps.length === 0 ? (
-                                <div className="p-16 text-center rounded-3xl border border-dashed border-border bg-card/80">
-                                    <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-4 text-muted-foreground">
-                                        <MagnifyingGlassIcon className="w-6 h-6" />
-                                    </div>
-                                    <h3 className="text-lg font-bold text-foreground tracking-tight">No results found</h3>
-                                    <p className="text-sm font-medium text-muted-foreground mt-2 max-w-sm mx-auto">
-                                        Try adjusting your filters or search keywords to find matching opportunities.
-                                    </p>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => {
-                                            setSearch('');
-                                            updateType(null);
-                                            setSelectedLoc(null);
-                                            setClosingSoon(false);
-                                            setShowOnlySaved(false);
-                                        }}
-                                        className="mt-6 h-11 px-6 text-sm font-bold uppercase tracking-widest"
-                                    >
-                                        Clear filters
-                                    </Button>
-                                </div>
+                                <ProfileReadinessRequired
+                                    percentage={profileIncomplete.percentage}
+                                    message={profileIncomplete.message}
+                                />
                             ) : (
-                                <div className="space-y-4 md:space-y-6">
-                                    <div className="flex items-center justify-between pb-2 border-b border-border/50">
-                                        <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground/80">Listings</h2>
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                                            <span className="text-[9px] font-bold uppercase tracking-widest text-primary">Live updates</span>
-                                        </div>
-                                    </div>
-                                    <div className={cn(
-                                        "grid grid-cols-1 md:grid-cols-2 gap-3.5 md:gap-6",
-                                        isFilterOpen ? "lg:grid-cols-2 xl:grid-cols-3" : "lg:grid-cols-3 xl:grid-cols-4"
-                                    )}>
-                                        {filteredOpps.map((opp) => (
-                                            <JobCard
-                                                key={opp.id}
-                                                job={{
-                                                    ...opp,
-                                                    normalizedRole: opp.title,
-                                                    salary: (opp.salaryMin !== undefined && opp.salaryMax !== undefined) ? { min: opp.salaryMin, max: opp.salaryMax } : undefined,
-                                                }}
-                                                jobId={opp.id}
-                                                isSaved={isJobSaved(opp)}
-                                                isApplied={isJobApplied(opp)}
-                                                onToggleSave={() => toggleSave(opp.id)}
-                                                onClick={() => router.push(`/opportunities/${opp.slug || opp.id}`)}
-                                                isAdmin={user?.role === 'ADMIN'}
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
+                                <OpportunityGrid
+                                    opportunities={filteredOpps}
+                                    isLoading={isLoading}
+                                    error={error}
+                                    isFilterOpen={isFilterOpen}
+                                    isAdmin={user?.role === 'ADMIN'}
+                                    onToggleSave={toggleSave}
+                                    onRetry={reload}
+                                    onClearFilters={() => {
+                                        setSearch('');
+                                        updateType(null);
+                                        setSelectedLoc(null);
+                                        setClosingSoon(false);
+                                        setShowOnlySaved(false);
+                                    }}
+                                />
                             )}
 
-                            {/* Feed Footer */}
                             {!isLoading && !profileIncomplete && filteredOpps.length > 0 && (
-                                <div className="mt-8 md:mt-12 text-center pb-6 md:pb-8 border-t border-border pt-6 md:pt-8">
-                                    <p className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em]">
-                                        Verified &bull; {totalCount} listings active
+                                <div className="mt-12 text-center pb-8 border-t border-border/50 pt-8">
+                                    <p className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em] flex items-center justify-center gap-3">
+                                        <div className="w-1 h-1 rounded-full bg-border" />
+                                        End of feed &bull; {totalCount} total listings
+                                        <div className="w-1 h-1 rounded-full bg-border" />
                                     </p>
                                 </div>
                             )}

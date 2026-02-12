@@ -12,6 +12,8 @@ interface UseOpportunitiesFeedOptions {
     showOnlySaved: boolean;
     closingSoon: boolean;
     search: string;
+    minSalary?: number | null;
+    maxSalary?: number | null;
 }
 
 export function useOpportunitiesFeed({
@@ -20,6 +22,8 @@ export function useOpportunitiesFeed({
     showOnlySaved,
     closingSoon,
     search,
+    minSalary,
+    maxSalary,
 }: UseOpportunitiesFeedOptions) {
     const { user, isLoading: authLoading } = useAuth();
     const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
@@ -48,7 +52,10 @@ export function useOpportunitiesFeed({
             } else {
                 data = await opportunitiesApi.list({
                     type: type || undefined,
-                    city: selectedLoc || undefined
+                    city: selectedLoc || undefined,
+                    minSalary: minSalary || undefined,
+                    maxSalary: maxSalary || undefined,
+                    closingSoon: closingSoon || undefined
                 });
             }
             setOpportunities(data.opportunities || []);
@@ -92,7 +99,7 @@ export function useOpportunitiesFeed({
         } finally {
             setIsLoading(false);
         }
-    }, [type, selectedLoc, user, authLoading, showOnlySaved]);
+    }, [type, selectedLoc, user, authLoading, showOnlySaved, minSalary, maxSalary, closingSoon]);
 
     useEffect(() => {
         if (!authLoading && user) {
@@ -116,9 +123,12 @@ export function useOpportunitiesFeed({
                 return expiryDate >= now && expiryDate <= threeDaysFromNow;
             })();
 
-            return matchesSearch && matchesLoc && matchesClosingSoon;
+            const matchesSalary = (!minSalary || (opp.salaryMax && opp.salaryMax >= minSalary) || (opp.salaryMin && opp.salaryMin >= minSalary)) &&
+                (!maxSalary || (opp.salaryMin && opp.salaryMin <= maxSalary));
+
+            return matchesSearch && matchesLoc && matchesClosingSoon && matchesSalary;
         });
-    }, [opportunities, debouncedSearch, selectedLoc, closingSoon]);
+    }, [opportunities, debouncedSearch, selectedLoc, closingSoon, minSalary, maxSalary]);
 
     const toggleSave = async (opportunityId: string) => {
         if (typeof navigator !== 'undefined' && !navigator.onLine) {

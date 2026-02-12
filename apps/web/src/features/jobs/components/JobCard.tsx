@@ -1,4 +1,5 @@
 ﻿import { Opportunity } from '@fresherflow/types';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import BookmarkIcon from '@heroicons/react/24/outline/BookmarkIcon';
 import MapPinIcon from '@heroicons/react/24/outline/MapPinIcon';
@@ -7,7 +8,9 @@ import ChevronRightIcon from '@heroicons/react/24/outline/ChevronRightIcon';
 import ShieldCheckIcon from '@heroicons/react/24/outline/ShieldCheckIcon';
 import ClockIcon from '@heroicons/react/24/outline/ClockIcon';
 import { BookmarkIcon as BookmarkSolidIcon } from '@heroicons/react/24/solid';
+import ShareIcon from '@heroicons/react/24/outline/ShareIcon';
 import CompanyLogo from '@/components/ui/CompanyLogo';
+import toast from 'react-hot-toast';
 
 /**
  * JobCard - REFINED TYPOGRAPHY PATTERN
@@ -75,6 +78,33 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
         }
     };
 
+    const handleShareClick = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const shareUrl = `${window.location.origin}/opportunities/${job.slug || job.id}`;
+        const shareData = {
+            title: job.normalizedRole || job.title,
+            text: `Check out this ${job.normalizedRole || job.title} opportunity at ${job.company} on FresherFlow!`,
+            url: shareUrl,
+        };
+
+        if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+            try {
+                await navigator.share(shareData);
+            } catch (err) {
+                if ((err as Error).name !== 'AbortError') {
+                    toast.error('Failed to share');
+                }
+            }
+        } else {
+            try {
+                await navigator.clipboard.writeText(shareUrl);
+                toast.success('Link copied to clipboard!');
+            } catch {
+                toast.error('Failed to copy link');
+            }
+        }
+    };
+
     const isClosingSoon = () => {
         if (!job.expiresAt) return false;
         const expiryDate = new Date(job.expiresAt);
@@ -132,8 +162,16 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
     return (
         <div
             onClick={onClick}
+            onKeyDown={(e) => {
+                if (onClick && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    onClick();
+                }
+            }}
+            role="button"
+            tabIndex={0}
             className={cn(
-                "group relative bg-card border border-border rounded-xl p-4 transition-all hover:border-primary/30 hover:shadow-md flex flex-col gap-3",
+                "group relative bg-card border border-border rounded-xl p-4 transition-all hover:border-primary/30 hover:shadow-md flex flex-col gap-3 focus:outline-none focus:ring-2 focus:ring-primary/40",
                 onClick && "cursor-pointer"
             )}
         >
@@ -142,27 +180,41 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                     <CompanyLogo companyName={job.company} companyWebsite={job.companyWebsite} applyLink={job.applyLink} />
                     <div className="min-w-0">
-                        <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider line-clamp-1">
+                        <Link
+                            href={`/companies/${encodeURIComponent(job.company)}`}
+                            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                            className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider line-clamp-1 hover:text-primary transition-colors cursor-pointer block"
+                        >
                             {job.company}
-                        </h4>
+                        </Link>
                         <h3 className="text-[15px] font-bold text-foreground group-hover:text-primary transition-colors leading-snug line-clamp-2 mt-1">
                             {job.normalizedRole || job.title}
                         </h3>
                     </div>
                 </div>
 
-                <button
-                    onClick={handleSaveClick}
-                    className={cn(
-                        "h-9 w-9 rounded-lg transition-all border shrink-0 flex items-center justify-center",
-                        isSaved
-                            ? "bg-primary/10 border-primary/20 text-primary shadow-sm"
-                            : "bg-background border-border text-muted-foreground hover:border-primary/30"
-                    )}
-                    aria-label={isSaved ? "Remove from saved" : "Save job"}
-                >
-                    {isSaved ? <BookmarkSolidIcon className="w-5 h-5" /> : <BookmarkIcon className="w-5 h-5" />}
-                </button>
+                <div className="flex items-center gap-1">
+                    <button
+                        onClick={handleShareClick}
+                        className="h-9 w-9 rounded-lg transition-all border border-border bg-background text-muted-foreground hover:border-primary/30 hover:text-primary flex items-center justify-center focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 outline-none"
+                        title="Share listing"
+                        aria-label={`Share ${job.title}`}
+                    >
+                        <ShareIcon className="w-5 h-5" aria-hidden="true" />
+                    </button>
+                    <button
+                        onClick={handleSaveClick}
+                        className={cn(
+                            "h-9 w-9 rounded-lg transition-all border shrink-0 flex items-center justify-center focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 outline-none",
+                            isSaved
+                                ? "bg-primary/10 border-primary/20 text-primary shadow-sm"
+                                : "bg-background border-border text-muted-foreground hover:border-primary/30"
+                        )}
+                        aria-label={isSaved ? `Remove ${job.title} from saved jobs` : `Save ${job.title}`}
+                    >
+                        {isSaved ? <BookmarkSolidIcon className="w-5 h-5" aria-hidden="true" /> : <BookmarkIcon className="w-5 h-5" aria-hidden="true" />}
+                    </button>
+                </div>
             </div>
 
             {/* Badges */}
@@ -179,7 +231,7 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
                                     : "bg-muted/60 border-border text-foreground"
                         )}
                     >
-                        <ClockIcon className="w-3 h-3" />
+                        <ClockIcon className="w-3 h-3" aria-hidden="true" />
                         {isExpired()
                             ? 'Expired'
                             : isClosingSoon()
@@ -189,7 +241,7 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
                 )}
                 {isClosingSoon() && !isExpired() && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-muted/60 border border-border text-foreground text-[9px] font-bold uppercase tracking-wider rounded-full">
-                        <ClockIcon className="w-3 h-3" />
+                        <ClockIcon className="w-3 h-3" aria-hidden="true" />
                         Closing soon
                     </span>
                 )}
@@ -223,17 +275,17 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
             {/* Stats Grid */}
             <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 pt-3 border-t border-border/40">
                 <div className="flex flex-col gap-1">
-                    <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">Location</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Location</p>
                     <div className="flex items-center gap-2 text-foreground/90 text-[13px] font-semibold">
-                        <MapPinIcon className="w-3.5 h-3.5 shrink-0 text-muted-foreground/50" />
+                        <MapPinIcon className="w-3.5 h-3.5 shrink-0 text-muted-foreground/70" aria-hidden="true" />
                         <span className="truncate">{job.locations[0] || 'Remote'}</span>
                     </div>
                 </div>
 
                 <div className="flex flex-col gap-1">
-                    <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">Salary</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Salary</p>
                     <div className="flex items-center gap-2 text-foreground/90 text-[13px] font-semibold">
-                        <CurrencyRupeeIcon className="w-3.5 h-3.5 shrink-0 text-muted-foreground/50" />
+                        <CurrencyRupeeIcon className="w-3.5 h-3.5 shrink-0 text-muted-foreground/70" aria-hidden="true" />
                         <span className="truncate">{formatSalary()}</span>
                     </div>
                 </div>
@@ -243,7 +295,7 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
             <div className="flex items-center justify-between pt-3 border-t border-border/30 mt-auto">
                 <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1.5 text-muted-foreground text-[10px] font-bold uppercase tracking-widest">
-                        <ShieldCheckIcon className="w-4 h-4" />
+                        <ShieldCheckIcon className="w-4 h-4" aria-hidden="true" />
                         <span>Verified</span>
                     </div>
                     {isApplied && (
@@ -254,7 +306,7 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
                 </div>
                 <div className="flex items-center gap-1 text-primary text-[11px] font-bold uppercase tracking-widest group-hover:translate-x-0.5 transition-transform duration-300">
                     <span>{isApplied ? 'Track App' : 'Apply Now'}</span>
-                    <ChevronRightIcon className="w-3.5 h-3.5" />
+                    <ChevronRightIcon className="w-3.5 h-3.5" aria-hidden="true" />
                 </div>
             </div>
 

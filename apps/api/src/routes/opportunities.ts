@@ -21,8 +21,10 @@ function normalizeTypeParam(raw?: string) {
 // GET /api/opportunities - Get filtered// Reading file to check filter logicng)
 router.get('/', requireAuth, profileGate, async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { type, category, city, closingSoon, relevanceDebug } = req.query;
+        const { type, category, city, company, closingSoon, relevanceDebug, minSalary, maxSalary } = req.query;
         const filterType = normalizeTypeParam((type || category) as string | undefined);
+        const minSal = minSalary ? parseInt(minSalary as string) : undefined;
+        const maxSal = maxSalary ? parseInt(maxSalary as string) : undefined;
 
         // Get user for role check
         const user = await prisma.user.findUnique({
@@ -51,6 +53,18 @@ router.get('/', requireAuth, profileGate, async (req: Request, res: Response, ne
                 ...(filterType ? { type: filterType.toUpperCase() as any } : {}),
                 ...(city ? {
                     locations: { has: city as string }
+                } : {}),
+                ...(company ? {
+                    company: company as string
+                } : {}),
+                ...(minSal !== undefined ? {
+                    OR: [
+                        { salaryMin: { gte: minSal } },
+                        { salaryMax: { gte: minSal } }
+                    ]
+                } : {}),
+                ...(maxSal !== undefined ? {
+                    salaryMin: { lte: maxSal }
                 } : {}),
             },
             include: {
