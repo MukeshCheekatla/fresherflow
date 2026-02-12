@@ -165,5 +165,24 @@ router.get('/summary', requireAuth, async (req: Request, res: Response, next: Ne
     }
 });
 
-export default router;
+// DELETE /api/actions/:id - Remove action recording
+router.delete('/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const opportunityId = req.params.id as string;
 
+        await prisma.userAction.delete({
+            where: {
+                userId_opportunityId: {
+                    userId: req.userId!,
+                    opportunityId
+                }
+            }
+        });
+
+        res.json({ message: 'Action removed successfully' });
+    } catch (error) {
+        next(error);
+    }
+});
+
+export default router;
