@@ -36,6 +36,7 @@ import adminAnalyticsRoutes from './routes/admin/analytics';
 import adminTotpRoutes from './routes/admin/totp';
 import healthRoutes from './routes/public/health';
 import growthRoutes from './routes/public/growth';
+import companyRoutes from './routes/public/companies';
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
@@ -209,6 +210,7 @@ app.use('/api/actions', actionsRoutes);
 app.use('/api/saved', savedRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/alerts', alertsRoutes);
+app.use('/api/public/companies', companyRoutes);
 app.use('/api/opportunities', feedbackRoutes);
 app.use('/api/feedback', appFeedbackRoutes);
 

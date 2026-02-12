@@ -3,7 +3,8 @@
 // Code Review Score: 10/10 ✅
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearchPostgres"]
 }
 
 datasource db {
@@ -96,11 +97,14 @@ enum GrowthFunnelEvent {
 
 enum AlertChannel {
   EMAIL
+  APP
 }
 
 enum AlertKind {
   DAILY_DIGEST
   CLOSING_SOON
+  HIGHLIGHT
+  APP_UPDATE
 }
 
 // ============================================================================
@@ -307,8 +311,11 @@ model Opportunity {
   telegramBroadcasts TelegramBroadcast[]
 
   // DB-level filtering indexes
-  @@index([status])
-  @@index([type])
+  @@index([status, deletedAt, type, postedAt(desc)])
+  @@index([allowedPassoutYears])
+  @@index([allowedDegrees])
+  @@index([allowedCourses])
+  @@index([requiredSkills])
   @@index([locations])
   @@index([expiresAt]) // Performance for expiry cron
   @@index([deletedAt]) // Exclude soft-deleted in queries
@@ -427,6 +434,7 @@ model AlertDelivery {
   channel       AlertChannel @default(EMAIL)
   dedupeKey     String       @unique
   sentAt        DateTime     @default(now())
+  readAt        DateTime?
   metadata      String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -434,6 +442,7 @@ model AlertDelivery {
 
   @@index([userId, kind])
   @@index([sentAt])
+  @@index([readAt])
 }
 
 enum TelegramBroadcastStatus {

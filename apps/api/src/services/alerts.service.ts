@@ -53,7 +53,7 @@ async function sendDailyDigestForUser(
     user: { id: string; email: string; fullName: string | null; profile: any },
     preference: any,
     now: Date
-) : Promise<boolean> {
+): Promise<boolean> {
     if (!preference.dailyDigest) return false;
     if (!user.profile) return false;
 
@@ -89,16 +89,18 @@ async function sendDailyDigestForUser(
     const existing = await prisma.alertDelivery.findUnique({ where: { dedupeKey } });
     if (existing) return false;
 
-    await EmailService.sendOpportunityDigest(
-        user.email,
-        user.fullName,
-        ranked.map((item) => ({
-            title: item.opportunity.title,
-            company: item.opportunity.company,
-            location: item.opportunity.locations?.[0] || null,
-            applyUrl: buildOpportunityUrl(frontendUrl, item.opportunity.slug),
-        }))
-    );
+    if (preference.emailEnabled) {
+        await EmailService.sendOpportunityDigest(
+            user.email,
+            user.fullName,
+            ranked.map((item) => ({
+                title: item.opportunity.title,
+                company: item.opportunity.company,
+                location: item.opportunity.locations?.[0] || null,
+                applyUrl: buildOpportunityUrl(frontendUrl, item.opportunity.slug),
+            }))
+        );
+    }
 
     await prisma.$transaction([
         prisma.alertDelivery.create({
@@ -106,7 +108,16 @@ async function sendDailyDigestForUser(
                 userId: user.id,
                 kind: 'DAILY_DIGEST',
                 channel: 'EMAIL',
-                dedupeKey,
+                dedupeKey: `${dedupeKey}:EMAIL`,
+                metadata: JSON.stringify({ count: ranked.length }),
+            },
+        }),
+        prisma.alertDelivery.create({
+            data: {
+                userId: user.id,
+                kind: 'DAILY_DIGEST',
+                channel: 'APP',
+                dedupeKey: `${dedupeKey}:APP`,
                 metadata: JSON.stringify({ count: ranked.length }),
             },
         }),
@@ -123,7 +134,7 @@ async function sendClosingSoonForUser(
     user: { id: string; email: string; fullName: string | null; profile: any },
     preference: any,
     now: Date
-) : Promise<boolean> {
+): Promise<boolean> {
     if (!preference.closingSoon) return false;
     if (!user.profile) return false;
 
@@ -157,22 +168,35 @@ async function sendClosingSoonForUser(
             ? `Expires in ${Math.max(1, Math.round(hoursLeft))} hours`
             : `Expires in ${Math.ceil(hoursLeft / 24)} days`;
 
-        await EmailService.sendClosingSoonAlert(user.email, user.fullName, {
-            title: item.opportunity.title,
-            company: item.opportunity.company,
-            expiresText,
-            applyUrl: buildOpportunityUrl(frontendUrl, item.opportunity.slug),
-        });
+        if (preference.emailEnabled) {
+            await EmailService.sendClosingSoonAlert(user.email, user.fullName, {
+                title: item.opportunity.title,
+                company: item.opportunity.company,
+                expiresText,
+                applyUrl: buildOpportunityUrl(frontendUrl, item.opportunity.slug),
+            });
+        }
 
-        await prisma.alertDelivery.create({
-            data: {
-                userId: user.id,
-                opportunityId: item.opportunity.id,
-                kind: 'CLOSING_SOON',
-                channel: 'EMAIL',
-                dedupeKey,
-                metadata: JSON.stringify({ hoursLeft: Math.round(hoursLeft) }),
-            },
+        await prisma.alertDelivery.createMany({
+            data: [
+                {
+                    userId: user.id,
+                    opportunityId: item.opportunity.id,
+                    kind: 'CLOSING_SOON',
+                    channel: 'EMAIL',
+                    dedupeKey: `${dedupeKey}:EMAIL`,
+                    metadata: JSON.stringify({ hoursLeft: Math.round(hoursLeft) }),
+                },
+                {
+                    userId: user.id,
+                    opportunityId: item.opportunity.id,
+                    kind: 'CLOSING_SOON',
+                    channel: 'APP',
+                    dedupeKey: `${dedupeKey}:APP`,
+                    metadata: JSON.stringify({ hoursLeft: Math.round(hoursLeft) }),
+                }
+            ],
+            skipDuplicates: true
         });
         return true;
     }
@@ -188,7 +212,7 @@ export async function runAlertsCycle() {
             role: 'USER',
             alertPreference: {
                 enabled: true,
-                emailEnabled: true,
+                // emailEnabled: true, // Keep commented out as requested
             },
         },
         select: {
