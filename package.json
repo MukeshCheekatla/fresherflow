@@ -21,7 +21,7 @@
         "build:api": "turbo run build --filter=fresherflow-api",
         "build:web": "turbo run build --filter=fresherflow-web",
         "deploy:web": "npm run build:web",
-        "deploy:api": "npx turbo run db:generate --filter=fresherflow-api && npx turbo run build --filter=fresherflow-api",
+        "deploy:api": "cd apps/api && npx prisma migrate deploy && cd ../.. && npx turbo run db:generate --filter=fresherflow-api && npx turbo run build --filter=fresherflow-api",
         "start:api": "cd apps/api && npm start",
         "start:web": "cd apps/web && npm start",
         "db:generate": "cd apps/api && npm run db:generate",
