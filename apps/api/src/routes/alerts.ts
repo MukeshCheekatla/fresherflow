@@ -36,11 +36,11 @@ router.get('/feed', requireAuth, async (req: Request, res: Response, next: NextF
 
         const where: {
             userId: string;
-            kind?: 'DAILY_DIGEST' | 'CLOSING_SOON';
+            kind?: 'DAILY_DIGEST' | 'CLOSING_SOON' | 'HIGHLIGHT' | 'APP_UPDATE';
         } = { userId };
 
-        if (kindRaw === 'DAILY_DIGEST' || kindRaw === 'CLOSING_SOON') {
-            where.kind = kindRaw;
+        if (['DAILY_DIGEST', 'CLOSING_SOON', 'HIGHLIGHT', 'APP_UPDATE'].includes(kindRaw)) {
+            where.kind = kindRaw as any;
         }
 
         const deliveries = await prisma.alertDelivery.findMany({
@@ -63,11 +63,78 @@ router.get('/feed', requireAuth, async (req: Request, res: Response, next: NextF
 
         const summary = {
             total: deliveries.length,
-            dailyDigest: deliveries.filter((item) => item.kind === 'DAILY_DIGEST').length,
-            closingSoon: deliveries.filter((item) => item.kind === 'CLOSING_SOON').length,
+            dailyDigest: deliveries.filter((item) => (item.kind as any) === 'DAILY_DIGEST').length,
+            closingSoon: deliveries.filter((item) => (item.kind as any) === 'CLOSING_SOON').length,
+            highlight: deliveries.filter((item) => (item.kind as any) === 'HIGHLIGHT').length,
+            appUpdate: deliveries.filter((item) => (item.kind as any) === 'APP_UPDATE').length,
         };
 
-        res.json({ deliveries, summary });
+        const unreadCount = await prisma.alertDelivery.count({
+            where: { userId, readAt: null }
+        });
+
+        res.json({ deliveries, summary, unreadCount });
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.get('/unread-count', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.userId;
+        if (!userId) return next(new AppError('Unauthorized', 401));
+
+        const count = await prisma.alertDelivery.count({
+            where: {
+                userId,
+                readAt: null
+            }
+        });
+
+        res.json({ count });
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.post('/mark-all-read', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.userId;
+        if (!userId) return next(new AppError('Unauthorized', 401));
+
+        await prisma.alertDelivery.updateMany({
+            where: {
+                userId,
+                readAt: null
+            },
+            data: {
+                readAt: new Date()
+            }
+        });
+
+        res.json({ success: true });
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.post('/:id/read', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.userId;
+        const { id } = req.params;
+        if (!userId) return next(new AppError('Unauthorized', 401));
+
+        await prisma.alertDelivery.updateMany({
+            where: {
+                id: String(id),
+                userId // Ensure user owns the alert
+            },
+            data: {
+                readAt: new Date()
+            }
+        });
+
+        res.json({ success: true });
     } catch (error) {
         next(error);
     }

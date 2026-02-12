@@ -133,8 +133,9 @@ export default function SavedJobsPage() {
                                         onClick={(e) => handleRemove(e, job.id)}
                                         className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all shrink-0"
                                         title="Remove from saved"
+                                        aria-label={`Remove ${job.title} from saved jobs`}
                                     >
-                                        <TrashIcon className="w-5 h-5" />
+                                        <TrashIcon className="w-5 h-5" aria-hidden="true" />
                                     </button>
                                 </div>
 

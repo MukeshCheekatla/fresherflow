@@ -17,6 +17,7 @@ import BellIcon from '@heroicons/react/24/outline/BellIcon';
 import PaperAirplaneIcon from '@heroicons/react/24/outline/PaperAirplaneIcon';
 import ClipboardDocumentCheckIcon from '@heroicons/react/24/outline/ClipboardDocumentCheckIcon';
 import { ThemeToggle } from './ThemeToggle';
+import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 
 function TelegramBrandIcon({ className }: { className?: string }) {
     return (
@@ -72,6 +73,7 @@ export function Navbar() {
     const isLoading = context?.isLoading;
     const pathname = usePathname();
     const searchParams = useSearchParams();
+    const { unreadCount } = useUnreadNotifications();
 
     const navLinks = [
         { href: '/dashboard', label: 'Dashboard' },
@@ -186,15 +188,24 @@ export function Navbar() {
                         </div>
                         <ThemeToggle />
 
+
                         {!isLoading && (
                             <>
                                 {user ? (
                                     <div className="flex items-center gap-1 md:gap-3">
                                         <div className="h-4 w-px bg-border mx-1 hidden md:block" />
 
+                                        <Link href="/alerts" className="p-2 text-muted-foreground hover:text-primary transition-colors hidden md:block relative">
+                                            <BellIcon className="w-5 h-5" />
+                                            {unreadCount > 0 && (
+                                                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full ring-2 ring-card" />
+                                            )}
+                                        </Link>
+
                                         <Link href="/profile/edit" className="p-2 text-muted-foreground hover:text-primary transition-colors hidden md:block">
                                             <UserIcon className="w-5 h-5" />
                                         </Link>
+
 
                                         <Link
                                             href="/logout"
@@ -224,6 +235,7 @@ export function Navbar() {
 export function MobileNav() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
+    const { unreadCount } = useUnreadNotifications();
     const context = useContext(AuthContext);
     const user = context?.user;
     const isLoading = context?.isLoading;
@@ -309,7 +321,16 @@ export function MobileNav() {
                         <span className="text-sm font-bold tracking-tight text-foreground">{mobileTitle}</span>
                     </Link>
                     <div className="flex items-center gap-2">
-                        <ThemeToggle />
+                        <Link
+                            href="/alerts"
+                            className="p-2 rounded-lg border border-border bg-muted/40 text-muted-foreground hover:text-primary transition-all relative"
+                            aria-label="View notifications"
+                        >
+                            <BellIcon className="w-5 h-5" />
+                            {unreadCount > 0 && (
+                                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full ring-2 ring-background" />
+                            )}
+                        </Link>
                         <button
                             onClick={() => setMenuOpen(true)}
                             className={cn(
@@ -318,7 +339,12 @@ export function MobileNav() {
                             )}
                             aria-label="Open menu"
                         >
-                            <Bars3Icon className="w-5 h-5" />
+                            <div className="relative">
+                                <Bars3Icon className="w-5 h-5" />
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full border-2 border-background" />
+                                )}
+                            </div>
                         </button>
                     </div>
                 </div>
@@ -340,6 +366,9 @@ export function MobileNav() {
                                     <h3 className="text-sm font-bold uppercase tracking-tight italic">{user.fullName || 'User Identity'}</h3>
                                     <p className="text-[10px] font-semibold text-muted-foreground uppercase opacity-60 tracking-wider truncate max-w-50">{user.email}</p>
                                 </div>
+                                <div className="ml-auto">
+                                    <ThemeToggle />
+                                </div>
                             </div>
                         </div>
 
@@ -355,10 +384,17 @@ export function MobileNav() {
                                     key={item.href}
                                     href={item.href}
                                     onClick={() => setMenuOpen(false)}
-                                    className="flex items-center gap-3 px-3 py-3 rounded-lg text-[11px] font-bold uppercase tracking-wider text-muted-foreground hover:bg-muted hover:text-foreground"
+                                    className="flex items-center justify-between gap-3 px-3 py-3 rounded-lg text-[11px] font-bold uppercase tracking-wider text-muted-foreground hover:bg-muted hover:text-foreground"
                                 >
-                                    <item.icon className="w-4 h-4 text-primary" />
-                                    <span>{item.label}</span>
+                                    <div className="flex items-center gap-3">
+                                        <item.icon className="w-4 h-4 text-primary" />
+                                        <span>{item.label}</span>
+                                    </div>
+                                    {item.href === '/alerts' && unreadCount > 0 && (
+                                        <span className="px-1.5 py-0.5 rounded-full bg-primary text-[8px] font-bold text-white min-w-[18px] text-center">
+                                            {unreadCount > 99 ? '99+' : unreadCount}
+                                        </span>
+                                    )}
                                 </Link>
                             ))}
 

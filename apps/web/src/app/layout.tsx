@@ -20,8 +20,6 @@ const inter = Inter({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   viewportFit: "cover",
 };
 
@@ -48,6 +46,7 @@ export const metadata: Metadata = {
 };
 
 import { AuthFormDataProvider } from "@/contexts/AuthFormDataContext";
+import { ErrorBoundary } from "@/components/providers/ErrorBoundary";
 
 export default function RootLayout({
   children,
@@ -86,7 +85,9 @@ export default function RootLayout({
           <AuthFormDataProvider>
             <ConditionalAuthProvider>
               <NavigationWrapper>
-                {children}
+                <ErrorBoundary>
+                  {children}
+                </ErrorBoundary>
               </NavigationWrapper>
             </ConditionalAuthProvider>
           </AuthFormDataProvider>

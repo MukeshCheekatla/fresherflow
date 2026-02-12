@@ -14,10 +14,14 @@ import MagnifyingGlassIcon from '@heroicons/react/24/outline/MagnifyingGlassIcon
 import ChartBarIcon from '@heroicons/react/24/outline/ChartBarIcon';
 import ClockIcon from '@heroicons/react/24/outline/ClockIcon';
 import CheckBadgeIcon from '@heroicons/react/24/outline/CheckBadgeIcon';
-import { SkeletonJobCard } from '@/components/ui/Skeleton';
+import { Skeleton, SkeletonJobCard } from '@/components/ui/Skeleton';
 import JobCard from '@/features/jobs/components/JobCard';
 import { Button } from '@/components/ui/Button';
 import { formatSyncTime, getFeedLastSyncAt } from '@/lib/offline/syncStatus';
+
+const UPDATE_INTERVAL_MS = 60_000;
+const HOURS_72_IN_MS = 72 * 60 * 60 * 1000;
+const HOURS_24_IN_MS = 24 * 60 * 60 * 1000;
 
 export default function DashboardPage() {
     const { user, isLoading: authLoading } = useAuth();
@@ -73,7 +77,7 @@ export default function DashboardPage() {
         const interval = window.setInterval(() => {
             loadRecentOpportunities();
             loadHighlights();
-        }, 60_000);
+        }, UPDATE_INTERVAL_MS);
         return () => window.clearInterval(interval);
     }, [hasLoaded, user]);
 
@@ -144,7 +148,7 @@ export default function DashboardPage() {
     const getDaysToExpiry = (expiresAt?: string | Date | null) => {
         if (!expiresAt) return null;
         const diffMs = new Date(expiresAt).getTime() - new Date().getTime();
-        return Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+        return Math.ceil(diffMs / (HOURS_24_IN_MS));
     };
 
     const formatExpiry = (expiresAt?: string | Date | null) => {
@@ -162,12 +166,12 @@ export default function DashboardPage() {
         .filter((o) => o.expiresAt)
         .sort((a, b) => new Date(a.expiresAt as string).getTime() - new Date(b.expiresAt as string).getTime())
         .slice(0, 8);
-    const newCutoff = lastSeenAt || (Date.now() - (72 * 60 * 60 * 1000));
+    const newCutoff = lastSeenAt || (Date.now() - (HOURS_72_IN_MS));
     const newSinceLastVisit = latestList
         .filter((o) => new Date(o.postedAt as string | Date).getTime() > newCutoff)
         .slice(0, 10);
     const newLast24Hours = latestList
-        .filter((o) => (Date.now() - new Date(o.postedAt as string | Date).getTime()) <= (24 * 60 * 60 * 1000))
+        .filter((o) => (Date.now() - new Date(o.postedAt as string | Date).getTime()) <= (HOURS_24_IN_MS))
         .slice(0, 10);
 
     const totalActive = activeRecentOpps.length || 1;
@@ -248,10 +252,17 @@ export default function DashboardPage() {
 
                     {/* Highlights Loading State */}
                     {isLoadingHighlights ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                            <div className="h-24 bg-muted/20 rounded-xl animate-pulse" />
-                            <div className="h-24 bg-muted/20 rounded-xl animate-pulse" />
-                            <div className="h-24 bg-muted/20 rounded-xl animate-pulse" />
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <Skeleton className="h-3 w-28 md:w-32 rounded-full opacity-60" />
+                                <Skeleton className="h-3 w-12 md:w-16 rounded-full opacity-40" />
+                            </div>
+                            {/* Mobile: 1 card, Tablet+: 3 cards horizontal */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div className="h-20 md:h-24 bg-muted/10 rounded-2xl animate-pulse" />
+                                <div className="hidden md:block h-20 md:h-24 bg-muted/10 rounded-2xl animate-pulse" />
+                                <div className="hidden md:block h-20 md:h-24 bg-muted/10 rounded-2xl animate-pulse" />
+                            </div>
                         </div>
                     ) : highlightsError ? (
                         <div className="rounded-xl border border-dashed border-border bg-card p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -301,8 +312,8 @@ export default function DashboardPage() {
                                                 <div className="space-y-1">
                                                     <div className="flex items-center justify-between">
                                                         <span className="text-[8px] font-bold uppercase tracking-wider text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded">Urgent Walk-in</span>
-                                                        <div className="flex items-center gap-1 text-[9px] text-amber-600 font-bold tracking-tight">
-                                                            <ClockIcon className="w-3 h-3" />
+                                                        <div className="flex items-center gap-1 text-[9px] text-amber-600 font-bold tracking-tight" aria-label="Closing soon">
+                                                            <ClockIcon className="w-3 h-3" aria-hidden="true" />
                                                             Closing Soon
                                                         </div>
                                                     </div>
@@ -311,7 +322,7 @@ export default function DashboardPage() {
                                                 </div>
                                                 <div className="flex items-center justify-between border-t border-amber-500/10 pt-2">
                                                     <span className="text-[9px] font-bold uppercase tracking-widest text-amber-700/60">Verified Drive</span>
-                                                    <ChevronRightIcon className="w-4 h-4 text-amber-500 group-hover:translate-x-1 transition-transform" />
+                                                    <ChevronRightIcon className="w-4 h-4 text-amber-500 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
                                                 </div>
                                             </div>
                                         ))}
@@ -393,7 +404,10 @@ export default function DashboardPage() {
                                 </div>
                                 {isLoadingOpps ? (
                                     <div className="grid grid-cols-1 gap-4">
-                                        {[1, 2].map(i => <SkeletonJobCard key={`mobile-loading-${i}`} />)}
+                                        <SkeletonJobCard key="mobile-loading-1" />
+                                        <div className="hidden xs:block">
+                                            <SkeletonJobCard key="mobile-loading-2" />
+                                        </div>
                                     </div>
                                 ) : activeMobileSection.items.length === 0 ? (
                                     <div className="rounded-xl border border-dashed border-border bg-card p-4 text-xs text-muted-foreground space-y-3">
@@ -429,8 +443,8 @@ export default function DashboardPage() {
                                 )}
                             </div>
                             {isLoadingOpps ? (
-                                <div className="hidden md:grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {[1, 2, 3, 4].map(i => <SkeletonJobCard key={i} />)}
+                                <div className="hidden md:grid grid-cols-3 gap-4">
+                                    {[1, 2, 3].map(i => <SkeletonJobCard key={i} />)}
                                 </div>
                             ) : recentError ? (
                                 <div className="hidden md:block col-span-full bg-card rounded-xl text-center p-8 md:p-10 border border-dashed border-border">
