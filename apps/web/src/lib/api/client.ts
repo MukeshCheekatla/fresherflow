@@ -20,6 +20,8 @@ export async function apiClient<T = any>(
 ): Promise<T> {
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
+        'X-Requested-From': 'fresherflow-web', // Basic CSRF protection against cross-site forms
+        'X-Request-Id': `web-${Math.random().toString(36).slice(2, 10)}`, // Tracing
         ...(options.headers as Record<string, string> || {}),
     };
 
@@ -36,13 +38,29 @@ export async function apiClient<T = any>(
     const canRetry = method === 'GET';
 
     const fetchWithRetry = async () => {
-        try {
-            return await fetch(requestUrl, fetchOptions);
-        } catch (error) {
-            if (!canRetry) throw error;
-            await new Promise((resolve) => setTimeout(resolve, 300));
-            return await fetch(requestUrl, fetchOptions);
+        let lastError: unknown;
+        const maxRetries = 3;
+        const baseDelay = 300;
+
+        for (let i = 0; i < maxRetries; i++) {
+            try {
+                const response = await fetch(requestUrl, fetchOptions);
+                if (response.ok || response.status < i * 100 || !canRetry) return response;
+
+                // Only retry on potential transient errors (5xx or network failures)
+                if (response.status < 500 && response.status !== 429) return response;
+
+                lastError = new Error(`Request failed with status ${response.status}`);
+            } catch (error) {
+                if (!canRetry) throw error;
+                lastError = error;
+            }
+
+            // Exponential backoff: 300, 900, 2700ms
+            const delay = baseDelay * Math.pow(3, i);
+            await new Promise((resolve) => setTimeout(resolve, delay));
         }
+        throw lastError;
     };
 
     try {
@@ -301,17 +319,26 @@ export const growthApi = {
 
 // Opportunities API calls
 export const opportunitiesApi = {
-    list: (params?: { type?: string; city?: string; closingSoon?: boolean }) => {
+    list: (params?: { type?: string; city?: string; company?: string; closingSoon?: boolean; minSalary?: number; maxSalary?: number }) => {
         const query = new URLSearchParams();
         if (params?.type) query.append('type', params.type);
         if (params?.city) query.append('city', params.city);
+        if (params?.company) query.append('company', params.company);
         if (params?.closingSoon) query.append('closingSoon', 'true');
+        if (params?.minSalary) query.append('minSalary', String(params.minSalary));
+        if (params?.maxSalary) query.append('maxSalary', String(params.maxSalary));
 
         const queryString = query.toString();
         return apiClient(`/api/opportunities${queryString ? `?${queryString}` : ''}`);
     },
 
     getById: (id: string) => apiClient(`/api/opportunities/${id}`)
+};
+
+// Companies API calls
+export const companiesApi = {
+    search: (query: string) => apiClient(`/api/public/companies/search?q=${encodeURIComponent(query)}`),
+    getByName: (name: string) => apiClient(`/api/public/companies/${encodeURIComponent(name)}`)
 };
 
 // Actions API calls
@@ -323,6 +350,11 @@ export const actionsApi = {
         apiClient(`/api/actions/${opportunityId}/action`, {
             method: 'POST',
             body: JSON.stringify({ actionType })
+        }),
+
+    remove: (opportunityId: string) =>
+        apiClient(`/api/actions/${opportunityId}`, {
+            method: 'DELETE'
         })
 };
 
@@ -360,7 +392,7 @@ export const dashboardApi = {
 // Alerts API calls
 export const alertsApi = {
     getPreferences: () => apiClient('/api/alerts/preferences'),
-    getFeed: (kind: 'all' | 'DAILY_DIGEST' | 'CLOSING_SOON' = 'all', limit = 50) => {
+    getFeed: (kind: 'all' | 'DAILY_DIGEST' | 'CLOSING_SOON' | 'HIGHLIGHT' | 'APP_UPDATE' = 'all', limit = 50) => {
         const query = new URLSearchParams();
         query.set('kind', kind);
         query.set('limit', String(limit));
@@ -378,7 +410,10 @@ export const alertsApi = {
         apiClient('/api/alerts/preferences', {
             method: 'PUT',
             body: JSON.stringify(data)
-        })
+        }),
+    getUnreadCount: () => apiClient<{ count: number }>('/api/alerts/unread-count'),
+    markAllRead: () => apiClient('/api/alerts/mark-all-read', { method: 'POST' }),
+    markRead: (id: string) => apiClient(`/api/alerts/${id}/read`, { method: 'POST' }),
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
