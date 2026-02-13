@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { adminApi } from '@/lib/api/admin';
+import type { Opportunity } from '@fresherflow/types';
 import toast from 'react-hot-toast';
 import { AdminOpportunitiesSkeleton } from '@/components/ui/Skeleton';
 import { useDebounce } from '@/lib/hooks/useDebounce';
@@ -18,7 +19,6 @@ import {
     TrashIcon,
     ClockIcon,
     PencilSquareIcon,
-    XMarkIcon,
     DocumentTextIcon,
     CheckCircleIcon,
     ArrowPathIcon,
@@ -31,7 +31,15 @@ import {
     bulkOpportunityAction
 } from '@/features/jobs/actions/opportunity';
 
-export default function OpportunitiesListPage() {
+export default function AdminOpportunitiesPage() {
+    return (
+        <Suspense fallback={<AdminOpportunitiesSkeleton />}>
+            <OpportunitiesListPage />
+        </Suspense>
+    );
+}
+
+function OpportunitiesListPage() {
     const { isAuthenticated } = useAdmin();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -133,14 +141,14 @@ export default function OpportunitiesListPage() {
     const loadOpportunities = useCallback(async () => {
         setIsLoading(true);
         try {
-            const data = await adminApi.getOpportunities({
+            const data = (await adminApi.getOpportunities({
                 type: typeFilter || undefined,
                 status: statusFilter || undefined,
                 q: debouncedSearch || undefined,
                 sort,
                 limit: pageSize,
                 offset: (page - 1) * pageSize
-            });
+            })) as { opportunities: Opportunity[]; total: number; totalPages: number };
             setOpportunities(data.opportunities || []);
             setTotalCount(data.total || 0);
             setTotalPages(data.totalPages || 1);
@@ -800,7 +808,7 @@ export default function OpportunitiesListPage() {
                                                 {opp.status === 'PUBLISHED' && (
                                                     <button
                                                         onClick={() => handleExpire(opp.id, opp.title)}
-                                                        className="p-2 text-muted-foreground hover:text-amber-600 hover:bg-amber-50 rounded-md transition-all"
+                                                        className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-all"
                                                         title="Expire"
                                                     >
                                                         <ClockIcon className="w-4 h-4" />
@@ -808,7 +816,7 @@ export default function OpportunitiesListPage() {
                                                 )}
                                                 <button
                                                     onClick={() => handleDelete(opp.id, opp.title)}
-                                                    className="p-2 text-muted-foreground hover:text-rose-600 hover:bg-rose-50 rounded-md transition-all"
+                                                    className="p-2 text-rose-700 hover:bg-rose-50 rounded-md transition-all"
                                                     title="Remove"
                                                 >
                                                     <TrashIcon className="w-4 h-4" />
@@ -819,75 +827,100 @@ export default function OpportunitiesListPage() {
                                 ))}
                             </tbody>
                         </table>
-                    </div>
-                </div>
-            )}
 
-            {/* Pagination */}
-            {!isLoading && opportunities.length > 0 && (
-                <div className="flex items-center justify-between py-4 border-t border-border">
-                    <button
-                        onClick={() => setPage(p => Math.max(1, p - 1))}
-                        disabled={page === 1}
-                        className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
-                    >
-                        Previous
-                    </button>
-                    <span className="text-xs font-medium text-muted-foreground">
-                        Page {page} of {effectiveTotalPages} - {totalCount} results
-                    </span>
-                    <button
-                        onClick={() => setPage(p => p + 1)}
-                        disabled={!hasNextPage}
-                        className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
-                    >
-                        Next
-                    </button>
-                </div>
-            )}
+                        {/* Pagination */}
+                        <div className="px-5 py-4 border-t border-border bg-muted/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="text-xs text-muted-foreground order-2 md:order-1">
+                                Showing <span className="font-medium text-foreground">{(page - 1) * pageSize + 1}</span> to <span className="font-medium text-foreground">{Math.min(page * pageSize, totalCount)}</span> of <span className="font-medium text-foreground">{totalCount}</span> results
+                            </div>
+                            <div className="flex items-center gap-1.5 order-1 md:order-2">
+                                <button
+                                    onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                                    disabled={page === 1}
+                                    className="h-8 px-3 rounded border border-input bg-background text-xs font-medium disabled:opacity-50 hover:bg-accent transition-colors"
+                                >
+                                    Previous
+                                </button>
+                                <div className="flex items-center gap-1">
+                                    {[...Array(Math.min(5, effectiveTotalPages))].map((_, i) => {
+                                        let pageNum = page;
+                                        if (effectiveTotalPages <= 5) pageNum = i + 1;
+                                        else if (page <= 3) pageNum = i + 1;
+                                        else if (page >= effectiveTotalPages - 2) pageNum = effectiveTotalPages - 4 + i;
+                                        else pageNum = page - 2 + i;
 
-            {/* Confirmation Modal */}
-            {confirmModal.show && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-                    <div className="bg-card rounded-lg border border-border shadow-lg w-full max-w-md relative z-50 overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${confirmModal.type === 'danger' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'}`}>
-                                    {confirmModal.type === 'danger' ? <TrashIcon className="w-5 h-5" /> : <ClockIcon className="w-5 h-5" />}
+                                        return (
+                                            <button
+                                                key={pageNum}
+                                                onClick={() => setPage(pageNum)}
+                                                className={`w-8 h-8 rounded text-xs font-medium transition-colors ${page === pageNum
+                                                    ? 'bg-primary text-primary-foreground'
+                                                    : 'border border-input bg-background hover:bg-accent'
+                                                    }`}
+                                            >
+                                                {pageNum}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                                 <button
-                                    onClick={() => setConfirmModal(prev => ({ ...prev, show: false }))}
-                                    className="text-muted-foreground hover:text-foreground transition-colors"
+                                    onClick={() => setPage(prev => Math.min(effectiveTotalPages, prev + 1))}
+                                    disabled={!hasNextPage}
+                                    className="h-8 px-3 rounded border border-input bg-background text-xs font-medium disabled:opacity-50 hover:bg-accent transition-colors"
                                 >
-                                    <XMarkIcon className="w-5 h-5" />
-                                </button>
-                            </div>
-
-                            <h3 className="text-lg font-semibold text-foreground tracking-tight mb-2">
-                                {confirmModal.title}
-                            </h3>
-                            <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-                                {confirmModal.message}
-                            </p>
-
-                            <div className="flex gap-3 justify-end">
-                                <button
-                                    onClick={() => setConfirmModal(prev => ({ ...prev, show: false }))}
-                                    className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={confirmModal.action}
-                                    className={`inline-flex h-9 items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-white shadow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${confirmModal.type === 'danger' ? 'bg-destructive hover:bg-destructive/90' : 'bg-primary hover:bg-primary/90'}`}
-                                >
-                                    {confirmModal.confirmText}
+                                    Next
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
+
+            {/* Confirmation Modal */}
+            {confirmModal.show && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="w-full max-w-sm bg-card rounded-xl border border-border shadow-2xl p-6 animate-in zoom-in-95 duration-200">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 ${confirmModal.type === 'danger' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'}`}>
+                            <ExclamationTriangleIcon className="w-6 h-6" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-foreground mb-2">{confirmModal.title}</h3>
+                        <p className="text-sm text-muted-foreground mb-6 leading-relaxed">{confirmModal.message}</p>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setConfirmModal(prev => ({ ...prev, show: false }))}
+                                className="flex-1 h-10 px-4 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmModal.action}
+                                className={`flex-1 h-10 px-4 rounded-md text-sm font-medium text-white transition-opacity hover:opacity-90 ${confirmModal.type === 'danger' ? 'bg-rose-600 shadow-rose-200' : 'bg-primary shadow-primary/20 shadow-lg'}`}
+                            >
+                                {confirmModal.confirmText}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
+    );
+}
+
+function ExclamationTriangleIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
+    return (
+        <svg
+            {...props}
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+        >
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+            />
+        </svg>
     );
 }

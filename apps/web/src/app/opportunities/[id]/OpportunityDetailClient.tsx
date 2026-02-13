@@ -8,6 +8,7 @@ import { ActionType, type Opportunity } from '@fresherflow/types';
 import BookmarkIcon from '@heroicons/react/24/outline/BookmarkIcon';
 import { BookmarkIcon as BookmarkSolidIcon } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
+import { toastError } from '@/lib/utils/error';
 import MapPinIcon from '@heroicons/react/24/outline/MapPinIcon';
 import ClockIcon from '@heroicons/react/24/outline/ClockIcon';
 import ArrowLeftIcon from '@heroicons/react/24/outline/ArrowLeftIcon';
@@ -53,7 +54,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
 
         setIsLoading(true);
         try {
-            const { opportunity } = await opportunitiesApi.getById(id);
+            const { opportunity } = await opportunitiesApi.getById(id) as { opportunity: Opportunity };
             // Sanitize data
             const sanitized = {
                 ...opportunity,
@@ -80,7 +81,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
             }
             if (!hasShownNotFoundRef.current) {
                 hasShownNotFoundRef.current = true;
-                toast.error('Listing not found.');
+                toastError(new Error('Listing not found.'));
             }
             router.push('/opportunities');
         } finally {
@@ -123,13 +124,34 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
         growthApi.trackEvent('DETAIL_VIEW', 'opportunity_detail').catch(() => undefined);
     }, [opp, user]);
 
+    // Auto-track VIEWED action for logged-in users (background, non-blocking)
+    useEffect(() => {
+        if (!opp || !user) return;
+
+        // Fire-and-forget: track view in background
+        const trackView = async () => {
+            try {
+                // Only track if no stronger action exists
+                const currentAction = opp.actions?.[0]?.actionType;
+                if (!currentAction || currentAction === ActionType.VIEWED) {
+                    await actionsApi.track(opp.id, ActionType.VIEWED);
+                }
+            } catch {
+                // Silently fail - don't block user experience
+            }
+        };
+
+        trackView();
+    }, [opp, user]);
+
     useEffect(() => {
         if (!opp) return;
 
         const loadRelated = async () => {
+            if (!opp) return;
             setIsLoadingRelated(true);
             try {
-                const data = await opportunitiesApi.list({ type: opp.type });
+                const data = await opportunitiesApi.list({ type: opp.type }) as { opportunities: Opportunity[] };
                 const currentSkillSet = new Set((opp.requiredSkills || []).map((s) => s.toLowerCase()));
                 const currentLocations = new Set((opp.locations || []).map((l) => l.toLowerCase()));
 
@@ -163,7 +185,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
         };
 
         void loadRelated();
-    }, [opp]);
+    }, [opp, opp?.id, opp?.type, opp?.requiredSkills, opp?.locations, opp?.company, opp?.workMode]);
 
     useEffect(() => {
         if (!showReports) return;
@@ -193,11 +215,27 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
 
     const handleToggleSave = async () => {
         if (!opp) return;
+
+        // OPTIMISTIC UPDATE
+        const previousSavedState = opp.isSaved;
+        const newSavedState = !previousSavedState;
+        setOpp(prev => prev ? { ...prev, isSaved: newSavedState } : null);
+
         try {
-            const result = await savedApi.toggle(opp.id);
-            setOpp(prev => prev ? { ...prev, isSaved: result.saved } : null);
-        } catch {
-            toast.error('Failed to update bookmark');
+            const result = await savedApi.toggle(opp.id) as { saved: boolean };
+
+            // Verify sync result matches optimistic state
+            if (result.saved !== newSavedState) {
+                setOpp(prev => prev ? { ...prev, isSaved: result.saved } : null);
+            }
+
+            if (result.saved) {
+                growthApi.trackEvent('SAVE_JOB', 'opportunity_detail').catch(() => undefined);
+            }
+        } catch (err) {
+            // ROLLBACK
+            setOpp(prev => prev ? { ...prev, isSaved: previousSavedState } : null);
+            toastError(err, 'Failed to update bookmark');
         }
     };
 
@@ -215,34 +253,45 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
             router.push(loginFromDetailHref);
             return;
         }
+
+        // OPTIMISTIC UPDATE: Update UI immediately
+        const previousActions = opp.actions;
+        const label = actionType === ActionType.PLANNED
+            ? 'Planned'
+            : actionType === ActionType.INTERVIEWED
+                ? 'Interviewed'
+                : actionType === ActionType.SELECTED
+                    ? 'Selected'
+                    : 'Applied';
+
+        setOpp((prev) => {
+            if (!prev) return prev;
+            return {
+                ...prev,
+                actions: [
+                    {
+                        id: `local-${prev.id}`,
+                        userId: user.id,
+                        opportunityId: prev.id,
+                        actionType,
+                        createdAt: new Date(),
+                    }
+                ]
+            };
+        });
+        toast.success(`Progress updated: ${label}`);
+
+        // Background sync
         setIsUpdatingAction(true);
         try {
             await actionsApi.track(opp.id, actionType);
+        } catch (err) {
+            // ROLLBACK: Revert to previous state
             setOpp((prev) => {
                 if (!prev) return prev;
-                return {
-                    ...prev,
-                    actions: [
-                        {
-                            id: `local-${prev.id}`,
-                            userId: user.id,
-                            opportunityId: prev.id,
-                            actionType,
-                            createdAt: new Date(),
-                        }
-                    ]
-                };
+                return { ...prev, actions: previousActions };
             });
-            const label = actionType === ActionType.PLANNED
-                ? 'Planned'
-                : actionType === ActionType.INTERVIEWED
-                    ? 'Interviewed'
-                    : actionType === ActionType.SELECTED
-                        ? 'Selected'
-                        : 'Applied';
-            toast.success(`Progress updated: ${label}`);
-        } catch {
-            toast.error('Could not update progress');
+            toastError(err, 'Could not update progress');
         } finally {
             setIsUpdatingAction(false);
         }
@@ -250,9 +299,10 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
 
     const handleApply = async () => {
         if (!opp || !opp.applyLink) {
-            toast.error('Error: Apply link unavailable for this listing.');
+            toastError(new Error('Apply link unavailable for this listing.'));
             return;
         }
+        growthApi.trackEvent('APPLY_CLICK', 'opportunity_detail').catch(() => undefined);
         try {
             await handleSetAction(ActionType.APPLIED);
             window.open(opp.applyLink, '_blank');
@@ -279,6 +329,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
             url: shareUrl,
         };
 
+        growthApi.trackEvent('SHARE_JOB', 'opportunity_detail').catch(() => undefined);
         try {
             if (navigator.share) {
                 await navigator.share(shareData);
@@ -295,8 +346,8 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
         try {
             await navigator.clipboard.writeText(getShareUrl());
             toast.success('Link copied to clipboard!');
-        } catch {
-            toast.error('Failed to copy link');
+        } catch (err) {
+            toastError(err, 'Failed to copy link');
         }
     };
 
@@ -390,18 +441,22 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
 
     const handleReport = async (reason: string) => {
         if (!user) {
-            toast.error('Identity required to file report.');
+            toastError(new Error('Identity required to file report.'));
             router.push('/login');
             return;
         }
 
         const loadingToast = toast.loading('Submitting report...');
         try {
-            await feedbackApi.submit(opp!.id, reason);
-            toast.success('Report received. Our moderation team will review this listing.', { id: loadingToast });
-            setShowReports(false);
+            const data = await feedbackApi.submit(opp!.id, reason) as { success: boolean; message?: string };
+            if (data.success) {
+                toast.success('Thank you for your feedback', { id: loadingToast });
+                setShowReports(false);
+            } else {
+                toastError(new Error(data.message || 'Unknown error'), 'Report failed.', { id: loadingToast });
+            }
         } catch (err: unknown) {
-            toast.error((err as Error).message || 'Report failed.', { id: loadingToast });
+            toastError(err, 'Report failed.', { id: loadingToast });
         }
     };
 
@@ -420,10 +475,47 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
     const sourceParam = searchParams.get('source');
     const fromShare = searchParams.get('ref') === 'share' || sourceParam === 'opportunity_share';
     const loginSource = fromShare ? 'opportunity_share' : 'opportunity_detail';
-    const loginFromDetailHref = `/login?redirect=${encodeURIComponent(detailPath)}&source=${encodeURIComponent(loginSource)}`;
+    const loginFromDetailHref = `/login?redirect=${encodeURIComponent(detailPath)}&source=${encodeURIComponent(loginSource)}&intent=signup`;
+
+    const jobPostingJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'JobPosting',
+        'title': opp.title,
+        'description': opp.description,
+        'datePosted': opp.postedAt,
+        'validThrough': opp.expiresAt,
+        'employmentType': opp.employmentType || (opp.type === 'INTERNSHIP' ? 'INTERN' : 'FULL_TIME'),
+        'hiringOrganization': {
+            '@type': 'Organization',
+            'name': opp.company,
+            'sameAs': opp.companyWebsite
+        },
+        'jobLocation': (opp.locations || []).map(loc => ({
+            '@type': 'Place',
+            'address': {
+                '@type': 'PostalAddress',
+                'addressLocality': loc,
+                'addressCountry': 'IN'
+            }
+        })),
+        'baseSalary': opp.salaryMin ? {
+            '@type': 'MonetaryAmount',
+            'currency': 'INR',
+            'value': {
+                '@type': 'QuantitativeValue',
+                'minValue': opp.salaryMin,
+                'maxValue': opp.salaryMax,
+                'unitText': opp.salaryPeriod || 'YEAR'
+            }
+        } : undefined
+    };
 
     return (
         <div className="min-h-screen bg-background pb-16 selection:bg-primary/20">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingJsonLd) }}
+            />
             <main className="relative z-10 max-w-6xl mx-auto px-4 py-4 md:py-7 space-y-3 md:space-y-5">
 
                 {/* Navigation & Actions Top Bar */}
@@ -628,24 +720,39 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                         </div>
 
                         {!user && (
-                            <div className="bg-muted/20 border border-border rounded-xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                                <div className="space-y-1">
-                                    <h3 className="text-sm font-bold text-foreground">Like this listing?</h3>
-                                    <p className="text-xs text-muted-foreground">
-                                        Sign up to save listings, set alerts, and track applications.
-                                    </p>
+                            <div className="premium-card p-6 md:p-8 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 border-primary/20 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
+                                    <ShieldCheckIcon className="w-24 h-24 text-primary" />
                                 </div>
-                                <Link
-                                    href={loginFromDetailHref}
-                                    className="premium-button h-9 px-4 text-[10px] uppercase tracking-widest"
-                                >
-                                    Sign up free
-                                </Link>
+                                <div className="relative z-10 space-y-4 max-w-lg">
+                                    <h3 className="text-xl font-bold text-foreground tracking-tight">Unlock the full FresherFlow experience</h3>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
+                                        Join thousands of freshers who use our verified feed to land their first roles. Get instant alerts, track your applications, and never miss a deadline.
+                                    </p>
+                                    <div className="flex flex-wrap items-center gap-3 pt-2">
+                                        <Link
+                                            href={loginFromDetailHref}
+                                            className="premium-button h-10 px-6 text-xs"
+                                        >
+                                            Create Free Account
+                                        </Link>
+                                        <div className="flex -space-x-2">
+                                            {[1, 2, 3].map(i => (
+                                                <div key={i} className="w-6 h-6 rounded-full border-2 border-background bg-muted flex items-center justify-center text-[8px] font-bold">
+                                                    {String.fromCharCode(64 + i)}
+                                                </div>
+                                            ))}
+                                            <div className="pl-3 text-[10px] font-medium text-muted-foreground flex items-center">
+                                                500+ joined today
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
 
                         {/* Description Section */}
-                        <div className="hidden lg:block bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3">
+                        <div className="bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3">
                             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border pb-2">Description</h3>
                             <div
                                 className="prose prose-sm max-w-none text-foreground/80 font-medium text-sm md:text-base leading-relaxed whitespace-pre-wrap"
@@ -738,33 +845,6 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                 )}
                             </div>
                         )}
-                        <div className="bg-card border border-border p-4 md:p-5 rounded-xl space-y-3">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-xs font-bold uppercase tracking-wider text-primary">Related opportunities</h2>
-                                <Link href="/opportunities" className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline">
-                                    Explore all
-                                </Link>
-                            </div>
-                            {isLoadingRelated ? (
-                                <p className="text-xs text-muted-foreground">Finding related roles...</p>
-                            ) : relatedOpps.length === 0 ? (
-                                <p className="text-xs text-muted-foreground">No close matches yet. Check full feed for more roles.</p>
-                            ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                    {relatedOpps.map((item) => (
-                                        <button
-                                            key={item.id}
-                                            onClick={() => router.push(`/opportunities/${item.slug || item.id}`)}
-                                            className="text-left rounded-lg border border-border bg-muted/20 hover:bg-muted/40 p-3 transition-colors"
-                                        >
-                                            <p className="text-xs font-semibold text-foreground line-clamp-2">{item.title}</p>
-                                            <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{item.company}</p>
-                                            <p className="text-[10px] text-primary font-semibold mt-1 line-clamp-1">{(item.locations || []).join(', ') || 'Location not specified'}</p>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
                         <div className="lg:hidden bg-card p-4 rounded-xl border border-border space-y-3">
                             <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Quick actions</h4>
                             <button
@@ -871,55 +951,80 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3">
-                            <div className="space-y-2">
-                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Track your progress</h4>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {trackerOptions.map((option) => {
-                                        const isActive = currentAction === option.key;
-                                        return (
-                                            <button
-                                                key={option.key}
-                                                onClick={() => handleSetAction(option.key)}
-                                                disabled={isUpdatingAction}
-                                                className={cn(
-                                                    "h-8 rounded-lg border text-[10px] font-bold uppercase tracking-tight transition-colors",
-                                                    isActive
-                                                        ? "bg-primary/10 text-primary border-primary/30"
-                                                        : "bg-muted/30 border-border text-muted-foreground hover:bg-muted/50",
-                                                    isUpdatingAction && "opacity-70 cursor-not-allowed"
-                                                )}
-                                            >
-                                                {option.label}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {hasApplyLink && (
-                                <div className="space-y-2">
-                                    <Button
-                                        onClick={handleApply}
-                                        className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg flex items-center justify-center gap-2 text-sm font-bold uppercase tracking-tight shadow-md"
+                        <div className="bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3 relative overflow-hidden group">
+                            {/* Visual Polish for Guest Mode */}
+                            {!user && (
+                                <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center p-6 text-center space-y-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
+                                        <ShieldCheckIcon className="w-5 h-5 text-primary" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-[11px] font-bold uppercase tracking-tight text-foreground">Member Feature</p>
+                                        <p className="text-[10px] text-muted-foreground px-4 leading-tight">Track, save, and manage your applications in one place.</p>
+                                    </div>
+                                    <Link
+                                        href={loginFromDetailHref}
+                                        className="h-8 px-5 bg-primary text-primary-foreground rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center justify-center shadow-lg hover:shadow-primary/20 transition-all"
                                     >
-                                        Apply Now
-                                        <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                                    </Button>
+                                        Join to Track
+                                    </Link>
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-1 gap-2">
-                                <button
-                                    onClick={handleToggleSave}
-                                    className={cn(
-                                        "flex items-center justify-center gap-2 h-9 rounded-lg border transition-all text-[10px] font-bold uppercase",
-                                        opp.isSaved ? "bg-primary/10 text-primary border-primary/20" : "bg-muted/30 border-border text-muted-foreground hover:bg-muted/50"
-                                    )}
-                                >
-                                    {opp.isSaved ? <BookmarkSolidIcon className="w-3.5 h-3.5" /> : <BookmarkIcon className="w-3.5 h-3.5" />}
-                                    {opp.isSaved ? 'Saved' : 'Save'}
-                                </button>
+                            <div className={cn("space-y-3", !user && "filter blur-[0.4px] select-none opacity-80")}>
+                                <div className="space-y-2">
+                                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                                        Track your progress
+                                        {!user && <ShieldCheckIcon className="w-3 h-3 opacity-50" />}
+                                    </h4>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {trackerOptions.map((option) => {
+                                            const isActive = currentAction === option.key;
+                                            return (
+                                                <button
+                                                    key={option.key}
+                                                    onClick={() => handleSetAction(option.key)}
+                                                    disabled={isUpdatingAction || !user}
+                                                    className={cn(
+                                                        "h-8 rounded-lg border text-[10px] font-bold uppercase tracking-tight transition-all",
+                                                        isActive
+                                                            ? "bg-primary/10 text-primary border-primary/30"
+                                                            : "bg-muted/30 border-border text-muted-foreground hover:bg-muted/50",
+                                                        isUpdatingAction && "opacity-70 cursor-not-allowed"
+                                                    )}
+                                                >
+                                                    {option.label}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {hasApplyLink && (
+                                    <div className="space-y-2">
+                                        <Button
+                                            onClick={handleApply}
+                                            className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg flex items-center justify-center gap-2 text-sm font-bold uppercase tracking-tight shadow-md"
+                                        >
+                                            Apply Now
+                                            <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                                        </Button>
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-1 gap-2">
+                                    <button
+                                        onClick={handleToggleSave}
+                                        disabled={!user}
+                                        className={cn(
+                                            "flex items-center justify-center gap-2 h-9 rounded-lg border transition-all text-[10px] font-bold uppercase",
+                                            opp.isSaved ? "bg-primary/10 text-primary border-primary/20" : "bg-muted/30 border-border text-muted-foreground hover:bg-muted/50"
+                                        )}
+                                    >
+                                        {opp.isSaved ? <BookmarkSolidIcon className="w-3.5 h-3.5" /> : <BookmarkIcon className="w-3.5 h-3.5" />}
+                                        {opp.isSaved ? 'Saved' : 'Save'}
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="pt-3 border-t border-border flex items-center justify-between">
@@ -928,14 +1033,22 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                             </div>
                         </div>
 
-                        <div className="hidden lg:block bg-card p-4 rounded-xl border border-border shadow-sm space-y-3">
-                            <h4 className="text-[9px] font-bold uppercase tracking-widest text-primary">Hiring activity</h4>
-                            <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
-                                <div className="h-full bg-primary w-[75%] shadow-[0_0_8px_rgba(var(--primary),0.3)]" />
+                        <div className="hidden lg:block bg-card p-4 rounded-xl border border-border shadow-sm space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-[9px] font-bold uppercase tracking-widest text-primary">Live Activity</h4>
+                                <div className="flex items-center gap-1">
+                                    <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                                    <span className="text-[8px] font-bold text-emerald-600 uppercase">Hiring Now</span>
+                                </div>
                             </div>
-                            <p className="text-[10px] font-medium text-muted-foreground leading-relaxed">
-                                <span className="text-foreground font-bold">{opp?.company}</span> is actively recruiting for this role.
-                            </p>
+                            <div className="space-y-2">
+                                <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                                    <div className="h-full bg-primary/80 w-[82%] shadow-[0_0_12px_rgba(var(--primary),0.2)] rounded-full" />
+                                </div>
+                                <p className="text-[10px] font-medium text-muted-foreground leading-relaxed">
+                                    <span className="text-foreground font-bold">{opp?.company}</span> has viewed several applications recently and is actively filtering for this role.
+                                </p>
+                            </div>
                         </div>
 
                         <div className="hidden lg:flex p-3.5 items-start gap-3 bg-muted/10 border border-border border-dashed rounded-xl">
@@ -960,6 +1073,53 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                             </div>
                         )}
                     </aside>
+                </div>
+
+                {/* Related Opportunities - Moved to end for better content flow */}
+                <div className="mt-8 space-y-4">
+                    <div className="flex items-center justify-between px-1">
+                        <h2 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
+                            <span className="w-1 h-4 bg-primary rounded-full" />
+                            Related opportunities
+                        </h2>
+                        <Link href="/opportunities" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">
+                            Explore all →
+                        </Link>
+                    </div>
+
+                    {isLoadingRelated ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="h-24 bg-card border border-border rounded-xl animate-pulse" />
+                            ))}
+                        </div>
+                    ) : relatedOpps.length === 0 ? (
+                        <div className="bg-muted/10 border border-border border-dashed rounded-xl p-6 text-center">
+                            <p className="text-xs text-muted-foreground">No close matches yet. Check full feed for more roles.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {relatedOpps.map((item) => (
+                                <button
+                                    key={item.id}
+                                    onClick={() => router.push(`/opportunities/${item.slug || item.id}`)}
+                                    className="text-left rounded-xl border border-border bg-card hover:border-primary/30 hover:shadow-md p-4 transition-all group"
+                                >
+                                    <p className="text-sm font-bold text-foreground line-clamp-2 group-hover:text-primary transition-colors">{item.title}</p>
+                                    <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{item.company}</p>
+                                    <div className="flex items-center gap-3 mt-3">
+                                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                            <MapPinIcon className="w-3 h-3" />
+                                            {(item.locations || []).join(', ') || 'Remote'}
+                                        </div>
+                                        <div className="flex items-center gap-1 text-[10px] text-primary font-bold uppercase tracking-tighter">
+                                            {item.type}
+                                        </div>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </main>
 

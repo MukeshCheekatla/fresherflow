@@ -2,7 +2,14 @@ import { Opportunity } from '@fresherflow/types';
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { opportunitiesApi } from '@/lib/api/client';
+import { Suspense } from 'react';
 import OpportunityDetailClient from './OpportunityDetailClient';
+import { OpportunityDetailSkeleton } from '@/components/ui/Skeleton';
+
+interface ExtendedOpportunity extends Opportunity {
+    updatedAt?: string | Date;
+    normalizedRole?: string;
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { id: slugOrId } = await params;
 
     try {
-        const { opportunity } = await opportunitiesApi.getById(slugOrId);
+        const { opportunity } = await opportunitiesApi.getById(slugOrId) as { opportunity: ExtendedOpportunity };
 
         const role = opportunity.normalizedRole || opportunity.title;
         const company = opportunity.company;
@@ -147,7 +154,7 @@ export default async function OpportunityDetailPage({ params }: Props) {
     let opportunityData = null;
 
     try {
-        const { opportunity } = await opportunitiesApi.getById(slugOrId);
+        const { opportunity } = await opportunitiesApi.getById(slugOrId) as { opportunity: ExtendedOpportunity };
         opportunityData = opportunity;
 
         // SEO Enforcement: Redirect to slug if ID was used
@@ -166,7 +173,9 @@ export default async function OpportunityDetailPage({ params }: Props) {
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(generateJsonLd(opportunityData)) }}
                 />
             )}
-            <OpportunityDetailClient id={slugOrId} initialData={opportunityData} />
+            <Suspense fallback={<OpportunityDetailSkeleton />}>
+                <OpportunityDetailClient id={slugOrId} initialData={opportunityData} />
+            </Suspense>
         </>
     );
 }

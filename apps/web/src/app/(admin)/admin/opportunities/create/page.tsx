@@ -4,8 +4,49 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import toast from 'react-hot-toast';
 import { adminApi } from '@/lib/api/admin';
+import { Opportunity } from '@fresherflow/types';
+import toast from 'react-hot-toast';
+
+interface ParsedJob {
+    title?: string;
+    company?: string;
+    companyWebsite?: string;
+    type?: string;
+    locations?: string[];
+    skills?: string[];
+    requiredSkills?: string[];
+    experienceMin?: number | string;
+    experienceMax?: number | string;
+    salaryRange?: string;
+    salaryMin?: number;
+    salaryMax?: number;
+    salaryPeriod?: string;
+    jobFunction?: string;
+    employmentType?: string;
+    incentives?: string;
+    allowedDegrees?: string[];
+    allowedCourses?: string[];
+    allowedPassoutYears?: number[];
+    applyLink?: string;
+    expiresAt?: string;
+    venueAddress?: string;
+    venueLink?: string;
+    dateRange?: string;
+    timeRange?: string;
+    requiredDocuments?: string[];
+    contactPerson?: string;
+    contactPhone?: string;
+}
+
+type DuplicateOpportunity = {
+    id: string;
+    title: string;
+    company: string;
+    applyLink?: string;
+    status: string;
+    updatedAt: string;
+};
 import { buildOpportunityPayload } from '../opportunityPayload';
 import { buildShareUrl, type SharePlatform } from '@/lib/share';
 import {
@@ -211,15 +252,8 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
         const timeoutId = setTimeout(async () => {
             try {
                 setCheckingDuplicates(true);
-                const response = await adminApi.getOpportunities({ q: trimmedCompany, limit: 25 });
-                const opportunities = (response?.opportunities || []) as Array<{
-                    id: string;
-                    title: string;
-                    company: string;
-                    applyLink?: string;
-                    status: string;
-                    updatedAt: string;
-                }>;
+                const response = await adminApi.getOpportunities({ q: trimmedCompany, limit: 25 }) as { opportunities: DuplicateOpportunity[] };
+                const opportunities = (response?.opportunities || []);
                 const titleTokens = tokenSet(trimmedTitle);
                 const companyTokens = tokenSet(trimmedCompany);
                 const currentApplyDomain = extractDomain(applyLink);
@@ -258,7 +292,7 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
     const fetchOpportunityForEdit = useCallback(async () => {
         if (!opportunityId) return;
         try {
-            const data = await adminApi.getOpportunity(opportunityId);
+            const data = await adminApi.getOpportunity(opportunityId) as { opportunity: Opportunity };
             const opp = data.opportunity;
 
             setType(opp.type);
@@ -424,7 +458,7 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
         const toastId = toast.loading('Auto-filling from text...');
 
         try {
-            const { parsed } = await adminApi.parseJobText(pastedText);
+            const { parsed } = await adminApi.parseJobText(pastedText) as { parsed: ParsedJob };
 
             if (parsed.title) setTitle(parsed.title);
             if (parsed.company) setCompany(parsed.company);
@@ -739,7 +773,7 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
             if (isEditMode && opportunityId) {
                 await adminApi.updateOpportunity(opportunityId, payload);
             } else {
-                const response = await adminApi.createOpportunity(payload);
+                const response = await adminApi.createOpportunity(payload) as { opportunity: Opportunity };
                 const created = response?.opportunity;
                 if (created?.id || created?.slug) {
                     const listingData = {
@@ -768,7 +802,13 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
             }
         } catch (err: unknown) {
             const error = err as Error;
-            toast.error(`Error: ${error.message}`, { id: loadingToast });
+            let errorMessage = 'An unexpected error occurred.';
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            } else if (typeof err === 'object' && err !== null && 'message' in err) {
+                errorMessage = String((err as { message: unknown }).message);
+            }
+            toast.error(`Error: ${errorMessage}`, { id: loadingToast });
         } finally {
             setIsLoading(false);
         }
@@ -1496,6 +1536,12 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
     );
 }
 
+import { Suspense } from 'react';
+
 export default function CreateOpportunityPage() {
-    return <OpportunityFormPage mode="create" />;
+    return (
+        <Suspense fallback={<div className="p-10 text-center text-muted-foreground animate-pulse">Loading editor...</div>}>
+            <OpportunityFormPage mode="create" />
+        </Suspense>
+    );
 }

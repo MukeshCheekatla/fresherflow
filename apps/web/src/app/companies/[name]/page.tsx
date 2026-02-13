@@ -35,7 +35,7 @@ export default function CompanyProfilePage({ params }: { params: Promise<{ name:
                 const [profileRes, jobsRes] = await Promise.all([
                     companiesApi.getByName(companyName),
                     opportunitiesApi.list({ company: companyName })
-                ]);
+                ]) as [{ company: CompanyProfile }, { opportunities: Opportunity[] }];
                 setProfile(profileRes.company);
                 setJobs(jobsRes.opportunities || []);
             } catch (err) {
