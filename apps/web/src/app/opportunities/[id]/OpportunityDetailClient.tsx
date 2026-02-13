@@ -29,6 +29,7 @@ import { formatSyncTime, getDetailLastSyncAt } from '@/lib/offline/syncStatus';
 import { OpportunityDetailSkeleton } from '@/components/ui/Skeleton';
 import { buildShareUrl } from '@/lib/share';
 import { sanitizeHtml } from '@/lib/sanitize';
+import { analytics } from '@/lib/analytics';
 
 export default function OpportunityDetailClient({ id, initialData }: { id: string; initialData?: Opportunity | null }) {
     const router = useRouter();
@@ -119,10 +120,12 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
     }, []);
 
     useEffect(() => {
-        if (!opp || user || hasTrackedDetailViewRef.current) return;
-        hasTrackedDetailViewRef.current = true;
-        growthApi.trackEvent('DETAIL_VIEW', 'opportunity_detail').catch(() => undefined);
-    }, [opp, user]);
+        if (opp && !hasTrackedDetailViewRef.current) {
+            hasTrackedDetailViewRef.current = true;
+            // Track job view in analytics
+            analytics.jobView(opp.id, opp.company, opp.locations?.[0] || 'Remote');
+        }
+    }, [opp]);
 
     // Auto-track VIEWED action for logged-in users (background, non-blocking)
     useEffect(() => {
@@ -298,17 +301,30 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
     };
 
     const handleApply = async () => {
-        if (!opp || !opp.applyLink) {
-            toastError(new Error('Apply link unavailable for this listing.'));
+        if (!opp) return;
+
+        // Track apply click in analytics
+        analytics.applyClick(opp.id, opp.company, !!opp.applyLink);
+
+        // Track analytics event
+        actionsApi.createOrUpdate(opp.id, ActionType.APPLIED).catch(() => undefined);
+        growthApi.trackEvent('APPLY_CLICK', 'opportunity_detail').catch(() => undefined);
+
+        // Open apply link
+        if (opp.applyLink) {
+            window.open(opp.applyLink, '_blank', 'noopener,noreferrer');
+        } else if (opp.companyWebsite) {
+            window.open(opp.companyWebsite, '_blank', 'noopener,noreferrer');
+        } else {
+            toast.error('No application link available');
             return;
         }
-        growthApi.trackEvent('APPLY_CLICK', 'opportunity_detail').catch(() => undefined);
-        try {
-            await handleSetAction(ActionType.APPLIED);
-            window.open(opp.applyLink, '_blank');
-        } catch {
-            window.open(opp.applyLink, '_blank');
-        }
+
+        // Optimistic UI Update
+        setOpp(prev => prev ? {
+            ...prev,
+            actions: [{ actionType: ActionType.APPLIED as string, actionDate: new Date().toISOString() }]
+        } : null);
     };
 
     const getShareUrl = () => {
