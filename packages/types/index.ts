@@ -50,6 +50,7 @@ export enum ActionType {
     PLANNED = 'PLANNED',
     INTERVIEWED = 'INTERVIEWED',
     SELECTED = 'SELECTED',
+    VIEWED = 'VIEWED',
     // Backward-compatible legacy values
     PLANNING = 'PLANNING',
     ATTENDED = 'ATTENDED',
