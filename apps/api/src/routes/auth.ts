@@ -14,6 +14,22 @@ import { requireAuth } from '../middleware/auth';
 import { AuthService } from '../services/auth.service';
 import { EmailService } from '../services/email.service';
 import { recordAuthSuccess } from '../services/growthFunnel.service';
+import { createRateLimiter } from '../middleware/rateLimit';
+
+// Rate Limiters
+const otpSendLimiter = createRateLimiter({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 5,
+    message: 'Too many verification codes sent. Please try again after an hour.',
+    keyPrefix: 'rate:otp:send'
+});
+
+const authVerifyLimiter = createRateLimiter({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 15,
+    message: 'Too many login attempts. Please try again after an hour.',
+    keyPrefix: 'rate:auth:verify'
+});
 
 const router: Router = express.Router();
 const prisma = new PrismaClient();
@@ -75,7 +91,7 @@ async function setAuthCookies(user: any, res: Response) {
 }
 
 // POST /api/auth/otp/send
-router.post('/otp/send', validate(sendOtpSchema), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/otp/send', otpSendLimiter, validate(sendOtpSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { email } = req.body;
         const code = AuthService.generateOtp(email);
@@ -89,7 +105,7 @@ router.post('/otp/send', validate(sendOtpSchema), async (req: Request, res: Resp
 });
 
 // POST /api/auth/otp/verify
-router.post('/otp/verify', validate(verifyOtpSchema), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/otp/verify', authVerifyLimiter, validate(verifyOtpSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { email, code, source } = req.body;
         const { user, isNewUser } = await AuthService.verifyOtp(email, code);
@@ -107,7 +123,7 @@ router.post('/otp/verify', validate(verifyOtpSchema), async (req: Request, res: 
 });
 
 // POST /api/auth/google
-router.post('/google', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/google', authVerifyLimiter, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { token, source } = req.body;
         if (!token) return next(new AppError('Google token is required', 400));

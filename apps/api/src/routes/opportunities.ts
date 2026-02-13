@@ -1,6 +1,6 @@
 import express, { Router, Request, Response, NextFunction } from 'express';
 import { PrismaClient, OpportunityStatus } from '@prisma/client';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, optionalAuth } from '../middleware/auth';
 import { profileGate } from '../middleware/profileGate';
 import { AppError } from '../middleware/errorHandler';
 import { filterOpportunitiesForUser, rankOpportunitiesForUser, checkEligibility } from '../domain/eligibility';
@@ -18,55 +18,55 @@ function normalizeTypeParam(raw?: string) {
     return raw.toUpperCase();
 }
 
-// GET /api/opportunities - Get filtered// Reading file to check filter logicng)
-router.get('/', requireAuth, profileGate, async (req: Request, res: Response, next: NextFunction) => {
+// GET /api/opportunities - Get filtered opportunities (Publicly accessible with optional personalization)
+router.get('/', optionalAuth, async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { type, category, city, company, closingSoon, relevanceDebug, minSalary, maxSalary } = req.query;
-        const filterType = normalizeTypeParam((type || category) as string | undefined);
+        const { type, city, company, closingSoon, relevanceDebug, minSalary, maxSalary, page = '1', limit = '50' } = req.query;
+        const filterType = normalizeTypeParam((type) as string | undefined);
         const minSal = minSalary ? parseInt(minSalary as string) : undefined;
         const maxSal = maxSalary ? parseInt(maxSalary as string) : undefined;
+        const p = parseInt(page as string) || 1;
+        const l = parseInt(limit as string) || 50;
 
-        // Get user for role check
-        const user = await prisma.user.findUnique({
+        // Get user for role check (Optional)
+        const user = req.userId ? await prisma.user.findUnique({
             where: { id: req.userId },
             include: { profile: true }
-        });
+        }) : null;
 
-        if (!user) return next(new AppError('User not found', 404));
-
-        const isAdmin = user.role === 'ADMIN';
-        const profile = user.profile;
-
-        // Candidate Validation: Must have complete profile
-        if (!isAdmin && (!profile || !profile.gradYear)) {
-            return next(new AppError('Profile incomplete', 400));
-        }
+        const isAdmin = user?.role === 'ADMIN';
+        const profile = user?.profile;
+        const userId = req.userId;
 
         // Stage 1: DB-Level Filtering (Coarse)
-        const dbFiltered = await prisma.opportunity.findMany({
-            where: {
-                status: OpportunityStatus.PUBLISHED,
+        const whereClause = {
+            status: OpportunityStatus.PUBLISHED,
+            OR: [
+                { expiresAt: null },
+                { expiresAt: { gt: new Date() } }
+            ],
+            ...(filterType ? { type: filterType.toUpperCase() as any } : {}),
+            ...(city ? {
+                locations: { has: city as string }
+            } : {}),
+            ...(company ? {
+                company: company as string
+            } : {}),
+            ...(minSal !== undefined ? {
                 OR: [
-                    { expiresAt: null },
-                    { expiresAt: { gt: new Date() } }
-                ],
-                ...(filterType ? { type: filterType.toUpperCase() as any } : {}),
-                ...(city ? {
-                    locations: { has: city as string }
-                } : {}),
-                ...(company ? {
-                    company: company as string
-                } : {}),
-                ...(minSal !== undefined ? {
-                    OR: [
-                        { salaryMin: { gte: minSal } },
-                        { salaryMax: { gte: minSal } }
-                    ]
-                } : {}),
-                ...(maxSal !== undefined ? {
-                    salaryMin: { lte: maxSal }
-                } : {}),
-            },
+                    { salaryMin: { gte: minSal } },
+                    { salaryMax: { gte: minSal } }
+                ]
+            } : {}),
+            ...(maxSal !== undefined ? {
+                salaryMin: { lte: maxSal }
+            } : {}),
+        };
+
+        const totalAvailable = await prisma.opportunity.count({ where: whereClause });
+
+        const dbFiltered = await prisma.opportunity.findMany({
+            where: whereClause,
             include: {
                 walkInDetails: true,
                 user: {
@@ -74,16 +74,20 @@ router.get('/', requireAuth, profileGate, async (req: Request, res: Response, ne
                         fullName: true
                     }
                 },
-                actions: {
-                    where: { userId: req.userId }
-                },
-                savedBy: {
-                    where: { userId: req.userId }
-                }
+                ...(userId ? {
+                    actions: {
+                        where: { userId }
+                    },
+                    savedBy: {
+                        where: { userId }
+                    }
+                } : {})
             },
             orderBy: {
                 postedAt: 'desc'
-            }
+            },
+            take: l,
+            skip: (p - 1) * l
         });
 
         // Map results to include isSaved flag
@@ -124,6 +128,9 @@ router.get('/', requireAuth, profileGate, async (req: Request, res: Response, ne
         res.json({
             opportunities: sorted,
             count: sorted.length,
+            total: totalAvailable,
+            page: p,
+            limit: l,
             ...(includeRelevanceDebug ? { relevanceDebug: debug } : {})
         });
     } catch (error) {

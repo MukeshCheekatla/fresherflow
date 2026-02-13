@@ -11,6 +11,22 @@ declare global {
     }
 }
 
+// Optional User Authentication Middleware
+export function optionalAuth(req: Request, res: Response, next: NextFunction) {
+    const token = req.cookies.accessToken;
+    if (token) {
+        try {
+            const userId = verifyAccessToken(token);
+            if (userId) {
+                req.userId = userId;
+            }
+        } catch {
+            // Ignore token verification errors for optional auth
+        }
+    }
+    next();
+}
+
 // User Authentication Middleware
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
     // Cookie-based auth only

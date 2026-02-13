@@ -131,6 +131,20 @@ router.get('/overview', requireAdmin, async (req: Request, res: Response, next: 
             }
         });
 
+        // 8. Growth Funnel Stats (Last 30 days)
+        const growthStats = await prisma.growthEvent.groupBy({
+            by: ['event'],
+            _count: true,
+            where: {
+                createdAt: { gte: thirtyDaysAgo }
+            }
+        });
+
+        const funnel: Record<string, number> = {};
+        growthStats.forEach(stat => {
+            funnel[stat.event] = stat._count;
+        });
+
         res.json({
             linkHealth: healthDistribution,
             opportunityStatus: statusDistribution,
@@ -141,6 +155,7 @@ router.get('/overview', requireAdmin, async (req: Request, res: Response, next: 
             },
             typeDistribution: typeStats.map(t => ({ type: t.type, count: t._count })),
             feedback: feedbackDistribution,
+            funnel,
             urgent: {
                 closingSoon48h: closingSoonCount,
                 brokenLinks: healthDistribution.broken
