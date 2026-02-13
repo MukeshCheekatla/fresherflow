@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { toastError } from '@/lib/utils/error';
 import {
     EnvelopeIcon,
     ArrowPathIcon,
@@ -27,7 +28,17 @@ import LoadingScreen from '@/components/ui/LoadingScreen';
 
 type LoginStep = 'email' | 'otp';
 
+import { Suspense } from 'react';
+
 export default function LoginPage() {
+    return (
+        <Suspense fallback={<LoadingScreen />}>
+            <LoginContent />
+        </Suspense>
+    );
+}
+
+function LoginContent() {
     const { email, setEmail } = useAuthFormData();
     const [otp, setOtp] = useState('');
     const [step, setStep] = useState<LoginStep>('email');
@@ -95,10 +106,16 @@ export default function LoginPage() {
         }
     }, [loginWithGoogle, router, source]);
 
+    const intent = searchParams.get('intent');
+
     useEffect(() => {
-        if (!source) return;
-        growthApi.trackEvent('LOGIN_VIEW', source).catch(() => undefined);
-    }, [source]);
+        const trackSource = source || 'unknown';
+        if (intent === 'signup') {
+            growthApi.trackEvent('SIGNUP_VIEW', trackSource).catch(() => undefined);
+        } else {
+            growthApi.trackEvent('LOGIN_VIEW', trackSource).catch(() => undefined);
+        }
+    }, [source, intent]);
 
     // Initialize Google Login - robust version with cleanup
     useEffect(() => {
@@ -110,11 +127,11 @@ export default function LoginPage() {
         const initGoogle = () => {
             if (!mounted) return;
 
-                const googleBtn = document.getElementById(googleBtnId);
-                if (!googleBtn) {
-                    setTimeout(initGoogle, 100);
-                    return;
-                }
+            const googleBtn = document.getElementById(googleBtnId);
+            if (!googleBtn) {
+                setTimeout(initGoogle, 100);
+                return;
+            }
 
             try {
                 googleBtn.innerHTML = '';
@@ -157,7 +174,7 @@ export default function LoginPage() {
             toast.success('Code sent to your email!', { id: loadingToast });
             setStep('otp');
         } catch (err: unknown) {
-            toast.error((err as Error).message || 'Failed to send code.', { id: loadingToast });
+            toastError(err, 'Failed to send code.', { id: loadingToast });
         }
     };
 
@@ -169,7 +186,7 @@ export default function LoginPage() {
             router.push('/dashboard');
         } catch (err: unknown) {
             setIsProcessing(false);
-            toast.error((err as Error).message || 'Invalid or expired code.');
+            toastError(err, 'Invalid or expired code.');
         }
     };
 

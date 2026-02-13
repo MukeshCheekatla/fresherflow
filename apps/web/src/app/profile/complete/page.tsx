@@ -355,7 +355,7 @@ export default function ProfileCompletePage() {
                                                 </div>
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Year of Passing</label>
-                                                    <Input type="text" maxLength={4} value={tenthYear} onChange={(e) => setTenthYear(e.target.value.replace(/\D/g, ''))} placeholder="Year" />
+                                                    <Input type="text" maxLength={4} value={tenthYear} onChange={(e) => setTenthYear(e.target.value.replace(/\D/g, ''))} placeholder="Enter your 10th year" />
                                                 </div>
                                             </div>
 
@@ -366,7 +366,7 @@ export default function ProfileCompletePage() {
                                                 </div>
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Year of Passing</label>
-                                                    <Input type="text" maxLength={4} value={twelfthYear} onChange={(e) => setTwelfthYear(e.target.value.replace(/\D/g, ''))} placeholder="2020" />
+                                                    <Input type="text" maxLength={4} value={twelfthYear} onChange={(e) => setTwelfthYear(e.target.value.replace(/\D/g, ''))} placeholder="Enter your 12th year" />
                                                 </div>
                                             </div>
                                         </div>
@@ -419,7 +419,7 @@ export default function ProfileCompletePage() {
 
                                             <div className="space-y-2">
                                                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">UG Passout Year</label>
-                                                <Input type="text" maxLength={4} value={gradYear} onChange={(e) => setGradYear(e.target.value.replace(/\D/g, ''))} placeholder="2024" />
+                                                <Input type="text" maxLength={4} value={gradYear} onChange={(e) => setGradYear(e.target.value.replace(/\D/g, ''))} placeholder="Enter your UG year" />
                                             </div>
                                         </div>
 
@@ -450,7 +450,7 @@ export default function ProfileCompletePage() {
                                                 </div>
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">PG Passout Year</label>
-                                                    <Input type="text" maxLength={4} value={pgYear} onChange={(e) => setPgYear(e.target.value.replace(/\D/g, ''))} placeholder="2026" />
+                                                    <Input type="text" maxLength={4} value={pgYear} onChange={(e) => setPgYear(e.target.value.replace(/\D/g, ''))} placeholder="Enter your PG year" />
                                                 </div>
                                             </div>
                                         )}
@@ -465,13 +465,13 @@ export default function ProfileCompletePage() {
                                     <div className="space-y-7 animate-in fade-in slide-in-from-right-4 duration-500">
                                         <div className="space-y-4">
                                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Stream Selection</p>
-                                            <div className="flex flex-wrap gap-2">
+                                            <div className="flex flex-wrap gap-3">
                                                 {OPPORTUNITY_TYPES.map(type => (
                                                     <button
                                                         key={type}
                                                         onClick={() => toggleArrayItem(interestedIn, setInterestedIn, type)}
                                                         className={cn(
-                                                            "h-9 rounded-xl font-bold border-2 transition-all text-[10px] uppercase tracking-widest",
+                                                            "px-6 h-10 rounded-xl font-bold border-2 transition-all text-[11px] uppercase tracking-widest",
                                                             interestedIn.includes(type) ? "bg-primary border-primary text-primary-foreground shadow-lg" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/40"
                                                         )}
                                                     >
@@ -483,11 +483,11 @@ export default function ProfileCompletePage() {
 
                                         <div className="space-y-4">
                                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Work Mode</p>
-                                            <div className="flex flex-wrap gap-2">
+                                            <div className="flex flex-wrap gap-3">
                                                 {WORK_MODES.map(t => (
                                                     <button
                                                         key={t} onClick={() => toggleArrayItem(workModes, setWorkModes, t)}
-                                                        className={cn("px-5 h-9 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all border", workModes.includes(t) ? "bg-foreground text-background border-foreground shadow-lg" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/50")}
+                                                        className={cn("px-6 h-10 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all border-2", workModes.includes(t) ? "bg-foreground text-background border-foreground shadow-lg" : "bg-muted/50 border-border text-muted-foreground hover:border-primary/50")}
                                                     >
                                                         {t}
                                                     </button>
@@ -498,17 +498,34 @@ export default function ProfileCompletePage() {
                                         <div className="space-y-4">
                                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Preferred Locations</p>
                                             <div className="flex gap-2">
-                                                <input
-                                                    placeholder="Type city and hit Enter"
-                                                    onKeyPress={(e) => {
-                                                        if (e.key === 'Enter') {
-                                                            const val = (e.target as HTMLInputElement).value;
-                                                            if (val) { toggleArrayItem(preferredCities, setPreferredCities, val); (e.target as HTMLInputElement).value = ''; }
+                                                <div className="relative flex-1">
+                                                    <Input
+                                                        id="city-input"
+                                                        placeholder="e.g. Hyderabad, Bangalore"
+                                                        className="premium-input h-11! text-sm"
+                                                        onKeyPress={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                const val = (e.currentTarget as HTMLInputElement).value;
+                                                                if (val) { toggleArrayItem(preferredCities, setPreferredCities, val); (e.currentTarget as HTMLInputElement).value = ''; }
+                                                            }
+                                                        }}
+                                                    />
+                                                </div>
+                                                <Button
+                                                    variant="outline"
+                                                    className="h-11 px-6 font-bold uppercase tracking-widest text-[10px]"
+                                                    onClick={() => {
+                                                        const input = document.getElementById('city-input') as HTMLInputElement;
+                                                        if (input.value) {
+                                                            toggleArrayItem(preferredCities, setPreferredCities, input.value);
+                                                            input.value = '';
                                                         }
                                                     }}
-                                                    className="premium-input h-9! text-[11px]"
-                                                />
+                                                >
+                                                    Add City
+                                                </Button>
                                             </div>
+                                            <p className="text-[9px] font-bold text-muted-foreground uppercase ml-1">Type a city and click Add or hit Enter.</p>
                                             <div className="flex flex-wrap gap-2 min-h-6">
                                                 {preferredCities.map(c => (
                                                     <span key={c} className="bg-primary text-primary-foreground px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 shadow-lg shadow-primary/20">
