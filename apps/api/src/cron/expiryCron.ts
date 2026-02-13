@@ -189,6 +189,7 @@ export function startExpiryCron() {
             });
 
         } catch (error) {
+            import('@sentry/node').then(Sentry => Sentry.captureException(error));
             logger.error('Expiry cron job failed', {
                 error: error instanceof Error ? error.message : 'Unknown error',
                 stack: error instanceof Error ? error.stack : undefined

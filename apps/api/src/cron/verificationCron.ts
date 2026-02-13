@@ -25,6 +25,8 @@ export function startVerificationCron() {
             logger.info('Verification cron completed', result);
         } catch (error) {
             logger.error('Verification cron failed', error);
+            const Sentry = await import('@sentry/node');
+            Sentry.captureException(error);
         } finally {
             isRunning = false;
         }

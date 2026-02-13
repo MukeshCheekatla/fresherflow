@@ -25,6 +25,8 @@ export function startAlertsCron() {
             logger.info('Alerts cron completed', result);
         } catch (error) {
             logger.error('Alerts cron failed', error);
+            const Sentry = await import('@sentry/node');
+            Sentry.captureException(error);
         } finally {
             isRunning = false;
         }
