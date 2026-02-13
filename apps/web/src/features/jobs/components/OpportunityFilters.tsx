@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 const LOCATIONS = ['Bangalore', 'Mumbai', 'Delhi', 'Hyderabad', 'Pune', 'Remote'];
 
 interface OpportunityFiltersProps {
+    id?: string;
     selectedLoc: string | null;
     setSelectedLoc: (loc: string | null) => void;
     closingSoon: boolean;
@@ -26,6 +27,7 @@ const SALARY_RANGES = [
 ];
 
 export function OpportunityFilters({
+    id,
     selectedLoc,
     setSelectedLoc,
     closingSoon,
@@ -37,7 +39,7 @@ export function OpportunityFilters({
     className
 }: OpportunityFiltersProps) {
     return (
-        <aside className={cn("space-y-6", className)}>
+        <aside id={id} className={cn("space-y-6", className)}>
             <div className="bg-card/80 rounded-2xl border border-border p-4 md:p-5 space-y-6">
                 <div>
                     <div className="flex items-center justify-between mb-4">

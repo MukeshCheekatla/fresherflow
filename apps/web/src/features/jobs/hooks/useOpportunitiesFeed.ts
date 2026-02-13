@@ -4,7 +4,7 @@ import { opportunitiesApi, savedApi } from '@/lib/api/client';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { mergeFeedCache, readFeedCache, saveFeedCache } from '@/lib/offline/opportunitiesFeedCache';
+import { readFeedCache, saveFeedCache } from '@/lib/offline/opportunitiesFeedCache';
 
 interface UseOpportunitiesFeedOptions {
     type?: string | null;
@@ -28,81 +28,103 @@ export function useOpportunitiesFeed({
     const { user, isLoading: authLoading } = useAuth();
     const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
     const [totalCount, setTotalCount] = useState(0);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [usingCachedFeed, setUsingCachedFeed] = useState(false);
     const [cachedAt, setCachedAt] = useState<number | null>(null);
     const [profileIncomplete, setProfileIncomplete] = useState<{ percentage: number; message: string } | null>(null);
-    const hydratedFullCacheRef = useRef(false);
+    const lastRequestTimestamp = useRef(0);
     const debouncedSearch = useDebounce(search, 300);
 
-    const loadOpportunities = useCallback(async () => {
-        if (!user || authLoading) return;
+    const loadOpportunities = useCallback(async (pageNum = 1, append = false) => {
+        if (authLoading) return;
+        const timestamp = Date.now();
+        lastRequestTimestamp.current = timestamp;
+
         setIsLoading(true);
         setProfileIncomplete(null);
         setError(null);
         setUsingCachedFeed(false);
+
         try {
-            let data;
+            interface FeedResponse {
+                opportunities: Opportunity[];
+                total?: number;
+                count?: number;
+                limit?: number;
+            }
+            let data: FeedResponse;
             if (showOnlySaved) {
-                data = await savedApi.list();
+                if (!user) {
+                    setError('Please log in to view saved opportunities');
+                    setOpportunities([]);
+                    setTotalCount(0);
+                    setIsLoading(false);
+                    return;
+                }
+                data = (await savedApi.list()) as FeedResponse;
                 if (type) {
                     data.opportunities = data.opportunities?.filter((opp: Opportunity) => opp.type === type) || [];
                 }
             } else {
-                data = await opportunitiesApi.list({
+                data = (await opportunitiesApi.list({
                     type: type || undefined,
                     city: selectedLoc || undefined,
                     minSalary: minSalary || undefined,
                     maxSalary: maxSalary || undefined,
-                    closingSoon: closingSoon || undefined
-                });
+                    closingSoon: closingSoon || undefined,
+                    page: pageNum
+                })) as FeedResponse;
             }
-            setOpportunities(data.opportunities || []);
-            setTotalCount(data.count || data.opportunities?.length || 0);
-            if (!showOnlySaved) {
-                saveFeedCache(data.opportunities || [], data.count || data.opportunities?.length || 0);
-                // Deep offline catalog: merge full feed snapshot so offline search/filter works beyond current view.
-                const hasActiveQuery = Boolean(type || selectedLoc);
-                if (hasActiveQuery && !hydratedFullCacheRef.current && typeof navigator !== 'undefined' && navigator.onLine) {
-                    try {
-                        const fullData = await opportunitiesApi.list();
-                        mergeFeedCache(fullData.opportunities || [], fullData.count || fullData.opportunities?.length || 0);
-                        hydratedFullCacheRef.current = true;
-                    } catch {
-                        // Keep primary fetch successful even if catalog hydration fails.
-                    }
-                }
+
+            // Freshness check: only update if this is the most recent request
+            if (lastRequestTimestamp.current !== timestamp) return;
+
+            const newOpps = data.opportunities || [];
+            setOpportunities(prev => append ? [...prev, ...newOpps] : newOpps);
+            setTotalCount(data.total || data.count || (append ? opportunities.length + newOpps.length : newOpps.length));
+            setHasMore(newOpps.length >= (data.limit || 50));
+            setPage(pageNum);
+
+            if (!showOnlySaved && pageNum === 1) {
+                saveFeedCache(newOpps, data.total || data.count || newOpps.length);
                 setCachedAt(Date.now());
             }
         } catch (err: unknown) {
-            const error = err as { code?: string; completionPercentage?: number; message?: string };
-            if (error.code === 'PROFILE_INCOMPLETE') {
+            if (lastRequestTimestamp.current !== timestamp) return;
+            const errorObj = err as { code?: string; completionPercentage?: number; message?: string };
+            if (errorObj.code === 'PROFILE_INCOMPLETE') {
                 setProfileIncomplete({
-                    percentage: error.completionPercentage || 0,
-                    message: error.message || 'Complete your profile to access job listings'
+                    percentage: errorObj.completionPercentage || 0,
+                    message: errorObj.message || 'Complete your profile to access job listings'
                 });
             } else {
                 const cached = readFeedCache();
-                if (cached && !showOnlySaved) {
+                if (cached && !showOnlySaved && pageNum === 1) {
                     setOpportunities(cached.opportunities);
                     setTotalCount(cached.count || cached.opportunities.length);
                     setUsingCachedFeed(true);
                     setCachedAt(cached.cachedAt);
+                    setHasMore(false);
                     toast.success('Offline mode: showing cached feed.');
                 } else {
-                    const message = error.message || 'Failed to load feed';
-                    setError(message);
-                    toast.error(message);
+                    const { getErrorMessage } = await import('@/lib/utils/error');
+                    const msg = getErrorMessage(err);
+                    setError(msg);
+                    toast.error(msg);
                 }
             }
         } finally {
-            setIsLoading(false);
+            if (lastRequestTimestamp.current === timestamp) {
+                setIsLoading(false);
+            }
         }
-    }, [type, selectedLoc, user, authLoading, showOnlySaved, minSalary, maxSalary, closingSoon]);
+    }, [type, selectedLoc, user, authLoading, showOnlySaved, minSalary, maxSalary, closingSoon, opportunities.length]);
 
     useEffect(() => {
-        if (!authLoading && user) {
+        if (!authLoading) {
             loadOpportunities();
         }
     }, [loadOpportunities, authLoading, user, showOnlySaved]);
@@ -131,19 +153,48 @@ export function useOpportunitiesFeed({
     }, [opportunities, debouncedSearch, selectedLoc, closingSoon, minSalary, maxSalary]);
 
     const toggleSave = async (opportunityId: string) => {
+        if (!user) {
+            toast.error('Please log in to save opportunities');
+            return;
+        }
         if (typeof navigator !== 'undefined' && !navigator.onLine) {
             toast.error('You are offline. Reconnect to update saved listings.');
             return;
         }
+
+        // OPTIMISTIC UPDATE: Update UI immediately
+        const previousState = [...opportunities];
+        const newSavedState = !opportunities.find(o => o.id === opportunityId)?.isSaved;
+
+        setOpportunities(prev => prev.map(opp =>
+            opp.id === opportunityId
+                ? { ...opp, isSaved: newSavedState }
+                : opp
+        ));
+
+        // Background sync
         try {
-            const result = await savedApi.toggle(opportunityId);
-            setOpportunities(prev => prev.map(opp =>
-                opp.id === opportunityId
-                    ? { ...opp, isSaved: result.saved }
-                    : opp
-            ));
-        } catch {
-            toast.error('Failed to update bookmark');
+            const result = await savedApi.toggle(opportunityId) as { saved: boolean };
+
+            // Verify sync result matches optimistic state
+            if (result.saved !== newSavedState) {
+                setOpportunities(prev => prev.map(opp =>
+                    opp.id === opportunityId
+                        ? { ...opp, isSaved: result.saved }
+                        : opp
+                ));
+            }
+
+            if (result.saved) {
+                import('@/lib/api/client').then(({ growthApi }) => {
+                    growthApi.trackEvent('SAVE_JOB', 'opportunity_feed').catch(() => undefined);
+                });
+            }
+        } catch (err: unknown) {
+            // ROLLBACK: Revert to previous state on error
+            setOpportunities(previousState);
+            const { getErrorMessage } = await import('@/lib/utils/error');
+            toast.error(getErrorMessage(err) || 'Failed to update bookmark');
         }
     };
 
@@ -151,6 +202,8 @@ export function useOpportunitiesFeed({
         opportunities,
         filteredOpps,
         totalCount,
+        page,
+        hasMore,
         isLoading,
         error,
         usingCachedFeed,
@@ -158,6 +211,7 @@ export function useOpportunitiesFeed({
         profileIncomplete,
         toggleSave,
         setOpportunities,
-        reload: loadOpportunities,
+        reload: () => loadOpportunities(1, false),
+        loadMore: () => hasMore && !isLoading && loadOpportunities(page + 1, true),
     };
 }

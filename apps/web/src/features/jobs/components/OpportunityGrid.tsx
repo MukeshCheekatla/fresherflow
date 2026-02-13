@@ -47,7 +47,7 @@ export function OpportunityGrid({
 
     if (isLoading) {
         return (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6" role="status" aria-label="Loading opportunities">
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
                     <SkeletonJobCard key={item} />
                 ))}
@@ -89,7 +89,7 @@ export function OpportunityGrid({
             <div className={cn(
                 "grid grid-cols-1 md:grid-cols-2 gap-3.5 md:gap-6",
                 isFilterOpen ? "lg:grid-cols-2 xl:grid-cols-3" : "lg:grid-cols-3 xl:grid-cols-4"
-            )}>
+            )} role="list" aria-label="Job listings">
                 {visibleOpportunities.map((opp) => (
                     <JobCard
                         key={opp.id}
