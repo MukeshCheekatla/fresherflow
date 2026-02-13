@@ -520,9 +520,10 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
 
                 {/* Navigation & Actions Top Bar */}
                 <div className="flex items-center justify-between">
-                    <Link href="/opportunities" className="group/back flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-all">
-                        <ArrowLeftIcon className="w-3.5 h-3.5 group-hover/back:-translate-x-0.5 transition-all" />
-                        Back to feed
+                    <Link href="/opportunities" className="group/back flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-foreground/70 hover:text-primary transition-all p-2 -ml-2 rounded-lg hover:bg-muted/50">
+                        <ArrowLeftIcon className="w-4 h-4 group-hover/back:-translate-x-0.5 transition-all" />
+                        <span className="hidden sm:inline">Explore Jobs</span>
+                        <span className="sm:hidden">Back</span>
                     </Link>
 
                     <div className="flex items-center gap-1.5">
@@ -951,27 +952,8 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3 relative overflow-hidden group">
-                            {/* Visual Polish for Guest Mode */}
-                            {!user && (
-                                <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center p-6 text-center space-y-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                    <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
-                                        <ShieldCheckIcon className="w-5 h-5 text-primary" />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <p className="text-[11px] font-bold uppercase tracking-tight text-foreground">Member Feature</p>
-                                        <p className="text-[10px] text-muted-foreground px-4 leading-tight">Track, save, and manage your applications in one place.</p>
-                                    </div>
-                                    <Link
-                                        href={loginFromDetailHref}
-                                        className="h-8 px-5 bg-primary text-primary-foreground rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center justify-center shadow-lg hover:shadow-primary/20 transition-all"
-                                    >
-                                        Join to Track
-                                    </Link>
-                                </div>
-                            )}
-
-                            <div className={cn("space-y-3", !user && "filter blur-[0.4px] select-none opacity-80")}>
+                        <div className="bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3">
+                            <div className="space-y-3">
                                 <div className="space-y-2">
                                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
                                         Track your progress
@@ -1004,18 +986,23 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                     <div className="space-y-2">
                                         <Button
                                             onClick={handleApply}
-                                            className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg flex items-center justify-center gap-2 text-sm font-bold uppercase tracking-tight shadow-md"
+                                            className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl flex items-center justify-center gap-2 text-base font-bold uppercase tracking-tight shadow-lg hover:shadow-xl transition-all"
                                         >
                                             Apply Now
-                                            <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                                            <ArrowTopRightOnSquareIcon className="w-5 h-5" />
                                         </Button>
                                     </div>
                                 )}
 
                                 <div className="grid grid-cols-1 gap-2">
                                     <button
-                                        onClick={handleToggleSave}
-                                        disabled={!user}
+                                        onClick={() => {
+                                            if (!user) {
+                                                router.push(loginFromDetailHref);
+                                                return;
+                                            }
+                                            handleToggleSave();
+                                        }}
                                         className={cn(
                                             "flex items-center justify-center gap-2 h-9 rounded-lg border transition-all text-[10px] font-bold uppercase",
                                             opp.isSaved ? "bg-primary/10 text-primary border-primary/20" : "bg-muted/30 border-border text-muted-foreground hover:bg-muted/50"
@@ -1025,6 +1012,13 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                         {opp.isSaved ? 'Saved' : 'Save'}
                                     </button>
                                 </div>
+                                {!user && (
+                                    <p className="text-[10px] text-center text-muted-foreground leading-relaxed">
+                                        <Link href={loginFromDetailHref} className="text-primary hover:underline font-semibold">
+                                            Create account
+                                        </Link> to track and save jobs
+                                    </p>
+                                )}
                             </div>
 
                             <div className="pt-3 border-t border-border flex items-center justify-between">
