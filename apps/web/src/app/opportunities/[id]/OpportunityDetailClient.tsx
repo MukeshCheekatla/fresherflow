@@ -307,7 +307,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
         analytics.applyClick(opp.id, opp.company, !!opp.applyLink);
 
         // Track analytics event
-        actionsApi.createOrUpdate(opp.id, ActionType.APPLIED).catch(() => undefined);
+        actionsApi.track(opp.id, ActionType.APPLIED).catch(() => undefined);
         growthApi.trackEvent('APPLY_CLICK', 'opportunity_detail').catch(() => undefined);
 
         // Open apply link
@@ -317,14 +317,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
             window.open(opp.companyWebsite, '_blank', 'noopener,noreferrer');
         } else {
             toast.error('No application link available');
-            return;
         }
-
-        // Optimistic UI Update
-        setOpp(prev => prev ? {
-            ...prev,
-            actions: [{ actionType: ActionType.APPLIED as string, actionDate: new Date().toISOString() }]
-        } : null);
     };
 
     const getShareUrl = () => {
