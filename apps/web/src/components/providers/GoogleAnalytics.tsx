@@ -24,8 +24,18 @@ export default function GoogleAnalytics({ ga_id }: { ga_id: string }) {
     return (
         <>
             <Script
+                id="gtag-script"
                 strategy="afterInteractive"
-                src={`https://www.googletagmanager.com/gtag/js?id=${ga_id}`}
+                dangerouslySetInnerHTML={{
+                    __html: `
+            (function() {
+              var script = document.createElement('script');
+              script.async = true;
+              script.src = 'https://www.googletagmanager.com/gtag/js?id=${ga_id}';
+              document.head.appendChild(script);
+            })();
+          `,
+                }}
             />
             <Script
                 id="gtag-init"
