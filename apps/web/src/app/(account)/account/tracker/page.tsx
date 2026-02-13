@@ -56,7 +56,7 @@ export default function AccountTrackerPage() {
 
     const loadData = async () => {
         try {
-            const data = await actionsApi.list();
+            const data = await actionsApi.list() as { actions: ActionRecord[] };
             setActions(data.actions || []);
         } catch {
             toast.error('Unable to load tracker right now.');

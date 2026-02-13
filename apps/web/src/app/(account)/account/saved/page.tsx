@@ -22,7 +22,7 @@ export default function SavedJobsPage() {
     const loadSavedJobs = useCallback(async () => {
         setFetchingJobs(true);
         try {
-            const data = await savedApi.list();
+            const data = await savedApi.list() as { opportunities: Opportunity[] };
             setSavedJobs(data.opportunities || []);
         } catch (err) {
             console.error('Error loading saved jobs:', err);
