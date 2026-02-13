@@ -17,6 +17,7 @@
     "@heroicons/react": "^2.2.0",
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-slot": "^1.2.4",
+    "@sentry/nextjs": "^10.38.0",
     "@simplewebauthn/browser": "^13.2.2",
     "@types/dompurify": "^3.0.5",
     "@vercel/analytics": "^1.6.1",
