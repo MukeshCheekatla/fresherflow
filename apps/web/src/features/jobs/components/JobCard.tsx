@@ -11,6 +11,7 @@ import { BookmarkIcon as BookmarkSolidIcon } from '@heroicons/react/24/solid';
 import ShareIcon from '@heroicons/react/24/outline/ShareIcon';
 import CompanyLogo from '@/components/ui/CompanyLogo';
 import toast from 'react-hot-toast';
+import { toastError } from '@/lib/utils/error';
 
 /**
  * JobCard - REFINED TYPOGRAPHY PATTERN
@@ -87,20 +88,24 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
             url: shareUrl,
         };
 
+        import('@/lib/api/client').then(({ growthApi }) => {
+            growthApi.trackEvent('SHARE_JOB', 'opportunity_card').catch(() => undefined);
+        });
+
         if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
             try {
                 await navigator.share(shareData);
             } catch (err) {
                 if ((err as Error).name !== 'AbortError') {
-                    toast.error('Failed to share');
+                    toastError(err, 'Failed to share');
                 }
             }
         } else {
             try {
                 await navigator.clipboard.writeText(shareUrl);
                 toast.success('Link copied to clipboard!');
-            } catch {
-                toast.error('Failed to copy link');
+            } catch (err) {
+                toastError(err, 'Failed to copy link');
             }
         }
     };
@@ -299,13 +304,13 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
                         <span>Verified</span>
                     </div>
                     {isApplied && (
-                        <span className="px-2 py-0.5 bg-muted/60 text-foreground rounded text-[10px] font-bold border border-border uppercase">
-                            Tracked
+                        <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-bold border border-primary/20 uppercase">
+                            Applied
                         </span>
                     )}
                 </div>
                 <div className="flex items-center gap-1 text-primary text-[11px] font-bold uppercase tracking-widest group-hover:translate-x-0.5 transition-transform duration-300">
-                    <span>{isApplied ? 'Track App' : 'Apply Now'}</span>
+                    <span>{isApplied ? 'View Status' : 'Apply Now'}</span>
                     <ChevronRightIcon className="w-3.5 h-3.5" aria-hidden="true" />
                 </div>
             </div>

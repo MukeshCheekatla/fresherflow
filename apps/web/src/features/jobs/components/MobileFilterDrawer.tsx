@@ -4,7 +4,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const LOCATIONS = ['Bangalore', 'Mumbai', 'Delhi', 'Hyderabad', 'Pune', 'Remote'];
 
@@ -61,26 +61,45 @@ export function MobileFilterDrawer({
         setTouchStart(null);
     };
 
+    // Basic focus management
+    useEffect(() => {
+        if (isOpen) {
+            // Give the browser a moment to render then focus close button for accessibility
+            const timer = setTimeout(() => {
+                const btn = document.getElementById('close-filters-btn');
+                btn?.focus();
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 lg:hidden">
-            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose} />
+        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-labelledby="filter-drawer-title">
             <div
-                className="absolute inset-x-3 top-6 bottom-6 overflow-auto rounded-2xl border border-border bg-card p-4 shadow-2xl"
+                className="absolute inset-0 bg-background/40 backdrop-blur-md transition-opacity duration-300 animate-in fade-in"
+                onClick={onClose}
+            />
+            <div
+                className="absolute inset-x-3 top-10 bottom-10 overflow-auto rounded-3xl border border-border/50 bg-card/90 backdrop-blur-xl p-5 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] animate-in slide-in-from-bottom-10 duration-300"
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
             >
                 {/* Visual affordance for swipe */}
-                <div className="flex justify-center mb-2">
-                    <div className="w-10 h-1 rounded-full bg-border" />
+                <div className="flex justify-center mb-4">
+                    <div className="w-12 h-1.5 rounded-full bg-muted shadow-inner" />
                 </div>
 
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-bold tracking-tight text-foreground">Filters</h3>
+                <div className="flex items-center justify-between mb-6">
+                    <div className="space-y-0.5">
+                        <h3 className="text-lg font-bold tracking-tight text-foreground">Filters</h3>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Tailor your feed</p>
+                    </div>
                     <button
+                        id="close-filters-btn"
                         onClick={onClose}
-                        className="h-10 w-10 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:bg-muted"
+                        className="h-10 w-10 rounded-xl border border-border bg-background/50 flex items-center justify-center text-muted-foreground hover:bg-muted focus:ring-2 focus:ring-primary outline-none transition-all"
                         aria-label="Close filters"
                     >
                         <XMarkIcon className="w-5 h-5" />
