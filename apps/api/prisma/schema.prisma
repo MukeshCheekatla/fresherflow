@@ -39,6 +39,7 @@ enum ActionType {
   PLANNED
   INTERVIEWED
   SELECTED
+  VIEWED  // Auto-tracked on job detail view
   // Legacy values kept for compatibility with existing rows
   PLANNING
   ATTENDED
@@ -93,6 +94,10 @@ enum GrowthFunnelEvent {
   LOGIN_VIEW
   AUTH_SUCCESS
   SIGNUP_SUCCESS
+  SAVE_JOB
+  APPLY_CLICK
+  SHARE_JOB
+  SIGNUP_VIEW
 }
 
 enum AlertChannel {
@@ -105,6 +110,7 @@ enum AlertKind {
   CLOSING_SOON
   HIGHLIGHT
   APP_UPDATE
+  NEW_JOB  // Instant alert when new opportunity is published
 }
 
 // ============================================================================
@@ -312,11 +318,15 @@ model Opportunity {
 
   // DB-level filtering indexes
   @@index([status, deletedAt, type, postedAt(desc)])
-  @@index([allowedPassoutYears])
-  @@index([allowedDegrees])
-  @@index([allowedCourses])
-  @@index([requiredSkills])
-  @@index([locations])
+  @@index([status, postedAt(desc)])
+  @@index([allowedPassoutYears], type: Gin)
+  @@index([allowedDegrees], type: Gin)
+  @@index([allowedCourses], type: Gin)
+  @@index([locations], type: Gin)
+  @@index([requiredSkills], type: Gin)
+  @@index([salaryMin, salaryMax])
+  @@index([company])
+  @@index([slug])
   @@index([expiresAt]) // Performance for expiry cron
   @@index([deletedAt]) // Exclude soft-deleted in queries
   @@index([linkHealth]) // Focus for verification bot
@@ -424,6 +434,7 @@ model GrowthEvent {
 
   @@index([createdAt])
   @@index([source, event])
+  @@index([source, createdAt])
 }
 
 model AlertDelivery {

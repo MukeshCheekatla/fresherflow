@@ -7,7 +7,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
-// import * as Sentry from '@sentry/node'; // Disabled for first run
+import * as Sentry from '@sentry/node';
 import { requestIdMiddleware } from './middleware/requestId';
 import { errorHandler } from './middleware/errorHandler';
 import { observabilityMiddleware } from './middleware/observability';
@@ -16,6 +16,7 @@ import httpLogger from './middleware/httpLogger';
 import { startExpiryCron } from './cron/expiryCron';
 import { startVerificationCron } from './cron/verificationCron';
 import { startAlertsCron } from './cron/alertsCron';
+import { csrfGate } from './middleware/csrf';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -72,18 +73,13 @@ if (process.env.NODE_ENV === 'production') {
 // ============================================================================
 // Sentry Error Monitoring (Disabled for first run)
 // ============================================================================
-// if (process.env.SENTRY_DSN) {
-//     Sentry.init({
-//         dsn: process.env.SENTRY_DSN,
-//         environment: process.env.NODE_ENV || 'development',
-//         tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
-//         integrations: [
-//             new Sentry.Integrations.Http({ tracing: true }),
-//         ],
-//     });
-//     app.use(Sentry.Handlers.requestHandler());
-//     app.use(Sentry.Handlers.tracingHandler());
-// }
+if (process.env.SENTRY_DSN) {
+    Sentry.init({
+        dsn: process.env.SENTRY_DSN,
+        environment: process.env.NODE_ENV || 'development',
+        tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+    });
+}
 
 // ============================================================================
 // Middleware Setup
@@ -120,10 +116,13 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// In-memory request metrics (latency + error rate)
+// observabilityMiddleware
 app.use(observabilityMiddleware);
 
-// Rate Limiting - Stricter on auth routes
+// CSRF Protection (Gate)
+app.use(csrfGate);
+
+// Rate Limiting
 // Rate Limiting - Stricter on auth routes
 const defaultLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -239,10 +238,10 @@ app.use((req, res) => {
     });
 });
 
-// Sentry error handler (disabled for first run)
-// if (process.env.SENTRY_DSN) {
-//     app.use(Sentry.Handlers.errorHandler());
-// }
+// Sentry error handler (must be BEFORE other error handlers)
+if (process.env.SENTRY_DSN) {
+    Sentry.setupExpressErrorHandler(app);
+}
 
 // Central error handler (must be last)
 app.use(errorHandler);
@@ -277,9 +276,9 @@ process.on('SIGINT', () => {
 // Unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
     logger.error('Unhandled Rejection', { reason, promise });
-    // if (process.env.SENTRY_DSN) {
-    //     Sentry.captureException(reason);
-    // }
+    if (process.env.SENTRY_DSN) {
+        Sentry.captureException(reason);
+    }
 });
 
 export default app;
