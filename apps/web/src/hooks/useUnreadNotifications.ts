@@ -11,7 +11,7 @@ export function useUnreadNotifications() {
     const fetchCount = useCallback(async () => {
         if (!user) return;
         try {
-            const data = await alertsApi.getUnreadCount();
+            const data = await alertsApi.getUnreadCount() as { count: number };
             setUnreadCount(data.count);
         } catch {
             // silent fail
