@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -10,6 +11,7 @@ import { ThemeScript } from "@/components/providers/ThemeScript";
 import OfflineNotification from "@/components/ui/OfflineNotification";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import GoogleAnalytics from "@/components/providers/GoogleAnalytics";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -95,6 +97,9 @@ export default function RootLayout({
         <ServiceWorkerRegister />
         <SmartToaster />
         <OfflineNotification />
+        <Suspense fallback={null}>
+          <GoogleAnalytics ga_id={process.env.NEXT_PUBLIC_GA_ID || ''} />
+        </Suspense>
         <Analytics />
         <SpeedInsights />
       </body>

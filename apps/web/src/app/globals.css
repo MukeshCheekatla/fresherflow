@@ -58,13 +58,13 @@
     --warning: 35 95% 50%;
     --error: 0 85% 55%;
     
-    /* Typography Scale */
-    --fs-h1: 32px;
-    --fs-h2: 24px;
-    --fs-h3: 20px;
-    --fs-body: 16px;
-    --fs-small: 13px;
-    --fs-button: 14px;
+    /* Typography Scale - Mobile First */
+    --fs-h1: 28px;
+    --fs-h2: 22px;
+    --fs-h3: 18px;
+    --fs-body: 15px;
+    --fs-small: 12px;
+    --fs-button: 13px;
     
     /* Spacing System */
     --space-1: 4px;
@@ -123,11 +123,12 @@
     color-scheme: dark;
   }
 
+  /* Desktop Typography Scale */
   @media (min-width: 1024px) {
     :root {
-      --fs-h1: 30px;
-      --fs-h2: 24px;
-      --fs-h3: 20px;
+      --fs-h1: 36px;
+      --fs-h2: 28px;
+      --fs-h3: 22px;
       --fs-body: 16px;
       --fs-small: 14px;
       --fs-button: 14px;
