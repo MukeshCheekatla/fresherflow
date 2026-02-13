@@ -3,7 +3,7 @@ import logger from '../utils/logger';
 
 const prisma = new PrismaClient();
 
-export type FunnelEvent = 'DETAIL_VIEW' | 'LOGIN_VIEW' | 'AUTH_SUCCESS' | 'SIGNUP_SUCCESS';
+export type FunnelEvent = 'DETAIL_VIEW' | 'LOGIN_VIEW' | 'AUTH_SUCCESS' | 'SIGNUP_SUCCESS' | 'SAVE_JOB' | 'APPLY_CLICK' | 'SHARE_JOB' | 'SIGNUP_VIEW';
 export type GrowthWindow = '24h' | '7d' | '30d' | 'all';
 
 type SourceCounters = Record<FunnelEvent, number>;
@@ -16,7 +16,11 @@ function emptyCounters(): SourceCounters {
         DETAIL_VIEW: 0,
         LOGIN_VIEW: 0,
         AUTH_SUCCESS: 0,
-        SIGNUP_SUCCESS: 0
+        SIGNUP_SUCCESS: 0,
+        SAVE_JOB: 0,
+        APPLY_CLICK: 0,
+        SHARE_JOB: 0,
+        SIGNUP_VIEW: 0
     };
 }
 
@@ -28,7 +32,8 @@ function sanitizeSource(source?: string): string {
 
 function normalizeEvent(event?: string): FunnelEvent | null {
     const normalized = (event || '').trim().toUpperCase() as FunnelEvent;
-    if (!['DETAIL_VIEW', 'LOGIN_VIEW', 'AUTH_SUCCESS', 'SIGNUP_SUCCESS'].includes(normalized)) {
+    const allowed: FunnelEvent[] = ['DETAIL_VIEW', 'LOGIN_VIEW', 'AUTH_SUCCESS', 'SIGNUP_SUCCESS', 'SAVE_JOB', 'APPLY_CLICK', 'SHARE_JOB', 'SIGNUP_VIEW'];
+    if (!allowed.includes(normalized)) {
         return null;
     }
     return normalized;
@@ -70,6 +75,10 @@ function formatRows(rows: Array<{ source: string; counters: SourceCounters }>) {
         acc.LOGIN_VIEW += row.LOGIN_VIEW;
         acc.AUTH_SUCCESS += row.AUTH_SUCCESS;
         acc.SIGNUP_SUCCESS += row.SIGNUP_SUCCESS;
+        acc.SAVE_JOB += row.SAVE_JOB || 0;
+        acc.APPLY_CLICK += row.APPLY_CLICK || 0;
+        acc.SHARE_JOB += row.SHARE_JOB || 0;
+        acc.SIGNUP_VIEW += row.SIGNUP_VIEW || 0;
         return acc;
     }, emptyCounters());
 

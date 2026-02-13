@@ -167,4 +167,47 @@ Expires in: 15 minutes
             logger.error(`Failed to send closing-soon email to ${email}:`, error);
         }
     }
+
+    /**
+     * Send new job alert (instant notification)
+     */
+    static async sendNewJobAlert(
+        email: string,
+        fullName: string | null,
+        data: { title: string; company: string; location: string | null; applyUrl: string }
+    ): Promise<void> {
+        const greeting = fullName ? `Hello ${fullName.split(' ')[0]}` : 'Hello';
+
+        if (!resend) {
+            logger.info(`New job alert email skipped (no Resend): ${email}`, { title: data.title });
+            return;
+        }
+
+        try {
+            await resend.emails.send({
+                from: 'FresherFlow <alerts@fresherflow.in>',
+                to: email,
+                subject: `🎯 New Job: ${data.title} at ${data.company}`,
+                html: `
+                    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                        <h2 style="color: #333; text-align: center;">🎯 New Job Alert</h2>
+                        <p style="font-size: 16px; color: #666; text-align: center;">${greeting},</p>
+                        <p style="font-size: 16px; color: #666; text-align: center;">A new opportunity matching your profile has just been posted!</p>
+                        <div style="background: #f4f4f4; padding: 20px; border-radius: 5px; margin: 20px 0;">
+                            <h3 style="margin-top: 0; color: #000;">${data.title}</h3>
+                            <p style="color: #666; margin: 5px 0;"><strong>Company:</strong> ${data.company}</p>
+                            <p style="color: #666; margin: 5px 0;"><strong>Location:</strong> ${data.location || 'Multiple locations'}</p>
+                        </div>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${data.applyUrl}" style="display: inline-block; background: #000; color: #fff; text-decoration: none; padding: 12px 30px; border-radius: 5px; font-weight: bold;">View & Apply</a>
+                        </div>
+                        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+                        <p style="font-size: 12px; color: #bbb; text-align: center;">You're receiving this because you enabled instant job alerts in your preferences.</p>
+                    </div>
+                `
+            });
+        } catch (error) {
+            logger.error(`Failed to send new job alert to ${email}:`, error);
+        }
+    }
 }
