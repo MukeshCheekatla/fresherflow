@@ -63,8 +63,11 @@ self.addEventListener('fetch', (event) => {
   const isSameOrigin = url.origin === self.location.origin;
   const isApiRequest = url.pathname.startsWith('/api');
   const isNavigation = event.request.mode === 'navigate';
-  // Never intercept HTML navigations. Let the browser handle redirects/cookies.
+  // Handle navigation requests by serving cached offline page if network fails
   if (isNavigation) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(OFFLINE_URL))
+    );
     return;
   }
 

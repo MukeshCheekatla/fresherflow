@@ -39,7 +39,8 @@ export default function AccountAlertsPage() {
         const load = async () => {
             setLoadingPrefs(true);
             try {
-                const response = await alertsApi.getPreferences();
+                interface AlertResponse { preference: AlertPreference }
+                const response = await alertsApi.getPreferences() as AlertResponse;
                 setPrefs({
                     ...DEFAULT_PREFS,
                     ...(response.preference || {}),
@@ -56,7 +57,8 @@ export default function AccountAlertsPage() {
     const update = async (patch: Partial<AlertPreference>) => {
         setSaving(true);
         try {
-            const response = await alertsApi.updatePreferences(patch);
+            interface AlertResponse { preference: AlertPreference }
+            const response = await alertsApi.updatePreferences(patch) as AlertResponse;
             setPrefs({
                 ...prefs,
                 ...(response.preference || patch),
