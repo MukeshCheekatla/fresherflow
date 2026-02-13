@@ -11,10 +11,12 @@ import {
     ArrowPathIcon,
     UsersIcon,
     BriefcaseIcon,
-    DocumentTextIcon
+    DocumentTextIcon,
+    ChevronRightIcon
 } from '@heroicons/react/24/outline';
 import { AdminAnalyticsSkeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
+import { cn } from '@/lib/utils';
 
 interface AnalyticsOverview {
     linkHealth: {
@@ -34,21 +36,15 @@ interface AnalyticsOverview {
     };
     typeDistribution: Array<{ type: string; count: number }>;
     feedback: Record<string, number>;
+    funnel: Record<string, number>;
     urgent: {
         closingSoon48h: number;
         brokenLinks: number;
     };
 }
 
-interface HealthStats {
-    healthy: number;
-    broken: number;
-    retrying: number;
-}
-
 export default function AdminAnalyticsPage() {
     const [analytics, setAnalytics] = useState<AnalyticsOverview | null>(null);
-    const [healthStats, setHealthStats] = useState<HealthStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -56,13 +52,8 @@ export default function AdminAnalyticsPage() {
         setLoading(true);
         setLoadError(null);
         try {
-            const [analyticsData, healthData] = await Promise.all([
-                adminApi.getAnalyticsOverview(),
-                adminApi.getHealthStats()
-            ]);
-
+            const analyticsData = await adminApi.getAnalyticsOverview();
             setAnalytics(analyticsData as AnalyticsOverview);
-            setHealthStats((healthData as { stats?: HealthStats })?.stats || null);
         } catch (error) {
             const message = (error as Error)?.message || 'Failed to load analytics';
             setLoadError(message);
@@ -179,25 +170,51 @@ export default function AdminAnalyticsPage() {
                     <h4 className="text-lg md:text-2xl font-bold text-foreground leading-none">{analytics.activity.bookmarks7d}</h4>
                     <p className="text-[9px] md:text-[10px] font-bold text-muted-foreground uppercase tracking-tighter mt-1">Last 7 Days</p>
                 </div>
+            </div>
 
-                {/* System Health */}
-                <div className="bg-card/50 rounded-xl border border-border/50 p-3 md:p-5">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-[9px] md:text-xs font-bold text-muted-foreground uppercase tracking-widest">System health</span>
-                        <ChartBarIcon className="w-3 h-3 md:w-4 h-4 text-primary" />
-                    </div>
-                    <h4 className="text-lg md:text-2xl font-bold text-foreground leading-none">
-                        {healthStats ? `${healthStats.healthy}` : '-'}
-                    </h4>
-                    <p className="text-[9px] md:text-[10px] font-bold text-muted-foreground uppercase tracking-tighter mt-1">
-                        Healthy links
-                    </p>
+            {/* Conversion Funnel */}
+            <div className="bg-card/30 rounded-xl border border-border/50 p-4 md:p-6 space-y-4">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+                    <ArrowPathIcon className="w-4 h-4" />
+                    Conversion Funnel (Last 30d)
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    {[
+                        { label: 'Job Views', key: 'DETAIL_VIEW', color: 'bg-primary' },
+                        { label: 'Apply Clicks', key: 'APPLY_CLICK', color: 'bg-accent' },
+                        { label: 'Signup Views', key: 'SIGNUP_VIEW', color: 'bg-amber-500' },
+                        { label: 'Signup Success', key: 'SIGNUP_SUCCESS', color: 'bg-success' },
+                        { label: 'Saved Jobs', key: 'SAVE_JOB', color: 'bg-primary/60' },
+                    ].map((step, idx, arr) => {
+                        const count = analytics.funnel[step.key] || 0;
+                        const prevStep = idx > 0 ? arr[idx - 1] : null;
+                        const prevCount = prevStep ? (analytics.funnel[prevStep.key] || 0) : 0;
+                        const rate = (idx > 0 && prevCount > 0) ? Math.round((count / prevCount) * 100) : null;
+
+                        return (
+                            <div key={step.key} className="space-y-2 relative">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-bold uppercase tracking-tight text-muted-foreground">{step.label}</span>
+                                    {rate !== null && (
+                                        <span className="text-[10px] font-bold text-success">{rate}% rate</span>
+                                    )}
+                                </div>
+                                <div className="h-12 bg-muted/20 rounded-lg flex items-center px-3 border border-border/30 overflow-hidden relative">
+                                    <div
+                                        className={cn("absolute left-0 top-0 bottom-0 opacity-10", step.color)}
+                                        style={{ width: '100%' }}
+                                    />
+                                    <span className="text-xl font-bold tracking-tighter relative z-10">{count.toLocaleString()}</span>
+                                </div>
+                                {idx < arr.length - 1 && (
+                                    <div className="hidden lg:block absolute -right-2 top-1/2 -translate-y-1/2 z-20">
+                                        <ChevronRightIcon className="w-4 h-4 text-muted-foreground/30" />
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
-                {loadError && (
-                    <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[10px] font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
-                        Partial data mode
-                    </div>
-                )}
             </div>
 
             {/* Detailed Breakdowns */}
