@@ -168,12 +168,12 @@ function OpportunitiesContent() {
                         <div className="flex items-center gap-2">
                             <div className={cn(
                                 "px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-widest",
-                                isOnline ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/20" : "bg-amber-500/10 text-amber-700 border-amber-500/20"
+                                isOnline ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/20" : "bg-amber-500/10 text-orange-600 dark:text-amber-300 border-amber-500/20"
                             )}>
                                 {isOnline ? 'Network: Online' : 'Network: Offline'}
                             </div>
                             {usingCachedFeed && (
-                                <div className="px-2.5 py-1 rounded-full border border-amber-500/20 bg-amber-500/10 text-amber-700 text-[10px] font-bold uppercase tracking-widest">
+                                <div className="px-2.5 py-1 rounded-full border border-amber-500/20 bg-amber-500/10 text-orange-600 dark:text-amber-300 text-[10px] font-bold uppercase tracking-widest">
                                     Cached {formatSyncTime(cachedAt)}
                                 </div>
                             )}

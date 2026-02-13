@@ -321,7 +321,7 @@ export default function DashboardPage() {
                                                     <p className="text-[11px] font-medium text-muted-foreground">{opp.company} &bull; {opp.locations[0]}</p>
                                                 </div>
                                                 <div className="flex items-center justify-between border-t border-amber-500/10 pt-2">
-                                                    <span className="text-[9px] font-bold uppercase tracking-widest text-amber-700/60">Verified Drive</span>
+                                                    <span className="text-[9px] font-bold uppercase tracking-widest text-orange-600/60 dark:text-amber-300/60">Verified Drive</span>
                                                     <ChevronRightIcon className="w-4 h-4 text-amber-500 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
                                                 </div>
                                             </div>
@@ -361,13 +361,13 @@ export default function DashboardPage() {
                         <div className="lg:col-span-8 space-y-3 md:space-y-6">
                             {(recentError || highlightsError) && (
                                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                                    <div className="text-xs text-amber-700 dark:text-amber-300">
+                                    <div className="text-xs text-orange-600 dark:text-amber-300">
                                         Some dashboard data is unavailable. You can still browse listings.
                                     </div>
                                     <Button
                                         variant="outline"
                                         onClick={retryAll}
-                                        className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest border-amber-500/40 text-amber-700 dark:text-amber-300"
+                                        className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest border-amber-500/40 text-orange-600 dark:text-amber-300"
                                     >
                                         Retry all
                                     </Button>
@@ -555,7 +555,7 @@ export default function DashboardPage() {
                                                     >
                                                         <p className="text-xs font-semibold text-foreground line-clamp-1">{opp.title}</p>
                                                         <p className="text-[10px] text-muted-foreground line-clamp-1">{opp.company}</p>
-                                                        <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 mt-1">
+                                                        <p className="text-[10px] font-bold uppercase tracking-wider text-orange-600 dark:text-amber-300 mt-1">
                                                             {days != null && days >= 0 ? `Expires in ${days}d` : 'Closing'} • {formatExpiry(opp.expiresAt)}
                                                         </p>
                                                     </button>

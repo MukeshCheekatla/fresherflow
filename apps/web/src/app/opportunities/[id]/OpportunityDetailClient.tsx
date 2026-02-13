@@ -518,7 +518,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
             />
             <main className="relative z-10 max-w-6xl mx-auto px-4 py-4 md:py-7 space-y-3 md:space-y-5">
 
-                {/* Navigation & Actions Top Bar */}
+                {/* Navigation & Actions - Only for logged-in users */}
                 <div className="flex items-center justify-between">
                     <Link href="/opportunities" className="group/back flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-foreground/70 hover:text-primary transition-all p-2 -ml-2 rounded-lg hover:bg-muted/50">
                         <ArrowLeftIcon className="w-4 h-4 group-hover/back:-translate-x-0.5 transition-all" />
@@ -629,14 +629,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                     <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground leading-tight">
                                         {opp.title}
                                     </h1>
-                                    {!user && (
-                                        <Link
-                                            href={loginFromDetailHref}
-                                            className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-primary hover:underline"
-                                        >
-                                            Sign up to save & get alerts
-                                        </Link>
-                                    )}
+
                                     <div className="flex items-center gap-3">
                                         <CompanyLogo
                                             companyName={opp.company}
@@ -689,7 +682,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                 {opp.expiresAt && (
                                     <div className={cn(
                                         "pt-3 border-t border-border/50 flex items-center justify-between gap-2 text-xs",
-                                        isExpired(opp) ? "text-destructive" : isClosingSoon(opp) ? "text-amber-700 dark:text-amber-300" : "text-muted-foreground"
+                                        isExpired(opp) ? "text-destructive" : isClosingSoon(opp) ? "text-orange-600 dark:text-amber-300" : "text-muted-foreground"
                                     )}>
                                         <span className="font-bold uppercase tracking-wider">
                                             {isExpired(opp) ? 'Expired on' : isClosingSoon(opp) ? 'Closing soon' : 'Apply before'}
@@ -700,57 +693,75 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                             </div>
                         </div>
 
-                        <div className="lg:hidden bg-card p-4 rounded-xl border border-border shadow-sm space-y-3">
-                            {hasApplyLink && (
-                                <Button
-                                    onClick={handleApply}
-                                    className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg flex items-center justify-center gap-2 text-sm font-bold uppercase tracking-wide shadow-md"
-                                >
-                                    Apply Now
-                                    <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                                </Button>
-                            )}
 
-                            {/* Share buttons for non-logged-in users */}
-                            {!user && (
+                        {/* Mobile Actions - Non-logged-in users */}
+                        {!user && (
+                            <div className="lg:hidden bg-card p-4 rounded-xl border border-border shadow-sm space-y-3">
+                                {hasApplyLink && (
+                                    <Button
+                                        onClick={handleApply}
+                                        className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg flex items-center justify-center gap-2 text-sm font-bold uppercase tracking-wide shadow-md"
+                                    >
+                                        Apply Now
+                                        <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                                    </Button>
+                                )}
+
                                 <div className="grid grid-cols-2 gap-2">
                                     <button
                                         onClick={handleShare}
-                                        className="flex items-center justify-center gap-2 h-10 rounded-lg border border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-primary transition-all text-xs font-bold uppercase tracking-wide"
+                                        className="flex items-center justify-center gap-2 h-12 rounded-lg border border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-primary transition-all text-xs font-bold uppercase tracking-wide"
                                     >
                                         <ShareIcon className="w-4 h-4" />
                                         Share
                                     </button>
                                     <button
                                         onClick={handleCopyLink}
-                                        className="flex items-center justify-center gap-2 h-10 rounded-lg border border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-primary transition-all text-xs font-bold uppercase tracking-wide"
+                                        className="flex items-center justify-center gap-2 h-12 rounded-lg border border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-primary transition-all text-xs font-bold uppercase tracking-wide"
                                     >
                                         <LinkIcon className="w-4 h-4" />
                                         Copy Link
                                     </button>
                                 </div>
-                            )}
 
-                            <button
-                                onClick={() => {
-                                    if (!user) {
-                                        router.push(loginFromDetailHref);
-                                        return;
-                                    }
-                                    handleToggleSave();
-                                }}
-                                className={cn(
-                                    "w-full flex items-center justify-center gap-2 h-10 rounded-lg border transition-all text-xs font-bold uppercase tracking-wide",
-                                    opp.isSaved ? "bg-primary/10 text-primary border-primary/20" : "bg-muted/30 border-border text-muted-foreground hover:bg-muted/50"
+                                <button
+                                    onClick={() => router.push(loginFromDetailHref)}
+                                    className="w-full flex items-center justify-center gap-2 h-12 rounded-lg border transition-all text-xs font-bold uppercase tracking-wide bg-muted/30 border-border text-muted-foreground hover:bg-muted/50"
+                                >
+                                    <BookmarkIcon className="w-4 h-4" />
+                                    Save
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Mobile Actions - Logged-in users */}
+                        {user && (
+                            <div className="lg:hidden bg-card p-4 rounded-xl border border-border shadow-sm space-y-3">
+                                {hasApplyLink && (
+                                    <Button
+                                        onClick={handleApply}
+                                        className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg flex items-center justify-center gap-2 text-sm font-bold uppercase tracking-wide shadow-md"
+                                    >
+                                        Apply Now
+                                        <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                                    </Button>
                                 )}
-                            >
-                                {opp.isSaved ? <BookmarkSolidIcon className="w-4 h-4" /> : <BookmarkIcon className="w-4 h-4" />}
-                                {opp.isSaved ? 'Saved' : 'Save'}
-                            </button>
-                        </div>
+
+                                <button
+                                    onClick={handleToggleSave}
+                                    className={cn(
+                                        "w-full flex items-center justify-center gap-2 h-12 rounded-lg border transition-all text-xs font-bold uppercase tracking-wide",
+                                        opp.isSaved ? "bg-primary/10 text-primary border-primary/20" : "bg-muted/30 border-border text-muted-foreground hover:bg-muted/50"
+                                    )}
+                                >
+                                    {opp.isSaved ? <BookmarkSolidIcon className="w-4 h-4" /> : <BookmarkIcon className="w-4 h-4" />}
+                                    {opp.isSaved ? 'Saved' : 'Save'}
+                                </button>
+                            </div>
+                        )}
 
                         {!user && (
-                            <div className="premium-card p-6 md:p-8 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 border-primary/20 relative overflow-hidden group">
+                            <div className="lg:hidden premium-card p-6 md:p-8 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 border-primary/20 relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
                                     <ShieldCheckIcon className="w-24 h-24 text-primary" />
                                 </div>
@@ -760,6 +771,15 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                         Join thousands of freshers who use our verified feed to land their first roles. Get instant alerts, track your applications, and never miss a deadline.
                                     </p>
                                     <div className="flex flex-wrap items-center gap-3 pt-2">
+                                        {hasApplyLink && (
+                                            <Link
+                                                href={opp.applyLink || '#'}
+                                                className="premium-button h-11 px-6 text-xs"
+                                                target="_blank"
+                                            >
+                                                Apply on company site
+                                            </Link>
+                                        )}
                                         <Link
                                             href={loginFromDetailHref}
                                             className="premium-button h-10 px-6 text-xs"
@@ -894,20 +914,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
 
                     {/* Right Column: Dynamic Action Sidebar */}
                     <aside className="lg:col-span-4 space-y-3 lg:sticky lg:top-24">
-                        {!user && (
-                            <div className="bg-muted/20 border border-border rounded-xl p-4 space-y-2">
-                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Get more matches</h4>
-                                <p className="text-xs text-muted-foreground">
-                                    Create an account to save, share, and get alerts for similar roles.
-                                </p>
-                                <Link
-                                    href={loginFromDetailHref}
-                                    className="premium-button h-9 px-4 text-[10px] uppercase tracking-widest"
-                                >
-                                    Sign up free
-                                </Link>
-                            </div>
-                        )}
+
                         {opp.type === 'WALKIN' && (
                             <div className="hidden lg:block bg-card p-4 rounded-xl border border-border shadow-sm space-y-3">
                                 <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Walk-in snapshot</h4>
@@ -983,33 +990,34 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                         </div>
                         <div className="bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3">
                             <div className="space-y-3">
-                                <div className="space-y-2">
-                                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-                                        Track your progress
-                                        {!user && <ShieldCheckIcon className="w-3 h-3 opacity-50" />}
-                                    </h4>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {trackerOptions.map((option) => {
-                                            const isActive = currentAction === option.key;
-                                            return (
-                                                <button
-                                                    key={option.key}
-                                                    onClick={() => handleSetAction(option.key)}
-                                                    disabled={isUpdatingAction || !user}
-                                                    className={cn(
-                                                        "h-8 rounded-lg border text-[10px] font-bold uppercase tracking-tight transition-all",
-                                                        isActive
-                                                            ? "bg-primary/10 text-primary border-primary/30"
-                                                            : "bg-muted/30 border-border text-muted-foreground hover:bg-muted/50",
-                                                        isUpdatingAction && "opacity-70 cursor-not-allowed"
-                                                    )}
-                                                >
-                                                    {option.label}
-                                                </button>
-                                            );
-                                        })}
+                                {user && (
+                                    <div className="space-y-2">
+                                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                                            Track your progress
+                                        </h4>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {trackerOptions.map((option) => {
+                                                const isActive = currentAction === option.key;
+                                                return (
+                                                    <button
+                                                        key={option.key}
+                                                        onClick={() => handleSetAction(option.key)}
+                                                        disabled={isUpdatingAction}
+                                                        className={cn(
+                                                            "h-8 rounded-lg border text-[10px] font-bold uppercase tracking-tight transition-all",
+                                                            isActive
+                                                                ? "bg-primary/10 text-primary border-primary/20"
+                                                                : "bg-muted/20 border-border text-muted-foreground hover:bg-muted/40",
+                                                            isUpdatingAction && "opacity-50 cursor-not-allowed"
+                                                        )}
+                                                    >
+                                                        {option.label}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
                                 {hasApplyLink && (
                                     <div className="space-y-2">

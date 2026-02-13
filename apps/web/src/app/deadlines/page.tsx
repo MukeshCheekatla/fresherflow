@@ -60,7 +60,7 @@ export default function DeadlinesPage() {
                             Back
                         </Link>
                         <h1 className="text-sm md:text-base font-bold tracking-tight">Deadline Radar</h1>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300">{sorted.length} active</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-orange-600 dark:text-amber-300">{sorted.length} active</span>
                     </div>
 
                     {isLoading ? (
