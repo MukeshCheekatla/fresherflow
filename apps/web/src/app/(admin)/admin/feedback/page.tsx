@@ -61,7 +61,7 @@ export default function FeedbackPage() {
             const [listingData, appData] = await Promise.all([
                 adminApi.getFeedback(),
                 adminApi.getAppFeedback()
-            ]);
+            ]) as [{ feedback: FeedbackItem[] }, { feedback: AppFeedbackItem[] }];
             setFeedback(listingData.feedback || []);
             setAppFeedback(appData.feedback || []);
         } catch (err: unknown) {

@@ -58,7 +58,7 @@ export default function TelegramBroadcastPanel() {
                     windowFilter
                 ),
                 adminApi.getTelegramBroadcasts("SENT", 200, windowFilter)
-            ]);
+            ]) as [{ broadcasts: BroadcastItem[]; summary: { sent: number; failed: number; skipped: number } }, { broadcasts: BroadcastItem[] }];
             setItems(response.broadcasts || []);
             setSummary(response.summary || { sent: 0, failed: 0, skipped: 0 });
 

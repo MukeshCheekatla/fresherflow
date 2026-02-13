@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { adminApi } from '@/lib/api/admin';
 import { cn } from '@/lib/utils';
+import { Opportunity } from '@fresherflow/types';
 import {
     BriefcaseIcon,
     MapPinIcon,
@@ -37,8 +38,7 @@ type GrowthSourceMetric = {
 type GrowthWindow = '24h' | '7d' | '30d' | 'all';
 
 export default function AdminDashboardHome() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [recent, setRecent] = useState<any[]>([]);
+    const [recent, setRecent] = useState<Opportunity[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [stats, setStats] = useState({
@@ -70,25 +70,25 @@ export default function AdminDashboardHome() {
                 adminApi.getGrowthFunnelMetrics(growthWindow)
             ]);
 
-            const summary = summaryRes.summary || {};
-            const opportunities = recentRes.opportunities || [];
-            const totals = metricsRes.metrics?.totals || {};
-            const routeEntries = Object.entries(metricsRes.metrics?.routes || {})
+            const summary = (summaryRes as { summary: Record<string, number> }).summary || {};
+            const opportunities = (recentRes as { opportunities: Opportunity[] }).opportunities || [];
+            const metrics = (metricsRes as { metrics: { totals?: Record<string, number>; routes?: Record<string, Record<string, number>> } }).metrics || {};
+            const totals = metrics.totals || {};
+            const routeEntries = Object.entries(metrics.routes || {})
                 .map(([route, values]) => ({
                     route,
                     ...(values as Omit<RouteMetric, 'route'>)
                 }))
                 .filter((row) => row.requests > 0);
-            const growthSourceRows = (growthRes.metrics?.sources || []) as GrowthSourceMetric[];
+            const growthSourceRows = ((growthRes as { metrics?: { sources: GrowthSourceMetric[] } }).metrics?.sources || []);
 
             setRecent(opportunities);
             setStats({
                 jobs: (summary.total || 0) - (summary.walkins || 0),
                 walkins: summary.walkins || 0,
                 total: summary.total || 0,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                recent24h: opportunities.filter((o: any) => {
-                    const posted = new Date(o.postedAt).getTime();
+                recent24h: opportunities.filter((o) => {
+                    const posted = new Date(o.postedAt as string | number | Date).getTime();
                     return posted > Date.now() - 24 * 60 * 60 * 1000;
                 }).length
             });
