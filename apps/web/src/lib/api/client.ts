@@ -13,8 +13,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 let isRefreshing: Promise<void> | null = null;
 
 // API Client with automatic cookie handling
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function apiClient<T = any>(
+export async function apiClient<T = unknown>(
     endpoint: string,
     options: RequestInit = {}
 ): Promise<T> {
@@ -41,19 +40,34 @@ export async function apiClient<T = any>(
         let lastError: unknown;
         const maxRetries = 3;
         const baseDelay = 300;
+        const DEFAULT_TIMEOUT = 10000; // 10 seconds
 
         for (let i = 0; i < maxRetries; i++) {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT);
+
             try {
-                const response = await fetch(requestUrl, fetchOptions);
+                const response = await fetch(requestUrl, {
+                    ...fetchOptions,
+                    signal: controller.signal
+                });
+                clearTimeout(id);
+
                 if (response.ok || response.status < i * 100 || !canRetry) return response;
 
                 // Only retry on potential transient errors (5xx or network failures)
                 if (response.status < 500 && response.status !== 429) return response;
 
                 lastError = new Error(`Request failed with status ${response.status}`);
-            } catch (error) {
-                if (!canRetry) throw error;
-                lastError = error;
+            } catch (error: unknown) {
+                clearTimeout(id);
+                if (error instanceof Error && error.name === 'AbortError') {
+                    lastError = new Error('Gateway Timeout: The server took too long to respond.');
+                    (lastError as { code?: string }).code = 'TIMEOUT';
+                } else {
+                    lastError = error;
+                }
+                if (!canRetry) throw lastError;
             }
 
             // Exponential backoff: 300, 900, 2700ms
@@ -103,24 +117,25 @@ export async function apiClient<T = any>(
             try {
                 await isRefreshing;
                 // Retry original request
-                // Retry original request
                 response = await fetchWithRetry();
             } catch {
                 console.error('[Auth] Refresh failed, session expired.');
+                if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('fresherflow-unauthorized'));
+                }
                 throw new Error('Session expired');
             }
         }
 
         if (!response.ok) {
             let errorMessage = 'Request failed';
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            let errorData: any = {};
+            let errorData: { error?: { message?: string } | string; completionPercentage?: number; requiredCompletion?: number } = {};
 
             try {
                 errorData = await response.json();
-                errorMessage = errorData.error?.message || errorData.error || errorMessage;
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            } catch (jsonError) {
+                const errorObj = errorData.error;
+                errorMessage = typeof errorObj === 'object' && errorObj !== null ? errorObj.message || errorMessage : (typeof errorObj === 'string' ? errorObj : errorMessage);
+            } catch {
                 // Fallback if response is not JSON
                 if (response.status === 429) {
                     errorMessage = 'Too many requests. Please wait a moment and try again.';
@@ -133,8 +148,7 @@ export async function apiClient<T = any>(
 
             // Special handling for 403 profile incomplete errors
             if (response.status === 403 && errorData.completionPercentage !== undefined) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const error: any = new Error(errorMessage);
+                const error = new Error(errorMessage) as Error & { code: string; completionPercentage: number; requiredCompletion: number };
                 error.code = 'PROFILE_INCOMPLETE';
                 error.completionPercentage = errorData.completionPercentage;
                 error.requiredCompletion = errorData.requiredCompletion || 100;
@@ -154,8 +168,17 @@ export async function apiClient<T = any>(
         }
 
         return await response.json();
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('API Error:', error);
+        // Only report to Sentry if it's a server error or a critical unexpected error
+        const err = error as { statusCode?: number; code?: string };
+        if (err.statusCode && err.statusCode >= 500 || err.code === 'TIMEOUT' || !err.statusCode) {
+            import('@sentry/nextjs').then(Sentry => {
+                Sentry.captureException(error, {
+                    extra: { endpoint, method }
+                });
+            });
+        }
         throw error;
     }
 }
@@ -310,7 +333,7 @@ export const profileApi = {
 };
 
 export const growthApi = {
-    trackEvent: (event: 'DETAIL_VIEW' | 'LOGIN_VIEW', source = 'unknown') =>
+    trackEvent: (event: 'DETAIL_VIEW' | 'LOGIN_VIEW' | 'SAVE_JOB' | 'APPLY_CLICK' | 'SHARE_JOB' | 'SIGNUP_VIEW', source = 'unknown') =>
         apiClient('/api/public/growth/event', {
             method: 'POST',
             body: JSON.stringify({ event, source })
@@ -319,7 +342,7 @@ export const growthApi = {
 
 // Opportunities API calls
 export const opportunitiesApi = {
-    list: (params?: { type?: string; city?: string; company?: string; closingSoon?: boolean; minSalary?: number; maxSalary?: number }) => {
+    list: (params?: { type?: string; city?: string; company?: string; closingSoon?: boolean; minSalary?: number; maxSalary?: number; page?: number }) => {
         const query = new URLSearchParams();
         if (params?.type) query.append('type', params.type);
         if (params?.city) query.append('city', params.city);
@@ -327,6 +350,7 @@ export const opportunitiesApi = {
         if (params?.closingSoon) query.append('closingSoon', 'true');
         if (params?.minSalary) query.append('minSalary', String(params.minSalary));
         if (params?.maxSalary) query.append('maxSalary', String(params.maxSalary));
+        if (params?.page) query.append('page', String(params.page));
 
         const queryString = query.toString();
         return apiClient(`/api/opportunities${queryString ? `?${queryString}` : ''}`);

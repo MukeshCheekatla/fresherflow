@@ -24,7 +24,7 @@ export default function PasskeyManager() {
 
     const loadKeys = async () => {
         try {
-            const data = await adminAuthApi.getPasskeys();
+            const data = await adminAuthApi.getPasskeys() as { keys: Passkey[] };
             setKeys(data.keys);
         } catch (error) {
             console.error("Failed to load passkeys:", error);

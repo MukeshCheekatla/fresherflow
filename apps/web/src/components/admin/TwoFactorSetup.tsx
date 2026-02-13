@@ -25,8 +25,7 @@ export default function TwoFactorSetup() {
     const checkStatus = async () => {
         try {
             const { admin } = await adminAuthApi.me();
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setIsEnabled((admin as any)?.isTwoFactorEnabled || false);
+            setIsEnabled(admin?.isTwoFactorEnabled || false);
         } catch {
             console.error("Failed to check 2FA status");
         } finally {
@@ -37,7 +36,7 @@ export default function TwoFactorSetup() {
     const handleEnable = async () => {
         setSubmitting(true);
         try {
-            const data = await adminAuthApi.generateTotp();
+            const data = await adminAuthApi.generateTotp() as { qrCode: string; secret: string };
             setQrCode(data.qrCode);
             setSecret(data.secret);
             setSetupStep("qr");
