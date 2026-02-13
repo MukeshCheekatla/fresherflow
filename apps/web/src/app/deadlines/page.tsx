@@ -22,7 +22,7 @@ export default function DeadlinesPage() {
             setIsLoading(true);
             setError(null);
             try {
-                const data = await opportunitiesApi.list({ closingSoon: true });
+                const data = await opportunitiesApi.list({ closingSoon: true }) as { opportunities: Opportunity[] };
                 const opportunities = (data.opportunities || []) as Opportunity[];
                 const active = opportunities.filter((o) => !o.expiresAt || new Date(o.expiresAt) > new Date());
                 setItems(active);
@@ -43,7 +43,7 @@ export default function DeadlinesPage() {
 
     const toggleSave = async (opportunityId: string) => {
         try {
-            const result = await savedApi.toggle(opportunityId);
+            const result = await savedApi.toggle(opportunityId) as { saved: boolean };
             setItems((prev) => prev.map((opp) => (opp.id === opportunityId ? { ...opp, isSaved: result.saved } : opp)));
         } catch {
             // no-op

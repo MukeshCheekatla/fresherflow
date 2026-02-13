@@ -24,7 +24,7 @@ const HOURS_72_IN_MS = 72 * 60 * 60 * 1000;
 const HOURS_24_IN_MS = 24 * 60 * 60 * 1000;
 
 export default function DashboardPage() {
-    const { user, isLoading: authLoading } = useAuth();
+    const { user, profile, isLoading: authLoading } = useAuth();
     const router = useRouter();
     const [recentOpps, setRecentOpps] = useState<Opportunity[]>([]);
     const [isLoadingOpps, setIsLoadingOpps] = useState(true);
@@ -40,13 +40,13 @@ export default function DashboardPage() {
     const [mobileFeedTab, setMobileFeedTab] = useState<'featured' | 'latest' | 'expiring' | 'all' | 'applied' | 'archived'>('featured');
 
     useEffect(() => {
-        // Only load once when auth is confirmed and user exists
-        if (!authLoading && user && !hasLoaded) {
+        // Only load once when auth is confirmed and profile is 100% complete
+        if (!authLoading && user && profile?.completionPercentage === 100 && !hasLoaded) {
             setHasLoaded(true);
             loadRecentOpportunities();
             loadHighlights();
         }
-    }, [authLoading, user, hasLoaded]);
+    }, [authLoading, user, profile, hasLoaded]);
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -84,7 +84,7 @@ export default function DashboardPage() {
     const loadHighlights = async () => {
         setHighlightsError(null);
         try {
-            const data = await dashboardApi.getHighlights();
+            const data = await dashboardApi.getHighlights() as { urgent: { walkins: Opportunity[]; others: Opportunity[] }; newlyAdded: Opportunity[] };
             setHighlights(data);
         } catch (err: unknown) {
             const message = (err as Error)?.message || 'Unable to load highlights';
@@ -97,7 +97,7 @@ export default function DashboardPage() {
 
     const toggleSave = async (opportunityId: string) => {
         try {
-            const result = await savedApi.toggle(opportunityId);
+            const result = await savedApi.toggle(opportunityId) as { saved: boolean };
             setRecentOpps(prev => prev.map(opp =>
                 opp.id === opportunityId ? { ...opp, isSaved: result.saved } : opp
             ));
@@ -121,7 +121,7 @@ export default function DashboardPage() {
     const loadRecentOpportunities = async () => {
         setRecentError(null);
         try {
-            const data = await opportunitiesApi.list();
+            const data = await opportunitiesApi.list() as { opportunities: Opportunity[] };
             // Keep a broader pool so dashboard tabs can rotate fresh content.
             const sanitized = (data.opportunities || []).slice(0, 60).map((o: Opportunity) => ({
                 ...o,
