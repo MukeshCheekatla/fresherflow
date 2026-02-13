@@ -1,12 +1,31 @@
 'use client';
 
-import Script from 'next/script';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function GoogleAnalytics({ ga_id }: { ga_id: string }) {
     const pathname = usePathname();
     const searchParams = useSearchParams();
+
+    useEffect(() => {
+        if (!ga_id) return;
+
+        // Load gtag.js script
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = `https://www.googletagmanager.com/gtag/js?id=${ga_id}`;
+        document.head.appendChild(script);
+
+        // Initialize dataLayer and gtag
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function gtag() {
+            window.dataLayer.push(arguments);
+        };
+        window.gtag('js', new Date());
+        window.gtag('config', ga_id, {
+            page_path: window.location.pathname,
+        });
+    }, [ga_id]);
 
     useEffect(() => {
         if (!ga_id) return;
@@ -19,44 +38,12 @@ export default function GoogleAnalytics({ ga_id }: { ga_id: string }) {
         });
     }, [pathname, searchParams, ga_id]);
 
-    if (!ga_id) return null;
-
-    return (
-        <>
-            <Script
-                id="gtag-script"
-                strategy="afterInteractive"
-                dangerouslySetInnerHTML={{
-                    __html: `
-            (function() {
-              var script = document.createElement('script');
-              script.async = true;
-              script.src = 'https://www.googletagmanager.com/gtag/js?id=${ga_id}';
-              document.head.appendChild(script);
-            })();
-          `,
-                }}
-            />
-            <Script
-                id="gtag-init"
-                strategy="afterInteractive"
-                dangerouslySetInnerHTML={{
-                    __html: `
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${ga_id}', {
-              page_path: window.location.pathname,
-            });
-          `,
-                }}
-            />
-        </>
-    );
+    return null;
 }
 
 declare global {
     interface Window {
+        dataLayer: unknown[];
         gtag: (command: string, ...args: unknown[]) => void;
     }
 }
