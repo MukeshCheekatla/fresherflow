@@ -11,10 +11,8 @@ import toast from 'react-hot-toast';
 import UserIcon from '@heroicons/react/24/outline/UserIcon';
 import ChevronRightIcon from '@heroicons/react/24/outline/ChevronRightIcon';
 import MagnifyingGlassIcon from '@heroicons/react/24/outline/MagnifyingGlassIcon';
-import ChartBarIcon from '@heroicons/react/24/outline/ChartBarIcon';
 import ClockIcon from '@heroicons/react/24/outline/ClockIcon';
-import CheckBadgeIcon from '@heroicons/react/24/outline/CheckBadgeIcon';
-import { Skeleton, SkeletonJobCard } from '@/components/ui/Skeleton';
+import { SkeletonJobCard } from '@/components/ui/Skeleton';
 import JobCard from '@/features/jobs/components/JobCard';
 import { Button } from '@/components/ui/Button';
 import { formatSyncTime, getFeedLastSyncAt } from '@/lib/offline/syncStatus';
@@ -37,7 +35,7 @@ export default function DashboardPage() {
     const [isOnline, setIsOnline] = useState(true);
     const [feedLastSyncAt, setFeedLastSyncAt] = useState<number | null>(null);
     const [lastSeenAt, setLastSeenAt] = useState<number | null>(null);
-    const [mobileFeedTab, setMobileFeedTab] = useState<'featured' | 'latest' | 'expiring' | 'all' | 'applied' | 'archived'>('featured');
+    const [activeTab, setActiveTab] = useState<'featured' | 'latest' | 'expiring' | 'all' | 'applied' | 'archived'>('featured');
 
     useEffect(() => {
         // Only load once when auth is confirmed and profile is 100% complete
@@ -156,11 +154,6 @@ export default function DashboardPage() {
         return Math.ceil(diffMs / (HOURS_24_IN_MS));
     };
 
-    const formatExpiry = (expiresAt?: string | Date | null) => {
-        if (!expiresAt) return null;
-        return new Date(expiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
-    };
-
     const activeRecentOpps = recentOpps.filter((o) => !o.expiresAt || new Date(o.expiresAt) > new Date());
     const latestList = [...activeRecentOpps].sort(
         (a, b) => new Date(b.postedAt as string | Date).getTime() - new Date(a.postedAt as string | Date).getTime()
@@ -171,10 +164,6 @@ export default function DashboardPage() {
         .filter((o) => o.expiresAt)
         .sort((a, b) => new Date(a.expiresAt as string).getTime() - new Date(b.expiresAt as string).getTime())
         .slice(0, 8);
-    const newCutoff = lastSeenAt || (Date.now() - (HOURS_72_IN_MS));
-    const newSinceLastVisit = latestList
-        .filter((o) => new Date(o.postedAt as string | Date).getTime() > newCutoff)
-        .slice(0, 10);
     const newLast24Hours = latestList
         .filter((o) => (Date.now() - new Date(o.postedAt as string | Date).getTime()) <= (HOURS_24_IN_MS))
         .slice(0, 10);
@@ -184,16 +173,6 @@ export default function DashboardPage() {
     const internshipsCount = activeRecentOpps.filter((o) => o.type === 'INTERNSHIP').length;
     const walkinsCount = activeRecentOpps.filter((o) => o.type === 'WALKIN').length;
 
-    const sections = [
-        { key: 'best', title: 'Best matches', href: '/opportunities', items: bestMatchList.slice(0, 6) },
-        { key: 'latest', title: 'Latest uploads', href: '/opportunities', items: latestList.slice(0, 6) },
-        { key: 'new24h', title: 'Added in last 24h', href: '/opportunities', items: newLast24Hours.slice(0, 6) },
-        { key: 'expiring', title: 'Expiring soon', href: '/opportunities?closingSoon=true', items: closingSoon.slice(0, 4) },
-        { key: 'new', title: 'New since last visit', href: '/opportunities', items: newSinceLastVisit },
-        { key: 'jobs', title: 'Jobs', href: '/jobs', items: bestMatchList.filter((o) => o.type === 'JOB').slice(0, 4) },
-        { key: 'internships', title: 'Internships', href: '/internships', items: bestMatchList.filter((o) => o.type === 'INTERNSHIP').slice(0, 4) },
-        { key: 'walkins', title: 'Walk-ins', href: '/walk-ins', items: bestMatchList.filter((o) => o.type === 'WALKIN').slice(0, 4) },
-    ];
     const archivedList = recentOpps.filter((o) => o.status === 'ARCHIVED' || (!!o.expiresAt && new Date(o.expiresAt) <= new Date()));
     const appliedList = recentOpps.filter((o) =>
         (o.actions || []).some((action) =>
@@ -218,7 +197,7 @@ export default function DashboardPage() {
         { key: 'applied', title: 'Applied', href: '/account/saved', items: appliedList.slice(0, 8) },
         { key: 'archived', title: 'Archived', href: '/opportunities', items: archivedList.slice(0, 8) },
     ] as const;
-    const activeMobileSection = mobileSections.find((section) => section.key === mobileFeedTab) || mobileSections[0];
+    const activeSection = mobileSections.find((section) => section.key === activeTab) || mobileSections[0];
 
     return (
         <AuthGate>
@@ -248,46 +227,10 @@ export default function DashboardPage() {
                                 </Button>
                             </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
-                            <span className="px-2 py-1 rounded-full border border-border bg-muted/50">
-                                {isOnline ? 'Online' : 'Offline'} {'•'} Sync {formatSyncTime(feedLastSyncAt)}
-                            </span>
-                        </div>
                     </div>
 
-                    {/* Highlights Loading State */}
-                    {isLoadingHighlights ? (
-                        <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                                <Skeleton className="h-3 w-28 md:w-32 rounded-full opacity-60" />
-                                <Skeleton className="h-3 w-12 md:w-16 rounded-full opacity-40" />
-                            </div>
-                            {/* Mobile: 1 card, Tablet+: 3 cards horizontal */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <div className="h-20 md:h-24 bg-muted/10 rounded-2xl animate-pulse" />
-                                <div className="hidden md:block h-20 md:h-24 bg-muted/10 rounded-2xl animate-pulse" />
-                                <div className="hidden md:block h-20 md:h-24 bg-muted/10 rounded-2xl animate-pulse" />
-                            </div>
-                        </div>
-                    ) : highlightsError ? (
-                        <div className="rounded-xl border border-dashed border-border bg-card p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                            <div>
-                                <h3 className="text-sm font-semibold text-foreground">Could not load highlights</h3>
-                                <p className="text-xs text-muted-foreground mt-1">{highlightsError}</p>
-                            </div>
-                            <Button
-                                variant="outline"
-                                onClick={() => {
-                                    setIsLoadingHighlights(true);
-                                    loadHighlights();
-                                }}
-                                className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest"
-                            >
-                                Retry highlights
-                            </Button>
-                        </div>
-                    ) : highlights && (
-                        /* Filter out expired items on the fly */
+                    {/* Highlights (Urgent/New) */}
+                    {!isLoadingHighlights && highlights && (
                         (() => {
                             const isNotExpired = (o: Opportunity) => !o.expiresAt || new Date(o.expiresAt) > new Date();
                             const activeWalkins = highlights.urgent.walkins.filter(isNotExpired);
@@ -296,7 +239,7 @@ export default function DashboardPage() {
                             if (activeWalkins.length === 0 && activeNew.length === 0) return null;
 
                             return (
-                                <div className="space-y-4">
+                                <div className="space-y-4 animate-in fade-in duration-500">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
@@ -307,35 +250,32 @@ export default function DashboardPage() {
                                         </Link>
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                        {/* Urgent Walkins */}
-                                        {activeWalkins.length > 0 && activeWalkins.map(opp => (
+                                        {activeWalkins.map(opp => (
                                             <div
-                                                key={opp.id}
+                                                key={`urgent-${opp.id}`}
                                                 onClick={() => router.push(`/opportunities/${opp.slug || opp.id}`)}
                                                 className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 cursor-pointer hover:bg-amber-500/10 transition-all flex flex-col justify-between gap-2 group"
                                             >
                                                 <div className="space-y-1">
                                                     <div className="flex items-center justify-between">
                                                         <span className="text-[8px] font-bold uppercase tracking-wider text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded">Urgent Walk-in</span>
-                                                        <div className="flex items-center gap-1 text-[9px] text-amber-600 font-bold tracking-tight" aria-label="Closing soon">
-                                                            <ClockIcon className="w-3 h-3" aria-hidden="true" />
+                                                        <div className="flex items-center gap-1 text-[9px] text-amber-600 font-bold tracking-tight">
+                                                            <ClockIcon className="w-3 h-3" />
                                                             Closing Soon
                                                         </div>
                                                     </div>
                                                     <h3 className="font-bold text-sm tracking-tight line-clamp-1 group-hover:text-amber-600 transition-colors">{opp.title}</h3>
-                                                    <p className="text-[11px] font-medium text-muted-foreground">{opp.company} &bull; {opp.locations[0]}</p>
+                                                    <p className="text-[11px] font-medium text-muted-foreground line-clamp-1">{opp.company} &bull; {opp.locations[0]}</p>
                                                 </div>
                                                 <div className="flex items-center justify-between border-t border-amber-500/10 pt-2">
                                                     <span className="text-[9px] font-bold uppercase tracking-widest text-orange-600/60 dark:text-amber-300/60">Verified Drive</span>
-                                                    <ChevronRightIcon className="w-4 h-4 text-amber-500 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
+                                                    <ChevronRightIcon className="w-4 h-4 text-amber-500 group-hover:translate-x-1 transition-transform" />
                                                 </div>
                                             </div>
                                         ))}
-
-                                        {/* New Additions */}
                                         {activeNew.slice(0, activeWalkins.length > 0 ? 2 : 3).map(opp => (
                                             <div
-                                                key={opp.id}
+                                                key={`new-${opp.id}`}
                                                 onClick={() => router.push(`/opportunities/${opp.slug || opp.id}`)}
                                                 className="bg-primary/5 border border-primary/20 rounded-2xl p-4 cursor-pointer hover:bg-primary/10 transition-all flex flex-col justify-between gap-2 group"
                                             >
@@ -345,7 +285,7 @@ export default function DashboardPage() {
                                                         <span className="text-[10px] text-primary font-bold">Just Added</span>
                                                     </div>
                                                     <h3 className="font-bold text-sm tracking-tight line-clamp-1 group-hover:text-primary transition-colors">{opp.title}</h3>
-                                                    <p className="text-[11px] font-medium text-muted-foreground">{opp.company} &bull; {opp.locations[0]}</p>
+                                                    <p className="text-[11px] font-medium text-muted-foreground line-clamp-1">{opp.company} &bull; {opp.locations[0]}</p>
                                                 </div>
                                                 <div className="flex items-center justify-between border-t border-primary/10 pt-2">
                                                     <span className="text-[10px] font-bold uppercase tracking-tighter text-primary/60">Active Hiring</span>
@@ -359,83 +299,46 @@ export default function DashboardPage() {
                         })()
                     )}
 
-                    {/* Main Content Layout */}
+                    {/* Main Grid */}
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
-
-                        {/* Recent Opportunities */}
+                        {/* Feed Column */}
                         <div className="lg:col-span-8 space-y-3 md:space-y-6">
                             {(recentError || highlightsError) && (
                                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                                    <div className="text-xs text-orange-600 dark:text-amber-300">
-                                        Some dashboard data is unavailable. You can still browse listings.
-                                    </div>
-                                    <Button
-                                        variant="outline"
-                                        onClick={retryAll}
-                                        className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest border-amber-500/40 text-orange-600 dark:text-amber-300"
-                                    >
-                                        Retry all
-                                    </Button>
+                                    <div className="text-xs text-orange-600 dark:text-amber-300">Data sync issues. Browse existing listings.</div>
+                                    <Button variant="outline" onClick={retryAll} className="h-8 px-3 text-[10px] borer-amber-500/40 text-orange-600">Retry</Button>
                                 </div>
                             )}
+
+                            {/* Mobile View */}
                             <div className="md:hidden space-y-3">
                                 <div className="border-b border-border/60">
                                     <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
-                                        {mobileSections.map((section) => {
-                                            const isActive = mobileFeedTab === section.key;
-                                            return (
-                                                <button
-                                                    key={`mobile-tab-${section.key}`}
-                                                    onClick={() => setMobileFeedTab(section.key)}
-                                                    className={`relative whitespace-nowrap px-3 py-2 text-[11px] font-semibold tracking-tight transition-colors ${isActive
-                                                        ? 'text-foreground'
-                                                        : 'text-muted-foreground'
-                                                        }`}
-                                                >
-                                                    {section.title}
-                                                    {isActive && (
-                                                        <>
-                                                            <span className="absolute left-1/2 -translate-x-1/2 bottom-0 h-0.5 w-7 rounded-full bg-primary" />
-                                                        </>
-                                                    )}
-                                                </button>
-                                            );
-                                        })}
+                                        {mobileSections.map((s) => (
+                                            <button
+                                                key={s.key}
+                                                onClick={() => setActiveTab(s.key)}
+                                                className={`relative whitespace-nowrap px-3 py-2 text-[11px] font-semibold transition-colors ${activeTab === s.key ? 'text-foreground' : 'text-muted-foreground'}`}
+                                            >
+                                                {s.title}
+                                                {activeTab === s.key && <span className="absolute left-1/2 -translate-x-1/2 bottom-0 h-0.5 w-7 rounded-full bg-primary" />}
+                                            </button>
+                                        ))}
                                     </div>
-                                </div>
-                                <div className="flex items-center justify-between pb-1.5 border-b border-border/50">
-                                    <h2 className="text-sm font-bold tracking-tight text-foreground/90">{activeMobileSection.title}</h2>
-                                    <Link href={activeMobileSection.href} className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline">View all</Link>
                                 </div>
                                 {isLoadingOpps ? (
-                                    <div className="grid grid-cols-1 gap-4">
-                                        <SkeletonJobCard key="mobile-loading-1" />
-                                        <div className="hidden xs:block">
-                                            <SkeletonJobCard key="mobile-loading-2" />
-                                        </div>
+                                    <div className="space-y-4">
+                                        <SkeletonJobCard />
+                                        <SkeletonJobCard />
                                     </div>
-                                ) : activeMobileSection.items.length === 0 ? (
-                                    <div className="rounded-xl border border-dashed border-border bg-card p-4 text-xs text-muted-foreground space-y-3">
-                                        <p>
-                                            {activeMobileSection.key === 'applied'
-                                                ? 'No applied listings yet.'
-                                                : activeMobileSection.key === 'archived'
-                                                    ? 'No archived listings yet.'
-                                                    : 'No listings in this section yet.'}
-                                        </p>
-                                        {recentOpps.length === 0 && (activeMobileSection.key === 'featured' || activeMobileSection.key === 'all') && (
-                                            <Button asChild className="h-9 px-4 text-xs font-medium">
-                                                <Link href="/profile/edit">Setup Profile</Link>
-                                            </Button>
-                                        )}
-                                    </div>
+                                ) : activeSection.items.length === 0 ? (
+                                    <div className="p-10 text-center border border-dashed border-border rounded-xl text-xs text-muted-foreground">No listings here yet.</div>
                                 ) : (
-                                    <div className="grid grid-cols-1 gap-4">
-                                        {activeMobileSection.items.map((opp) => (
+                                    <div className="space-y-4">
+                                        {activeSection.items.map((opp: Opportunity) => (
                                             <JobCard
-                                                key={`mobile-${activeMobileSection.key}-${opp.id}`}
-                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                job={opp as any}
+                                                key={`mob-${opp.id}`}
+                                                job={opp}
                                                 jobId={opp.id}
                                                 isApplied={false}
                                                 isSaved={opp.isSaved}
@@ -447,160 +350,101 @@ export default function DashboardPage() {
                                     </div>
                                 )}
                             </div>
-                            {isLoadingOpps ? (
-                                <div className="hidden md:grid grid-cols-3 gap-4">
-                                    {[1, 2, 3].map(i => <SkeletonJobCard key={i} />)}
+
+                            {/* Desktop Feed */}
+                            <div className="hidden md:block space-y-6">
+                                <div className="border-b border-border/60">
+                                    <div className="flex items-center gap-6">
+                                        {mobileSections.map((s) => (
+                                            <button
+                                                key={`desktop-tab-${s.key}`}
+                                                onClick={() => setActiveTab(s.key)}
+                                                className={`relative pb-3 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === s.key ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                                            >
+                                                {s.title}
+                                                {activeTab === s.key && <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-primary animate-in fade-in zoom-in duration-300" />}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                            ) : recentError ? (
-                                <div className="hidden md:block col-span-full bg-card rounded-xl text-center p-8 md:p-10 border border-dashed border-border">
-                                    <h3 className="font-semibold text-foreground text-sm">Could not load recommendations</h3>
-                                    <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">{recentError}</p>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => {
-                                            setIsLoadingOpps(true);
-                                            loadRecentOpportunities();
-                                        }}
-                                        className="mt-5 h-8 px-3 text-[10px] font-bold uppercase tracking-widest"
-                                    >
-                                        Retry
-                                    </Button>
+
+                                {isLoadingOpps ? (
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {[1, 2, 3, 4].map(i => <SkeletonJobCard key={i} />)}
+                                    </div>
+                                ) : activeSection.items.length === 0 ? (
+                                    <div className="p-12 text-center border border-dashed border-border rounded-xl">
+                                        <p className="text-sm font-medium text-muted-foreground">No results found in this section.</p>
+                                        <Button asChild variant="outline" className="mt-4 h-8 text-[10px] font-bold uppercase tracking-widest">
+                                            <Link href="/opportunities">Browse all feed</Link>
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                        {activeSection.items.map((opp: Opportunity) => (
+                                            <JobCard
+                                                key={`desk-${opp.id}`}
+                                                job={opp}
+                                                jobId={opp.id}
+                                                isApplied={false}
+                                                isSaved={opp.isSaved}
+                                                onToggleSave={() => toggleSave(opp.id)}
+                                                onClick={() => router.push(`/opportunities/${opp.slug || opp.id}`)}
+                                                isAdmin={user?.role === 'ADMIN'}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Sidebar */}
+                        <aside className="lg:col-span-4 space-y-6">
+                            <h2 className="text-sm font-bold uppercase tracking-wider">Intelligence</h2>
+                            <div className="space-y-4">
+                                <div className="p-5 rounded-2xl border border-border bg-card/50 space-y-2">
+                                    <h3 className="text-[10px] font-bold text-primary uppercase">Snapshot</h3>
+                                    <p className="text-xs text-muted-foreground">Listings prioritized for your profile.</p>
                                 </div>
-                            ) : recentOpps.length === 0 ? (
-                                <div className="hidden md:block col-span-full bg-card rounded-xl text-center p-8 md:p-12 border border-dashed border-border">
-                                    <h3 className="font-semibold text-foreground text-sm">No recommended jobs yet</h3>
-                                    <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">Update your profile parameters to see matching jobs.</p>
-                                    <Button asChild className="mt-6 h-9 px-4 text-xs font-medium">
-                                        <Link href="/profile/edit">Setup Profile</Link>
-                                    </Button>
+                                <div className="p-5 rounded-2xl border border-border bg-card/50 space-y-3">
+                                    <h3 className="text-[10px] font-bold text-success uppercase">Deadline radar</h3>
+                                    <div className="space-y-2">
+                                        {closingSoon.slice(0, 3).map(opp => (
+                                            <button key={`side-${opp.id}`} onClick={() => router.push(`/opportunities/${opp.slug || opp.id}`)} className="w-full text-left p-2 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors">
+                                                <p className="text-[11px] font-semibold truncate">{opp.title}</p>
+                                                <p className="text-[10px] text-orange-600">{getDaysToExpiry(opp.expiresAt)}d remaining</p>
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                            ) : (
-                                <div className="hidden md:block space-y-7">
-                                    {sections.map((section) => (
-                                        <div key={section.key} className="space-y-3">
-                                            <div className="flex items-center justify-between pb-1.5 border-b border-border/50">
-                                                <h2 className="text-sm md:text-base font-bold tracking-tight text-foreground/90">{section.title}</h2>
-                                                <Link href={section.href} className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline">View all</Link>
+                                <div className="p-5 rounded-2xl border border-border bg-card/50 space-y-4">
+                                    <h3 className="text-[10px] font-bold uppercase">Activity pulse</h3>
+                                    {[
+                                        { label: 'Jobs', count: jobsCount },
+                                        { label: 'Internships', count: internshipsCount },
+                                        { label: 'Walk-ins', count: walkinsCount },
+                                    ].map(item => (
+                                        <div key={item.label} className="space-y-1">
+                                            <div className="flex justify-between text-[10px]">
+                                                <span>{item.label}</span>
+                                                <span>{item.count}</span>
                                             </div>
-                                            {section.items.length === 0 ? (
-                                                <div className="rounded-xl border border-dashed border-border bg-card p-4 text-xs text-muted-foreground">
-                                                    No active listings in this section.
-                                                </div>
-                                            ) : (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    {section.items.map((opp) => (
-                                                        <JobCard
-                                                            key={`${section.key}-${opp.id}`}
-                                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                            job={opp as any}
-                                                            jobId={opp.id}
-                                                            isApplied={false}
-                                                            isSaved={opp.isSaved}
-                                                            onToggleSave={() => toggleSave(opp.id)}
-                                                            onClick={() => router.push(`/opportunities/${opp.slug || opp.id}`)}
-                                                            isAdmin={user?.role === 'ADMIN'}
-                                                        />
-                                                    ))}
-                                                </div>
-                                            )}
+                                            <div className="h-1 bg-muted rounded-full overflow-hidden">
+                                                <div className="h-full bg-primary/60" style={{ width: `${Math.min(100, (item.count / totalActive) * 100)}%` }} />
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
-                            )}
-                        </div>
-
-                        {/* Intelligence Feed */}
-                        <div className="lg:col-span-4 space-y-4 md:space-y-6">
-                            <h2 className="text-sm md:text-base font-bold tracking-tight text-foreground/90">Next steps</h2>
-                            <div className="space-y-3">
-                                <div className="p-5 rounded-2xl border border-border bg-card/70 space-y-3">
-                                    <div className="flex items-center gap-2">
-                                        <ChartBarIcon className="w-4 h-4 text-primary" />
-                                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Snapshot</h4>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground leading-snug">
-                                        New uploads and close-deadline listings are prioritized to reduce missed opportunities.
-                                    </p>
-                                </div>
-
-                                <div className="p-5 rounded-2xl border border-border bg-card/70 space-y-3">
-                                    <div className="flex items-center gap-2">
-                                        <CheckBadgeIcon className="w-4 h-4 text-success" />
-                                        <h3 className="text-[10px] font-bold uppercase tracking-wider">Profile status</h3>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground leading-snug">
-                                        Complete your profile to unlock every opportunity and faster shortlists.
-                                    </p>
-                                    <Button asChild className="w-full h-9 text-[10px] font-bold uppercase tracking-widest">
-                                        <Link href="/profile/edit">Improve profile</Link>
-                                    </Button>
-                                </div>
-
-                                <div className="p-5 rounded-2xl border border-border bg-card/70 space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <ClockIcon className="w-4 h-4 text-amber-500" />
-                                            <h3 className="text-[10px] font-bold uppercase tracking-wider">Deadline radar</h3>
-                                        </div>
-                                        <Link href="/opportunities?closingSoon=true" className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline">
-                                            View all
-                                        </Link>
-                                    </div>
-                                    {closingSoon.length === 0 ? (
-                                        <p className="text-xs text-muted-foreground">No urgent deadlines right now.</p>
-                                    ) : (
-                                        <div className="space-y-2">
-                                            {closingSoon.slice(0, 5).map((opp) => {
-                                                const days = getDaysToExpiry(opp.expiresAt);
-                                                return (
-                                                    <button
-                                                        key={opp.id}
-                                                        onClick={() => router.push(`/opportunities/${opp.slug || opp.id}`)}
-                                                        className="w-full text-left rounded-lg border border-border bg-muted/20 hover:bg-muted/40 p-2.5 transition-colors"
-                                                    >
-                                                        <p className="text-xs font-semibold text-foreground line-clamp-1">{opp.title}</p>
-                                                        <p className="text-[10px] text-muted-foreground line-clamp-1">{opp.company}</p>
-                                                        <p className="text-[10px] font-bold uppercase tracking-wider text-orange-600 dark:text-amber-300 mt-1">
-                                                            {days != null && days >= 0 ? `Expires in ${days}d` : 'Closing'} • {formatExpiry(opp.expiresAt)}
-                                                        </p>
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="p-5 rounded-2xl border border-border bg-card/70 space-y-3">
-                                    <h3 className="text-[10px] font-bold uppercase tracking-wider">Category pulse</h3>
-                                    {[
-                                        { label: 'Jobs', count: jobsCount, href: '/jobs' },
-                                        { label: 'Internships', count: internshipsCount, href: '/internships' },
-                                        { label: 'Walk-ins', count: walkinsCount, href: '/walk-ins' },
-                                    ].map((item) => {
-                                        const pct = Math.max(8, Math.round((item.count / totalActive) * 100));
-                                        return (
-                                            <Link key={item.label} href={item.href} className="block space-y-1.5">
-                                                <div className="flex items-center justify-between text-xs">
-                                                    <span className="font-semibold text-foreground">{item.label}</span>
-                                                    <span className="text-muted-foreground">{item.count}</span>
-                                                </div>
-                                                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                                                    <div className="h-full rounded-full bg-primary/70" style={{ width: `${pct}%` }} />
-                                                </div>
-                                            </Link>
-                                        );
-                                    })}
+                                <div className="pt-2 flex items-center justify-center">
+                                    <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-muted-foreground/40 px-2 py-0.5 rounded-full border border-border/30">
+                                        {isOnline ? 'Network Stable' : 'Offline Mode'} &bull; Last Sync {formatSyncTime(feedLastSyncAt)}
+                                    </span>
                                 </div>
                             </div>
-                        </div>
+                        </aside>
                     </div>
                 </div>
             </ProfileGate>
         </AuthGate>
     );
 }
-
-
-
-
-
