@@ -1,4 +1,4 @@
-const SW_VERSION = '1.4.7';
+const SW_VERSION = '1.4.8';
 const STATIC_CACHE = `fresherflow-static-${SW_VERSION}`;
 const API_CACHE = `fresherflow-api-${SW_VERSION}`;
 const OFFLINE_URL = '/offline.html';
@@ -6,6 +6,12 @@ const OFFLINE_URL = '/offline.html';
 // Assets that should be cached on install
 const PRECACHE_ASSETS = [
   OFFLINE_URL,
+  '/',
+  '/dashboard',
+  '/opportunities',
+  '/jobs',
+  '/internships',
+  '/walk-ins',
   '/favicon.ico',
   '/manifest.webmanifest'
 ];
@@ -66,7 +72,21 @@ self.addEventListener('fetch', (event) => {
   // Handle navigation requests by serving cached offline page if network fails
   if (isNavigation) {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(OFFLINE_URL))
+      (async () => {
+        const cache = await caches.open(STATIC_CACHE);
+        const navigationKey = new Request(url.pathname || '/', { method: 'GET' });
+        try {
+          const networkResponse = await fetch(event.request);
+          if (networkResponse && networkResponse.ok) {
+            cache.put(navigationKey, networkResponse.clone());
+          }
+          return networkResponse;
+        } catch {
+          const cachedNavigation = await cache.match(navigationKey);
+          if (cachedNavigation) return cachedNavigation;
+          return (await caches.match(OFFLINE_URL)) || Response.error();
+        }
+      })()
     );
     return;
   }

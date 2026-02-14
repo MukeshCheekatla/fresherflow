@@ -1,7 +1,7 @@
 {
     "name": "FresherFlow",
     "short_name": "FresherFlow",
-    "version": "1.4.7",
+    "version": "1.4.8",
     "description": "Premium job platform for freshers.",
     "start_url": "/",
     "scope": "/",
