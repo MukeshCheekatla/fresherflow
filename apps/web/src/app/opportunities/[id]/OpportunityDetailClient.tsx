@@ -11,7 +11,6 @@ import toast from 'react-hot-toast';
 import { toastError } from '@/lib/utils/error';
 import MapPinIcon from '@heroicons/react/24/outline/MapPinIcon';
 import ClockIcon from '@heroicons/react/24/outline/ClockIcon';
-import ArrowLeftIcon from '@heroicons/react/24/outline/ArrowLeftIcon';
 import ArrowTopRightOnSquareIcon from '@heroicons/react/24/outline/ArrowTopRightOnSquareIcon';
 import InformationCircleIcon from '@heroicons/react/24/outline/InformationCircleIcon';
 import ShareIcon from '@heroicons/react/24/outline/ShareIcon';
@@ -525,15 +524,10 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingJsonLd) }}
             />
-            <main className="relative z-10 max-w-6xl mx-auto px-4 py-4 md:py-7 space-y-3 md:space-y-5">
+            <main className="relative z-10 max-w-6xl mx-auto px-4 pt-2 pb-4 md:py-7 space-y-3 md:space-y-5">
 
                 {/* Navigation & Actions - Only for logged-in users */}
-                <div className="flex items-center justify-between">
-                    <Link href="/opportunities" className="group/back flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-foreground/70 hover:text-primary transition-all p-2 -ml-2 rounded-lg hover:bg-muted/50">
-                        <ArrowLeftIcon className="w-4 h-4 group-hover/back:-translate-x-0.5 transition-all" />
-                        <span className="hidden sm:inline">Explore Jobs</span>
-                        <span className="sm:hidden">Back</span>
-                    </Link>
+                <div className="flex items-center justify-end">
 
                     {user && (
                         <div className="flex items-center gap-1.5">
@@ -769,46 +763,6 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                             </div>
                         )}
 
-                        {!user && (
-                            <div className="lg:hidden premium-card p-6 md:p-8 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 border-primary/20 relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
-                                    <ShieldCheckIcon className="w-24 h-24 text-primary" />
-                                </div>
-                                <div className="relative z-10 space-y-4 max-w-lg">
-                                    <h3 className="text-xl font-bold text-foreground tracking-tight">Unlock the full FresherFlow experience</h3>
-                                    <p className="text-sm text-muted-foreground leading-relaxed">
-                                        Join thousands of freshers who use our verified feed to land their first roles. Get instant alerts, track your applications, and never miss a deadline.
-                                    </p>
-                                    <div className="flex flex-wrap items-center gap-3 pt-2">
-                                        {hasApplyLink && (
-                                            <Link
-                                                href={opp.applyLink || '#'}
-                                                className="premium-button h-11 px-6 text-xs"
-                                                target="_blank"
-                                            >
-                                                Apply on company site
-                                            </Link>
-                                        )}
-                                        <Link
-                                            href={loginFromDetailHref}
-                                            className="premium-button h-10 px-6 text-xs"
-                                        >
-                                            Create Free Account
-                                        </Link>
-                                        <div className="flex -space-x-2">
-                                            {[1, 2, 3].map(i => (
-                                                <div key={i} className="w-6 h-6 rounded-full border-2 border-background bg-muted flex items-center justify-center text-[8px] font-bold">
-                                                    {String.fromCharCode(64 + i)}
-                                                </div>
-                                            ))}
-                                            <div className="pl-3 text-[10px] font-medium text-muted-foreground flex items-center">
-                                                500+ joined today
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
 
                         {/* Description Section */}
                         <div className="bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3">
@@ -1145,15 +1099,25 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                     onClick={() => router.push(`/opportunities/${item.slug || item.id}`)}
                                     className="text-left rounded-xl border border-border bg-card hover:border-primary/30 hover:shadow-md p-4 transition-all group"
                                 >
-                                    <p className="text-sm font-bold text-foreground line-clamp-2 group-hover:text-primary transition-colors">{item.title}</p>
-                                    <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{item.company}</p>
-                                    <div className="flex items-center gap-3 mt-3">
-                                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                                            <MapPinIcon className="w-3 h-3" />
-                                            {(item.locations || []).join(', ') || 'Remote'}
-                                        </div>
-                                        <div className="flex items-center gap-1 text-[10px] text-primary font-bold uppercase tracking-tighter">
-                                            {item.type}
+                                    <div className="flex items-start gap-3">
+                                        <CompanyLogo
+                                            companyName={item.company}
+                                            companyWebsite={item.companyWebsite}
+                                            applyLink={item.applyLink}
+                                            className="w-9 h-9 rounded-lg shrink-0 mt-0.5"
+                                        />
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-sm font-bold text-foreground line-clamp-2 group-hover:text-primary transition-colors leading-snug">{item.title}</p>
+                                            <p className="text-[11px] font-medium text-muted-foreground mt-0.5 line-clamp-1">{item.company}</p>
+                                            <div className="flex items-center gap-3 mt-3">
+                                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground truncate">
+                                                    <MapPinIcon className="w-3 h-3" />
+                                                    {(item.locations || []).join(', ') || 'Remote'}
+                                                </div>
+                                                <div className="flex items-center gap-1 text-[10px] text-primary font-bold uppercase tracking-tight shrink-0">
+                                                    {item.type}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </button>

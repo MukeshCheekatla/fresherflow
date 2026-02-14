@@ -281,8 +281,6 @@ export function MobileNav() {
         return () => document.removeEventListener('keydown', onEsc);
     }, [menuOpen]);
 
-    if (isLoading || !user) return null;
-
     const getMobileTitle = (path: string) => {
         if (path === '/dashboard') return 'FresherFlow';
         if (path === '/opportunities') return 'Search';
@@ -312,7 +310,7 @@ export function MobileNav() {
         <>
             <div className="md:hidden fixed top-0 left-0 right-0 z-[70] h-16 bg-background/95 backdrop-blur-md border-b border-border">
                 <div className="h-full px-4 flex items-center justify-between">
-                    <Link href="/dashboard" className="flex items-center gap-2">
+                    <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2">
                         <div
                             suppressHydrationWarning
                             className="w-6 h-6 bg-contain bg-center bg-no-repeat"
@@ -320,36 +318,43 @@ export function MobileNav() {
                         />
                         <span className="text-sm font-bold tracking-tight text-foreground">{mobileTitle}</span>
                     </Link>
-                    <div className="flex items-center gap-2">
-                        <Link
-                            href="/alerts"
-                            className="p-2 rounded-lg border border-border bg-muted/40 text-muted-foreground hover:text-primary transition-all relative"
-                            aria-label="View notifications"
-                        >
-                            <BellIcon className="w-5 h-5" />
-                            {unreadCount > 0 && (
-                                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full ring-2 ring-background" />
-                            )}
-                        </Link>
-                        <button
-                            onClick={() => setMenuOpen(true)}
-                            className={cn(
-                                "p-2 rounded-lg border border-border bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted transition-all",
-                                menuOpen && "text-primary border-primary/30 bg-primary/10"
-                            )}
-                            aria-label="Open menu"
-                        >
-                            <div className="relative">
-                                <Bars3Icon className="w-5 h-5" />
+
+                    {user ? (
+                        <div className="flex items-center gap-2">
+                            <Link
+                                href="/alerts"
+                                className="p-2 rounded-lg border border-border bg-muted/40 text-muted-foreground hover:text-primary transition-all relative"
+                                aria-label="View notifications"
+                            >
+                                <BellIcon className="w-5 h-5" />
                                 {unreadCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full border-2 border-background" />
+                                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full ring-2 ring-background" />
                                 )}
-                            </div>
-                        </button>
-                    </div>
+                            </Link>
+                            <button
+                                onClick={() => setMenuOpen(true)}
+                                className={cn(
+                                    "p-2 rounded-lg border border-border bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted transition-all",
+                                    menuOpen && "text-primary border-primary/30 bg-primary/10"
+                                )}
+                                aria-label="Open menu"
+                            >
+                                <div className="relative">
+                                    <Bars3Icon className="w-5 h-5" />
+                                    {unreadCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full border-2 border-background" />
+                                    )}
+                                </div>
+                            </button>
+                        </div>
+                    ) : (
+                        <Link href="/login" className="premium-button !h-8 !px-4 !text-[10px] uppercase font-bold tracking-widest italic">
+                            Login
+                        </Link>
+                    )}
                 </div>
             </div>
-            {menuOpen && (
+            {user && menuOpen && (
                 <div className="md:hidden fixed inset-0 z-[75] bg-background/95 backdrop-blur-sm animate-in fade-in duration-200">
                     <button
                         className="absolute inset-0"
@@ -472,46 +477,48 @@ export function MobileNav() {
                     </div>
                 </div>
             )}
-            <div className={cn(
-                "md:hidden fixed bottom-0 left-0 right-0 h-16 bg-background/95 backdrop-blur-md border-t border-border z-50 transition-transform duration-200",
-                isVisible ? "translate-y-0" : "translate-y-full"
-            )}>
-                <div className="flex justify-around items-center h-full px-0">
-                    {tabs.map((tab) => {
-                        const currentSearchParams = searchParams.toString();
-                        const fullPath = pathname + (currentSearchParams ? `?${currentSearchParams}` : '');
-                        const [tabPath, tabQuery] = tab.href.split('?');
-                        const currentView = searchParams.get('view');
-                        const tabView = tabQuery ? new URLSearchParams(tabQuery).get('view') : null;
-                        const isActive = fullPath === tab.href
-                            || (pathname === tabPath && ((tabView && currentView === tabView) || (!tabView && currentView !== 'new')));
+            {user && (
+                <div className={cn(
+                    "md:hidden fixed bottom-0 left-0 right-0 h-16 bg-background/95 backdrop-blur-md border-t border-border z-50 transition-transform duration-200",
+                    isVisible ? "translate-y-0" : "translate-y-full"
+                )}>
+                    <div className="flex justify-around items-center h-full px-0">
+                        {tabs.map((tab) => {
+                            const currentSearchParams = searchParams.toString();
+                            const fullPath = pathname + (currentSearchParams ? `?${currentSearchParams}` : '');
+                            const [tabPath, tabQuery] = tab.href.split('?');
+                            const currentView = searchParams.get('view');
+                            const tabView = tabQuery ? new URLSearchParams(tabQuery).get('view') : null;
+                            const isActive = fullPath === tab.href
+                                || (pathname === tabPath && ((tabView && currentView === tabView) || (!tabView && currentView !== 'new')));
 
-                        return (
-                            <Link
-                                key={tab.href + tab.label}
-                                href={tab.href}
-                                className={cn(
-                                    "flex flex-col items-center justify-center flex-1 h-full gap-1",
-                                    isActive ? "text-primary" : "text-muted-foreground"
-                                )}
-                            >
-                                <div className={cn(
-                                    "p-1 rounded-xl",
-                                    isActive && "bg-primary/10"
-                                )}>
-                                    <tab.icon className={cn("w-6 h-6", isActive && "fill-primary/20")} strokeWidth={isActive ? 2 : 1.5} />
-                                </div>
-                                <span className={cn(
-                                    "text-[10px]",
-                                    isActive ? "font-semibold" : "font-normal"
-                                )}>
-                                    {tab.label}
-                                </span>
-                            </Link>
-                        );
-                    })}
+                            return (
+                                <Link
+                                    key={tab.href + tab.label}
+                                    href={tab.href}
+                                    className={cn(
+                                        "flex flex-col items-center justify-center flex-1 h-full gap-1",
+                                        isActive ? "text-primary" : "text-muted-foreground"
+                                    )}
+                                >
+                                    <div className={cn(
+                                        "p-1 rounded-xl",
+                                        isActive && "bg-primary/10"
+                                    )}>
+                                        <tab.icon className={cn("w-6 h-6", isActive && "fill-primary/20")} strokeWidth={isActive ? 2 : 1.5} />
+                                    </div>
+                                    <span className={cn(
+                                        "text-[10px]",
+                                        isActive ? "font-semibold" : "font-normal"
+                                    )}>
+                                        {tab.label}
+                                    </span>
+                                </Link>
+                            );
+                        })}
+                    </div>
                 </div>
-            </div>
+            )}
         </>
     );
 }
