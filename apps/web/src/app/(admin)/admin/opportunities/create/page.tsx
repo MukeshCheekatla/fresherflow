@@ -860,9 +860,7 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
                 ? 'Listing updated.'
                 : (sharePackCopied ? 'Listing published. Share pack copied.' : 'Listing published.');
             toast.success(successMessage, { id: loadingToast });
-            if (isEditMode) {
-                router.push('/admin/opportunities');
-            }
+            router.push('/admin/opportunities');
         } catch (err: unknown) {
             const error = err as Error;
             let errorMessage = 'An unexpected error occurred.';
