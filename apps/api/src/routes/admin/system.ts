@@ -3,8 +3,9 @@ import { requireAdmin } from '../../middleware/auth';
 import { getVerificationStats, runLinkVerification } from '../../services/verificationBot';
 import { getObservabilityMetrics } from '../../middleware/observability';
 import { getGrowthFunnelMetrics, GrowthWindow } from '../../services/growthFunnel.service';
-import { PrismaClient, TelegramBroadcastStatus } from '@prisma/client';
+import { IngestionSourceType, OpportunityType, PrismaClient, TelegramBroadcastStatus } from '@prisma/client';
 import TelegramService from '../../services/telegram.service';
+import { runIngestionForSource } from '../../services/ingestion.service';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -236,6 +237,129 @@ router.post('/telegram-broadcasts/:id/retry', requireAdmin, async (req: Request,
             success: true,
             broadcast: refreshed
         });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * Ingestion sources management
+ */
+router.get('/ingestion/sources', requireAdmin, async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+        const sources = await prisma.ingestionSource.findMany({
+            orderBy: { createdAt: 'desc' }
+        });
+        res.json({ sources });
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.post('/ingestion/sources', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const name = String(req.body?.name || '').trim();
+        const endpoint = String(req.body?.endpoint || '').trim();
+        const sourceTypeRaw = String(req.body?.sourceType || '').toUpperCase();
+        const sourceType = Object.values(IngestionSourceType).includes(sourceTypeRaw as IngestionSourceType)
+            ? (sourceTypeRaw as IngestionSourceType)
+            : IngestionSourceType.JSON_FEED;
+        const runFrequencyMinutes = Number(req.body?.runFrequencyMinutes || 60);
+        const defaultTypeRaw = String(req.body?.defaultType || '').toUpperCase();
+        const defaultType = Object.values(OpportunityType).includes(defaultTypeRaw as OpportunityType)
+            ? (defaultTypeRaw as OpportunityType)
+            : OpportunityType.JOB;
+
+        if (!name || !endpoint) {
+            return res.status(400).json({ message: 'name and endpoint are required' });
+        }
+
+        const source = await prisma.ingestionSource.create({
+            data: {
+                name,
+                endpoint,
+                sourceType,
+                runFrequencyMinutes: Number.isFinite(runFrequencyMinutes) ? Math.max(5, runFrequencyMinutes) : 60,
+                defaultType,
+                createdByUserId: req.adminId || null
+            }
+        });
+
+        res.status(201).json({ source });
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.patch('/ingestion/sources/:id', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const id = String(req.params.id || '');
+        const data: Record<string, unknown> = {};
+
+        if (req.body?.name !== undefined) data.name = String(req.body.name).trim();
+        if (req.body?.endpoint !== undefined) data.endpoint = String(req.body.endpoint).trim();
+        if (req.body?.enabled !== undefined) data.enabled = Boolean(req.body.enabled);
+
+        if (req.body?.runFrequencyMinutes !== undefined) {
+            const parsed = Number(req.body.runFrequencyMinutes);
+            data.runFrequencyMinutes = Number.isFinite(parsed) ? Math.max(5, parsed) : 60;
+        }
+
+        if (req.body?.sourceType !== undefined) {
+            const sourceTypeRaw = String(req.body.sourceType).toUpperCase();
+            if (Object.values(IngestionSourceType).includes(sourceTypeRaw as IngestionSourceType)) {
+                data.sourceType = sourceTypeRaw as IngestionSourceType;
+            }
+        }
+
+        if (req.body?.defaultType !== undefined) {
+            const defaultTypeRaw = String(req.body.defaultType).toUpperCase();
+            if (Object.values(OpportunityType).includes(defaultTypeRaw as OpportunityType)) {
+                data.defaultType = defaultTypeRaw as OpportunityType;
+            }
+        }
+
+        const source = await prisma.ingestionSource.update({
+            where: { id },
+            data
+        });
+
+        res.json({ source });
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.post('/ingestion/sources/:id/run', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const id = String(req.params.id || '');
+        if (!id) return res.status(400).json({ message: 'source id is required' });
+
+        const result = await runIngestionForSource(id);
+        res.json({ success: true, result });
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.get('/ingestion/runs', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const sourceId = typeof req.query.sourceId === 'string' ? req.query.sourceId : undefined;
+        const limitRaw = Number(req.query.limit || 25);
+        const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 200) : 25;
+
+        const runs = await prisma.ingestionRun.findMany({
+            where: sourceId ? { sourceId } : undefined,
+            include: {
+                source: {
+                    select: { id: true, name: true, sourceType: true }
+                }
+            },
+            orderBy: { startedAt: 'desc' },
+            take: limit
+        });
+
+        res.json({ runs });
     } catch (error) {
         next(error);
     }
