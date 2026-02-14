@@ -59,6 +59,12 @@ function toNumber(input: unknown): number | undefined {
 function stripHtml(input: string): string {
     return input
         .replace(/<[^>]*>/g, ' ')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&amp;/gi, '&')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/gi, "'")
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
         .replace(/\s+/g, ' ')
         .trim();
 }
@@ -118,6 +124,7 @@ function computeFresherScore(candidate: Candidate): { score: number; flags: stri
 function parseExperienceRange(input: unknown): { min?: number; max?: number } {
     const text = String(input || '').toLowerCase();
     if (!text) return {};
+    if (text.includes('fresher') || text.includes('entry level')) return { min: 0, max: 0 };
     const numbers = text.match(/\d+(\.\d+)?/g)?.map((value) => Number(value)) || [];
     if (numbers.length === 0) return {};
     if (numbers.length === 1) return { min: numbers[0], max: numbers[0] };
@@ -132,8 +139,19 @@ function normalizeGfgJobItem(item: Record<string, unknown>, fallbackType: Opport
     const company = String(organization?.name || item.company || '').trim();
     if (!title || !company) return null;
 
-    const description = stripHtml(String(organization?.about || item.description || '')).trim() || undefined;
+    const baseDescription = stripHtml(String(organization?.about || item.description || '')).trim();
+    const summaryParts = [
+        String(item.salary || '').trim() ? `Salary: ${String(item.salary).trim()}` : '',
+        String(item.employment_type || '').trim() ? `Employment: ${String(item.employment_type).trim()}` : '',
+        String(item.last_apply_date_display || '').trim() ? `Apply by: ${String(item.last_apply_date_display).trim()}` : '',
+    ].filter(Boolean);
+    const description = [baseDescription, ...summaryParts].filter(Boolean).join('\n').trim() || undefined;
     const experience = parseExperienceRange(item.experience);
+    const experienceLevel = String(item.experience_level || '').toLowerCase();
+    if (experience.min === undefined && experience.max === undefined && experienceLevel === 'fresher') {
+        experience.min = 0;
+        experience.max = 0;
+    }
     const locationType = String(item.location_type || '').toUpperCase();
     const sourceListingLink = String(item.slug || '').trim()
         ? `https://www.geeksforgeeks.org/jobs/${String(item.slug).trim()}/`
