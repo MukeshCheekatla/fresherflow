@@ -42,7 +42,7 @@ export function checkEligibility(
             reason = rule.getReason(opportunity, profile);
 
             // Log ineligibility
-            logger.info('Eligibility check failed', {
+            logger.debug('Eligibility check failed', {
                 userId,
                 opportunityId: opportunity.id,
                 rule: rule.name,

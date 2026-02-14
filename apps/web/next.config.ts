@@ -3,6 +3,17 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@fresherflow/types", "@fresherflow/schemas", "@fresherflow/constants"],
+
+  // Twitter-style navigation caching
+  // Pages stay cached in router for 5 minutes
+  // Back button = instant, no reload
+  experimental: {
+    staleTimes: {
+      dynamic: 300, // 5 minutes for dynamic pages
+      static: 300,  // 5 minutes for static pages
+    },
+  },
+
   images: {
     remotePatterns: [
       {

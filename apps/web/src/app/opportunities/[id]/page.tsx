@@ -62,8 +62,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         // Fallback static OG image (works even when Vercel deployment is paused)
         const staticOgImageUrl = 'https://fresherflow.in/main.png';
 
-        // Use dynamic if available, static as fallback
-        const ogImageUrl = process.env.VERCEL_ENV === 'production' ? dynamicOgImageUrl : staticOgImageUrl;
+        // Use dynamic OG image by default
+        // Only use static fallback if dynamic generation is unavailable
+        const ogImageUrl = dynamicOgImageUrl;
 
         return {
             title: seoTitle,

@@ -74,11 +74,16 @@ export default function DashboardPage() {
 
     useEffect(() => {
         if (!hasLoaded || !user) return;
+
+        // DISABLED: Auto-refresh causes API spam every 3 seconds
+        // Only enable in production if needed for real-time updates
+        /*
         const interval = window.setInterval(() => {
             loadRecentOpportunities();
             loadHighlights();
         }, UPDATE_INTERVAL_MS);
         return () => window.clearInterval(interval);
+        */
     }, [hasLoaded, user]);
 
     const loadHighlights = async () => {
