@@ -60,6 +60,36 @@ type AlertFeedResponse = {
     };
 };
 
+function getAlertMetaText(item: AlertFeedItem): string | null {
+    if (!item.metadata) return null;
+
+    try {
+        const metadata = JSON.parse(item.metadata) as {
+            relevanceScore?: number;
+            hoursLeft?: number;
+            count?: number;
+        };
+
+        if (item.kind === 'NEW_JOB' && typeof metadata.relevanceScore === 'number') {
+            return `Match score ${Math.round(metadata.relevanceScore)}%`;
+        }
+
+        if (item.kind === 'CLOSING_SOON' && typeof metadata.hoursLeft === 'number') {
+            return metadata.hoursLeft <= 24
+                ? `${metadata.hoursLeft}h remaining`
+                : `${Math.ceil(metadata.hoursLeft / 24)}d remaining`;
+        }
+
+        if (item.kind === 'DAILY_DIGEST' && typeof metadata.count === 'number') {
+            return `${metadata.count} matching opportunities`;
+        }
+    } catch {
+        return null;
+    }
+
+    return null;
+}
+
 export default function AlertsCenterPage() {
     const { user, isLoading } = useAuth();
     const [loadingFeed, setLoadingFeed] = useState(true);
@@ -272,6 +302,7 @@ export default function AlertsCenterPage() {
                             const title = item.opportunity?.title || 'Opportunity update';
                             const company = item.opportunity?.company || 'FresherFlow';
                             const href = item.opportunity ? getOpportunityPathFromItem(item.opportunity) : '/opportunities';
+                            const metaText = getAlertMetaText(item);
                             const kindLabel =
                                 item.kind === 'CLOSING_SOON' ? 'Closing soon' :
                                     item.kind === 'DAILY_DIGEST' ? 'Daily digest' :
@@ -321,6 +352,9 @@ export default function AlertsCenterPage() {
                                             <div className="w-1 h-1 rounded-full bg-border" />
                                             <p className="text-[10px] font-bold text-primary/80 uppercase tracking-widest">{item.channel}</p>
                                         </div>
+                                        {metaText && (
+                                            <p className="text-[11px] font-semibold text-muted-foreground/80">{metaText}</p>
+                                        )}
                                     </div>
                                 </Link>
                             );

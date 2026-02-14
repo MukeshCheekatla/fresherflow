@@ -37,7 +37,9 @@ router.get('/feed', requireAuth, async (req: Request, res: Response, next: NextF
         const where: {
             userId: string;
             kind?: 'DAILY_DIGEST' | 'CLOSING_SOON' | 'HIGHLIGHT' | 'APP_UPDATE' | 'NEW_JOB';
+            channel?: 'APP';
         } = { userId };
+        where.channel = 'APP';
 
         if (['DAILY_DIGEST', 'CLOSING_SOON', 'HIGHLIGHT', 'APP_UPDATE', 'NEW_JOB'].includes(kindRaw)) {
             where.kind = kindRaw as any;
@@ -71,7 +73,7 @@ router.get('/feed', requireAuth, async (req: Request, res: Response, next: NextF
         };
 
         const unreadCount = await prisma.alertDelivery.count({
-            where: { userId, readAt: null }
+            where: { userId, readAt: null, channel: 'APP' }
         });
 
         res.json({ deliveries, summary, unreadCount });
@@ -88,7 +90,8 @@ router.get('/unread-count', requireAuth, async (req: Request, res: Response, nex
         const count = await prisma.alertDelivery.count({
             where: {
                 userId,
-                readAt: null
+                readAt: null,
+                channel: 'APP'
             }
         });
 
@@ -106,7 +109,8 @@ router.post('/mark-all-read', requireAuth, async (req: Request, res: Response, n
         await prisma.alertDelivery.updateMany({
             where: {
                 userId,
-                readAt: null
+                readAt: null,
+                channel: 'APP'
             },
             data: {
                 readAt: new Date()
@@ -128,7 +132,8 @@ router.post('/:id/read', requireAuth, async (req: Request, res: Response, next: 
         await prisma.alertDelivery.updateMany({
             where: {
                 id: String(id),
-                userId // Ensure user owns the alert
+                userId, // Ensure user owns the alert
+                channel: 'APP'
             },
             data: {
                 readAt: new Date()
