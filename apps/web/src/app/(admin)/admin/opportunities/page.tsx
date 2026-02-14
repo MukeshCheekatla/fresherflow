@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { AdminOpportunitiesSkeleton } from '@/components/ui/Skeleton';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import CompanyLogo from '@/components/ui/CompanyLogo';
+import { getOpportunityPath } from '@/lib/opportunityPath';
 import {
     PlusCircleIcon,
     MagnifyingGlassIcon,
@@ -324,8 +325,8 @@ function OpportunitiesListPage() {
     };
 
     // Admin preview should match exactly what a user sees on the public detail route.
-    const getPublicOpportunityHref = (opp: { id: string; slug?: string | null }) =>
-        `/opportunities/${opp.slug || opp.id}`;
+    const getPublicOpportunityHref = (opp: { id: string; slug?: string | null; type?: Opportunity['type'] }) =>
+        getOpportunityPath(opp.type, opp.slug || opp.id);
 
     const formatLinkHealth = (health?: string) => {
         if (!health) return 'Unknown';

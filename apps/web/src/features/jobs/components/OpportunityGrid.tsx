@@ -3,11 +3,10 @@
 import { Opportunity } from '@fresherflow/types';
 import JobCard from './JobCard';
 import { SkeletonJobCard } from '@/components/ui/Skeleton';
-import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
-import { useState, useMemo } from 'react';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
+import { getOpportunityPathFromItem } from '@/lib/opportunityPath';
 
 interface OpportunityGridProps {
     opportunities: Opportunity[];
@@ -18,7 +17,6 @@ interface OpportunityGridProps {
     onToggleSave: (id: string) => void;
     onClearFilters: () => void;
     onRetry: () => void;
-    pageSize?: number;
 }
 
 export function OpportunityGrid({
@@ -29,21 +27,9 @@ export function OpportunityGrid({
     isAdmin,
     onToggleSave,
     onClearFilters,
-    onRetry,
-    pageSize = 12
+    onRetry
 }: OpportunityGridProps) {
     const router = useRouter();
-    const [displayCount, setDisplayCount] = useState(pageSize);
-
-    const visibleOpportunities = useMemo(() => {
-        return opportunities.slice(0, displayCount);
-    }, [opportunities, displayCount]);
-
-    const hasMore = displayCount < opportunities.length;
-
-    const handleLoadMore = () => {
-        setDisplayCount(prev => prev + pageSize);
-    };
 
     if (isLoading) {
         return (
@@ -90,7 +76,7 @@ export function OpportunityGrid({
                 "grid grid-cols-1 md:grid-cols-2 gap-3.5 md:gap-6",
                 isFilterOpen ? "lg:grid-cols-2 xl:grid-cols-3" : "lg:grid-cols-3 xl:grid-cols-4"
             )} role="list" aria-label="Job listings">
-                {visibleOpportunities.map((opp) => (
+                {opportunities.map((opp) => (
                     <JobCard
                         key={opp.id}
                         job={{
@@ -102,23 +88,11 @@ export function OpportunityGrid({
                         isSaved={opp.isSaved || false}
                         isApplied={opp.actions && opp.actions.length > 0}
                         onToggleSave={() => onToggleSave(opp.id)}
-                        onClick={() => router.push(`/opportunities/${opp.slug || opp.id}`)}
+                        onClick={() => router.push(getOpportunityPathFromItem(opp))}
                         isAdmin={isAdmin}
                     />
                 ))}
             </div>
-
-            {hasMore && (
-                <div className="flex justify-center pt-8">
-                    <Button
-                        variant="outline"
-                        onClick={handleLoadMore}
-                        className="h-10 px-8 text-xs font-bold uppercase tracking-widest border-primary/20 hover:border-primary/40 hover:bg-primary/5 text-primary"
-                    >
-                        Load more opportunities
-                    </Button>
-                </div>
-            )}
         </div>
     );
 }

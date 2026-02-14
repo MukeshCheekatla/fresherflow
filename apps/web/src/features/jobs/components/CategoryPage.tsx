@@ -24,6 +24,7 @@ import { Input } from '@/components/ui/Input';
 import { FeedPageSkeleton, SkeletonJobCard } from '@/components/ui/Skeleton';
 import { useOpportunitiesFeed } from '@/features/jobs/hooks/useOpportunitiesFeed';
 import { useAuth } from '@/contexts/AuthContext';
+import { getOpportunityPathFromItem } from '@/lib/opportunityPath';
 
 const FILTERS = {
     location: ['Bangalore', 'Mumbai', 'Delhi', 'Hyderabad', 'Pune', 'Remote'],
@@ -183,7 +184,7 @@ function CategoryPageContent({ type }: CategoryPageProps) {
                                 className={cn(
                                     "h-8 px-3 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all",
                                     closingSoon
-                                        ? "bg-orange-100 border-orange-300 text-orange-900 dark:bg-amber-500/15 dark:border-amber-500/30 dark:text-amber-300"
+                                        ? "bg-orange-100 border-orange-300 text-slate-900 dark:bg-amber-500/15 dark:border-amber-500/30 dark:text-amber-300"
                                         : "bg-background border-border text-muted-foreground hover:bg-muted"
                                 )}
                             >
@@ -280,12 +281,12 @@ function CategoryPageContent({ type }: CategoryPageProps) {
                                             className={cn(
                                                 "w-full flex items-center justify-between px-3 py-3 rounded-xl border text-xs font-semibold transition-all uppercase tracking-wide",
                                                 draftClosingSoon
-                                                    ? "bg-orange-100 border-orange-300 text-orange-900 dark:bg-amber-500/10 dark:border-amber-500/50 dark:text-amber-300"
+                                                    ? "bg-orange-100 border-orange-300 text-slate-900 dark:bg-amber-500/10 dark:border-amber-500/50 dark:text-amber-300"
                                                     : "bg-background border-border text-muted-foreground"
                                             )}
                                         >
                                             <span>Closing soon</span>
-                                            {draftClosingSoon && <div className="w-1.5 h-1.5 rounded-full bg-orange-600 dark:bg-amber-500" />}
+                                            {draftClosingSoon && <div className="w-1.5 h-1.5 rounded-full bg-slate-700 dark:bg-amber-500" />}
                                         </button>
                                     </div>
 
@@ -371,7 +372,7 @@ function CategoryPageContent({ type }: CategoryPageProps) {
                                         className={cn(
                                             "w-full flex items-center justify-between px-3 py-3 rounded-xl border text-xs font-semibold transition-all text-left uppercase tracking-wide",
                                             closingSoon
-                                                ? "bg-orange-100 border-orange-300 text-orange-900 dark:bg-amber-500/10 dark:border-amber-500/50 dark:text-amber-300 shadow-sm"
+                                                ? "bg-orange-100 border-orange-300 text-slate-900 dark:bg-amber-500/10 dark:border-amber-500/50 dark:text-amber-300 shadow-sm"
                                                 : "bg-background border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                                         )}
                                     >
@@ -514,7 +515,7 @@ function CategoryPageContent({ type }: CategoryPageProps) {
                                                 isSaved={isJobSaved(opp)}
                                                 isApplied={isJobApplied(opp)}
                                                 onToggleSave={() => toggleSave(opp.id)}
-                                                onClick={() => router.push(`/opportunities/${opp.slug || opp.id}`)}
+                                                onClick={() => router.push(getOpportunityPathFromItem(opp))}
                                                 isAdmin={user?.role === 'ADMIN'}
                                             />
                                         ))}

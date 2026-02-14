@@ -18,6 +18,7 @@ import {
     MapPinIcon
 } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
+import { getOpportunityPathFromItem } from '@/lib/opportunityPath';
 
 type ActionRecord = {
     id: string;
@@ -35,10 +36,10 @@ const STATUS_ORDER: ActionType[] = [
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
     APPLIED: { label: 'Applied', color: 'text-blue-600', bgColor: 'bg-blue-50' },
-    PLANNED: { label: 'Planned', color: 'text-amber-600', bgColor: 'bg-amber-50' },
+    PLANNED: { label: 'Planned', color: 'text-slate-900 dark:text-amber-300', bgColor: 'bg-amber-50' },
     INTERVIEWED: { label: 'Interviewed', color: 'text-purple-600', bgColor: 'bg-purple-50' },
     SELECTED: { label: 'Selected', color: 'text-green-600', bgColor: 'bg-green-50' },
-    PLANNING: { label: 'Planned', color: 'text-amber-600', bgColor: 'bg-amber-50' },
+    PLANNING: { label: 'Planned', color: 'text-slate-900 dark:text-amber-300', bgColor: 'bg-amber-50' },
     ATTENDED: { label: 'Interviewed', color: 'text-purple-600', bgColor: 'bg-purple-50' },
 };
 
@@ -203,7 +204,7 @@ export default function AccountTrackerPage() {
                                                 className="group relative rounded-2xl border border-border bg-card p-5 hover:border-primary/30 transition-all hover:shadow-md flex flex-col justify-between overflow-hidden"
                                             >
                                                 <div className="flex justify-between items-start gap-4">
-                                                    <Link href={`/opportunities/${opp.slug || opp.id}`} className="min-w-0 flex-1 space-y-1">
+                                                    <Link href={getOpportunityPathFromItem(opp)} className="min-w-0 flex-1 space-y-1">
                                                         <p className="text-[10px] uppercase tracking-widest font-black text-muted-foreground group-hover:text-primary transition-colors">
                                                             {opp.company}
                                                         </p>
@@ -256,7 +257,7 @@ export default function AccountTrackerPage() {
                                                         {opp.locations[0] || 'Remote'}
                                                     </div>
                                                     <Link
-                                                        href={`/opportunities/${opp.slug || opp.id}`}
+                                                        href={getOpportunityPathFromItem(opp)}
                                                         className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-1 group/btn"
                                                     >
                                                         View Listing

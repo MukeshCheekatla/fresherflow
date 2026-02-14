@@ -14,6 +14,7 @@ import { useOpportunitiesFeed } from '@/features/jobs/hooks/useOpportunitiesFeed
 import { useAuth } from '@/contexts/AuthContext';
 import { formatSyncTime } from '@/lib/offline/syncStatus';
 import dynamic from 'next/dynamic';
+import { getOpportunityPathFromItem } from '@/lib/opportunityPath';
 
 const MobileFilterDrawer = dynamic(() => import('@/features/jobs/components/MobileFilterDrawer').then(m => m.MobileFilterDrawer));
 const OpportunityFilters = dynamic(() => import('@/features/jobs/components/OpportunityFilters').then(m => m.OpportunityFilters));
@@ -138,7 +139,7 @@ function OpportunitiesContent() {
         'itemListElement': filteredOpps.slice(0, 10).map((opp, index) => ({
             '@type': 'ListItem',
             'position': index + 1,
-            'url': `https://fresherflow.in/opportunities/${opp.slug || opp.id}`,
+            'url': `https://fresherflow.in${getOpportunityPathFromItem(opp)}`,
             'name': opp.title
         }))
     };
@@ -168,12 +169,12 @@ function OpportunitiesContent() {
                         <div className="flex items-center gap-2">
                             <div className={cn(
                                 "px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-widest",
-                                isOnline ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/20" : "bg-amber-500/10 text-orange-600 dark:text-amber-300 border-amber-500/20"
+                                isOnline ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/20" : "bg-amber-500/10 text-foreground dark:text-amber-300 border-amber-500/20"
                             )}>
                                 {isOnline ? 'Network: Online' : 'Network: Offline'}
                             </div>
                             {usingCachedFeed && (
-                                <div className="px-2.5 py-1 rounded-full border border-amber-500/20 bg-amber-500/10 text-orange-600 dark:text-amber-300 text-[10px] font-bold uppercase tracking-widest">
+                                <div className="px-2.5 py-1 rounded-full border border-amber-500/20 bg-amber-500/10 text-foreground dark:text-amber-300 text-[10px] font-bold uppercase tracking-widest">
                                     Cached {formatSyncTime(cachedAt)}
                                 </div>
                             )}

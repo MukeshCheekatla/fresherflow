@@ -8,6 +8,7 @@ import { SkeletonJobCard } from '@/components/ui/Skeleton';
 import { ArrowLeftIcon, GlobeAltIcon, BriefcaseIcon } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { getOpportunityPathFromItem } from '@/lib/opportunityPath';
 
 type CompanyProfile = {
     name: string;
@@ -151,7 +152,7 @@ export default function CompanyProfilePage({ params }: { params: Promise<{ name:
                                     key={job.id}
                                     job={job}
                                     jobId={job.id}
-                                    onClick={() => router.push(`/opportunities/${job.slug || job.id}`)}
+                                    onClick={() => router.push(getOpportunityPathFromItem(job))}
                                 />
                             ))}
                         </div>

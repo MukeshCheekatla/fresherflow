@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { MapPinIcon, TrashIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import LoadingScreen from '@/components/ui/LoadingScreen';
+import { getOpportunityPathFromItem } from '@/lib/opportunityPath';
 
 export default function SavedJobsPage() {
     const context = useContext(AuthContext);
@@ -122,7 +123,7 @@ export default function SavedJobsPage() {
                             <div
                                 key={job.id}
                                 className="bg-card group cursor-pointer relative p-4 rounded-xl border border-border shadow-sm hover:border-primary/50 hover:shadow-md transition-all space-y-3"
-                                onClick={() => router.push(`/opportunities/${job.slug || job.id}`)}
+                                onClick={() => router.push(getOpportunityPathFromItem(job))}
                             >
                                 <div className="flex justify-between items-start gap-4">
                                     <div className="space-y-1.5 flex-1 min-w-0">
@@ -140,7 +141,7 @@ export default function SavedJobsPage() {
                                 </div>
 
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${job.type === 'WALKIN' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${job.type === 'WALKIN' ? 'bg-amber-500/10 text-slate-900 dark:text-amber-300 border-amber-500/20' :
                                         job.type === 'INTERNSHIP' ? 'bg-purple-500/10 text-purple-600 border-purple-500/20' :
                                             'bg-blue-500/10 text-blue-600 border-blue-500/20'
                                         }`}>

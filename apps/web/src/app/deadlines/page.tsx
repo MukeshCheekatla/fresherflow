@@ -10,6 +10,7 @@ import JobCard from '@/features/jobs/components/JobCard';
 import { SkeletonJobCard } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
 import ArrowLeftIcon from '@heroicons/react/24/outline/ArrowLeftIcon';
+import { getOpportunityPathFromItem } from '@/lib/opportunityPath';
 
 export default function DeadlinesPage() {
     const [items, setItems] = useState<Opportunity[]>([]);
@@ -60,7 +61,7 @@ export default function DeadlinesPage() {
                             Back
                         </Link>
                         <h1 className="text-sm md:text-base font-bold tracking-tight">Deadline Radar</h1>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-orange-600 dark:text-amber-300">{sorted.length} active</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-foreground dark:text-amber-300">{sorted.length} active</span>
                     </div>
 
                     {isLoading ? (
@@ -91,7 +92,7 @@ export default function DeadlinesPage() {
                                     isApplied={false}
                                     isSaved={opp.isSaved}
                                     onToggleSave={() => toggleSave(opp.id)}
-                                    onClick={() => router.push(`/opportunities/${opp.slug || opp.id}`)}
+                                    onClick={() => router.push(getOpportunityPathFromItem(opp))}
                                 />
                             ))}
                         </div>

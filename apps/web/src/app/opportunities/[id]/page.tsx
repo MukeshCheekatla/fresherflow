@@ -5,6 +5,7 @@ import { opportunitiesApi } from '@/lib/api/client';
 import { Suspense } from 'react';
 import OpportunityDetailClient from './OpportunityDetailClient';
 import { OpportunityDetailSkeleton } from '@/components/ui/Skeleton';
+import { getOpportunityPath } from '@/lib/opportunityPath';
 
 interface ExtendedOpportunity extends Opportunity {
     updatedAt?: string | Date;
@@ -52,7 +53,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
         // Canonical URL
         const canonicalId = opportunity.slug || opportunity.id;
-        const url = `https://fresherflow.in/opportunities/${canonicalId}`;
+        const canonicalPath = getOpportunityPath(opportunity.type, canonicalId);
+        const url = `https://fresherflow.in${canonicalPath}`;
 
         // Dynamic OG image URL - use correct base for environment
         const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://fresherflow.in';
@@ -171,7 +173,7 @@ export default async function OpportunityDetailPage({ params }: Props) {
 
         // SEO Enforcement: Redirect to slug if ID was used
         if (slugOrId === opportunity.id && opportunity.slug) {
-            redirect(`/opportunities/${opportunity.slug}`);
+            redirect(getOpportunityPath(opportunity.type, opportunity.slug));
         }
     } catch {
         // Fallback handled by client component (loading/404)

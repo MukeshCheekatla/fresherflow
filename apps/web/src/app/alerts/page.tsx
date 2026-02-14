@@ -8,6 +8,7 @@ import { BellIcon, ArrowLeftIcon, ClockIcon, BookOpenIcon, SparklesIcon } from '
 import { Loader2, Timer, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
+import { getOpportunityPathFromItem } from '@/lib/opportunityPath';
 
 type AlertKindFilter = 'all' | 'DAILY_DIGEST' | 'CLOSING_SOON' | 'HIGHLIGHT' | 'APP_UPDATE';
 
@@ -262,7 +263,7 @@ export default function AlertsCenterPage() {
                         {feed?.deliveries.map((item) => {
                             const title = item.opportunity?.title || 'Opportunity update';
                             const company = item.opportunity?.company || 'FresherFlow';
-                            const href = item.opportunity?.slug ? `/opportunities/${item.opportunity.slug}` : '/opportunities';
+                            const href = item.opportunity ? getOpportunityPathFromItem(item.opportunity) : '/opportunities';
                             const kindLabel =
                                 item.kind === 'CLOSING_SOON' ? 'Closing soon' :
                                     item.kind === 'DAILY_DIGEST' ? 'Daily digest' :
