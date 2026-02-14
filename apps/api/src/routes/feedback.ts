@@ -4,6 +4,7 @@ import { requireAuth } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { feedbackSchema } from '../utils/validation';
 import { AppError } from '../middleware/errorHandler';
+import TelegramService from '../services/telegram.service';
 
 const router: Router = express.Router();
 const prisma = new PrismaClient();
@@ -31,6 +32,19 @@ router.post('/:id/feedback', requireAuth, validate(feedbackSchema), async (req: 
                 reason
             }
         });
+
+        const reporter = await prisma.user.findUnique({
+            where: { id: req.userId! },
+            select: { email: true }
+        });
+
+        TelegramService.notifyListingFeedback({
+            opportunityId,
+            title: opportunity.title,
+            company: opportunity.company,
+            reason,
+            userEmail: reporter?.email
+        }).catch(() => { });
 
         res.status(201).json({
             feedback,

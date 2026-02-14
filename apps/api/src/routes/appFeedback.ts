@@ -3,6 +3,7 @@ import { PrismaClient, AppFeedbackType } from '@prisma/client';
 import { requireAuth } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { appFeedbackSchema } from '../utils/validation';
+import TelegramService from '../services/telegram.service';
 
 const router: Router = express.Router();
 const prisma = new PrismaClient();
@@ -26,6 +27,19 @@ router.post('/', requireAuth, validate(appFeedbackSchema), async (req: Request, 
                 pageUrl
             }
         });
+
+        const reporter = await prisma.user.findUnique({
+            where: { id: req.userId! },
+            select: { email: true }
+        });
+
+        TelegramService.notifyAppFeedback({
+            type,
+            message,
+            rating,
+            pageUrl,
+            userEmail: reporter?.email
+        }).catch(() => { });
 
         res.json({
             feedback,

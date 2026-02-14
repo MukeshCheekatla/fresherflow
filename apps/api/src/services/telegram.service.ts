@@ -24,6 +24,15 @@ class TelegramService {
         this.errorCooldownMs = Math.max(1, cooldownMinutes) * 60 * 1000;
     }
 
+    private escapeHtml(value: string): string {
+        return value
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     private get isConfigured(): boolean {
         if (process.env.NODE_ENV !== 'production' && !this.allowInDev) return false;
         return !!this.botToken && !!this.chatId;
@@ -136,6 +145,56 @@ class TelegramService {
             `<b>Stale warnings:</b> ${summary.staleWarnings}`,
             '------------------------',
             '<i>FresherFlow Expiry Cron</i>'
+        ].join('\n');
+        await this.sendMessage(message);
+    }
+
+    async notifyListingFeedback(params: {
+        opportunityId: string;
+        title: string;
+        company: string;
+        reason: string;
+        userEmail?: string | null;
+    }): Promise<void> {
+        const safeReason = this.escapeHtml(params.reason);
+        const safeCompany = this.escapeHtml(params.company);
+        const safeTitle = this.escapeHtml(params.title);
+        const safeUserEmail = this.escapeHtml(params.userEmail || 'Unknown');
+        const message = [
+            '<b>Listing Reported</b>',
+            '------------------------',
+            `<b>Company:</b> ${safeCompany}`,
+            `<b>Role:</b> ${safeTitle}`,
+            `<b>Reason:</b> ${safeReason}`,
+            `<b>User:</b> ${safeUserEmail}`,
+            `<b>ID:</b> ${params.opportunityId}`,
+            '------------------------',
+            '<i>FresherFlow Feedback</i>'
+        ].join('\n');
+        await this.sendMessage(message);
+    }
+
+    async notifyAppFeedback(params: {
+        type: string;
+        message: string;
+        rating?: number | null;
+        pageUrl?: string | null;
+        userEmail?: string | null;
+    }): Promise<void> {
+        const safeType = this.escapeHtml(params.type);
+        const safeUserEmail = this.escapeHtml(params.userEmail || 'Unknown');
+        const safePage = this.escapeHtml(params.pageUrl || 'N/A');
+        const safeMessage = this.escapeHtml(params.message);
+        const message = [
+            '<b>App Feedback Received</b>',
+            '------------------------',
+            `<b>Type:</b> ${safeType}`,
+            `<b>Rating:</b> ${params.rating ?? 'N/A'}`,
+            `<b>User:</b> ${safeUserEmail}`,
+            `<b>Page:</b> ${safePage}`,
+            `<b>Message:</b> ${safeMessage}`,
+            '------------------------',
+            '<i>FresherFlow Feedback</i>'
         ].join('\n');
         await this.sendMessage(message);
     }
