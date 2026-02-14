@@ -340,6 +340,33 @@ export const growthApi = {
         })
 };
 
+const OPPORTUNITY_CLICK_SESSION_KEY = 'ff_click_session_id';
+
+function getOpportunityClickSessionId(): string {
+    if (typeof window === 'undefined') return 'server';
+    try {
+        const existing = window.localStorage.getItem(OPPORTUNITY_CLICK_SESSION_KEY);
+        if (existing && existing.length > 0) return existing;
+        const next = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+        window.localStorage.setItem(OPPORTUNITY_CLICK_SESSION_KEY, next);
+        return next;
+    } catch {
+        return 'browser-session-unavailable';
+    }
+}
+
+export const opportunityClicksApi = {
+    trackApplyClick: (opportunityId: string, source = 'opportunity_detail', targetUrl?: string | null) =>
+        apiClient(`/api/public/opportunities/${opportunityId}/click`, {
+            method: 'POST',
+            body: JSON.stringify({
+                source,
+                sessionId: getOpportunityClickSessionId(),
+                targetUrl: targetUrl || null,
+            })
+        }),
+};
+
 // Opportunities API calls
 export const opportunitiesApi = {
     list: (params?: { type?: string; city?: string; company?: string; closingSoon?: boolean; minSalary?: number; maxSalary?: number; page?: number }) => {

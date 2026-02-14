@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { opportunitiesApi, actionsApi, feedbackApi, savedApi, growthApi } from '@/lib/api/client';
+import { opportunitiesApi, actionsApi, feedbackApi, savedApi, growthApi, opportunityClicksApi } from '@/lib/api/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { ActionType, type Opportunity } from '@fresherflow/types';
 import BookmarkIcon from '@heroicons/react/24/outline/BookmarkIcon';
@@ -314,6 +314,11 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
         const applyAction = opp.type === 'WALKIN' ? ActionType.PLANNED : ActionType.APPLIED;
         actionsApi.track(opp.id, applyAction).catch(() => undefined);
         growthApi.trackEvent('APPLY_CLICK', 'opportunity_detail').catch(() => undefined);
+        opportunityClicksApi.trackApplyClick(
+            opp.id,
+            'opportunity_detail',
+            opp.applyLink || opp.companyWebsite || null
+        ).catch(() => undefined);
 
         // Open apply link
         if (opp.applyLink) {
