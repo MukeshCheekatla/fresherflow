@@ -4,31 +4,13 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { alertsApi } from '@/lib/api/client';
-import { BellIcon, ArrowLeftIcon, ClockIcon, BookOpenIcon, SparklesIcon } from '@heroicons/react/24/outline';
-import { Loader2, Timer, Smartphone } from 'lucide-react';
+import { BellIcon, ArrowLeftIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { getOpportunityPathFromItem } from '@/lib/opportunityPath';
 
 type AlertKindFilter = 'all' | 'DAILY_DIGEST' | 'CLOSING_SOON' | 'HIGHLIGHT' | 'APP_UPDATE' | 'NEW_JOB';
-
-const SCROLLBAR_HIDE_STYLE = `
-.scrollbar-hide::-webkit-scrollbar {
-    display: none;
-}
-.scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-@keyframes progress-fast {
-  0% { transform: translateX(-100%) scaleX(0.2); }
-  50% { transform: translateX(0%) scaleX(0.5); }
-  100% { transform: translateX(100%) scaleX(0.2); }
-}
-.animate-progress-fast {
-  animation: progress-fast 1s infinite linear;
-}
-`;
 
 type AlertFeedItem = {
     id: string;
@@ -167,112 +149,47 @@ export default function AlertsCenterPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background pb-16 relative overflow-hidden">
-            <style>{SCROLLBAR_HIDE_STYLE}</style>
-
-            {/* Background Decorations - Desktop Only */}
-            <div className="hidden md:block absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] bg-primary/5 blur-[120px] pointer-events-none -z-10" />
-
-            <main className="relative max-w-3xl mx-auto px-4 py-4 md:py-8 space-y-6">
-                {/* Desktop Header: Visible on md+, Hidden on mobile */}
-                <div className="hidden md:flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-4">
-                        <Link href="/dashboard" className="w-10 h-10 flex items-center justify-center bg-card border border-border/60 hover:border-primary/40 rounded-xl transition-all shadow-sm active:scale-95">
-                            <ArrowLeftIcon className="w-5 h-5 text-muted-foreground" />
+        <div className="min-h-screen bg-background pb-16">
+            <main className="max-w-4xl mx-auto px-4 py-5 md:py-8 space-y-5">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <Link href="/dashboard" className="h-9 w-9 rounded-lg border border-border bg-card flex items-center justify-center hover:border-primary/30">
+                            <ArrowLeftIcon className="w-4 h-4 text-muted-foreground" />
                         </Link>
                         <div>
-                            <h1 className="text-3xl font-black tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">Alert center</h1>
-                            <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-[0.2em] mt-1">Smart personalization feed</p>
+                            <h1 className="text-xl md:text-2xl font-bold text-foreground">Alerts</h1>
+                            <p className="text-xs text-muted-foreground">Relevant updates based on your profile</p>
                         </div>
                     </div>
-                </div>
-
-                <div className="flex items-center justify-between pb-1 border-b border-border/40">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Quick Filters</p>
-                    <Link
-                        href="/account/alerts"
-                        className="text-[10px] font-black uppercase tracking-[0.15em] text-primary hover:text-primary-600 px-1"
-                    >
+                    <Link href="/account/alerts" className="text-xs font-semibold text-primary hover:underline">
                         Preferences
                     </Link>
                 </div>
 
-                {/* Progress Loader for filter switches */}
-                <div className="h-0.5 w-full bg-muted overflow-hidden relative">
-                    {loadingFeed && (
-                        <div className="absolute inset-0 bg-primary animate-progress-fast origin-left" />
-                    )}
-                </div>
+                <div className="rounded-xl border border-border bg-card p-3 space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                        <FilterChip label={`All (${summary.total})`} active={kind === 'all'} onClick={() => setKind('all')} />
+                        <FilterChip label={`New (${summary.newJob})`} active={kind === 'NEW_JOB'} onClick={() => setKind('NEW_JOB')} />
+                        <FilterChip label={`Digest (${summary.dailyDigest})`} active={kind === 'DAILY_DIGEST'} onClick={() => setKind('DAILY_DIGEST')} />
+                        <FilterChip label={`Closing (${summary.closingSoon})`} active={kind === 'CLOSING_SOON'} onClick={() => setKind('CLOSING_SOON')} />
+                        <FilterChip label={`Highlight (${summary.highlight})`} active={kind === 'HIGHLIGHT'} onClick={() => setKind('HIGHLIGHT')} />
+                        <FilterChip label={`App (${summary.appUpdate})`} active={kind === 'APP_UPDATE'} onClick={() => setKind('APP_UPDATE')} />
+                    </div>
 
-                <div className="flex overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide gap-2 transition-all">
-                    <SummaryCard
-                        label="All"
-                        value={summary.total}
-                        icon={<BellIcon className="w-4 h-4" />}
-                        active={kind === 'all'}
-                        onClick={() => setKind('all')}
-                    />
-                    <SummaryCard
-                        label="Digest"
-                        value={summary.dailyDigest}
-                        icon={<BookOpenIcon className="w-4 h-4" />}
-                        active={kind === 'DAILY_DIGEST'}
-                        onClick={() => setKind('DAILY_DIGEST')}
-                    />
-                    <SummaryCard
-                        label="Closing"
-                        value={summary.closingSoon}
-                        icon={<Timer className="w-4 h-4" />}
-                        active={kind === 'CLOSING_SOON'}
-                        onClick={() => setKind('CLOSING_SOON')}
-                    />
-                    <SummaryCard
-                        label="New"
-                        value={summary.newJob}
-                        icon={<BellIcon className="w-4 h-4" />}
-                        active={kind === 'NEW_JOB'}
-                        onClick={() => setKind('NEW_JOB')}
-                    />
-                    <SummaryCard
-                        label="High"
-                        value={summary.highlight}
-                        icon={<SparklesIcon className="w-4 h-4" />}
-                        active={kind === 'HIGHLIGHT'}
-                        onClick={() => setKind('HIGHLIGHT')}
-                    />
-                    <SummaryCard
-                        label="App"
-                        value={summary.appUpdate}
-                        icon={<Smartphone className="w-4 h-4" />}
-                        active={kind === 'APP_UPDATE'}
-                        onClick={() => setKind('APP_UPDATE')}
-                    />
-                </div>
-
-                <div className="flex items-center justify-between px-1">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/40">Recent Activity</p>
-                    <div className="flex items-center gap-1">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => void loadFeed(kind)}
-                            className="h-6 px-2 text-[8px] font-bold uppercase tracking-widest text-muted-foreground/60 hover:text-foreground"
-                        >
-                            Refresh
-                        </Button>
-                        {feed && feed.unreadCount > 0 && (
-                            <>
-                                <div className="w-px h-3 bg-border/40 mx-0.5" />
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={markAllRead}
-                                    className="h-6 px-2 text-[8px] font-bold uppercase tracking-widest text-primary/80 hover:bg-primary/5"
-                                >
-                                    Clear Unread
+                    <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">
+                            {feed?.unreadCount || 0} unread
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm" onClick={() => void loadFeed(kind)} className="h-8 text-xs">
+                                Refresh
+                            </Button>
+                            {feed && feed.unreadCount > 0 && (
+                                <Button variant="ghost" size="sm" onClick={markAllRead} className="h-8 text-xs">
+                                    Mark all read
                                 </Button>
-                            </>
-                        )}
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -285,13 +202,13 @@ export default function AlertsCenterPage() {
                         </Button>
                     </div>
                 ) : feed && feed.deliveries.length === 0 ? (
-                    <div className="rounded-3xl border-2 border-dashed border-border/60 bg-card/30 p-12 text-center space-y-4 animate-in fade-in zoom-in duration-500">
-                        <div className="w-16 h-16 mx-auto rounded-3xl bg-muted/30 flex items-center justify-center text-muted-foreground/40">
+                    <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center space-y-4">
+                        <div className="w-14 h-14 mx-auto rounded-xl bg-muted/30 flex items-center justify-center text-muted-foreground/40">
                             <BellIcon className="w-8 h-8" />
                         </div>
                         <div className="space-y-1">
-                            <p className="text-base font-bold text-foreground">No alerts yet</p>
-                            <p className="text-xs text-muted-foreground max-w-[200px] mx-auto leading-relaxed">
+                            <p className="text-base font-semibold text-foreground">No alerts yet</p>
+                            <p className="text-sm text-muted-foreground max-w-[280px] mx-auto leading-relaxed">
                                 You&apos;re all caught up! New alerts will appear here when they match your profile.
                             </p>
                         </div>
@@ -308,29 +225,32 @@ export default function AlertsCenterPage() {
                                     item.kind === 'DAILY_DIGEST' ? 'Daily digest' :
                                         item.kind === 'HIGHLIGHT' ? 'Highlight' :
                                             item.kind === 'NEW_JOB' ? 'New job' : 'App Update';
+                            const kindColor =
+                                item.kind === 'CLOSING_SOON' ? 'text-orange-600 bg-orange-50 border-orange-200 dark:bg-orange-500/10 dark:border-orange-500/20 dark:text-orange-300' :
+                                item.kind === 'NEW_JOB' ? 'text-primary bg-primary/10 border-primary/20' :
+                                'text-muted-foreground bg-muted border-border';
+
                             return (
                                 <Link
                                     key={item.id}
                                     href={href}
                                     onClick={() => !item.readAt && markAsRead(item.id)}
                                     className={cn(
-                                        "group block rounded-2xl border transition-all duration-300 p-4 relative overflow-hidden active:scale-[0.98]",
+                                        "group block rounded-xl border transition-all p-4 relative overflow-hidden",
                                         item.readAt
-                                            ? "border-border/60 bg-card/40 text-muted-foreground"
-                                            : "border-primary/20 bg-card shadow-sm hover:shadow-md hover:border-primary/40 ring-1 ring-primary/5"
+                                            ? "border-border bg-card text-muted-foreground"
+                                            : "border-primary/20 bg-card shadow-sm hover:border-primary/30"
                                     )}
                                 >
                                     {!item.readAt && (
-                                        <div className="absolute top-4 right-4 animate-pulse">
-                                            <div className="w-2 h-2 rounded-full bg-primary" />
+                                        <div className="absolute top-3 right-3">
+                                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                                         </div>
                                     )}
-                                    <div className="flex items-center justify-between gap-3 mb-2">
+                                    <div className="flex items-center justify-between gap-3 mb-2.5">
                                         <span className={cn(
-                                            "text-[9px] font-black uppercase tracking-[0.15em] px-2 py-1 rounded-lg",
-                                            item.kind === 'CLOSING_SOON'
-                                                ? 'bg-primary/10 text-primary-700 dark:text-primary-300'
-                                                : 'bg-muted text-muted-foreground',
+                                            "text-[10px] font-semibold uppercase tracking-wide px-2 py-1 rounded-md border",
+                                            kindColor,
                                             item.readAt && "opacity-60"
                                         )}>
                                             {kindLabel}
@@ -342,7 +262,7 @@ export default function AlertsCenterPage() {
                                     </div>
                                     <div className="space-y-1">
                                         <p className={cn(
-                                            "text-sm font-bold leading-tight group-hover:text-primary transition-colors",
+                                            "text-sm font-semibold leading-tight group-hover:text-primary transition-colors",
                                             item.readAt ? "text-muted-foreground/80" : "text-foreground"
                                         )}>
                                             {title}
@@ -366,16 +286,8 @@ export default function AlertsCenterPage() {
     );
 }
 
-function SummaryCard({
-    label,
-    value,
-    icon,
-    active,
-    onClick
-}: {
+function FilterChip({ label, active, onClick }: {
     label: string;
-    value: number;
-    icon: React.ReactNode;
     active: boolean;
     onClick: () => void;
 }) {
@@ -383,27 +295,13 @@ function SummaryCard({
         <button
             onClick={onClick}
             className={cn(
-                "min-w-[80px] flex-1 text-left rounded-xl border p-2.5 transition-all duration-200 group relative",
+                "h-8 px-3 rounded-full border text-xs font-semibold transition-colors",
                 active
-                    ? "bg-primary text-white border-primary shadow-lg shadow-primary/10 scale-[1.02] z-10"
-                    : "bg-card/40 border-border/60 hover:border-primary/40 hover:bg-card/80 text-foreground"
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background text-foreground border-border hover:border-primary/30"
             )}
         >
-            <div className={cn(
-                "w-7 h-7 rounded-lg flex items-center justify-center mb-2 transition-colors",
-                active ? "bg-white/20 text-white" : "bg-muted text-muted-foreground group-hover:text-primary"
-            )}>
-                {icon}
-            </div>
-            <div className="flex items-end justify-between gap-1">
-                <p className={cn(
-                    "text-[8px] font-black uppercase tracking-widest",
-                    active ? "text-white/80" : "text-muted-foreground"
-                )}>
-                    {label}
-                </p>
-                <p className="text-sm font-black tracking-tight leading-none">{value}</p>
-            </div>
+            {label}
         </button>
     );
 }
