@@ -36,10 +36,10 @@ router.get('/feed', requireAuth, async (req: Request, res: Response, next: NextF
 
         const where: {
             userId: string;
-            kind?: 'DAILY_DIGEST' | 'CLOSING_SOON' | 'HIGHLIGHT' | 'APP_UPDATE';
+            kind?: 'DAILY_DIGEST' | 'CLOSING_SOON' | 'HIGHLIGHT' | 'APP_UPDATE' | 'NEW_JOB';
         } = { userId };
 
-        if (['DAILY_DIGEST', 'CLOSING_SOON', 'HIGHLIGHT', 'APP_UPDATE'].includes(kindRaw)) {
+        if (['DAILY_DIGEST', 'CLOSING_SOON', 'HIGHLIGHT', 'APP_UPDATE', 'NEW_JOB'].includes(kindRaw)) {
             where.kind = kindRaw as any;
         }
 
@@ -67,6 +67,7 @@ router.get('/feed', requireAuth, async (req: Request, res: Response, next: NextF
             closingSoon: deliveries.filter((item) => (item.kind as any) === 'CLOSING_SOON').length,
             highlight: deliveries.filter((item) => (item.kind as any) === 'HIGHLIGHT').length,
             appUpdate: deliveries.filter((item) => (item.kind as any) === 'APP_UPDATE').length,
+            newJob: deliveries.filter((item) => (item.kind as any) === 'NEW_JOB').length,
         };
 
         const unreadCount = await prisma.alertDelivery.count({

@@ -8,6 +8,7 @@ import { opportunitySchema } from '../../utils/validation';
 import { AppError } from '../../middleware/errorHandler';
 import { OpportunityService } from '../../services/opportunity.service';
 import { ParserService } from '../../services/parser.service';
+import { sendNewJobAlerts } from '../../services/notification.service';
 import { generateSlug } from '../../utils/slugify';
 
 import TelegramService from '../../services/telegram.service';
@@ -224,6 +225,7 @@ router.post(
 
             let result;
             const now = new Date();
+            let idsNeedingAlerts: string[] = [];
 
             switch (action) {
                 case 'DELETE':
@@ -238,6 +240,14 @@ router.post(
                     });
                     break;
                 case 'PUBLISH':
+                    idsNeedingAlerts = (await prisma.opportunity.findMany({
+                        where: {
+                            id: { in: ids },
+                            status: { not: OpportunityStatus.PUBLISHED }
+                        },
+                        select: { id: true }
+                    })).map((item) => item.id);
+
                     result = await prisma.opportunity.updateMany({
                         where: { id: { in: ids } },
                         data: { status: OpportunityStatus.PUBLISHED }
@@ -260,6 +270,10 @@ router.post(
                 updatedCount: result.count,
                 skippedCount: Math.max(0, ids.length - result.count)
             });
+
+            if (action === 'PUBLISH' && idsNeedingAlerts.length > 0) {
+                Promise.allSettled(idsNeedingAlerts.map((opportunityId) => sendNewJobAlerts(opportunityId))).catch(() => { });
+            }
         } catch (error) {
             next(error);
         }
@@ -376,6 +390,10 @@ router.post(
                     opportunity.applyLink,
                     opportunity.slug
                 ).catch(() => { });
+            }
+
+            if (opportunity.status === OpportunityStatus.PUBLISHED) {
+                sendNewJobAlerts(opportunity.id).catch(() => { });
             }
 
             res.status(201).json({
@@ -670,6 +688,10 @@ router.put(
                     walkInDetails: true
                 }
             });
+
+            if (existing.status !== OpportunityStatus.PUBLISHED && opportunity.status === OpportunityStatus.PUBLISHED) {
+                sendNewJobAlerts(opportunity.id).catch(() => { });
+            }
 
             res.json({
                 opportunity,

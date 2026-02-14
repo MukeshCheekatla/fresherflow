@@ -66,9 +66,35 @@ export async function sendNewJobAlerts(opportunityId: string): Promise<NewJobNot
         if (relevanceScore < user.alertPreference.minRelevanceScore) continue;
 
         // Create dedupe key
-        const dedupeKey = `${user.id}:NEW_JOB:${opportunityId}`;
-        const existing = await prisma.alertDelivery.findUnique({ where: { dedupeKey } });
+        const dedupeKeyBase = `${user.id}:NEW_JOB:${opportunityId}`;
+        const existing = await prisma.alertDelivery.findFirst({
+            where: {
+                OR: [
+                    { dedupeKey: `${dedupeKeyBase}:APP` },
+                    { dedupeKey: `${dedupeKeyBase}:EMAIL` },
+                ],
+            },
+            select: { id: true },
+        });
         if (existing) continue;
+
+        const deliveriesToCreate: Array<{
+            userId: string;
+            opportunityId: string;
+            kind: 'NEW_JOB';
+            channel: 'APP' | 'EMAIL';
+            dedupeKey: string;
+            metadata: string;
+        }> = [
+            {
+                userId: user.id,
+                opportunityId: opportunity.id,
+                kind: 'NEW_JOB',
+                channel: 'APP',
+                dedupeKey: `${dedupeKeyBase}:APP`,
+                metadata: JSON.stringify({ relevanceScore }),
+            },
+        ];
 
         // Send email if enabled
         if (user.alertPreference.emailEnabled) {
@@ -80,6 +106,14 @@ export async function sendNewJobAlerts(opportunityId: string): Promise<NewJobNot
                     applyUrl: `${frontendUrl.replace(/\/$/, '')}/opportunities/${opportunity.slug}`,
                 });
                 emailsSent++;
+                deliveriesToCreate.push({
+                    userId: user.id,
+                    opportunityId: opportunity.id,
+                    kind: 'NEW_JOB',
+                    channel: 'EMAIL',
+                    dedupeKey: `${dedupeKeyBase}:EMAIL`,
+                    metadata: JSON.stringify({ relevanceScore }),
+                });
             } catch (err) {
                 logger.error('Failed to send new job email', { userId: user.id, opportunityId, error: err });
             }
@@ -87,25 +121,8 @@ export async function sendNewJobAlerts(opportunityId: string): Promise<NewJobNot
 
         // Create alert delivery records
         await prisma.alertDelivery.createMany({
-            data: [
-                {
-                    userId: user.id,
-                    opportunityId: opportunity.id,
-                    kind: 'NEW_JOB',
-                    channel: 'EMAIL',
-                    dedupeKey: `${dedupeKey}:EMAIL`,
-                    metadata: JSON.stringify({ relevanceScore }),
-                },
-                {
-                    userId: user.id,
-                    opportunityId: opportunity.id,
-                    kind: 'NEW_JOB',
-                    channel: 'APP',
-                    dedupeKey: `${dedupeKey}:APP`,
-                    metadata: JSON.stringify({ relevanceScore }),
-                }
-            ],
-            skipDuplicates: true
+            data: deliveriesToCreate,
+            skipDuplicates: true,
         });
 
         appAlertsSent++;
