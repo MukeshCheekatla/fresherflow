@@ -19,12 +19,16 @@ import {
 import AdminBottomNav from '@/shared/components/navigation/AdminBottomNav';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import LoadingScreen from '@/components/ui/LoadingScreen';
+import { adminApi } from '@/lib/api/admin';
+
+const ADMIN_FEEDBACK_SEEN_KEY = 'ff_admin_feedback_last_seen_at';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const { logout, isAuthenticated, isLoading } = useAdmin();
     const pathname = usePathname();
     const router = useRouter();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [feedbackAlertCount, setFeedbackAlertCount] = useState(0);
 
     // Scroll tracking is disabled per user request to keep navigation constant
 
@@ -36,6 +40,37 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             router.push('/admin/login');
         }
     }, [isAuthenticated, isLoading, isLoginPage, router]);
+
+    useEffect(() => {
+        if (!isAuthenticated || isLoginPage) return;
+
+        if (pathname.startsWith('/admin/feedback')) {
+            const now = new Date().toISOString();
+            window.localStorage.setItem(ADMIN_FEEDBACK_SEEN_KEY, now);
+            setFeedbackAlertCount(0);
+            return;
+        }
+
+        const pullFeedbackAlerts = async () => {
+            const since = window.localStorage.getItem(ADMIN_FEEDBACK_SEEN_KEY);
+            if (!since) {
+                window.localStorage.setItem(ADMIN_FEEDBACK_SEEN_KEY, new Date().toISOString());
+                setFeedbackAlertCount(0);
+                return;
+            }
+
+            try {
+                const response = await adminApi.getFeedbackAlerts(since) as { total: number };
+                setFeedbackAlertCount(Math.max(0, Number(response.total || 0)));
+            } catch {
+                // keep silent; badge is non-critical UI
+            }
+        };
+
+        void pullFeedbackAlerts();
+        const interval = window.setInterval(() => { void pullFeedbackAlerts(); }, 60000);
+        return () => window.clearInterval(interval);
+    }, [isAuthenticated, isLoginPage, pathname]);
 
 
     if (isLoading) {
@@ -96,6 +131,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             >
                                 <Icon className={`w-4 h-4 ${isActive ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
                                 {item.label}
+                                {item.label === 'Feedback' && feedbackAlertCount > 0 && (
+                                    <span className="ml-auto inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-1.5">
+                                        {feedbackAlertCount > 99 ? '99+' : feedbackAlertCount}
+                                    </span>
+                                )}
                             </Link>
                         );
                     })}
@@ -158,6 +198,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                         >
                                             <Icon className={`w-5 h-5 ${isActive ? 'text-primary-foreground' : 'text-primary'}`} />
                                             <span>{item.label}</span>
+                                            {item.label === 'Feedback' && feedbackAlertCount > 0 && (
+                                                <span className="ml-auto inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-1.5">
+                                                    {feedbackAlertCount > 99 ? '99+' : feedbackAlertCount}
+                                                </span>
+                                            )}
                                         </Link>
                                     );
                                 })}

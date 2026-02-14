@@ -65,6 +65,14 @@ export const adminApi = {
     getFeedback: () =>
         apiClient('/api/admin/feedback'),
 
+    // Feedback/report alerts count since timestamp (ISO)
+    getFeedbackAlerts: (since?: string) => {
+        const query = new URLSearchParams();
+        if (since) query.set('since', since);
+        const queryString = query.toString();
+        return apiClient(`/api/admin/feedback/alerts${queryString ? `?${queryString}` : ''}`);
+    },
+
     // Get app feedback
     getAppFeedback: () =>
         apiClient('/api/admin/app-feedback'),

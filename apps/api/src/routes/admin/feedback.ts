@@ -5,6 +5,30 @@ import { requireAdmin } from '../../middleware/auth';
 const router: Router = express.Router();
 const prisma = new PrismaClient();
 
+// GET /api/admin/feedback/alerts - Unread-style counters since a timestamp
+router.get('/alerts', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const sinceRaw = typeof req.query.since === 'string' ? req.query.since : undefined;
+        const sinceDate = sinceRaw ? new Date(sinceRaw) : null;
+        const where = sinceDate && !Number.isNaN(sinceDate.getTime())
+            ? { createdAt: { gt: sinceDate } }
+            : {};
+
+        const [listingCount, appCount] = await Promise.all([
+            prisma.listingFeedback.count({ where }),
+            prisma.appFeedback.count({ where })
+        ]);
+
+        res.json({
+            listingCount,
+            appCount,
+            total: listingCount + appCount
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
 // GET /api/admin/feedback - Get all feedback sorted by negative count
 router.get('/', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
     try {
