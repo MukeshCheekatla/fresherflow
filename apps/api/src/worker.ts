@@ -1,0 +1,21 @@
+import dotenv from 'dotenv';
+import logger from './utils/logger';
+import { startIngestionCron } from './cron/ingestionCron';
+
+dotenv.config();
+
+logger.info('Starting FresherFlow worker process', {
+    nodeEnv: process.env.NODE_ENV || 'development'
+});
+
+startIngestionCron();
+
+process.on('SIGTERM', () => {
+    logger.info('Worker SIGTERM received, shutting down');
+    process.exit(0);
+});
+
+process.on('SIGINT', () => {
+    logger.info('Worker SIGINT received, shutting down');
+    process.exit(0);
+});

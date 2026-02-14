@@ -16,6 +16,7 @@ import httpLogger from './middleware/httpLogger';
 import { startExpiryCron } from './cron/expiryCron';
 import { startVerificationCron } from './cron/verificationCron';
 import { startAlertsCron } from './cron/alertsCron';
+import { startIngestionCron } from './cron/ingestionCron';
 import { csrfGate } from './middleware/csrf';
 
 // Import routes
@@ -262,6 +263,7 @@ app.listen(PORT, () => {
     startExpiryCron();
     startVerificationCron();
     startAlertsCron();
+    startIngestionCron();
 });
 
 // Graceful shutdown
