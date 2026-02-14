@@ -145,6 +145,60 @@ router.get('/overview', requireAdmin, async (req: Request, res: Response, next: 
             funnel[stat.event] = stat._count;
         });
 
+        // 9. Apply click quality metrics (exclude internal/test traffic)
+        const clickWhere = {
+            createdAt: { gte: thirtyDaysAgo },
+            isInternal: false
+        } as const;
+
+        const [applyClicks30d, uniqueUserClickers30d, uniqueSessionClickers30d, topClickedRows] = await Promise.all([
+            prisma.opportunityClick.count({ where: clickWhere }),
+            prisma.opportunityClick.groupBy({
+                by: ['userId'],
+                where: {
+                    ...clickWhere,
+                    userId: { not: null }
+                },
+                _count: { _all: true }
+            }),
+            prisma.opportunityClick.groupBy({
+                by: ['sessionId'],
+                where: {
+                    ...clickWhere,
+                    userId: null,
+                    sessionId: { not: null }
+                },
+                _count: { _all: true }
+            }),
+            prisma.opportunityClick.groupBy({
+                by: ['opportunityId'],
+                where: clickWhere,
+                _count: { _all: true },
+                orderBy: { _count: { opportunityId: 'desc' } },
+                take: 10
+            })
+        ]);
+
+        const topOpportunityIds = topClickedRows.map((row) => row.opportunityId);
+        const topOpportunityMap = new Map<string, { title: string; company: string; slug: string }>();
+
+        if (topOpportunityIds.length > 0) {
+            const opportunities = await prisma.opportunity.findMany({
+                where: { id: { in: topOpportunityIds } },
+                select: { id: true, title: true, company: true, slug: true }
+            });
+
+            opportunities.forEach((item) => {
+                topOpportunityMap.set(item.id, { title: item.title, company: item.company, slug: item.slug });
+            });
+        }
+
+        const topClickedOpportunities = topClickedRows.map((row) => ({
+            opportunityId: row.opportunityId,
+            clicks: row._count._all,
+            ...(topOpportunityMap.get(row.opportunityId) || { title: 'Unknown', company: 'Unknown', slug: '' })
+        }));
+
         res.json({
             linkHealth: healthDistribution,
             opportunityStatus: statusDistribution,
@@ -156,6 +210,12 @@ router.get('/overview', requireAdmin, async (req: Request, res: Response, next: 
             typeDistribution: typeStats.map(t => ({ type: t.type, count: t._count })),
             feedback: feedbackDistribution,
             funnel,
+            clicks: {
+                applyClicks30d,
+                uniqueUserClickers30d: uniqueUserClickers30d.length,
+                uniqueAnonSessions30d: uniqueSessionClickers30d.length,
+                topClickedOpportunities
+            },
             urgent: {
                 closingSoon48h: closingSoonCount,
                 brokenLinks: healthDistribution.broken

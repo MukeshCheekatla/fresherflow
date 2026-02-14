@@ -136,6 +136,7 @@ model User {
   savedOpportunities SavedOpportunity[]
   alertPreference AlertPreference?
   alertDeliveries AlertDelivery[]
+  opportunityClicks OpportunityClick[]
   
   // Admin Relations (only for role=ADMIN)
   postedOpportunities Opportunity[]
@@ -318,6 +319,7 @@ model Opportunity {
   savedBy  SavedOpportunity[]
   alertDeliveries AlertDelivery[]
   telegramBroadcasts TelegramBroadcast[]
+  clicks OpportunityClick[]
 
   // DB-level filtering indexes
   @@index([status, deletedAt, type, postedAt(desc)])
@@ -439,6 +441,29 @@ model GrowthEvent {
   @@index([createdAt])
   @@index([source, event])
   @@index([source, createdAt])
+}
+
+model OpportunityClick {
+  id            String   @id @default(uuid())
+  opportunityId String
+  userId        String?
+  sessionId     String?
+  source        String   @default("unknown")
+  targetUrl     String?
+  referrer      String?
+  userAgent     String?
+  ipHash        String?
+  isInternal    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([opportunityId, createdAt])
+  @@index([isInternal, createdAt])
+  @@index([userId, createdAt])
+  @@index([sessionId, createdAt])
 }
 
 model AlertDelivery {

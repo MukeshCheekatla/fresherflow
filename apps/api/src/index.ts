@@ -38,6 +38,7 @@ import adminTotpRoutes from './routes/admin/totp';
 import healthRoutes from './routes/public/health';
 import growthRoutes from './routes/public/growth';
 import companyRoutes from './routes/public/companies';
+import opportunityClickRoutes from './routes/public/opportunityClicks';
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
@@ -64,6 +65,7 @@ function extractClientIp(req: express.Request): string {
 // Lightweight Health Check (Zero-DB, Zero-Auth)
 app.use('/api', healthRoutes);
 app.use('/api/public/growth', growthRoutes);
+app.use('/api/public', opportunityClickRoutes);
 
 // Trust proxy for Render/Vercel/Load Balancers
 if (process.env.NODE_ENV === 'production') {
