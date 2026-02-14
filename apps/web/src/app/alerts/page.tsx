@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { getOpportunityPathFromItem } from '@/lib/opportunityPath';
 
-type AlertKindFilter = 'all' | 'DAILY_DIGEST' | 'CLOSING_SOON' | 'HIGHLIGHT' | 'APP_UPDATE';
+type AlertKindFilter = 'all' | 'DAILY_DIGEST' | 'CLOSING_SOON' | 'HIGHLIGHT' | 'APP_UPDATE' | 'NEW_JOB';
 
 const SCROLLBAR_HIDE_STYLE = `
 .scrollbar-hide::-webkit-scrollbar {
@@ -32,7 +32,7 @@ const SCROLLBAR_HIDE_STYLE = `
 
 type AlertFeedItem = {
     id: string;
-    kind: 'DAILY_DIGEST' | 'CLOSING_SOON';
+    kind: 'DAILY_DIGEST' | 'CLOSING_SOON' | 'HIGHLIGHT' | 'APP_UPDATE' | 'NEW_JOB';
     channel: 'EMAIL' | 'APP';
     sentAt: string;
     readAt: string | null;
@@ -56,6 +56,7 @@ type AlertFeedResponse = {
         closingSoon: number;
         highlight: number;
         appUpdate: number;
+        newJob: number;
     };
 };
 
@@ -112,7 +113,7 @@ export default function AlertsCenterPage() {
     }, [isLoading, user, kind]);
 
     const summary = useMemo(
-        () => feed?.summary || { total: 0, dailyDigest: 0, closingSoon: 0, highlight: 0, appUpdate: 0 },
+        () => feed?.summary || { total: 0, dailyDigest: 0, closingSoon: 0, highlight: 0, appUpdate: 0, newJob: 0 },
         [feed]
     );
 
@@ -196,6 +197,13 @@ export default function AlertsCenterPage() {
                         onClick={() => setKind('CLOSING_SOON')}
                     />
                     <SummaryCard
+                        label="New"
+                        value={summary.newJob}
+                        icon={<BellIcon className="w-4 h-4" />}
+                        active={kind === 'NEW_JOB'}
+                        onClick={() => setKind('NEW_JOB')}
+                    />
+                    <SummaryCard
                         label="High"
                         value={summary.highlight}
                         icon={<SparklesIcon className="w-4 h-4" />}
@@ -267,7 +275,8 @@ export default function AlertsCenterPage() {
                             const kindLabel =
                                 item.kind === 'CLOSING_SOON' ? 'Closing soon' :
                                     item.kind === 'DAILY_DIGEST' ? 'Daily digest' :
-                                        item.kind === 'HIGHLIGHT' ? 'Highlight' : 'App Update';
+                                        item.kind === 'HIGHLIGHT' ? 'Highlight' :
+                                            item.kind === 'NEW_JOB' ? 'New job' : 'App Update';
                             return (
                                 <Link
                                     key={item.id}

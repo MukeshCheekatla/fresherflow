@@ -416,7 +416,7 @@ export const dashboardApi = {
 // Alerts API calls
 export const alertsApi = {
     getPreferences: () => apiClient('/api/alerts/preferences'),
-    getFeed: (kind: 'all' | 'DAILY_DIGEST' | 'CLOSING_SOON' | 'HIGHLIGHT' | 'APP_UPDATE' = 'all', limit = 50) => {
+    getFeed: (kind: 'all' | 'DAILY_DIGEST' | 'CLOSING_SOON' | 'HIGHLIGHT' | 'APP_UPDATE' | 'NEW_JOB' = 'all', limit = 50) => {
         const query = new URLSearchParams();
         query.set('kind', kind);
         query.set('limit', String(limit));
