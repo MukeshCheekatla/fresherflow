@@ -19,6 +19,13 @@ type Candidate = {
     raw: unknown;
 };
 
+type SourceConfig = {
+    sourceType: IngestionSourceType;
+    endpoint: string;
+    defaultType: OpportunityType;
+    name: string;
+};
+
 const prisma = new PrismaClient();
 const FRESHER_SCORE_MIN = Number(process.env.INGESTION_FRESHER_SCORE_MIN || 35);
 const FRESHER_SCORE_HIGH_CONFIDENCE = Number(process.env.INGESTION_HIGH_CONFIDENCE_SCORE || 55);
@@ -46,6 +53,14 @@ function toNumber(input: unknown): number | undefined {
         const parsed = Number(input.trim());
         return Number.isFinite(parsed) ? parsed : undefined;
     }
+    return undefined;
+}
+
+function extractWorkMode(content: string): Candidate['workMode'] {
+    const text = content.toLowerCase();
+    if (text.includes('remote')) return 'REMOTE';
+    if (text.includes('hybrid')) return 'HYBRID';
+    if (text.includes('onsite') || text.includes('on-site') || text.includes('on site')) return 'ONSITE';
     return undefined;
 }
 
@@ -124,7 +139,82 @@ function normalizeJsonFeedItem(item: Record<string, unknown>, fallbackType: Oppo
     };
 }
 
-async function fetchCandidates(source: { sourceType: IngestionSourceType; endpoint: string; defaultType: OpportunityType }): Promise<Candidate[]> {
+function normalizeWorkdayItem(item: Record<string, unknown>, source: SourceConfig): Candidate | null {
+    const title = String(item.title || item.jobTitle || item.jobPostingTitle || '').trim();
+    if (!title) return null;
+
+    const company =
+        String(item.company || item.hiringOrganization || item.companyName || '').trim()
+        || source.name;
+
+    const externalPath = String(item.externalPath || item.externalUrl || item.url || '').trim();
+    const applyLink = externalPath.startsWith('http')
+        ? externalPath
+        : externalPath
+            ? new URL(externalPath, source.endpoint).toString()
+            : undefined;
+
+    const locations = toStringArray(
+        item.locationsText
+            || item.locations
+            || item.primaryLocation
+            || item.location
+    );
+
+    const descriptionParts = [
+        item.description,
+        item.jobDescription,
+        item.shortDescription,
+        item.bulletFields,
+        item.additionalLocations
+    ].filter(Boolean);
+    const description = descriptionParts
+        .map((value) => (typeof value === 'string' ? value : JSON.stringify(value)))
+        .join('\n')
+        .trim() || undefined;
+
+    const contentForSignals = `${title} ${description || ''}`;
+    const lower = contentForSignals.toLowerCase();
+    const inferredType =
+        lower.includes('intern') ? OpportunityType.INTERNSHIP : source.defaultType;
+
+    return {
+        sourceExternalId: String(item.id || item.jobReqId || item.bulletFieldId || '').trim() || undefined,
+        type: inferredType,
+        title,
+        company,
+        description,
+        applyLink,
+        locations,
+        workMode: extractWorkMode(contentForSignals),
+        experienceMin: toNumber(item.experienceMin ?? item.minExperience),
+        experienceMax: toNumber(item.experienceMax ?? item.maxExperience),
+        allowedPassoutYears: [],
+        requiredSkills: toStringArray(item.skills || item.keySkills),
+        raw: item,
+    };
+}
+
+function parseWorkdayPayload(payload: unknown, source: SourceConfig): Candidate[] {
+    const maybeObject = payload as Record<string, unknown>;
+    const list = Array.isArray(payload)
+        ? payload
+        : Array.isArray(maybeObject?.jobPostings)
+            ? maybeObject.jobPostings
+            : Array.isArray(maybeObject?.jobRequisitions)
+                ? maybeObject.jobRequisitions
+                : Array.isArray(maybeObject?.postings)
+                    ? maybeObject.postings
+                    : Array.isArray(maybeObject?.jobs)
+                        ? maybeObject.jobs
+                        : [];
+
+    return (list as unknown[])
+        .map((item: unknown) => normalizeWorkdayItem(item as Record<string, unknown>, source))
+        .filter((item: Candidate | null): item is Candidate => Boolean(item));
+}
+
+async function fetchCandidates(source: SourceConfig): Promise<Candidate[]> {
     const response = await fetch(source.endpoint, {
         headers: {
             'User-Agent': 'FresherFlow-IngestionBot/1.0 (+https://fresherflow.in)',
@@ -138,16 +228,21 @@ async function fetchCandidates(source: { sourceType: IngestionSourceType; endpoi
 
     const payload = await response.json();
 
+    if (source.sourceType === IngestionSourceType.WORKDAY) {
+        return parseWorkdayPayload(payload, source);
+    }
+
     if (source.sourceType !== IngestionSourceType.JSON_FEED && source.sourceType !== IngestionSourceType.CUSTOM) {
         throw new Error(`Source type ${source.sourceType} parser is not implemented yet`);
     }
 
+    const jsonPayload = payload as Record<string, unknown>;
     const list = Array.isArray(payload)
         ? payload
-        : Array.isArray((payload as any)?.jobs)
-            ? (payload as any).jobs
-            : Array.isArray((payload as any)?.data)
-                ? (payload as any).data
+        : Array.isArray(jsonPayload?.jobs)
+            ? jsonPayload.jobs
+            : Array.isArray(jsonPayload?.data)
+                ? jsonPayload.data
                 : [];
 
     return (list as unknown[])
