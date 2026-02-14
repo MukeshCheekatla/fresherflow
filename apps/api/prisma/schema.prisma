@@ -137,6 +137,7 @@ model User {
   alertPreference AlertPreference?
   alertDeliveries AlertDelivery[]
   opportunityClicks OpportunityClick[]
+  ingestionSources IngestionSource[]
   
   // Admin Relations (only for role=ADMIN)
   postedOpportunities Opportunity[]
@@ -320,6 +321,7 @@ model Opportunity {
   alertDeliveries AlertDelivery[]
   telegramBroadcasts TelegramBroadcast[]
   clicks OpportunityClick[]
+  rawIngestions RawOpportunity[]
 
   // DB-level filtering indexes
   @@index([status, deletedAt, type, postedAt(desc)])
@@ -491,6 +493,29 @@ enum TelegramBroadcastStatus {
   SKIPPED
 }
 
+enum IngestionSourceType {
+  JSON_FEED
+  WORKDAY
+  GREENHOUSE
+  LEVER
+  CUSTOM
+}
+
+enum IngestionRunStatus {
+  RUNNING
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
+enum RawOpportunityStatus {
+  FETCHED
+  DRAFT_CREATED
+  DEDUPED
+  REJECTED
+  ERROR
+}
+
 model TelegramBroadcast {
   id            String                  @id @default(uuid())
   opportunityId String
@@ -507,4 +532,74 @@ model TelegramBroadcast {
 
   @@index([opportunityId, status])
   @@index([channel])
+}
+
+model IngestionSource {
+  id                  String              @id @default(uuid())
+  name                String
+  sourceType          IngestionSourceType
+  endpoint            String
+  enabled             Boolean             @default(true)
+  runFrequencyMinutes Int                 @default(60)
+  defaultType         OpportunityType     @default(JOB)
+  createdByUserId     String?
+  lastRunAt           DateTime?
+  lastSuccessAt       DateTime?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  createdBy User? @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  runs      IngestionRun[]
+  rawItems  RawOpportunity[]
+
+  @@index([enabled, sourceType])
+  @@index([lastRunAt])
+}
+
+model IngestionRun {
+  id                String             @id @default(uuid())
+  sourceId          String
+  status            IngestionRunStatus @default(RUNNING)
+  startedAt         DateTime           @default(now())
+  endedAt           DateTime?
+  fetchedCount      Int                @default(0)
+  draftCreatedCount Int                @default(0)
+  dedupedCount      Int                @default(0)
+  rejectedCount     Int                @default(0)
+  errorCount        Int                @default(0)
+  errorSummary      String?
+
+  source   IngestionSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  rawItems RawOpportunity[]
+
+  @@index([sourceId, startedAt])
+  @@index([status, startedAt])
+}
+
+model RawOpportunity {
+  id                  String               @id @default(uuid())
+  sourceId            String
+  ingestionRunId      String?
+  sourceExternalId    String?
+  status              RawOpportunityStatus @default(FETCHED)
+  rawPayload          Json
+  title               String?
+  company             String?
+  applyLink           String?
+  suggestedType       OpportunityType?
+  fresherScore        Int?
+  reasonFlags         String[]             @default([])
+  mappedOpportunityId String?
+  errorMessage        String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  source            IngestionSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  ingestionRun      IngestionRun?   @relation(fields: [ingestionRunId], references: [id], onDelete: SetNull)
+  mappedOpportunity Opportunity?    @relation(fields: [mappedOpportunityId], references: [id], onDelete: SetNull)
+
+  @@index([sourceId, createdAt])
+  @@index([status, createdAt])
+  @@index([applyLink])
+  @@index([sourceExternalId])
 }
