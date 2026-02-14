@@ -177,7 +177,7 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
             role="button"
             tabIndex={0}
             className={cn(
-                "group relative bg-card border border-border rounded-xl p-4 transition-all hover:border-primary/30 hover:shadow-md flex flex-col gap-3 focus:outline-none focus:ring-2 focus:ring-primary/40",
+                "group relative bg-card border border-border rounded-xl p-5 transition-all hover:border-primary/30 hover:shadow-md flex flex-col gap-4 focus:outline-none focus:ring-2 focus:ring-primary/40",
                 onClick && "cursor-pointer"
             )}
         >
@@ -189,17 +189,22 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
                         <Link
                             href={`/companies/${encodeURIComponent(job.company)}`}
                             onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                            className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider line-clamp-1 hover:text-primary transition-colors cursor-pointer block"
+                            className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide line-clamp-1 hover:text-primary transition-colors cursor-pointer block"
                         >
                             {job.company}
                         </Link>
-                        <h3 className="text-[15px] font-bold text-foreground group-hover:text-primary transition-colors leading-snug line-clamp-2 mt-1">
+                        <h3 className="text-[16px] font-bold text-foreground group-hover:text-primary transition-colors leading-snug line-clamp-2 mt-1">
                             {job.normalizedRole || job.title}
                         </h3>
                         {typeof job.matchScore === 'number' && (
-                            <p className="text-[10px] font-semibold text-muted-foreground mt-1 truncate whitespace-nowrap">
-                                Best match {job.matchScore}% · {job.matchReason || 'Profile fit'}
-                            </p>
+                            <div className="mt-1.5 flex items-center gap-1.5 min-w-0">
+                                <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-2 py-0.5 text-[10px] font-bold text-primary">
+                                    Match {job.matchScore}%
+                                </span>
+                                <p className="text-[10px] font-medium text-muted-foreground truncate">
+                                    {job.matchReason || 'Profile fit'}
+                                </p>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -280,10 +285,10 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
             )}
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 pt-3 border-t border-border/40">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3 pt-3 border-t border-border/40">
                 <div className="flex flex-col gap-1">
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Location</p>
-                    <div className="flex items-center gap-2 text-foreground/90 text-[13px] font-semibold">
+                    <div className="flex items-center gap-2 text-foreground/90 text-[14px] font-semibold">
                         <MapPinIcon className="w-3.5 h-3.5 shrink-0 text-muted-foreground/70" aria-hidden="true" />
                         <span className="truncate">{job.locations[0] || 'Remote'}</span>
                     </div>
@@ -291,7 +296,7 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
 
                 <div className="flex flex-col gap-1">
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Salary</p>
-                    <div className="flex items-center gap-2 text-foreground/90 text-[13px] font-semibold">
+                    <div className="flex items-center gap-2 text-foreground/90 text-[14px] font-semibold">
                         <CurrencyRupeeIcon className="w-3.5 h-3.5 shrink-0 text-muted-foreground/70" aria-hidden="true" />
                         <span className="truncate">{formatSalary()}</span>
                     </div>

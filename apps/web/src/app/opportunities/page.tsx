@@ -150,7 +150,7 @@ function OpportunitiesContent() {
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
-            <div className="w-full max-w-7xl mx-auto px-3 md:px-6 pb-10 md:pb-20 space-y-4 md:space-y-8">
+            <div className="w-full max-w-7xl mx-auto px-3 md:px-6 pt-2 md:pt-0 pb-10 md:pb-20 space-y-4 md:space-y-8">
                 {/* Header: Consolidated Search & Type selection */}
                 <div className="flex flex-col gap-3.5 border-b border-border/60 pb-5">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">

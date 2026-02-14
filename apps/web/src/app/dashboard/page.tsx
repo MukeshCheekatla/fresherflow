@@ -39,6 +39,7 @@ export default function DashboardPage() {
     const [feedLastSyncAt, setFeedLastSyncAt] = useState<number | null>(null);
     const [dashboardVisitCounter, setDashboardVisitCounter] = useState(0);
     const [activeTab, setActiveTab] = useState<'featured' | 'latest' | 'expiring' | 'all' | 'applied' | 'archived'>('featured');
+    const [showBackToTop, setShowBackToTop] = useState(false);
 
     useEffect(() => {
         // Only load once when auth is confirmed and profile is 100% complete
@@ -63,6 +64,14 @@ export default function DashboardPage() {
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('offline', handleOffline);
         };
+    }, []);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const handleScroll = () => setShowBackToTop(window.scrollY > 420);
+        handleScroll();
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
     useEffect(() => {
@@ -352,13 +361,13 @@ export default function DashboardPage() {
                     )}
 
                     {/* Main Grid */}
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
+                    <div className="space-y-6 md:space-y-8">
                         {/* Feed Column */}
-                        <div className="lg:col-span-8 space-y-3 md:space-y-6">
+                        <div className="space-y-3 md:space-y-6">
                             {(recentError || highlightsError) && (
-                                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                                    <div className="text-xs text-foreground/80 dark:text-amber-300">Data sync issues. Browse existing listings.</div>
-                                    <Button variant="outline" onClick={retryAll} className="h-8 px-3 text-[10px] borer-amber-500/40 text-foreground dark:text-amber-300">Retry</Button>
+                                <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                    <div className="text-xs text-foreground">Data sync issues. Browse existing listings.</div>
+                                    <Button variant="outline" onClick={retryAll} className="h-8 px-3 text-[10px] border-primary/30 text-primary">Retry</Button>
                                 </div>
                             )}
 
@@ -370,7 +379,7 @@ export default function DashboardPage() {
                                             <button
                                                 key={s.key}
                                                 onClick={() => setActiveTab(s.key)}
-                                                className={`relative whitespace-nowrap px-3 py-2 text-[11px] font-semibold transition-colors ${activeTab === s.key ? 'text-foreground' : 'text-muted-foreground'}`}
+                                                className={`relative whitespace-nowrap px-3 py-2 text-[12px] font-semibold transition-colors ${activeTab === s.key ? 'text-foreground' : 'text-muted-foreground'}`}
                                             >
                                                 {s.title}
                                                 {activeTab === s.key && <span className="absolute left-1/2 -translate-x-1/2 bottom-0 h-0.5 w-7 rounded-full bg-primary" />}
@@ -421,7 +430,7 @@ export default function DashboardPage() {
                                 </div>
 
                                 {isLoadingOpps ? (
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
                                         {[1, 2, 3, 4].map(i => <SkeletonJobCard key={i} />)}
                                     </div>
                                 ) : activeDesktopSection.items.length === 0 ? (
@@ -432,7 +441,7 @@ export default function DashboardPage() {
                                         </Button>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                    <div className="grid grid-cols-2 xl:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
                                         {activeDesktopSection.items.map((opp: Opportunity) => (
                                             <JobCard
                                                 key={`desk-${opp.id}`}
@@ -450,10 +459,9 @@ export default function DashboardPage() {
                             </div>
                         </div>
 
-                        {/* Sidebar */}
-                        <aside className="lg:col-span-4 space-y-6">
+                        <section className="space-y-4">
                             <h2 className="text-sm font-bold uppercase tracking-wider">Intelligence</h2>
-                            <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="p-5 rounded-2xl border border-border bg-card/50 space-y-2">
                                     <h3 className="text-[10px] font-bold text-primary uppercase">Snapshot</h3>
                                     <p className="text-xs text-muted-foreground">Listings prioritized for your profile.</p>
@@ -489,15 +497,24 @@ export default function DashboardPage() {
                                         </div>
                                     ))}
                                 </div>
-                                <div className="pt-2 flex items-center justify-center">
-                                    <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-muted-foreground/40 px-2 py-0.5 rounded-full border border-border/30">
-                                        {isOnline ? 'Network Stable' : 'Offline Mode'} &bull; Last Sync {formatSyncTime(feedLastSyncAt)}
-                                    </span>
-                                </div>
                             </div>
-                        </aside>
+                            <div className="pt-2 flex items-center justify-center">
+                                <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-muted-foreground/40 px-2 py-0.5 rounded-full border border-border/30">
+                                    {isOnline ? 'Network Stable' : 'Offline Mode'} &bull; Last Sync {formatSyncTime(feedLastSyncAt)}
+                                </span>
+                            </div>
+                        </section>
                     </div>
                 </div>
+                {showBackToTop && (
+                    <button
+                        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                        className="fixed bottom-24 md:bottom-8 right-4 z-40 h-10 px-3 rounded-full border border-border bg-card/95 shadow-sm text-[10px] font-bold uppercase tracking-wider text-foreground hover:border-primary/40 hover:text-primary transition-all"
+                        aria-label="Back to top"
+                    >
+                        Top
+                    </button>
+                )}
             </ProfileGate>
         </AuthGate>
     );

@@ -76,13 +76,13 @@ export function MobileFilterDrawer({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-labelledby="filter-drawer-title">
+        <div className="fixed inset-0 z-[90] lg:hidden" role="dialog" aria-modal="true" aria-labelledby="filter-drawer-title">
             <div
                 className="absolute inset-0 bg-background/40 backdrop-blur-md transition-opacity duration-300 animate-in fade-in"
                 onClick={onClose}
             />
             <div
-                className="absolute inset-x-3 top-10 bottom-10 overflow-auto rounded-3xl border border-border/50 bg-card/90 backdrop-blur-xl p-5 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] animate-in slide-in-from-bottom-10 duration-300"
+                className="absolute inset-x-3 top-[4.75rem] bottom-4 overflow-auto rounded-3xl border border-border/50 bg-card/90 backdrop-blur-xl p-5 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] animate-in slide-in-from-bottom-10 duration-300"
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
             >

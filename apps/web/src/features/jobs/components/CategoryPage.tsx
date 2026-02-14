@@ -448,7 +448,7 @@ function CategoryPageContent({ type }: CategoryPageProps) {
                             ) : isLoading ? (
                                 <div className={cn(
                                     "grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6",
-                                    isFilterOpen ? "lg:grid-cols-2 xl:grid-cols-3" : "lg:grid-cols-3 xl:grid-cols-4"
+                                    isFilterOpen ? "lg:grid-cols-2 xl:grid-cols-3" : "lg:grid-cols-2 xl:grid-cols-3"
                                 )}>
                                     {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
                                         <SkeletonJobCard key={item} />
@@ -501,7 +501,7 @@ function CategoryPageContent({ type }: CategoryPageProps) {
                                     </div>
                                     <div className={cn(
                                         "grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6",
-                                        isFilterOpen ? "lg:grid-cols-2 xl:grid-cols-3" : "lg:grid-cols-3 xl:grid-cols-4"
+                                        isFilterOpen ? "lg:grid-cols-2 xl:grid-cols-3" : "lg:grid-cols-2 xl:grid-cols-3"
                                     )}>
                                         {filteredOpps.map((opp) => (
                                             <JobCard

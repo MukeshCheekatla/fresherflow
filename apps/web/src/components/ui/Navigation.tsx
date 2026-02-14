@@ -288,7 +288,7 @@ export function MobileNav() {
                             className="w-6 h-6 bg-contain bg-center bg-no-repeat"
                             style={{ backgroundImage: 'var(--logo-image)' }}
                         />
-                        <span className="text-sm font-bold tracking-tight text-foreground">{mobileTitle}</span>
+                        <span className="text-base font-bold tracking-tight text-foreground">{mobileTitle}</span>
                     </Link>
 
                     {user ? (
@@ -489,7 +489,7 @@ export function MobileNav() {
                                         <tab.icon className={cn("w-6 h-6", isActive && "fill-primary/20")} strokeWidth={isActive ? 2 : 1.5} />
                                     </div>
                                     <span className={cn(
-                                        "text-[10px]",
+                                        "text-[11px]",
                                         isActive ? "font-semibold" : "font-normal"
                                     )}>
                                         {tab.label}
