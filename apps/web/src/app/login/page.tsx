@@ -193,7 +193,7 @@ function LoginContent() {
     if (isProcessing) return <LoadingScreen />;
 
     return (
-        <div className="flex-1 flex flex-col md:flex-row bg-background overflow-hidden relative min-h-[calc(100vh-80px)] md:min-h-[calc(100vh-80px)]">
+        <div className="flex-1 flex flex-col md:flex-row bg-background overflow-hidden relative min-h-[calc(100vh-64px)] md:min-h-[calc(100vh-88px)]">
             {/* Left Side: Hero (Desktop Only) */}
             <div className="hidden md:flex md:w-[45%] lg:w-[50%] bg-muted/30 border-r border-border relative overflow-hidden flex-col items-center justify-center p-12 text-center">
                 <div className="space-y-6 max-w-sm animate-in fade-in slide-in-from-left-6 duration-500">

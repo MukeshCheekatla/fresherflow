@@ -41,7 +41,7 @@ export default function LandingPage() {
 
                 <main className="flex-1 flex flex-col">
                     {/* Hero */}
-                    <section className="relative pt-24 pb-16 md:pt-28 md:pb-20 px-6 border-b border-border overflow-hidden">
+                    <section className="relative pt-12 pb-16 md:pt-20 md:pb-20 px-6 border-b border-border overflow-hidden">
                         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-10 items-center relative z-10">
                             <div className="space-y-6">
                                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-card/70 backdrop-blur">
