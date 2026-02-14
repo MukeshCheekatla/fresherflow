@@ -18,6 +18,7 @@ import LinkIcon from '@heroicons/react/24/outline/LinkIcon';
 import FlagIcon from '@heroicons/react/24/outline/FlagIcon';
 import ExclamationTriangleIcon from '@heroicons/react/24/outline/ExclamationTriangleIcon';
 import ShieldCheckIcon from '@heroicons/react/24/outline/ShieldCheckIcon';
+import ArrowLeftIcon from '@heroicons/react/24/outline/ArrowLeftIcon';
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
@@ -29,6 +30,9 @@ import { OpportunityDetailSkeleton } from '@/components/ui/Skeleton';
 import { buildShareUrl } from '@/lib/share';
 import { sanitizeHtml } from '@/lib/sanitize';
 import { analytics } from '@/lib/analytics';
+import { getOpportunityPathFromItem } from '@/lib/opportunityPath';
+import { OpportunityDeadlineBadge } from './components/OpportunityDeadlineBadge';
+import { EligibilitySnapshotCard } from './components/EligibilitySnapshotCard';
 
 export default function OpportunityDetailClient({ id, initialData }: { id: string; initialData?: Opportunity | null }) {
     const router = useRouter();
@@ -258,10 +262,11 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
 
         // OPTIMISTIC UPDATE: Update UI immediately
         const previousActions = opp.actions;
+        const isWalkinFlow = opp.type === 'WALKIN';
         const label = actionType === ActionType.PLANNED
             ? 'Planned'
             : actionType === ActionType.INTERVIEWED
-                ? 'Interviewed'
+                ? (isWalkinFlow ? 'Attended' : 'Interviewed')
                 : actionType === ActionType.SELECTED
                     ? 'Selected'
                     : 'Applied';
@@ -306,7 +311,8 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
         analytics.applyClick(opp.id, opp.company, !!opp.applyLink);
 
         // Track analytics event
-        actionsApi.track(opp.id, ActionType.APPLIED).catch(() => undefined);
+        const applyAction = opp.type === 'WALKIN' ? ActionType.PLANNED : ActionType.APPLIED;
+        actionsApi.track(opp.id, applyAction).catch(() => undefined);
         growthApi.trackEvent('APPLY_CLICK', 'opportunity_detail').catch(() => undefined);
 
         // Open apply link
@@ -471,13 +477,14 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
     if (isLoading) return <OpportunityDetailSkeleton />;
     if (!opp) return null;
 
-    const detailPath = `/opportunities/${opp.slug || opp.id}`;
+    const detailPath = getOpportunityPathFromItem(opp);
     const hasApplyLink = !!opp.applyLink;
+    const isWalkinFlow = opp.type === 'WALKIN';
     const currentAction = getCurrentActionType();
     const trackerOptions: Array<{ key: ActionType; label: string }> = [
-        { key: ActionType.APPLIED, label: 'Applied' },
+        ...(isWalkinFlow ? [] : [{ key: ActionType.APPLIED, label: 'Applied' }]),
         { key: ActionType.PLANNED, label: 'Planned' },
-        { key: ActionType.INTERVIEWED, label: 'Interviewed' },
+        { key: ActionType.INTERVIEWED, label: isWalkinFlow ? 'Attended' : 'Interviewed' },
         { key: ActionType.SELECTED, label: 'Selected' },
     ];
     const sourceParam = searchParams.get('source');
@@ -527,7 +534,17 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
             <main className="relative z-10 max-w-6xl mx-auto px-4 pt-2 pb-4 md:py-7 space-y-3 md:space-y-5">
 
                 {/* Navigation & Actions - Only for logged-in users */}
-                <div className="flex items-center justify-end">
+                <div className="flex items-center justify-between">
+
+                    {user && (
+                        <button
+                            onClick={() => (window.history.length > 1 ? router.back() : router.push('/opportunities'))}
+                            className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border bg-muted/30 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+                        >
+                            <ArrowLeftIcon className="w-4 h-4" />
+                            Back
+                        </button>
+                    )}
 
                     {user && (
                         <div className="flex items-center gap-1.5">
@@ -683,15 +700,11 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                     </div>
                                 </div>
                                 {opp.expiresAt && (
-                                    <div className={cn(
-                                        "pt-3 border-t border-border/50 flex items-center justify-between gap-2 text-xs",
-                                        isExpired(opp) ? "text-destructive" : isClosingSoon(opp) ? "text-orange-600 dark:text-amber-300" : "text-muted-foreground"
-                                    )}>
-                                        <span className="font-bold uppercase tracking-wider">
-                                            {isExpired(opp) ? 'Expired on' : isClosingSoon(opp) ? 'Closing soon' : 'Apply before'}
-                                        </span>
-                                        <span className="font-semibold">{formatDeadline(opp)}</span>
-                                    </div>
+                                    <OpportunityDeadlineBadge
+                                        isExpired={isExpired(opp)}
+                                        isClosingSoon={isClosingSoon(opp)}
+                                        deadlineLabel={formatDeadline(opp)}
+                                    />
                                 )}
                             </div>
                         </div>
@@ -801,6 +814,18 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                         {opp.incentives ? (
                                             <p className="text-xs text-muted-foreground">Incentives: {opp.incentives}</p>
                                         ) : null}
+                                    </div>
+                                )}
+                                {opp.selectionProcess && (
+                                    <div className="space-y-0.5 p-2.5 bg-muted/20 border border-border rounded-lg md:col-span-2">
+                                        <p className="text-[9px] font-bold text-muted-foreground uppercase">Selection process</p>
+                                        <p className="text-sm font-medium text-foreground leading-relaxed whitespace-pre-wrap">{opp.selectionProcess}</p>
+                                    </div>
+                                )}
+                                {opp.notesHighlights && (
+                                    <div className="space-y-0.5 p-2.5 bg-muted/20 border border-border rounded-lg md:col-span-2">
+                                        <p className="text-[9px] font-bold text-muted-foreground uppercase">Notes / Highlights</p>
+                                        <p className="text-sm font-medium text-foreground leading-relaxed whitespace-pre-wrap">{opp.notesHighlights}</p>
                                     </div>
                                 )}
                             </div>
@@ -914,43 +939,12 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                 )}
                             </div>
                         )}
-                        <div className="hidden lg:block bg-card p-4 rounded-xl border border-border shadow-sm space-y-3">
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Eligibility snapshot</h4>
-                            <div className="space-y-2 text-xs text-muted-foreground">
-                                <div>
-                                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Education</p>
-                                    <p className="text-foreground font-semibold">
-                                        {formatEducationDisplay(opp.allowedDegrees || [], opp.allowedCourses || [])}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Experience</p>
-                                    <p className="text-foreground">
-                                        {opp.experienceMax != null ? `${opp.experienceMin || 0}-${opp.experienceMax} yrs` : 'Fresher+ (no cap)'}
-                                    </p>
-                                </div>
-                                {opp.employmentType ? (
-                                    <div>
-                                        <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Employment</p>
-                                        <p className="text-foreground">{opp.employmentType}</p>
-                                    </div>
-                                ) : null}
-                                <div>
-                                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Skills</p>
-                                    <div className="flex flex-wrap gap-1">
-                                        {(opp.requiredSkills || []).length > 0 ? (
-                                            opp.requiredSkills.slice(0, 6).map((skill) => (
-                                                <span key={skill} className="px-1.5 py-0.5 bg-muted/50 border border-border rounded text-[9px] font-semibold text-foreground">
-                                                    {skill}
-                                                </span>
-                                            ))
-                                        ) : (
-                                            <span className="text-foreground">Not specified</span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <EligibilitySnapshotCard
+                            education={formatEducationDisplay(opp.allowedDegrees || [], opp.allowedCourses || [])}
+                            experience={opp.experienceMax != null ? `${opp.experienceMin || 0}-${opp.experienceMax} yrs` : 'Fresher+ (no cap)'}
+                            employmentType={opp.employmentType}
+                            skills={opp.requiredSkills || []}
+                        />
                         <div className="bg-card p-4 md:p-5 rounded-xl border border-border shadow-sm space-y-3">
                             <div className="space-y-3">
                                 {user && (
@@ -1096,7 +1090,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                             {relatedOpps.map((item) => (
                                 <button
                                     key={item.id}
-                                    onClick={() => router.push(`/opportunities/${item.slug || item.id}`)}
+                                    onClick={() => router.push(getOpportunityPathFromItem(item))}
                                     className="text-left rounded-xl border border-border bg-card hover:border-primary/30 hover:shadow-md p-4 transition-all group"
                                 >
                                     <div className="flex items-start gap-3">

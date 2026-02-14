@@ -282,6 +282,8 @@ model Opportunity {
   salaryPeriod   SalaryPeriod @default(YEARLY) // Default to Annual (India standard)
   incentives     String? // Optional: "Rs. 20k - 1L targets"
   jobFunction    String? // Optional: "Banking", "Sales", "Engineering"
+  selectionProcess String? @db.Text // Optional: "Aptitude > Technical > HR"
+  notesHighlights  String? @db.Text // Optional: bond, training, special conditions
   stipend        String? // New: "10k/month"
   employmentType String? // New: "full-time"
   applyLink      String?

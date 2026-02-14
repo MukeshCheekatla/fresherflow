@@ -20,6 +20,8 @@ export type OpportunityFormValues = {
     employmentType: string;
     incentives: string;
     jobFunction: string;
+    selectionProcess: string;
+    notesHighlights: string;
     experienceMin: string;
     experienceMax: string;
     applyLink: string;
@@ -107,6 +109,8 @@ export const buildOpportunityPayload = (values: OpportunityFormValues): Record<s
         employmentType: values.employmentType || undefined,
         incentives: values.incentives || undefined,
         jobFunction: values.jobFunction || undefined,
+        selectionProcess: values.selectionProcess || undefined,
+        notesHighlights: values.notesHighlights || undefined,
         experienceMin: toFloat(values.experienceMin),
         experienceMax: toFloat(values.experienceMax),
         applyLink: values.type === 'WALKIN' ? undefined : values.applyLink,

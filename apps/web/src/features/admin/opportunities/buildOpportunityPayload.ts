@@ -20,6 +20,8 @@ export type BuildOpportunityPayloadInput = {
     employmentType: string;
     incentives: string;
     jobFunction: string;
+    selectionProcess: string;
+    notesHighlights: string;
     experienceMin: string;
     experienceMax: string;
     applyLink: string;
@@ -71,6 +73,8 @@ export function buildOpportunityPayload(input: BuildOpportunityPayloadInput): Re
         employmentType: input.employmentType || undefined,
         incentives: input.incentives || undefined,
         jobFunction: input.jobFunction || undefined,
+        selectionProcess: input.selectionProcess || undefined,
+        notesHighlights: input.notesHighlights || undefined,
         experienceMin: toNumberOrUndefined(input.experienceMin),
         experienceMax: toNumberOrUndefined(input.experienceMax),
         applyLink: input.type === 'WALKIN' ? undefined : (input.applyLink || undefined),
@@ -93,4 +97,3 @@ export function buildOpportunityPayload(input: BuildOpportunityPayloadInput): Re
 
     return payload;
 }
-

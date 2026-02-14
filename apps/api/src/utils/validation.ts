@@ -85,6 +85,8 @@ export const opportunitySchema = z.object({
     salaryPeriod: z.nativeEnum(SalaryPeriod).optional(),
     incentives: z.string().optional(),
     jobFunction: z.string().optional(),
+    selectionProcess: z.string().optional(),
+    notesHighlights: z.string().optional(),
     experienceMin: z.number().int().optional(),
     experienceMax: z.number().int().optional(),
     employmentType: z.string().optional(), // New

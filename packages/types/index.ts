@@ -157,6 +157,8 @@ export interface Opportunity {
     salaryPeriod?: SalaryPeriod;
     incentives?: string;
     jobFunction?: string;
+    selectionProcess?: string;
+    notesHighlights?: string;
     stipend?: string;
     employmentType?: string;
 
@@ -324,6 +326,8 @@ export interface CreateOpportunityRequest {
     salaryPeriod?: SalaryPeriod;
     incentives?: string;
     jobFunction?: string;
+    selectionProcess?: string;
+    notesHighlights?: string;
     applyLink?: string;
     expiresAt?: string;
     walkInDetails?: {

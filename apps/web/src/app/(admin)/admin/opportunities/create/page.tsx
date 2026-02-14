@@ -25,6 +25,8 @@ interface ParsedJob {
     jobFunction?: string;
     employmentType?: string;
     incentives?: string;
+    selectionProcess?: string;
+    notesHighlights?: string;
     allowedDegrees?: string[];
     allowedCourses?: string[];
     allowedPassoutYears?: number[];
@@ -49,6 +51,7 @@ type DuplicateOpportunity = {
 };
 import { buildOpportunityPayload } from '../opportunityPayload';
 import { buildShareUrl, type SharePlatform } from '@/lib/share';
+import { getOpportunityPath } from '@/lib/opportunityPath';
 import {
     ArrowLeftIcon,
     InformationCircleIcon,
@@ -128,6 +131,8 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
     const [jobFunction, setJobFunction] = useState('');
     const [employmentType, setEmploymentType] = useState('');
     const [incentives, setIncentives] = useState('');
+    const [selectionProcess, setSelectionProcess] = useState('');
+    const [notesHighlights, setNotesHighlights] = useState('');
     const [salaryPeriod, setSalaryPeriod] = useState<'YEARLY' | 'MONTHLY'>('YEARLY');
     const [experienceMin, setExperienceMin] = useState('');
     const [experienceMax, setExperienceMax] = useState('');
@@ -147,9 +152,9 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
     const [startTime, setStartTime] = useState('10:00');
     const [endTime, setEndTime] = useState('13:00');
 
-    const getPublicOpportunityUrl = (slugOrId: string) => {
+    const getPublicOpportunityUrl = (slugOrId: string, opportunityType: 'JOB' | 'INTERNSHIP' | 'WALKIN') => {
         const origin = typeof window !== 'undefined' ? window.location.origin : 'https://fresherflow.in';
-        return `${origin}/opportunities/${slugOrId}`;
+        return `${origin}${getOpportunityPath(opportunityType, slugOrId)}`;
     };
 
     const buildAdminSharePack = (payload: {
@@ -158,7 +163,7 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
         type: 'JOB' | 'INTERNSHIP' | 'WALKIN';
         slugOrId: string;
     }) => {
-        const publicUrl = getPublicOpportunityUrl(payload.slugOrId);
+        const publicUrl = getPublicOpportunityUrl(payload.slugOrId, payload.type);
         // const telegramUrl = buildShareUrl(publicUrl, { platform: 'telegram', ref: 'admin_share' });
         // const linkedinUrl = buildShareUrl(publicUrl, { platform: 'linkedin', ref: 'admin_share' });
         // const xUrl = buildShareUrl(publicUrl, { platform: 'x', ref: 'admin_share' });
@@ -187,7 +192,7 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
         type: 'JOB' | 'INTERNSHIP' | 'WALKIN';
         slugOrId: string;
     }) => {
-        const publicUrl = getPublicOpportunityUrl(payload.slugOrId);
+        const publicUrl = getPublicOpportunityUrl(payload.slugOrId, payload.type);
         const tracked = buildShareUrl(publicUrl, { platform, ref: 'admin_share', campaign: 'job_share' });
         const label = payload.type === 'WALKIN' ? 'Walk-in' : payload.type === 'INTERNSHIP' ? 'Internship' : 'Job';
 
@@ -310,6 +315,8 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
             setJobFunction(opp.jobFunction || '');
             setEmploymentType(opp.employmentType || '');
             setIncentives(opp.incentives || '');
+            setSelectionProcess(opp.selectionProcess || '');
+            setNotesHighlights(opp.notesHighlights || '');
             setSalaryPeriod(opp.salaryPeriod || 'YEARLY');
             setExperienceMin(opp.experienceMin?.toString() || '');
             setExperienceMax(opp.experienceMax?.toString() || '');
@@ -485,6 +492,8 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
             if (parsed.jobFunction) setJobFunction(parsed.jobFunction);
             if (parsed.employmentType) setEmploymentType(parsed.employmentType);
             if (parsed.incentives) setIncentives(parsed.incentives);
+            if (parsed.selectionProcess) setSelectionProcess(parsed.selectionProcess);
+            if (parsed.notesHighlights) setNotesHighlights(parsed.notesHighlights);
             const parsedEducation = normalizeEducationPayload(parsed.allowedDegrees, parsed.allowedCourses);
             setAllowedDegrees(parsedEducation.degrees);
             setAllowedCourses(parsedEducation.courses);
@@ -532,6 +541,8 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
   "salaryPeriod": "YEARLY",
   "employmentType": "Full Time, Permanent",
   "jobFunction": "Engineering",
+  "selectionProcess": "Online Assessment > Technical Interview > HR",
+  "notesHighlights": "Training period 3 months. Immediate joiners preferred.",
   "applyLink": "https://company.com/careers/job-id"
 }`;
 
@@ -553,6 +564,8 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
   "salaryPeriod": "MONTHLY",
   "employmentType": "Internship",
   "jobFunction": "Engineering",
+  "selectionProcess": "Assignment > Technical Discussion",
+  "notesHighlights": "PPO based on performance.",
   "applyLink": "https://company.com/careers/internship-id"
 }`;
 
@@ -573,6 +586,8 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
   "salaryPeriod": "YEARLY",
   "employmentType": "Full Time, Permanent",
   "jobFunction": "Operations",
+  "selectionProcess": "Walk-in Test > Face to Face Interview",
+  "notesHighlights": "Bring original IDs and updated resume.",
   "walkInDetails": {
     "dateRange": "9 Feb - 13 Feb",
     "timeRange": "9:30 AM - 12:30 PM",
@@ -674,6 +689,8 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
             if (data.jobFunction) setJobFunction(String(data.jobFunction));
             if (data.employmentType) setEmploymentType(String(data.employmentType));
             if (data.incentives) setIncentives(String(data.incentives));
+            if (data.selectionProcess) setSelectionProcess(String(data.selectionProcess));
+            if (data.notesHighlights) setNotesHighlights(String(data.notesHighlights));
             if (data.experienceMin !== undefined) setExperienceMin(String(data.experienceMin));
             if (data.experienceMax !== undefined) setExperienceMax(String(data.experienceMax));
             if (data.applyLink) setApplyLink(data.applyLink);
@@ -752,6 +769,8 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
                 employmentType,
                 incentives,
                 jobFunction,
+                selectionProcess,
+                notesHighlights,
                 experienceMin,
                 experienceMax,
                 applyLink,
@@ -1129,6 +1148,29 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
                                 onChange={(e) => setIncentives(e.target.value)}
                                 className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all shadow-sm"
                                 placeholder="e.g. Rs. 20,000 to 1,00,000"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Selection process</label>
+                            <textarea
+                                value={selectionProcess}
+                                onChange={(e) => setSelectionProcess(e.target.value)}
+                                rows={3}
+                                className="flex min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary resize-y transition-all shadow-sm"
+                                placeholder="e.g. Aptitude Test > Technical Interview > HR Round"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Notes / highlights</label>
+                            <textarea
+                                value={notesHighlights}
+                                onChange={(e) => setNotesHighlights(e.target.value)}
+                                rows={3}
+                                className="flex min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary resize-y transition-all shadow-sm"
+                                placeholder="e.g. Bond: 12 months, Training: 3 months, Immediate joiners preferred"
                             />
                         </div>
                     </div>
