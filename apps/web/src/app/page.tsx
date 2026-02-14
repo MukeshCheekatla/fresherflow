@@ -29,6 +29,9 @@ export const metadata: Metadata = {
     },
 };
 
+// ISR: Homepage content doesn't change frequently
+export const revalidate = 120;
+
 export default function LandingPage() {
     return (
         <>

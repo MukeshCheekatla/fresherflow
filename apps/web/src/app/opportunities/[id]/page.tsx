@@ -11,7 +11,9 @@ interface ExtendedOpportunity extends Opportunity {
     normalizedRole?: string;
 }
 
-export const dynamic = 'force-dynamic';
+// ISR: Revalidate every 60 seconds instead of dynamic for every request
+// Jobs don't change every second, so caching drastically improves performance
+export const revalidate = 60;
 
 type Props = {
     params: Promise<{ id: string }>;
@@ -42,14 +44,26 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             ? `${opportunity.allowedPassoutYears.join(', ')} graduates`
             : 'freshers';
 
-        const description = `Verified ${type.toLowerCase()} at ${company} in ${location}. Open to ${eligibility}. Apply directly via FresherFlow.`.substring(0, 155);
+        // LinkedIn requires 100+ char description
+        const baseDesc = `Verified ${type.toLowerCase()} opportunity at ${company} in ${location}. Open to ${eligibility}.`;
+        const applyInfo = opportunity.applyLink ? ' Direct application link available.' : '';
+        const freshInfo = ' Browse verified job listings, internships, and walk-ins on FresherFlow.';
+        const description = (baseDesc + applyInfo + freshInfo).substring(0, 200);
 
         // Canonical URL
         const canonicalId = opportunity.slug || opportunity.id;
         const url = `https://fresherflow.in/opportunities/${canonicalId}`;
+
+        // Try dynamic OG image first, fallback to static if Vercel deployment paused
         const ogImageVersion = process.env.NEXT_PUBLIC_OG_IMAGE_VERSION || '1';
         const ogUpdatedAt = opportunity.updatedAt || opportunity.postedAt || '';
-        const ogImageUrl = `https://fresherflow.in/api/og/job/${encodeURIComponent(opportunity.id)}?v=${encodeURIComponent(ogImageVersion)}&t=${encodeURIComponent(String(ogUpdatedAt))}`;
+        const dynamicOgImageUrl = `https://fresherflow.in/api/og/job/${encodeURIComponent(opportunity.id)}?v=${encodeURIComponent(ogImageVersion)}&t=${encodeURIComponent(String(ogUpdatedAt))}`;
+
+        // Fallback static OG image (works even when Vercel deployment is paused)
+        const staticOgImageUrl = 'https://fresherflow.in/main.png';
+
+        // Use dynamic if available, static as fallback
+        const ogImageUrl = process.env.VERCEL_ENV === 'production' ? dynamicOgImageUrl : staticOgImageUrl;
 
         return {
             title: seoTitle,
