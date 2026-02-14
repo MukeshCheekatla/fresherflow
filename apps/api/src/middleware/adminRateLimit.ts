@@ -11,7 +11,7 @@ function getRedisClient() {
     if (!url) return null;
     if (!redisClient) {
         redisClient = new Redis(url, { maxRetriesPerRequest: 1 });
-        redisClient.on('error', () => {});
+        redisClient.on('error', () => { });
     }
     return redisClient;
 }
@@ -23,6 +23,11 @@ function getRedisClient() {
  * Keyed by: adminId + hour window
  */
 export async function adminRateLimit(req: Request, res: Response, next: NextFunction) {
+    // Skip rate limiting in development
+    if (process.env.NODE_ENV === 'development') {
+        return next();
+    }
+
     if (!req.adminId) {
         return next(new AppError('Admin ID not found', 401));
     }

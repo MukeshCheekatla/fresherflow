@@ -34,6 +34,11 @@ interface RateLimitOptions {
  */
 export function createRateLimiter(options: RateLimitOptions) {
     return async (req: Request, res: Response, next: NextFunction) => {
+        // Skip rate limiting in development
+        if (process.env.NODE_ENV === 'development') {
+            return next();
+        }
+
         // Use X-Forwarded-For if behind a proxy, otherwise req.ip
         const ip = (req.headers['x-forwarded-for'] as string) || req.ip || 'unknown-ip';
         const key = `${options.keyPrefix || 'rl'}:${ip}`;
