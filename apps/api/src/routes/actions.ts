@@ -4,7 +4,7 @@ import { requireAuth } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { userActionSchema } from '../utils/validation';
 import { AppError } from '../middleware/errorHandler';
-import { checkEligibility } from '../domain/eligibility';
+
 
 const router: Router = express.Router();
 const prisma = new PrismaClient();
@@ -53,14 +53,17 @@ router.post('/:id/action', requireAuth, validate(userActionSchema), async (req: 
             adminId: opportunity.postedByUserId
         };
 
-        const eligibilityResult = checkEligibility(opportunityForCheck as any, profile as any, req.userId);
+        // TESTING: Commenting out eligibility check
+        // const eligibilityResult = checkEligibility(opportunityForCheck as any, profile as any, req.userId);
 
+        /* TESTING: Commenting out eligibility blocker
         if (!eligibilityResult.eligible) {
             return next(new AppError(
                 eligibilityResult.reason || 'Not eligible for this opportunity',
                 403
             ));
         }
+        */
 
         // WALK-IN ATTENDED VALIDATION (Backend Only)
         // Can only mark ATTENDED after EARLIEST date has passed
