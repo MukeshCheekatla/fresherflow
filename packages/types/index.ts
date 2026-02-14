@@ -141,6 +141,7 @@ export interface Opportunity {
     // Eligibility
     allowedDegrees: EducationLevel[];
     allowedCourses: string[];
+    allowedSpecializations?: string[];
     allowedPassoutYears: number[];
     requiredSkills: string[];
 
@@ -315,6 +316,7 @@ export interface CreateOpportunityRequest {
     description: string;
     allowedDegrees: EducationLevel[];
     allowedCourses: string[];
+    allowedSpecializations?: string[];
     allowedPassoutYears: number[];
     requiredSkills: string[];
     locations: string[];

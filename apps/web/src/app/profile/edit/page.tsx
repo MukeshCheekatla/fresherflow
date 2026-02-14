@@ -63,7 +63,7 @@ const DEGREE_SPECIALIZATIONS: Record<string, string[]> = {
     'B.Sc.': ['Computer Science', 'Physics', 'Mathematics', 'Chemistry', 'Information Technology', 'Other'],
     'BCA': ['Software Development', 'Web Applications', 'Database Systems', 'Other'],
     'M.Tech / M.E.': ['Computer Science', 'VLSI Design', 'Structural Engineering', 'Thermo Fluids', 'Cloud Computing', 'Other'],
-    'MCA': ['Application Development', 'System Architecture', 'Cloud Tech', 'Other'],
+    'MCA': ['Computer Applications', 'Application Development', 'System Architecture', 'Cloud Tech', 'Other'],
     'MBA': ['Finance', 'Marketing', 'Human Resources', 'Operations', 'Business Analytics', 'Other'],
     'default': ['General', 'Computer Science', 'Business', 'Arts', 'Other']
 };

@@ -10,6 +10,7 @@ export type BuildOpportunityPayloadInput = {
     description: string;
     allowedDegrees: string[];
     allowedCourses: string[];
+    allowedSpecializations: string[];
     passoutYears: number[];
     requiredSkills: string;
     locations: string;
@@ -64,6 +65,7 @@ export function buildOpportunityPayload(input: BuildOpportunityPayloadInput): Re
         description: input.description,
         allowedDegrees: input.allowedDegrees,
         allowedCourses: input.allowedCourses,
+        allowedSpecializations: input.allowedSpecializations,
         allowedPassoutYears: input.passoutYears,
         requiredSkills: splitCsv(input.requiredSkills),
         locations: splitCsv(input.locations),

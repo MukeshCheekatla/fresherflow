@@ -430,26 +430,30 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
         }
     };
 
-    const formatEducationDisplay = (degrees: string[], courses: string[]): string => {
+    const formatEducationDisplay = (degrees: string[], courses: string[], specializations: string[] = []): string => {
         const degreeLabels = degrees.map(formatEducationLevel);
+        const specializationText = specializations.length > 0 ? `Specializations: ${specializations.join(', ')}` : '';
 
         // If specific courses are provided, show them with degree level context
         if (courses.length > 0) {
             if (degrees.length > 0) {
                 // Show both degree level and specific courses
-                return `${degreeLabels.join(', ')} (${courses.join(', ')})`;
+                const base = `${degreeLabels.join(', ')} (${courses.join(', ')})`;
+                return specializationText ? `${base} • ${specializationText}` : base;
             }
             // Only specific courses, no degree level
-            return courses.join(', ');
+            const base = courses.join(', ');
+            return specializationText ? `${base} • ${specializationText}` : base;
         }
 
         // If only degree levels, show friendly names
         if (degrees.length > 0) {
-            return degreeLabels.join(', ');
+            const base = degreeLabels.join(', ');
+            return specializationText ? `${base} • ${specializationText}` : base;
         }
 
         // No restrictions
-        return 'Any Graduate';
+        return specializationText ? `Any Graduate • ${specializationText}` : 'Any Graduate';
     };
 
 
@@ -794,7 +798,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                                 <div className="space-y-0.5 p-2.5 bg-muted/20 border border-border rounded-lg">
                                     <p className="text-[9px] font-bold text-muted-foreground uppercase">Education</p>
                                     <p className="text-sm font-semibold text-foreground">
-                                        {formatEducationDisplay(opp.allowedDegrees || [], opp.allowedCourses || [])}
+                                        {formatEducationDisplay(opp.allowedDegrees || [], opp.allowedCourses || [], (opp as { allowedSpecializations?: string[] }).allowedSpecializations || [])}
                                     </p>
                                 </div>
                                 <div className="space-y-0.5 p-2.5 bg-muted/20 border border-border rounded-lg">
@@ -940,7 +944,7 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                             </div>
                         )}
                         <EligibilitySnapshotCard
-                            education={formatEducationDisplay(opp.allowedDegrees || [], opp.allowedCourses || [])}
+                            education={formatEducationDisplay(opp.allowedDegrees || [], opp.allowedCourses || [], (opp as { allowedSpecializations?: string[] }).allowedSpecializations || [])}
                             experience={opp.experienceMax != null ? `${opp.experienceMin || 0}-${opp.experienceMax} yrs` : 'Fresher+ (no cap)'}
                             employmentType={opp.employmentType}
                             skills={opp.requiredSkills || []}

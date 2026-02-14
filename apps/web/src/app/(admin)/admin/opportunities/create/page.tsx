@@ -29,6 +29,7 @@ interface ParsedJob {
     notesHighlights?: string;
     allowedDegrees?: string[];
     allowedCourses?: string[];
+    allowedSpecializations?: string[];
     allowedPassoutYears?: number[];
     applyLink?: string;
     expiresAt?: string;
@@ -120,6 +121,7 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
     const [description, setDescription] = useState('');
     const [allowedDegrees, setAllowedDegrees] = useState<string[]>([]);
     const [allowedCourses, setAllowedCourses] = useState<string[]>([]);
+    const [allowedSpecializations, setAllowedSpecializations] = useState<string[]>([]);
     const [passoutYears, setPassoutYears] = useState<number[]>([]);
     const [requiredSkills, setRequiredSkills] = useState<string>('');
     const [locations, setLocations] = useState<string>('');
@@ -309,6 +311,7 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
             setRequiredSkills((opp.requiredSkills || []).join(', '));
             setAllowedDegrees(opp.allowedDegrees || []);
             setAllowedCourses(opp.allowedCourses || []);
+            setAllowedSpecializations(opp.allowedSpecializations || []);
             setPassoutYears(opp.allowedPassoutYears || []);
             setWorkMode(opp.workMode || 'ONSITE');
             setSalaryRange(opp.salaryRange || '');
@@ -361,6 +364,14 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
     const handleCourseToggle = (course: string) => {
         setAllowedCourses(prev =>
             prev.includes(course) ? prev.filter(c => c !== course) : [...prev, course]
+        );
+    };
+
+    const handleSpecializationToggle = (specialization: string) => {
+        setAllowedSpecializations(prev =>
+            prev.includes(specialization)
+                ? prev.filter((item) => item !== specialization)
+                : [...prev, specialization]
         );
     };
 
@@ -417,7 +428,7 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
         return uniqueValues(toStringArray(values));
     };
 
-    const normalizeEducationPayload = (degreesInput: unknown, coursesInput: unknown) => {
+    const normalizeEducationPayload = (degreesInput: unknown, coursesInput: unknown, specializationsInput: unknown) => {
         const rawDegrees = toStringArray(degreesInput);
         const normalizedDegrees = normalizeDegrees(rawDegrees);
         const inferredCoursesFromDegrees = rawDegrees.filter((value) => !normalizeDegreeValue(value));
@@ -425,13 +436,14 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
             ...toStringArray(coursesInput),
             ...inferredCoursesFromDegrees,
         ]);
+        const normalizedSpecializations = normalizeCourses(specializationsInput);
 
         // If only degree specializations were provided in allowedDegrees, keep eligibility broad as UG.
         const degrees = normalizedDegrees.length > 0
             ? normalizedDegrees
             : (inferredCoursesFromDegrees.length > 0 ? ['DEGREE'] : []);
 
-        return { degrees, courses: normalizedCourses };
+        return { degrees, courses: normalizedCourses, specializations: normalizedSpecializations };
     };
 
     const normalizeWorkModeValue = (value: unknown): 'ONSITE' | 'HYBRID' | 'REMOTE' | undefined => {
@@ -494,9 +506,10 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
             if (parsed.incentives) setIncentives(parsed.incentives);
             if (parsed.selectionProcess) setSelectionProcess(parsed.selectionProcess);
             if (parsed.notesHighlights) setNotesHighlights(parsed.notesHighlights);
-            const parsedEducation = normalizeEducationPayload(parsed.allowedDegrees, parsed.allowedCourses);
+            const parsedEducation = normalizeEducationPayload(parsed.allowedDegrees, parsed.allowedCourses, parsed.allowedSpecializations);
             setAllowedDegrees(parsedEducation.degrees);
             setAllowedCourses(parsedEducation.courses);
+            setAllowedSpecializations(parsedEducation.specializations);
             if (parsed.allowedPassoutYears?.length) setPassoutYears(normalizePassoutYears(parsed.allowedPassoutYears));
             if (parsed.applyLink) setApplyLink(parsed.applyLink);
             if (parsed.expiresAt) setExpiresAt(parsed.expiresAt);
@@ -531,6 +544,7 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
   "description": "Role summary...",
   "allowedDegrees": ["DEGREE"],
   "allowedCourses": [],
+  "allowedSpecializations": ["Computer Science"],
   "allowedPassoutYears": [2024, 2025],
   "requiredSkills": ["React", "Node.js"],
   "locations": ["Bangalore"],
@@ -554,6 +568,7 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
   "description": "Internship summary...",
   "allowedDegrees": ["DEGREE"],
   "allowedCourses": [],
+  "allowedSpecializations": ["Computer Science"],
   "allowedPassoutYears": [2025],
   "requiredSkills": ["HTML", "CSS", "JavaScript"],
   "locations": ["Hyderabad"],
@@ -577,6 +592,7 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
   "description": "Walk-in details and eligibility...",
   "allowedDegrees": ["DEGREE"],
   "allowedCourses": [],
+  "allowedSpecializations": ["Computer Science"],
   "allowedPassoutYears": [],
   "requiredSkills": ["Communication Skills"],
   "locations": ["Hyderabad"],
@@ -666,9 +682,10 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
             if (data.company) setCompany(data.company);
             if (data.companyWebsite) setCompanyWebsite(data.companyWebsite);
             if (data.description) setDescription(String(data.description));
-            const parsedEducation = normalizeEducationPayload(data.allowedDegrees, data.allowedCourses);
+            const parsedEducation = normalizeEducationPayload(data.allowedDegrees, data.allowedCourses, data.allowedSpecializations);
             setAllowedDegrees(parsedEducation.degrees);
             setAllowedCourses(parsedEducation.courses);
+            setAllowedSpecializations(parsedEducation.specializations);
             setPassoutYears(normalizePassoutYears(data.allowedPassoutYears));
             const requiredSkillsValues = toStringArray(data.requiredSkills);
             if (requiredSkillsValues.length > 0) setRequiredSkills(requiredSkillsValues.join(', '));
@@ -679,6 +696,7 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
                 if (normalizedWorkMode) setWorkMode(normalizedWorkMode);
             }
             if (data.salaryRange) setSalaryRange(String(data.salaryRange));
+            if (data.salaryAmount !== undefined) setSalaryAmount(String(data.salaryAmount));
             if (data.salaryMin !== undefined && data.salaryMax !== undefined) {
                 setSalaryRange(`${data.salaryMin}-${data.salaryMax}`);
             }
@@ -699,16 +717,35 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
             if (data.venueLink) setVenueLink(String(data.venueLink));
             if (data.dateRange) setWalkInDateRange(String(data.dateRange));
             if (data.timeRange) setWalkInTimeRange(String(data.timeRange));
+            if (data.requiredDocuments) {
+                const requiredDocumentsValues = toStringArray(data.requiredDocuments);
+                if (requiredDocumentsValues.length > 0) setRequiredDocuments(requiredDocumentsValues.join(', '));
+            }
+            if (data.contactPerson) setContactPerson(String(data.contactPerson));
+            if (data.contactPhone) setContactPhone(String(data.contactPhone));
+            if (data.startDate) setStartDate(String(data.startDate));
+            if (data.endDate) setEndDate(String(data.endDate));
+            if (data.startTime) setStartTime(String(data.startTime));
+            if (data.endTime) setEndTime(String(data.endTime));
 
             if (data.walkInDetails) {
                 if (data.walkInDetails.dateRange) setWalkInDateRange(data.walkInDetails.dateRange);
                 if (data.walkInDetails.timeRange) setWalkInTimeRange(data.walkInDetails.timeRange);
+                if (data.walkInDetails.reportingTime && !data.walkInDetails.timeRange) setWalkInTimeRange(data.walkInDetails.reportingTime);
                 if (data.walkInDetails.venueAddress) setVenueAddress(data.walkInDetails.venueAddress);
                 if (data.walkInDetails.venueLink) setVenueLink(data.walkInDetails.venueLink);
                 const requiredDocumentsValues = toStringArray(data.walkInDetails.requiredDocuments);
                 if (requiredDocumentsValues.length > 0) setRequiredDocuments(requiredDocumentsValues.join(', '));
                 if (data.walkInDetails.contactPerson) setContactPerson(data.walkInDetails.contactPerson);
                 if (data.walkInDetails.contactPhone) setContactPhone(data.walkInDetails.contactPhone);
+                if (Array.isArray(data.walkInDetails.dates) && data.walkInDetails.dates.length > 0) {
+                    const sortedDates = data.walkInDetails.dates
+                        .map((value: unknown) => String(value))
+                        .filter(Boolean)
+                        .sort((a: string, b: string) => new Date(a).getTime() - new Date(b).getTime());
+                    if (sortedDates.length > 0) setStartDate(sortedDates[0]);
+                    if (sortedDates.length > 1) setEndDate(sortedDates[sortedDates.length - 1]);
+                }
             }
 
             toast.success('Form updated from JSON.');
@@ -739,8 +776,14 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
         'B.Tech / B.E.', 'B.Sc.', 'BCA', 'BBA', 'B.Com', 'B.A.',
         'M.Tech / M.E.', 'M.Sc.', 'MCA', 'MBA', 'M.Com', 'M.A.'
     ];
+    const COMMON_SPECIALIZATIONS = [
+        'Computer Science', 'Information Technology', 'Electronics', 'Electrical',
+        'Mechanical', 'Civil', 'Data Science', 'AI/ML', 'Cybersecurity',
+        'Finance', 'Marketing', 'Human Resources', 'Operations', 'General'
+    ];
     const COMMON_DEGREES = ['DIPLOMA', 'DEGREE', 'PG'];
     const visibleCourseOptions = Array.from(new Set([...COMMON_COURSES, ...allowedCourses]));
+    const visibleSpecializationOptions = Array.from(new Set([...COMMON_SPECIALIZATIONS, ...allowedSpecializations]));
     const customDegrees = allowedDegrees.filter((degree) => !COMMON_DEGREES.includes(degree));
 
 
@@ -759,6 +802,7 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
                 description,
                 allowedDegrees,
                 allowedCourses,
+                allowedSpecializations,
                 passoutYears,
                 requiredSkills,
                 locations,
@@ -1309,6 +1353,48 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
                         )}
                     </div>
 
+                    <div className="space-y-2.5">
+                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            Courses
+                        </label>
+                        <div className="flex flex-wrap gap-1.5">
+                            {visibleCourseOptions.map((course) => (
+                                <button
+                                    key={course}
+                                    type="button"
+                                    onClick={() => handleCourseToggle(course)}
+                                    className={`px-2.5 py-1 rounded-md text-[10px] md:text-xs font-bold transition-all border ${allowedCourses.includes(course)
+                                        ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                                        : 'bg-muted/50 border-muted-foreground/10 text-muted-foreground hover:bg-muted hover:text-foreground'
+                                        }`}
+                                >
+                                    {course}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="space-y-2.5">
+                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            Specializations
+                        </label>
+                        <div className="flex flex-wrap gap-1.5">
+                            {visibleSpecializationOptions.map((specialization) => (
+                                <button
+                                    key={specialization}
+                                    type="button"
+                                    onClick={() => handleSpecializationToggle(specialization)}
+                                    className={`px-2.5 py-1 rounded-md text-[10px] md:text-xs font-bold transition-all border ${allowedSpecializations.includes(specialization)
+                                        ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                                        : 'bg-muted/50 border-muted-foreground/10 text-muted-foreground hover:bg-muted hover:text-foreground'
+                                        }`}
+                                >
+                                    {specialization}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Min Exp (years)</label>
@@ -1333,27 +1419,6 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
                                 className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all shadow-sm"
                                 placeholder="3"
                             />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2.5">
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            Courses
-                        </label>
-                        <div className="flex flex-wrap gap-1.5">
-                            {visibleCourseOptions.map((course) => (
-                                <button
-                                    key={course}
-                                    type="button"
-                                    onClick={() => handleCourseToggle(course)}
-                                    className={`px-2.5 py-1 rounded-md text-[10px] md:text-xs font-bold transition-all border ${allowedCourses.includes(course)
-                                        ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                                        : 'bg-muted/50 border-muted-foreground/10 text-muted-foreground hover:bg-muted hover:text-foreground'
-                                        }`}
-                                >
-                                    {course}
-                                </button>
-                            ))}
                         </div>
                     </div>
 

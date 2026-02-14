@@ -72,6 +72,7 @@ export const opportunitySchema = z.object({
     // Core Filters
     allowedDegrees: z.array(z.nativeEnum(EducationLevel)).optional().default([]),
     allowedCourses: z.array(z.string()).optional().default([]),
+    allowedSpecializations: z.array(z.string()).optional().default([]),
     allowedPassoutYears: z.array(z.number().int()).optional().default([]),
     requiredSkills: z.array(z.string()).default([]),
     locations: z.array(z.string()).min(1, 'Add at least one location'),

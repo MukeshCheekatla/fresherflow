@@ -19,23 +19,36 @@ export const degreeRule: EligibilityRule = {
         // If no degrees or courses specified, it's open to all
         const hasLevelRestrictions = !!(opp.allowedDegrees && opp.allowedDegrees.length > 0);
         const hasCourseRestrictions = !!((opp as any).allowedCourses && (opp as any).allowedCourses.length > 0);
+        const hasSpecializationRestrictions = !!((opp as any).allowedSpecializations && (opp as any).allowedSpecializations.length > 0);
 
-        if (!hasLevelRestrictions && !hasCourseRestrictions) return true;
+        if (!hasLevelRestrictions && !hasCourseRestrictions && !hasSpecializationRestrictions) return true;
         if (!profile.educationLevel) return false;
 
-        // 1. Check Course Restrictions (highest priority)
+        // 1. Course restrictions are strict when provided.
         if (hasCourseRestrictions) {
-            const allowedCourses = (opp as any).allowedCourses as string[];
-            const userCourse = profile.gradCourse;
-            const userPGCourse = profile.pgCourse;
+            const allowedCourses = ((opp as any).allowedCourses as string[]).map((course) => course.toLowerCase());
+            const userCourse = profile.gradCourse?.toLowerCase();
+            const userPGCourse = profile.pgCourse?.toLowerCase();
 
             const courseMatch = (userCourse && allowedCourses.includes(userCourse)) ||
                 (userPGCourse && allowedCourses.includes(userPGCourse));
 
-            if (courseMatch) return true;
+            if (!courseMatch) return false;
         }
 
-        // 2. Check Level Restrictions
+        // 2. Specialization restrictions are strict when provided.
+        if (hasSpecializationRestrictions) {
+            const allowedSpecializations = ((opp as any).allowedSpecializations as string[]).map((specialization) => specialization.toLowerCase());
+            const userSpecialization = profile.gradSpecialization?.toLowerCase();
+            const userPGSpecialization = profile.pgSpecialization?.toLowerCase();
+
+            const specializationMatch = (userSpecialization && allowedSpecializations.includes(userSpecialization)) ||
+                (userPGSpecialization && allowedSpecializations.includes(userPGSpecialization));
+
+            if (!specializationMatch) return false;
+        }
+
+        // 3. Check Level Restrictions
         if (hasLevelRestrictions) {
             const levels = ['DIPLOMA', 'DEGREE', 'PG'];
             const userLevelIndex = levels.indexOf(profile.educationLevel);
@@ -52,8 +65,12 @@ export const degreeRule: EligibilityRule = {
     },
     getReason: (opp, profile) => {
         const hasCourses = (opp as any).allowedCourses && (opp as any).allowedCourses.length > 0;
+        const hasSpecializations = (opp as any).allowedSpecializations && (opp as any).allowedSpecializations.length > 0;
         if (hasCourses) {
             return `This opportunity requires specific courses: ${(opp as any).allowedCourses.join(', ')}`;
+        }
+        if (hasSpecializations) {
+            return `This opportunity requires specific specializations: ${(opp as any).allowedSpecializations.join(', ')}`;
         }
         return `Your education level (${profile.educationLevel}) is not in the allowed degrees: ${opp.allowedDegrees.join(', ')}`;
     }

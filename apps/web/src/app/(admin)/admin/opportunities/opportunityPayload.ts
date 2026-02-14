@@ -10,6 +10,7 @@ export type OpportunityFormValues = {
     description: string;
     allowedDegrees: string[];
     allowedCourses: string[];
+    allowedSpecializations: string[];
     passoutYears: number[];
     requiredSkills: string;
     locations: string;
@@ -100,6 +101,7 @@ export const buildOpportunityPayload = (values: OpportunityFormValues): Record<s
         description: values.description,
         allowedDegrees: values.allowedDegrees,
         allowedCourses: values.allowedCourses,
+        allowedSpecializations: values.allowedSpecializations,
         allowedPassoutYears: values.passoutYears,
         requiredSkills: toCsvList(values.requiredSkills),
         locations: toCsvList(values.locations),

@@ -143,6 +143,7 @@ export interface RelevanceBreakdown {
     passoutYear: number;
     educationLevel: number;
     course: number;
+    specialization: number;
     location: number;
     workMode: number;
     freshness: number;
@@ -232,6 +233,18 @@ function getCourseMatchScore(opportunity: Opportunity, profile: Profile): number
     return userCourses.some((course) => allowed.includes(course)) ? 1 : 0;
 }
 
+function getSpecializationMatchScore(opportunity: Opportunity, profile: Profile): number {
+    const allowed = ((opportunity as any).allowedSpecializations || []).map((s: string) => s.toLowerCase());
+    if (allowed.length === 0) return 1;
+
+    const userSpecializations = [profile.gradSpecialization, profile.pgSpecialization]
+        .filter(Boolean)
+        .map((s) => (s as string).toLowerCase());
+
+    if (userSpecializations.length === 0) return 0;
+    return userSpecializations.some((specialization) => allowed.includes(specialization)) ? 1 : 0;
+}
+
 function getLocationPreferenceScore(opportunity: Opportunity, profile: Profile): number {
     const preferredCities = (profile.preferredCities || []).map((c: string) => c.toLowerCase());
     if (preferredCities.length === 0) return 0.7;
@@ -279,6 +292,7 @@ function computeRelevanceBreakdown(opportunity: Opportunity, profile: Profile): 
     const passoutWeight = 10 + Math.round(profileStrength * 4);
     const educationWeight = 8 + Math.round(profileStrength * 4);
     const courseWeight = 6 + Math.round(profileStrength * 3);
+    const specializationWeight = 6 + Math.round(profileStrength * 3);
     const locationWeight = 6 + Math.round(profileStrength * 3);
     const workModeWeight = 4 + Math.round(profileStrength * 2);
     const freshnessWeight = 4 + Math.round((1 - profileStrength) * 3);
@@ -290,6 +304,7 @@ function computeRelevanceBreakdown(opportunity: Opportunity, profile: Profile): 
         passoutYear: Math.round(getPassoutExactness(opportunity, profile) * passoutWeight),
         educationLevel: Math.round(getEducationLevelScore(opportunity, profile) * educationWeight),
         course: Math.round(getCourseMatchScore(opportunity, profile) * courseWeight),
+        specialization: Math.round(getSpecializationMatchScore(opportunity, profile) * specializationWeight),
         location: Math.round(getLocationPreferenceScore(opportunity, profile) * locationWeight),
         workMode: Math.round(getWorkModeScore(opportunity, profile) * workModeWeight),
         freshness: Math.round(getFreshnessBoost(opportunity) * freshnessWeight),
