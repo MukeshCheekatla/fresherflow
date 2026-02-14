@@ -56,6 +56,13 @@ function toNumber(input: unknown): number | undefined {
     return undefined;
 }
 
+function stripHtml(input: string): string {
+    return input
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
 function extractWorkMode(content: string): Candidate['workMode'] {
     const text = content.toLowerCase();
     if (text.includes('remote')) return 'REMOTE';
@@ -108,7 +115,56 @@ function computeFresherScore(candidate: Candidate): { score: number; flags: stri
     return { score, flags };
 }
 
+function parseExperienceRange(input: unknown): { min?: number; max?: number } {
+    const text = String(input || '').toLowerCase();
+    if (!text) return {};
+    const numbers = text.match(/\d+(\.\d+)?/g)?.map((value) => Number(value)) || [];
+    if (numbers.length === 0) return {};
+    if (numbers.length === 1) return { min: numbers[0], max: numbers[0] };
+    return { min: numbers[0], max: numbers[1] };
+}
+
+function normalizeGfgJobItem(item: Record<string, unknown>, fallbackType: OpportunityType): Candidate | null {
+    const designation = item.designation as Record<string, unknown> | undefined;
+    const organization = item.organization as Record<string, unknown> | undefined;
+
+    const title = String(designation?.text || item.role || item.title || '').trim();
+    const company = String(organization?.name || item.company || '').trim();
+    if (!title || !company) return null;
+
+    const description = stripHtml(String(organization?.about || item.description || '')).trim() || undefined;
+    const experience = parseExperienceRange(item.experience);
+    const locationType = String(item.location_type || '').toUpperCase();
+    const sourceListingLink = String(item.slug || '').trim()
+        ? `https://www.geeksforgeeks.org/jobs/${String(item.slug).trim()}/`
+        : undefined;
+    const externalApplyLink = String(item.apply_link || '').trim() || undefined;
+    const applyLink = externalApplyLink || sourceListingLink;
+
+    return {
+        sourceExternalId: String(item.job_id || '').trim() || undefined,
+        type: toOpportunityType(item.job_category, fallbackType),
+        title,
+        company,
+        description,
+        applyLink,
+        locations: toStringArray(item.location),
+        workMode: locationType === 'REMOTE' || locationType === 'HYBRID' || locationType === 'ONSITE'
+            ? (locationType as Candidate['workMode'])
+            : undefined,
+        experienceMin: experience.min,
+        experienceMax: experience.max,
+        allowedPassoutYears: [],
+        requiredSkills: [],
+        raw: item,
+    };
+}
+
 function normalizeJsonFeedItem(item: Record<string, unknown>, fallbackType: OpportunityType): Candidate | null {
+    if (item.job_id && item.organization && item.designation) {
+        return normalizeGfgJobItem(item, fallbackType);
+    }
+
     const title = String(item.title || '').trim();
     const company = String(item.company || '').trim();
     if (!title || !company) return null;
@@ -243,6 +299,8 @@ async function fetchCandidates(source: SourceConfig): Promise<Candidate[]> {
             ? jsonPayload.jobs
             : Array.isArray(jsonPayload?.data)
                 ? jsonPayload.data
+                : Array.isArray(jsonPayload?.results)
+                    ? jsonPayload.results
                 : [];
 
     return (list as unknown[])
