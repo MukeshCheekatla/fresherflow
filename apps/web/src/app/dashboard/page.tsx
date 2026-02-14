@@ -16,10 +16,13 @@ import { SkeletonJobCard } from '@/components/ui/Skeleton';
 import JobCard from '@/features/jobs/components/JobCard';
 import { Button } from '@/components/ui/Button';
 import { formatSyncTime, getFeedLastSyncAt } from '@/lib/offline/syncStatus';
+import { getOpportunityPathFromItem } from '@/lib/opportunityPath';
+import { calculateOpportunityMatch } from '@/lib/matchScore';
 
 // const UPDATE_INTERVAL_MS = 60_000;
-const HOURS_72_IN_MS = 72 * 60 * 60 * 1000;
 const HOURS_24_IN_MS = 24 * 60 * 60 * 1000;
+const MOBILE_DASHBOARD_LIMIT = 8;
+const DESKTOP_DASHBOARD_LIMIT = 24;
 
 export default function DashboardPage() {
     const { user, profile, isLoading: authLoading } = useAuth();
@@ -34,7 +37,7 @@ export default function DashboardPage() {
     const [highlightsError, setHighlightsError] = useState<string | null>(null);
     const [isOnline, setIsOnline] = useState(true);
     const [feedLastSyncAt, setFeedLastSyncAt] = useState<number | null>(null);
-    const [lastSeenAt, setLastSeenAt] = useState<number | null>(null);
+    const [dashboardVisitCounter, setDashboardVisitCounter] = useState(0);
     const [activeTab, setActiveTab] = useState<'featured' | 'latest' | 'expiring' | 'all' | 'applied' | 'archived'>('featured');
 
     useEffect(() => {
@@ -64,10 +67,14 @@ export default function DashboardPage() {
 
     useEffect(() => {
         if (typeof window === 'undefined' || !user) return;
-        const storageKey = 'ff_dashboard_last_seen_at';
-        const previous = Number(window.localStorage.getItem(storageKey) || '0');
-        setLastSeenAt(previous > 0 ? previous : null);
-        window.localStorage.setItem(storageKey, String(Date.now()));
+        const lastSeenStorageKey = 'ff_dashboard_last_seen_at';
+        const visitStorageKey = 'ff_dashboard_visit_counter';
+        window.localStorage.setItem(lastSeenStorageKey, String(Date.now()));
+
+        const previousVisits = Number(window.localStorage.getItem(visitStorageKey) || '0');
+        const nextVisits = Number.isFinite(previousVisits) ? previousVisits + 1 : 1;
+        window.localStorage.setItem(visitStorageKey, String(nextVisits));
+        setDashboardVisitCounter(nextVisits);
     }, [user]);
 
     useEffect(() => {
@@ -154,12 +161,34 @@ export default function DashboardPage() {
         return Math.ceil(diffMs / (HOURS_24_IN_MS));
     };
 
-    const activeRecentOpps = recentOpps.filter((o) => !o.expiresAt || new Date(o.expiresAt) > new Date());
-    const latestList = [...activeRecentOpps].sort(
+    const rotateByOffset = <T,>(items: T[], offset: number) => {
+        if (items.length <= 1) return items;
+        const normalizedOffset = ((offset % items.length) + items.length) % items.length;
+        if (normalizedOffset === 0) return items;
+        return [...items.slice(normalizedOffset), ...items.slice(0, normalizedOffset)];
+    };
+
+    const activeRecentOpps = recentOpps
+        .filter((o) => !o.expiresAt || new Date(o.expiresAt) > new Date())
+        .map((opp) => {
+            const match = calculateOpportunityMatch(profile, opp);
+            return {
+                ...opp,
+                matchScore: match.score,
+                matchReason: match.reason,
+            };
+        });
+    const rotationStep = 4;
+    const rotationOffset = Math.max(0, dashboardVisitCounter - 1) * rotationStep;
+    const latestSorted = [...activeRecentOpps].sort(
         (a, b) => new Date(b.postedAt as string | Date).getTime() - new Date(a.postedAt as string | Date).getTime()
     );
-    // Keep API-provided personalized ordering for best-match sections.
-    const bestMatchList = [...activeRecentOpps];
+    const latestList = rotateByOffset(latestSorted, rotationOffset);
+    // Rotate top cards per visit so users do not see the same first listings every time.
+    const bestMatchList = rotateByOffset(
+        [...activeRecentOpps].sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0)),
+        rotationOffset
+    );
     const closingSoon = activeRecentOpps
         .filter((o) => o.expiresAt)
         .sort((a, b) => new Date(a.expiresAt as string).getTime() - new Date(b.expiresAt as string).getTime())
@@ -185,19 +214,42 @@ export default function DashboardPage() {
         )
     );
     const featuredList = [
-        ...closingSoon.slice(0, 4),
-        ...newLast24Hours.filter((candidate) => !closingSoon.some((soon) => soon.id === candidate.id)).slice(0, 4),
-    ].slice(0, 8);
+        ...closingSoon,
+        ...newLast24Hours.filter((candidate) => !closingSoon.some((soon) => soon.id === candidate.id)),
+        ...bestMatchList.filter((candidate) =>
+            !closingSoon.some((soon) => soon.id === candidate.id)
+            && !newLast24Hours.some((fresh) => fresh.id === candidate.id)
+        ),
+    ];
+
+    const sectionMap = {
+        featured: featuredList,
+        latest: latestList,
+        expiring: closingSoon,
+        all: bestMatchList,
+        applied: appliedList,
+        archived: archivedList,
+    } as const;
 
     const mobileSections = [
-        { key: 'featured', title: 'Featured', href: '/opportunities', items: featuredList },
-        { key: 'latest', title: 'Latest', href: '/opportunities', items: latestList.slice(0, 8) },
-        { key: 'expiring', title: 'Expiring Soon', href: '/opportunities?closingSoon=true', items: closingSoon.slice(0, 8) },
-        { key: 'all', title: 'All Jobs', href: '/opportunities', items: bestMatchList.slice(0, 8) },
-        { key: 'applied', title: 'Applied', href: '/account/saved', items: appliedList.slice(0, 8) },
-        { key: 'archived', title: 'Archived', href: '/opportunities', items: archivedList.slice(0, 8) },
+        { key: 'featured', title: 'Featured', href: '/opportunities', items: sectionMap.featured.slice(0, MOBILE_DASHBOARD_LIMIT) },
+        { key: 'latest', title: 'Latest', href: '/opportunities', items: sectionMap.latest.slice(0, MOBILE_DASHBOARD_LIMIT) },
+        { key: 'expiring', title: 'Expiring Soon', href: '/opportunities?closingSoon=true', items: sectionMap.expiring.slice(0, MOBILE_DASHBOARD_LIMIT) },
+        { key: 'all', title: 'All Jobs', href: '/opportunities', items: sectionMap.all.slice(0, MOBILE_DASHBOARD_LIMIT) },
+        { key: 'applied', title: 'Applied', href: '/account/saved', items: sectionMap.applied.slice(0, MOBILE_DASHBOARD_LIMIT) },
+        { key: 'archived', title: 'Archived', href: '/opportunities', items: sectionMap.archived.slice(0, MOBILE_DASHBOARD_LIMIT) },
     ] as const;
+    const desktopSections = [
+        { key: 'featured', title: 'Featured', href: '/opportunities', items: sectionMap.featured.slice(0, DESKTOP_DASHBOARD_LIMIT) },
+        { key: 'latest', title: 'Latest', href: '/opportunities', items: sectionMap.latest.slice(0, DESKTOP_DASHBOARD_LIMIT) },
+        { key: 'expiring', title: 'Expiring Soon', href: '/opportunities?closingSoon=true', items: sectionMap.expiring.slice(0, DESKTOP_DASHBOARD_LIMIT) },
+        { key: 'all', title: 'All Jobs', href: '/opportunities', items: sectionMap.all.slice(0, DESKTOP_DASHBOARD_LIMIT) },
+        { key: 'applied', title: 'Applied', href: '/account/saved', items: sectionMap.applied.slice(0, DESKTOP_DASHBOARD_LIMIT) },
+        { key: 'archived', title: 'Archived', href: '/opportunities', items: sectionMap.archived.slice(0, DESKTOP_DASHBOARD_LIMIT) },
+    ] as const;
+
     const activeSection = mobileSections.find((section) => section.key === activeTab) || mobileSections[0];
+    const activeDesktopSection = desktopSections.find((section) => section.key === activeTab) || desktopSections[0];
 
     return (
         <AuthGate>
@@ -243,7 +295,7 @@ export default function DashboardPage() {
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                                            <h2 className="text-[10px] font-bold uppercase tracking-[0.15em] text-amber-600/80">Fresh & Urgent</h2>
+                                            <h2 className="text-[10px] font-bold uppercase tracking-[0.15em] text-primary dark:text-amber-300">Fresh & Urgent</h2>
                                         </div>
                                         <Link href="/opportunities" className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline">
                                             View feed
@@ -253,30 +305,30 @@ export default function DashboardPage() {
                                         {activeWalkins.map(opp => (
                                             <div
                                                 key={`urgent-${opp.id}`}
-                                                onClick={() => router.push(`/opportunities/${opp.slug || opp.id}`)}
+                                                onClick={() => router.push(getOpportunityPathFromItem(opp))}
                                                 className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 cursor-pointer hover:bg-amber-500/10 transition-all flex flex-col justify-between gap-2 group"
                                             >
                                                 <div className="space-y-1">
                                                     <div className="flex items-center justify-between">
-                                                        <span className="text-[8px] font-bold uppercase tracking-wider text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded">Urgent Walk-in</span>
-                                                        <div className="flex items-center gap-1 text-[9px] text-amber-600 font-bold tracking-tight">
+                                                        <span className="text-[8px] font-bold uppercase tracking-wider text-slate-900 dark:text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded">Urgent Walk-in</span>
+                                                        <div className="flex items-center gap-1 text-[9px] text-slate-700 dark:text-amber-300 font-bold tracking-tight">
                                                             <ClockIcon className="w-3 h-3" />
                                                             Closing Soon
                                                         </div>
                                                     </div>
-                                                    <h3 className="font-bold text-sm tracking-tight line-clamp-1 group-hover:text-amber-600 transition-colors">{opp.title}</h3>
+                                                    <h3 className="font-bold text-sm tracking-tight line-clamp-1 group-hover:text-primary dark:group-hover:text-amber-300 transition-colors">{opp.title}</h3>
                                                     <p className="text-[11px] font-medium text-muted-foreground line-clamp-1">{opp.company} &bull; {opp.locations[0]}</p>
                                                 </div>
                                                 <div className="flex items-center justify-between border-t border-amber-500/10 pt-2">
-                                                    <span className="text-[9px] font-bold uppercase tracking-widest text-orange-600/60 dark:text-amber-300/60">Verified Drive</span>
-                                                    <ChevronRightIcon className="w-4 h-4 text-amber-500 group-hover:translate-x-1 transition-transform" />
+                                                    <span className="text-[9px] font-bold uppercase tracking-widest text-slate-700 dark:text-amber-300/60">Verified Drive</span>
+                                                    <ChevronRightIcon className="w-4 h-4 text-primary dark:text-amber-300 group-hover:translate-x-1 transition-transform" />
                                                 </div>
                                             </div>
                                         ))}
                                         {activeNew.slice(0, activeWalkins.length > 0 ? 2 : 3).map(opp => (
                                             <div
                                                 key={`new-${opp.id}`}
-                                                onClick={() => router.push(`/opportunities/${opp.slug || opp.id}`)}
+                                                onClick={() => router.push(getOpportunityPathFromItem(opp))}
                                                 className="bg-primary/5 border border-primary/20 rounded-2xl p-4 cursor-pointer hover:bg-primary/10 transition-all flex flex-col justify-between gap-2 group"
                                             >
                                                 <div className="space-y-1">
@@ -305,8 +357,8 @@ export default function DashboardPage() {
                         <div className="lg:col-span-8 space-y-3 md:space-y-6">
                             {(recentError || highlightsError) && (
                                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                                    <div className="text-xs text-orange-600 dark:text-amber-300">Data sync issues. Browse existing listings.</div>
-                                    <Button variant="outline" onClick={retryAll} className="h-8 px-3 text-[10px] borer-amber-500/40 text-orange-600">Retry</Button>
+                                    <div className="text-xs text-foreground/80 dark:text-amber-300">Data sync issues. Browse existing listings.</div>
+                                    <Button variant="outline" onClick={retryAll} className="h-8 px-3 text-[10px] borer-amber-500/40 text-foreground dark:text-amber-300">Retry</Button>
                                 </div>
                             )}
 
@@ -343,7 +395,7 @@ export default function DashboardPage() {
                                                 isApplied={false}
                                                 isSaved={opp.isSaved}
                                                 onToggleSave={() => toggleSave(opp.id)}
-                                                onClick={() => router.push(`/opportunities/${opp.slug || opp.id}`)}
+                                                onClick={() => router.push(getOpportunityPathFromItem(opp))}
                                                 isAdmin={user?.role === 'ADMIN'}
                                             />
                                         ))}
@@ -372,7 +424,7 @@ export default function DashboardPage() {
                                     <div className="grid grid-cols-2 gap-4">
                                         {[1, 2, 3, 4].map(i => <SkeletonJobCard key={i} />)}
                                     </div>
-                                ) : activeSection.items.length === 0 ? (
+                                ) : activeDesktopSection.items.length === 0 ? (
                                     <div className="p-12 text-center border border-dashed border-border rounded-xl">
                                         <p className="text-sm font-medium text-muted-foreground">No results found in this section.</p>
                                         <Button asChild variant="outline" className="mt-4 h-8 text-[10px] font-bold uppercase tracking-widest">
@@ -381,7 +433,7 @@ export default function DashboardPage() {
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                                        {activeSection.items.map((opp: Opportunity) => (
+                                        {activeDesktopSection.items.map((opp: Opportunity) => (
                                             <JobCard
                                                 key={`desk-${opp.id}`}
                                                 job={opp}
@@ -389,7 +441,7 @@ export default function DashboardPage() {
                                                 isApplied={false}
                                                 isSaved={opp.isSaved}
                                                 onToggleSave={() => toggleSave(opp.id)}
-                                                onClick={() => router.push(`/opportunities/${opp.slug || opp.id}`)}
+                                                onClick={() => router.push(getOpportunityPathFromItem(opp))}
                                                 isAdmin={user?.role === 'ADMIN'}
                                             />
                                         ))}
@@ -410,9 +462,11 @@ export default function DashboardPage() {
                                     <h3 className="text-[10px] font-bold text-success uppercase">Deadline radar</h3>
                                     <div className="space-y-2">
                                         {closingSoon.slice(0, 3).map(opp => (
-                                            <button key={`side-${opp.id}`} onClick={() => router.push(`/opportunities/${opp.slug || opp.id}`)} className="w-full text-left p-2 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors">
+                                            <button key={`side-${opp.id}`} onClick={() => router.push(getOpportunityPathFromItem(opp))} className="w-full text-left p-2 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors">
                                                 <p className="text-[11px] font-semibold truncate">{opp.title}</p>
-                                                <p className="text-[10px] text-orange-600">{getDaysToExpiry(opp.expiresAt)}d remaining</p>
+                                                <p className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                                                    {getDaysToExpiry(opp.expiresAt)}d remaining
+                                                </p>
                                             </button>
                                         ))}
                                     </div>

@@ -5,6 +5,7 @@ import { useDebounce } from '@/lib/hooks/useDebounce';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { readFeedCache, saveFeedCache } from '@/lib/offline/opportunitiesFeedCache';
+import { calculateOpportunityMatch } from '@/lib/matchScore';
 
 interface UseOpportunitiesFeedOptions {
     type?: string | null;
@@ -25,7 +26,7 @@ export function useOpportunitiesFeed({
     minSalary,
     maxSalary,
 }: UseOpportunitiesFeedOptions) {
-    const { user, isLoading: authLoading } = useAuth();
+    const { user, profile, isLoading: authLoading } = useAuth();
     const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
     const [totalCount, setTotalCount] = useState(0);
     const [page, setPage] = useState(1);
@@ -130,7 +131,7 @@ export function useOpportunitiesFeed({
     }, [loadOpportunities, authLoading, user, showOnlySaved]);
 
     const filteredOpps = useMemo(() => {
-        return opportunities.filter(opp => {
+        const filtered = opportunities.filter(opp => {
             const matchesSearch = !debouncedSearch ||
                 opp.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
                 opp.company.toLowerCase().includes(debouncedSearch.toLowerCase());
@@ -150,7 +151,18 @@ export function useOpportunitiesFeed({
 
             return matchesSearch && matchesLoc && matchesClosingSoon && matchesSalary;
         });
-    }, [opportunities, debouncedSearch, selectedLoc, closingSoon, minSalary, maxSalary]);
+
+        const enriched = filtered.map((opp) => {
+            const match = calculateOpportunityMatch(profile, opp);
+            return {
+                ...opp,
+                matchScore: match.score,
+                matchReason: match.reason,
+            };
+        });
+
+        return enriched.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+    }, [opportunities, debouncedSearch, selectedLoc, closingSoon, minSalary, maxSalary, profile]);
 
     const toggleSave = async (opportunityId: string) => {
         if (!user) {

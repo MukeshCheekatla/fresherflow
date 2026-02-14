@@ -12,6 +12,7 @@ import ShareIcon from '@heroicons/react/24/outline/ShareIcon';
 import CompanyLogo from '@/components/ui/CompanyLogo';
 import toast from 'react-hot-toast';
 import { toastError } from '@/lib/utils/error';
+import { getOpportunityPathFromItem } from '@/lib/opportunityPath';
 
 /**
  * JobCard - REFINED TYPOGRAPHY PATTERN
@@ -19,7 +20,7 @@ import { toastError } from '@/lib/utils/error';
  */
 
 interface JobCardProps {
-    job: Opportunity;
+    job: Opportunity & { matchScore?: number; matchReason?: string };
     jobId: string;
     onClick?: () => void;
     isSaved?: boolean;
@@ -81,7 +82,7 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
 
     const handleShareClick = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        const shareUrl = `${window.location.origin}/opportunities/${job.slug || job.id}`;
+        const shareUrl = `${window.location.origin}${getOpportunityPathFromItem(job)}`;
         const shareData = {
             title: job.normalizedRole || job.title,
             text: `Check out this ${job.normalizedRole || job.title} opportunity at ${job.company} on FresherFlow!`,
@@ -195,6 +196,11 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
                         <h3 className="text-[15px] font-bold text-foreground group-hover:text-primary transition-colors leading-snug line-clamp-2 mt-1">
                             {job.normalizedRole || job.title}
                         </h3>
+                        {typeof job.matchScore === 'number' && (
+                            <p className="text-[10px] font-semibold text-muted-foreground mt-1 truncate whitespace-nowrap">
+                                Best match {job.matchScore}% · {job.matchReason || 'Profile fit'}
+                            </p>
+                        )}
                     </div>
                 </div>
 
@@ -223,16 +229,18 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
             </div>
 
             {/* Badges */}
-            <div className="flex flex-wrap items-center gap-1.5">
-                {getJobTypeBadge()}
+            <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                    {getJobTypeBadge()}
+                </div>
                 {job.expiresAt && (
                     <span
                         className={cn(
-                            "inline-flex items-center gap-1 px-2 py-0.5 border text-[9px] font-bold uppercase tracking-wider rounded-full",
+                            "inline-flex shrink-0 items-center gap-1 px-2 py-0.5 border text-[10px] font-bold uppercase tracking-wider rounded-full",
                             isExpired()
                                 ? "bg-destructive/5 border-destructive/20 text-destructive"
                                 : isClosingSoon()
-                                    ? "bg-orange-100 border-orange-300 text-orange-900 dark:bg-amber-500/15 dark:border-amber-500/30 dark:text-amber-300"
+                                    ? "bg-primary/10 border-primary/30 text-primary"
                                     : "bg-muted/60 border-border text-foreground"
                         )}
                     >
@@ -242,12 +250,6 @@ export default function JobCard({ job, onClick, isSaved = false, isApplied = fal
                             : isClosingSoon()
                                 ? `Expires in ${Math.max(0, daysToExpiry() || 0)}d • ${formatExpiryDate()}`
                                 : `Apply by ${formatExpiryDate()}`}
-                    </span>
-                )}
-                {isClosingSoon() && !isExpired() && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-muted/60 border border-border text-foreground text-[9px] font-bold uppercase tracking-wider rounded-full">
-                        <ClockIcon className="w-3 h-3" aria-hidden="true" />
-                        Closing soon
                     </span>
                 )}
             </div>

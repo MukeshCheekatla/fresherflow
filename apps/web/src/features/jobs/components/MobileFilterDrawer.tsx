@@ -154,12 +154,12 @@ export function MobileFilterDrawer({
                             className={cn(
                                 "w-full flex items-center justify-between px-3 py-3.5 rounded-xl border text-xs font-semibold transition-all uppercase tracking-wide",
                                 draftClosingSoon
-                                    ? "bg-orange-100 border-orange-300 text-orange-900 dark:bg-amber-500/10 dark:border-amber-500/50 dark:text-amber-300"
+                                    ? "bg-orange-100 border-orange-300 text-slate-900 dark:bg-amber-500/10 dark:border-amber-500/50 dark:text-amber-300"
                                     : "bg-background border-border text-muted-foreground active:bg-muted"
                             )}
                         >
                             <span>Closing soon</span>
-                            {draftClosingSoon && <div className="w-1.5 h-1.5 rounded-full bg-orange-600 dark:bg-amber-500" />}
+                            {draftClosingSoon && <div className="w-1.5 h-1.5 rounded-full bg-slate-700 dark:bg-amber-500" />}
                         </button>
                     </div>
 
