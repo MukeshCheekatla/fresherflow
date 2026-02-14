@@ -54,16 +54,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         const canonicalId = opportunity.slug || opportunity.id;
         const url = `https://fresherflow.in/opportunities/${canonicalId}`;
 
-        // Try dynamic OG image first, fallback to static if Vercel deployment paused
+        // Dynamic OG image URL - use correct base for environment
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://fresherflow.in';
         const ogImageVersion = process.env.NEXT_PUBLIC_OG_IMAGE_VERSION || '1';
         const ogUpdatedAt = opportunity.updatedAt || opportunity.postedAt || '';
-        const dynamicOgImageUrl = `https://fresherflow.in/api/og/job/${encodeURIComponent(opportunity.id)}?v=${encodeURIComponent(ogImageVersion)}&t=${encodeURIComponent(String(ogUpdatedAt))}`;
+        const dynamicOgImageUrl = `${baseUrl}/api/og/job/${encodeURIComponent(opportunity.id)}?v=${encodeURIComponent(ogImageVersion)}&t=${encodeURIComponent(String(ogUpdatedAt))}`;
 
-        // Fallback static OG image (works even when Vercel deployment is paused)
-        const staticOgImageUrl = 'https://fresherflow.in/main.png';
-
-        // Use dynamic OG image by default
-        // Only use static fallback if dynamic generation is unavailable
+        // Use dynamic OG image
         const ogImageUrl = dynamicOgImageUrl;
 
         return {

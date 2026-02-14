@@ -43,6 +43,11 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
+    // Note: We don't rewrite /api/* to localhost:5000 in production 
+    // because it shadows internal Next.js routes like /api/og.
+    // The API client uses absolute URLs (NEXT_PUBLIC_API_URL) so this is redundant.
+    if (process.env.NODE_ENV === 'production') return [];
+
     return [
       {
         source: "/api/:path*",

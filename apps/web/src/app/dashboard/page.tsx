@@ -19,7 +19,7 @@ import JobCard from '@/features/jobs/components/JobCard';
 import { Button } from '@/components/ui/Button';
 import { formatSyncTime, getFeedLastSyncAt } from '@/lib/offline/syncStatus';
 
-const UPDATE_INTERVAL_MS = 60_000;
+// const UPDATE_INTERVAL_MS = 60_000;
 const HOURS_72_IN_MS = 72 * 60 * 60 * 1000;
 const HOURS_24_IN_MS = 24 * 60 * 60 * 1000;
 
