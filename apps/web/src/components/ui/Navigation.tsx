@@ -16,6 +16,7 @@ import AcademicCapIcon from '@heroicons/react/24/outline/AcademicCapIcon';
 import BellIcon from '@heroicons/react/24/outline/BellIcon';
 import PaperAirplaneIcon from '@heroicons/react/24/outline/PaperAirplaneIcon';
 import ClipboardDocumentCheckIcon from '@heroicons/react/24/outline/ClipboardDocumentCheckIcon';
+import ArrowLeftIcon from '@heroicons/react/24/outline/ArrowLeftIcon';
 import { ThemeToggle } from './ThemeToggle';
 import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 
@@ -67,6 +68,15 @@ function WhatsAppBrandIcon({ className }: { className?: string }) {
     );
 }
 
+const SOCIAL_LINKS = [
+    { href: 'https://t.me/fresherflowin', label: 'Telegram', icon: TelegramBrandIcon },
+    { href: 'https://whatsapp.com/channel/0029VbCkZu6FHWq0qJOOU73D', label: 'WhatsApp', icon: WhatsAppBrandIcon },
+    { href: 'https://www.linkedin.com/company/fresherflow-in', label: 'LinkedIn', icon: LinkedInBrandIcon },
+    { href: 'https://twitter.com/Fresherflow', label: 'Twitter', icon: XBrandIcon },
+    { href: 'https://instagram.com/fresherflow', label: 'Instagram', icon: InstagramBrandIcon },
+    { href: 'https://www.facebook.com/FresherFlow.in', label: 'Facebook', icon: FacebookBrandIcon },
+] as const;
+
 export function Navbar() {
     const context = useContext(AuthContext);
     const user = context?.user;
@@ -81,6 +91,7 @@ export function Navbar() {
         { href: '/jobs', label: 'Jobs' },
         { href: '/internships', label: 'Internships' },
         { href: '/walk-ins', label: 'Walk-ins' },
+        { href: '/account/tracker', label: 'Tracker' },
         { href: '/account/saved', label: 'Saved' },
     ];
 
@@ -130,62 +141,6 @@ export function Navbar() {
 
                     {/* Right Actions */}
                     <div className="flex items-center gap-2 md:gap-4">
-                        <div className="hidden md:flex items-center gap-1.5">
-                            <a
-                                href="https://t.me/fresherflowin"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="h-8 w-8 rounded-lg border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40"
-                                aria-label="Telegram"
-                            >
-                                <TelegramBrandIcon className="w-4 h-4" />
-                            </a>
-                            <a
-                                href="https://whatsapp.com/channel/0029VbCkZu6FHWq0qJOOU73D"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="h-8 w-8 rounded-lg border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40"
-                                aria-label="WhatsApp"
-                            >
-                                <WhatsAppBrandIcon className="w-4 h-4" />
-                            </a>
-                            <a
-                                href="https://www.linkedin.com/company/fresherflow-in"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="h-8 w-8 rounded-lg border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40"
-                                aria-label="LinkedIn"
-                            >
-                                <LinkedInBrandIcon className="w-4 h-4" />
-                            </a>
-                            <a
-                                href="https://twitter.com/Fresherflow"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="h-8 w-8 rounded-lg border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40"
-                                aria-label="Twitter"
-                            >
-                                <XBrandIcon className="w-4 h-4" />
-                            </a>
-                            <a
-                                href="https://instagram.com/fresherflow"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="h-8 w-8 rounded-lg border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40"
-                                aria-label="Instagram"
-                            >
-                                <InstagramBrandIcon className="w-4 h-4" />
-                            </a>
-                            <a
-                                href="https://www.facebook.com/FresherFlow.in"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="h-8 w-8 rounded-lg border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40"
-                                aria-label="Facebook"
-                            >
-                                <FacebookBrandIcon className="w-4 h-4" />
-                            </a>
-                        </div>
                         <ThemeToggle />
 
 
@@ -287,6 +242,9 @@ export function MobileNav() {
         if (path === '/jobs') return 'Jobs';
         if (path === '/internships') return 'Internships';
         if (path === '/walk-ins') return 'Walk-ins';
+        if (path.startsWith('/jobs/')) return 'Job';
+        if (path.startsWith('/internships/')) return 'Internship';
+        if (path.startsWith('/walk-ins/')) return 'Walk-in';
         if (path === '/account/saved') return 'Saved';
         if (path === '/account/tracker') return 'Tracker';
         if (path === '/profile/edit') return 'Profile';
@@ -308,6 +266,20 @@ export function MobileNav() {
 
     return (
         <>
+            <div className="hidden lg:flex fixed right-3 top-1/2 -translate-y-1/2 z-[65] flex-col gap-1.5 rounded-xl border border-border bg-card/95 backdrop-blur px-1.5 py-2 shadow-sm">
+                {SOCIAL_LINKS.map((item) => (
+                    <a
+                        key={item.href}
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="h-8 w-8 rounded-lg border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40"
+                        aria-label={item.label}
+                    >
+                        <item.icon className="w-4 h-4" />
+                    </a>
+                ))}
+            </div>
             <div className="md:hidden fixed top-0 left-0 right-0 z-[70] h-16 bg-background/95 backdrop-blur-md border-b border-border">
                 <div className="h-full px-4 flex items-center justify-between">
                     <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2">
@@ -321,6 +293,15 @@ export function MobileNav() {
 
                     {user ? (
                         <div className="flex items-center gap-2">
+                            {pathname.startsWith('/jobs/') || pathname.startsWith('/internships/') || pathname.startsWith('/walk-ins/') || pathname.startsWith('/opportunities/') ? (
+                                <button
+                                    onClick={() => window.history.length > 1 ? history.back() : window.location.assign('/opportunities')}
+                                    className="p-2 rounded-lg border border-border bg-muted/40 text-muted-foreground hover:text-primary transition-all"
+                                    aria-label="Go back"
+                                >
+                                    <ArrowLeftIcon className="w-5 h-5" />
+                                </button>
+                            ) : null}
                             <Link
                                 href="/alerts"
                                 className="p-2 rounded-lg border border-border bg-muted/40 text-muted-foreground hover:text-primary transition-all relative"
@@ -522,4 +503,3 @@ export function MobileNav() {
         </>
     );
 }
-

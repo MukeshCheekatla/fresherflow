@@ -25,7 +25,7 @@ export function NavigationWrapper({ children }: { children: React.ReactNode }) {
             )}
             <main className={cn(
                 "relative w-full overflow-x-hidden",
-                !isAdminRoute && "pt-16 md:pt-[88px]",
+                !isAdminRoute && "pt-16",
                 !isAuthRoute && !isAdminRoute && !isHomePage && "pb-4 md:pb-8",
                 (isAuthRoute || isAdminRoute) && "min-h-screen flex flex-col"
             )}>

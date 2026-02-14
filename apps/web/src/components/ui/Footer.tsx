@@ -18,6 +18,8 @@ export function Footer({ className }: FooterProps) {
                     <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
                     <span className="text-muted-foreground/40">|</span>
                     <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+                    <span className="text-muted-foreground/40">|</span>
+                    <Link href="/account/feedback" className="hover:text-foreground transition-colors">Feedback</Link>
                 </div>
                 <div className="text-[10px] text-muted-foreground/60 max-w-md space-y-1">
                     <p>
