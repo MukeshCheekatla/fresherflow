@@ -84,8 +84,8 @@ export default function RootLayout({
         {/* Dynamic theme-color for light/dark mode */}
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)" />
-        <link rel="preload" as="image" href="/logo-optimized.png" fetchPriority="high" />
-        <link rel="preload" as="image" href="/logo-white-optimized.png" fetchPriority="high" />
+        <link rel="preload" as="image" href="/logo-optimized.png?v=3" fetchPriority="high" />
+        <link rel="preload" as="image" href="/logo-white-optimized.png?v=3" fetchPriority="high" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

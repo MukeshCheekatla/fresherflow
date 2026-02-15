@@ -20,6 +20,7 @@ import ArrowLeftIcon from '@heroicons/react/24/outline/ArrowLeftIcon';
 import { ThemeToggle } from './ThemeToggle';
 import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 import { useOfflineActionQueue } from '@/lib/offline/useOfflineActionQueue';
+import { useTheme } from '@/contexts/ThemeContext';
 
 function TelegramBrandIcon({ className }: { className?: string }) {
     return (
@@ -86,6 +87,8 @@ export function Navbar() {
     const searchParams = useSearchParams();
     const { unreadCount } = useUnreadNotifications();
     const pendingSyncCount = useOfflineActionQueue(user?.id);
+    const { theme } = useTheme();
+    const logoSrc = theme === 'dark' ? '/logo-white-optimized.png?v=3' : '/logo-optimized.png?v=3';
 
     const navLinks = [
         { href: '/dashboard', label: 'Dashboard' },
@@ -108,24 +111,14 @@ export function Navbar() {
                         <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-1 group shrink-0" suppressHydrationWarning>
                             <div className="w-8 h-8 relative flex items-center justify-center transition-all duration-300 transform group-hover:scale-110">
                                 <img
-                                    src="/logo-optimized.png"
+                                    src={logoSrc}
                                     alt="FresherFlow"
                                     width={32}
                                     height={32}
                                     loading="eager"
                                     fetchPriority="high"
                                     decoding="async"
-                                    className="block dark:hidden w-8 h-8 object-contain"
-                                />
-                                <img
-                                    src="/logo-white-optimized.png"
-                                    alt="FresherFlow"
-                                    width={32}
-                                    height={32}
-                                    loading="eager"
-                                    fetchPriority="high"
-                                    decoding="async"
-                                    className="hidden dark:block w-8 h-8 object-contain"
+                                    className="w-8 h-8 object-contain"
                                 />
                             </div>
                             <span className="font-bold text-lg tracking-tight text-foreground" suppressHydrationWarning>FresherFlow</span>
@@ -219,6 +212,8 @@ export function MobileNav() {
     const pendingSyncCount = useOfflineActionQueue(user?.id);
     const [isVisible, setIsVisible] = useState(true);
     const [menuOpen, setMenuOpen] = useState(false);
+    const { theme } = useTheme();
+    const logoSrc = theme === 'dark' ? '/logo-white-optimized.png?v=3' : '/logo-optimized.png?v=3';
     const lastScrollYRef = useRef(0);
     const tickingRef = useRef(false);
 
@@ -307,24 +302,14 @@ export function MobileNav() {
                 <div className="h-full px-4 flex items-center justify-between">
                     <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2">
                         <img
-                            src="/logo-optimized.png"
+                            src={logoSrc}
                             alt="FresherFlow"
                             width={24}
                             height={24}
                             loading="eager"
                             fetchPriority="high"
                             decoding="async"
-                            className="block dark:hidden w-6 h-6 object-contain"
-                        />
-                        <img
-                            src="/logo-white-optimized.png"
-                            alt="FresherFlow"
-                            width={24}
-                            height={24}
-                            loading="eager"
-                            fetchPriority="high"
-                            decoding="async"
-                            className="hidden dark:block w-6 h-6 object-contain"
+                            className="w-6 h-6 object-contain"
                         />
                         <span className="text-base font-bold tracking-tight text-foreground">{mobileTitle}</span>
                     </Link>

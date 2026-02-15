@@ -77,7 +77,7 @@
     --space-12: 48px;
 
     /* Base Logo */
-    --logo-image: url('/logo-optimized.png');
+    --logo-image: url('/logo-optimized.png?v=3');
   }
 
   .dark {
@@ -111,7 +111,7 @@
     --error: 0 85% 65%;
 
     /* Dark Mode Logo override */
-    --logo-image: url('/logo-white-optimized.png');
+    --logo-image: url('/logo-white-optimized.png?v=3');
   }
 
   /* Theme-aware native form controls */
