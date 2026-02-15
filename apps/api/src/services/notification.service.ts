@@ -16,6 +16,8 @@ interface NewJobNotificationResult {
     appAlertsSent: number;
 }
 
+const MAX_NEW_JOB_ALERTS_PER_USER_PER_DAY = Number(process.env.MAX_NEW_JOB_ALERTS_PER_USER_PER_DAY || 8);
+
 export async function sendNewJobAlerts(opportunityId: string): Promise<NewJobNotificationResult> {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
@@ -50,9 +52,27 @@ export async function sendNewJobAlerts(opportunityId: string): Promise<NewJobNot
     let emailsSent = 0;
     let appAlertsSent = 0;
     const usersSent = new Set<string>();
+    const dayStart = new Date();
+    dayStart.setHours(0, 0, 0, 0);
+    const sentTodayRows = await prisma.alertDelivery.groupBy({
+        by: ['userId'],
+        where: {
+            kind: 'NEW_JOB',
+            channel: 'APP',
+            sentAt: { gte: dayStart },
+        },
+        _count: {
+            _all: true,
+        },
+    });
+    const sentTodayByUser = new Map<string, number>(
+        sentTodayRows.map((row) => [row.userId, row._count._all])
+    );
 
     for (const user of users) {
         if (!user.profile || !user.alertPreference) continue;
+        const alreadySentToday = sentTodayByUser.get(user.id) || 0;
+        if (alreadySentToday >= MAX_NEW_JOB_ALERTS_PER_USER_PER_DAY) continue;
 
         // Check if user is eligible for this opportunity
         const eligible = filterOpportunitiesForUser([opportunity as any], user.profile as any);
@@ -63,6 +83,7 @@ export async function sendNewJobAlerts(opportunityId: string): Promise<NewJobNot
         if (ranked.length === 0) continue;
 
         const relevanceScore = ranked[0].score;
+        const relevanceReason = ranked[0].reason;
         if (relevanceScore < user.alertPreference.minRelevanceScore) continue;
 
         // Create dedupe key
@@ -92,7 +113,7 @@ export async function sendNewJobAlerts(opportunityId: string): Promise<NewJobNot
                 kind: 'NEW_JOB',
                 channel: 'APP',
                 dedupeKey: `${dedupeKeyBase}:APP`,
-                metadata: JSON.stringify({ relevanceScore }),
+                metadata: JSON.stringify({ relevanceScore, relevanceReason }),
             },
         ];
 
@@ -112,7 +133,7 @@ export async function sendNewJobAlerts(opportunityId: string): Promise<NewJobNot
                     kind: 'NEW_JOB',
                     channel: 'EMAIL',
                     dedupeKey: `${dedupeKeyBase}:EMAIL`,
-                    metadata: JSON.stringify({ relevanceScore }),
+                    metadata: JSON.stringify({ relevanceScore, relevanceReason }),
                 });
             } catch (err) {
                 logger.error('Failed to send new job email', { userId: user.id, opportunityId, error: err });
@@ -127,6 +148,7 @@ export async function sendNewJobAlerts(opportunityId: string): Promise<NewJobNot
 
         appAlertsSent++;
         usersSent.add(user.id);
+        sentTodayByUser.set(user.id, alreadySentToday + 1);
     }
 
     logger.info('New job alerts sent', {

@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { alertsApi } from '@/lib/api/client';
+import { alertsApi, savedApi } from '@/lib/api/client';
 import { BellIcon, ArrowLeftIcon, ClockIcon } from '@heroicons/react/24/outline';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { getOpportunityPathFromItem } from '@/lib/opportunityPath';
+import toast from 'react-hot-toast';
 
 type AlertKindFilter = 'all' | 'DAILY_DIGEST' | 'CLOSING_SOON' | 'HIGHLIGHT' | 'APP_UPDATE' | 'NEW_JOB';
 
@@ -26,6 +27,9 @@ type AlertFeedItem = {
         company: string;
         type: 'JOB' | 'INTERNSHIP' | 'WALKIN';
         expiresAt: string | null;
+        applyLink?: string | null;
+        companyWebsite?: string | null;
+        isSaved?: boolean;
     } | null;
 };
 
@@ -50,6 +54,7 @@ function getAlertMetaText(item: AlertFeedItem): string | null {
             relevanceScore?: number;
             hoursLeft?: number;
             count?: number;
+            relevanceReason?: string;
         };
 
         if (item.kind === 'NEW_JOB' && typeof metadata.relevanceScore === 'number') {
@@ -60,6 +65,10 @@ function getAlertMetaText(item: AlertFeedItem): string | null {
             return metadata.hoursLeft <= 24
                 ? `${metadata.hoursLeft}h remaining`
                 : `${Math.ceil(metadata.hoursLeft / 24)}d remaining`;
+        }
+
+        if ((item.kind === 'NEW_JOB' || item.kind === 'CLOSING_SOON') && typeof metadata.relevanceReason === 'string' && metadata.relevanceReason.trim().length > 0) {
+            return metadata.relevanceReason;
         }
 
         if (item.kind === 'DAILY_DIGEST' && typeof metadata.count === 'number') {
@@ -115,6 +124,25 @@ export default function AlertsCenterPage() {
             } : null);
         } catch {
             // silent fail
+        }
+    };
+
+    const toggleSaveFromAlert = async (deliveryId: string, opportunityId: string) => {
+        try {
+            const response = await savedApi.toggle(opportunityId) as { saved: boolean };
+            setFeed((prev) => {
+                if (!prev) return prev;
+                return {
+                    ...prev,
+                    deliveries: prev.deliveries.map((item) => item.id === deliveryId && item.opportunity
+                        ? { ...item, opportunity: { ...item.opportunity, isSaved: response.saved } }
+                        : item),
+                };
+            });
+            void markAsRead(deliveryId);
+            toast.success(response.saved ? 'Saved' : 'Removed from saved');
+        } catch (err: unknown) {
+            toast.error((err as Error)?.message || 'Failed to update save');
         }
     };
 
@@ -231,10 +259,8 @@ export default function AlertsCenterPage() {
                                 'text-muted-foreground bg-muted border-border';
 
                             return (
-                                <Link
+                                <article
                                     key={item.id}
-                                    href={href}
-                                    onClick={() => !item.readAt && markAsRead(item.id)}
                                     className={cn(
                                         "group block rounded-xl border transition-all p-4 relative overflow-hidden",
                                         item.readAt
@@ -276,7 +302,36 @@ export default function AlertsCenterPage() {
                                             <p className="text-[11px] font-semibold text-muted-foreground/80">{metaText}</p>
                                         )}
                                     </div>
-                                </Link>
+                                    <div className="mt-3 flex items-center gap-2 flex-wrap">
+                                        <Link
+                                            href={href}
+                                            onClick={() => !item.readAt && markAsRead(item.id)}
+                                            className="h-8 px-3 rounded-md border border-border bg-background text-[11px] font-semibold hover:border-primary/30 inline-flex items-center"
+                                        >
+                                            Open
+                                        </Link>
+                                        {item.opportunity && (
+                                            <button
+                                                onClick={() => {
+                                                    const target = item.opportunity?.applyLink || item.opportunity?.companyWebsite || href;
+                                                    window.open(target, '_blank', 'noopener,noreferrer');
+                                                    if (!item.readAt) void markAsRead(item.id);
+                                                }}
+                                                className="h-8 px-3 rounded-md border border-border bg-background text-[11px] font-semibold hover:border-primary/30 inline-flex items-center"
+                                            >
+                                                Apply
+                                            </button>
+                                        )}
+                                        {item.opportunity && (
+                                            <button
+                                                onClick={() => void toggleSaveFromAlert(item.id, item.opportunity!.id)}
+                                                className="h-8 px-3 rounded-md border border-border bg-background text-[11px] font-semibold hover:border-primary/30 inline-flex items-center"
+                                            >
+                                                {item.opportunity.isSaved ? 'Unsave' : 'Save'}
+                                            </button>
+                                        )}
+                                    </div>
+                                </article>
                             );
                         })}
                     </div>

@@ -58,25 +58,43 @@ router.get('/feed', requireAuth, async (req: Request, res: Response, next: NextF
                         company: true,
                         type: true,
                         expiresAt: true,
+                        applyLink: true,
+                        companyWebsite: true,
+                        savedBy: {
+                            where: { userId },
+                            select: { id: true },
+                            take: 1,
+                        }
                     }
                 }
             }
         });
 
+        const normalizedDeliveries = deliveries.map((item) => ({
+            ...item,
+            opportunity: item.opportunity
+                ? {
+                    ...item.opportunity,
+                    isSaved: item.opportunity.savedBy.length > 0,
+                    savedBy: undefined,
+                }
+                : null,
+        }));
+
         const summary = {
-            total: deliveries.length,
-            dailyDigest: deliveries.filter((item) => (item.kind as any) === 'DAILY_DIGEST').length,
-            closingSoon: deliveries.filter((item) => (item.kind as any) === 'CLOSING_SOON').length,
-            highlight: deliveries.filter((item) => (item.kind as any) === 'HIGHLIGHT').length,
-            appUpdate: deliveries.filter((item) => (item.kind as any) === 'APP_UPDATE').length,
-            newJob: deliveries.filter((item) => (item.kind as any) === 'NEW_JOB').length,
+            total: normalizedDeliveries.length,
+            dailyDigest: normalizedDeliveries.filter((item) => (item.kind as any) === 'DAILY_DIGEST').length,
+            closingSoon: normalizedDeliveries.filter((item) => (item.kind as any) === 'CLOSING_SOON').length,
+            highlight: normalizedDeliveries.filter((item) => (item.kind as any) === 'HIGHLIGHT').length,
+            appUpdate: normalizedDeliveries.filter((item) => (item.kind as any) === 'APP_UPDATE').length,
+            newJob: normalizedDeliveries.filter((item) => (item.kind as any) === 'NEW_JOB').length,
         };
 
         const unreadCount = await prisma.alertDelivery.count({
             where: { userId, readAt: null, channel: 'APP' }
         });
 
-        res.json({ deliveries, summary, unreadCount });
+        res.json({ deliveries: normalizedDeliveries, summary, unreadCount });
     } catch (error) {
         next(error);
     }
