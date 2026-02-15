@@ -1,7 +1,27 @@
-const SW_VERSION = '1.5.0';
+const SW_VERSION = '1.6.0';
 const STATIC_CACHE = `fresherflow-static-${SW_VERSION}`;
 const API_CACHE = `fresherflow-api-${SW_VERSION}`;
 const OFFLINE_URL = '/offline.html';
+const OFFLINE_FALLBACK_HTML = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FresherFlow - Offline</title>
+    <style>
+      body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#0b1220;color:#e5e7eb;margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px}
+      .card{max-width:420px;border:1px solid #273247;background:#111a2b;border-radius:14px;padding:20px}
+      h1{font-size:20px;margin:0 0 8px}
+      p{margin:0;color:#b8c2d6;line-height:1.5}
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>You are offline</h1>
+      <p>Connect to the internet to load fresh listings. Cached pages and feed will be shown when available.</p>
+    </div>
+  </body>
+</html>`;
 
 // Assets that should be cached on install
 const PRECACHE_ASSETS = [
@@ -44,16 +64,14 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(STATIC_CACHE);
-      for (const url of PRECACHE_ASSETS) {
-        try {
+      await Promise.allSettled(
+        PRECACHE_ASSETS.map(async (url) => {
           const response = await fetch(url, { redirect: 'follow', cache: 'reload' });
           if (response.ok && response.type !== 'opaqueredirect') {
             await cache.put(url, response.clone());
           }
-        } catch {
-          // Skip precache item if it fails to fetch
-        }
-      }
+        })
+      );
     })()
   );
   self.skipWaiting();
@@ -87,7 +105,12 @@ self.addEventListener('fetch', (event) => {
         } catch {
           const cachedNavigation = await cache.match(navigationKey);
           if (cachedNavigation) return cachedNavigation;
-          return (await caches.match(OFFLINE_URL)) || Response.error();
+          const offlinePage = await caches.match(OFFLINE_URL);
+          if (offlinePage) return offlinePage;
+          return new Response(OFFLINE_FALLBACK_HTML, {
+            status: 200,
+            headers: { 'Content-Type': 'text/html; charset=utf-8' },
+          });
         }
       })()
     );
