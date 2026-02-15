@@ -10,6 +10,7 @@ import { useOfflineActionQueue } from '@/lib/offline/useOfflineActionQueue';
 export default function OfflineNotification() {
     const authContext = useContext(AuthContext);
     const user = authContext?.user;
+    const pendingSyncCount = useOfflineActionQueue(user?.id);
     const isOffline = useSyncExternalStore(
         (callback) => {
             window.addEventListener('online', callback);
@@ -25,7 +26,6 @@ export default function OfflineNotification() {
 
     if (!isOffline) return null;
     const cachedCount = getRecentViewedCount();
-    const pendingSyncCount = useOfflineActionQueue(user?.id);
 
     return (
         <div className="fixed bottom-20 left-4 right-4 z-50 animate-in slide-in-from-bottom-2 duration-300 md:bottom-8 md:right-8 md:left-auto md:max-w-xs">

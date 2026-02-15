@@ -38,18 +38,26 @@ export function useOpportunitiesFeed({
     const [cachedAt, setCachedAt] = useState<number | null>(null);
     const [profileIncomplete, setProfileIncomplete] = useState<{ percentage: number; message: string } | null>(null);
     const lastRequestTimestamp = useRef(0);
+    const opportunitiesCountRef = useRef(0);
     const debouncedSearch = useDebounce(search, 300);
     const cacheScope = useMemo(() => {
         const normalizedType = (type || 'all').toLowerCase();
         return `type:${normalizedType}`;
     }, [type]);
 
+    useEffect(() => {
+        opportunitiesCountRef.current = opportunities.length;
+    }, [opportunities.length]);
+
     const loadOpportunities = useCallback(async (pageNum = 1, append = false) => {
         if (authLoading) return;
         const timestamp = Date.now();
         lastRequestTimestamp.current = timestamp;
 
-        setIsLoading(true);
+        const shouldShowBlockingLoader = !append && pageNum === 1 && opportunitiesCountRef.current === 0;
+        if (shouldShowBlockingLoader) {
+            setIsLoading(true);
+        }
         setProfileIncomplete(null);
         setError(null);
         setUsingCachedFeed(false);
@@ -90,7 +98,13 @@ export function useOpportunitiesFeed({
 
             const newOpps = data.opportunities || [];
             setOpportunities(prev => append ? [...prev, ...newOpps] : newOpps);
-            setTotalCount(data.total || data.count || (append ? opportunities.length + newOpps.length : newOpps.length));
+            if (typeof data.total === 'number' || typeof data.count === 'number') {
+                setTotalCount(data.total || data.count || 0);
+            } else if (append) {
+                setTotalCount(prev => prev + newOpps.length);
+            } else {
+                setTotalCount(newOpps.length);
+            }
             setHasMore(newOpps.length >= (data.limit || 50));
             setPage(pageNum);
 
@@ -127,7 +141,7 @@ export function useOpportunitiesFeed({
                 setIsLoading(false);
             }
         }
-    }, [type, selectedLoc, user, authLoading, showOnlySaved, minSalary, maxSalary, closingSoon, opportunities.length, cacheScope]);
+    }, [type, selectedLoc, user, authLoading, showOnlySaved, minSalary, maxSalary, closingSoon, cacheScope]);
 
     useEffect(() => {
         if (!authLoading) {

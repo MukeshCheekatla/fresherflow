@@ -47,7 +47,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         if (pathname.startsWith('/admin/feedback')) {
             const now = new Date().toISOString();
             window.localStorage.setItem(ADMIN_FEEDBACK_SEEN_KEY, now);
-            setFeedbackAlertCount(0);
             return;
         }
 
@@ -99,6 +98,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { href: '/admin/telegram', label: 'Telegram', icon: PaperAirplaneIcon },
         { href: '/admin/settings', label: 'Settings', icon: Cog8ToothIcon },
     ];
+    const effectiveFeedbackAlertCount = pathname.startsWith('/admin/feedback') ? 0 : feedbackAlertCount;
 
     return (
         <div className="flex h-dvh overflow-hidden bg-background text-foreground">
@@ -131,9 +131,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             >
                                 <Icon className={`w-4 h-4 ${isActive ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
                                 {item.label}
-                                {item.label === 'Feedback' && feedbackAlertCount > 0 && (
+                                {item.label === 'Feedback' && effectiveFeedbackAlertCount > 0 && (
                                     <span className="ml-auto inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-1.5">
-                                        {feedbackAlertCount > 99 ? '99+' : feedbackAlertCount}
+                                        {effectiveFeedbackAlertCount > 99 ? '99+' : effectiveFeedbackAlertCount}
                                     </span>
                                 )}
                             </Link>
@@ -198,9 +198,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                         >
                                             <Icon className={`w-5 h-5 ${isActive ? 'text-primary-foreground' : 'text-primary'}`} />
                                             <span>{item.label}</span>
-                                            {item.label === 'Feedback' && feedbackAlertCount > 0 && (
+                                            {item.label === 'Feedback' && effectiveFeedbackAlertCount > 0 && (
                                                 <span className="ml-auto inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-1.5">
-                                                    {feedbackAlertCount > 99 ? '99+' : feedbackAlertCount}
+                                                    {effectiveFeedbackAlertCount > 99 ? '99+' : effectiveFeedbackAlertCount}
                                                 </span>
                                             )}
                                         </Link>

@@ -341,7 +341,9 @@ function OpportunitiesListPage() {
         return `${origin}${getPublicOpportunityHref(opp)}`;
     };
 
-    const buildSocialCaption = (opp: any) => {
+    type SocialOpportunity = Pick<Opportunity, 'id' | 'slug' | 'type' | 'title' | 'company' | 'locations' | 'allowedPassoutYears'>;
+
+    const buildSocialCaption = (opp: SocialOpportunity) => {
         const normalizedLocations = (opp.locations || []).map((value: string) => String(value).trim()).filter(Boolean);
         const locationLine = normalizedLocations.length > 1 ? normalizedLocations.join(' | ') : (normalizedLocations[0] || 'Remote');
         const years = Array.isArray(opp.allowedPassoutYears)
@@ -365,7 +367,7 @@ function OpportunitiesListPage() {
         ].join('\n');
     };
 
-    const copySocialCaption = async (opp: any) => {
+    const copySocialCaption = async (opp: SocialOpportunity) => {
         try {
             await navigator.clipboard.writeText(buildSocialCaption(opp));
             toast.success('Social caption copied.');
