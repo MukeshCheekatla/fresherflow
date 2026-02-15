@@ -1,4 +1,4 @@
-const SW_VERSION = '1.4.8';
+const SW_VERSION = '1.5.0';
 const STATIC_CACHE = `fresherflow-static-${SW_VERSION}`;
 const API_CACHE = `fresherflow-api-${SW_VERSION}`;
 const OFFLINE_URL = '/offline.html';
@@ -20,6 +20,9 @@ const API_CACHE_PREFIXES = [
   '/api/opportunities',
   '/api/dashboard/highlights',
   '/api/dashboard/deadlines',
+  '/api/public',
+  '/api/profile',
+  '/api/auth/me',
   '/api/saved',
   '/api/actions',
   '/api/alerts',
@@ -122,32 +125,41 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Deeper offline support for feed/search/deadline APIs
+  // Deeper offline support for feed/search/deadline/profile APIs
   if (isSameOrigin && isApiRequest && isCacheableApiRequest(url)) {
     event.respondWith(
       (async () => {
         const cache = await caches.open(API_CACHE);
+        const cached = await cache.match(cacheKey);
 
-        try {
-          const networkResponse = await fetch(event.request);
-          if (networkResponse && networkResponse.ok && networkResponse.type !== 'opaqueredirect') {
-            cache.put(cacheKey, networkResponse.clone());
-          }
-          return networkResponse;
-        } catch {
-          const cached = await cache.match(cacheKey);
-          if (cached) return cached;
-          return new Response(
-            JSON.stringify({
-              error: 'Offline and no cached data available yet',
-              offline: true,
-            }),
-            {
-              status: 503,
-              headers: { 'Content-Type': 'application/json' },
+        const networkFetch = fetch(event.request)
+          .then((networkResponse) => {
+            if (networkResponse && networkResponse.ok && networkResponse.type !== 'opaqueredirect') {
+              cache.put(cacheKey, networkResponse.clone());
             }
-          );
+            return networkResponse;
+          })
+          .catch(() => null);
+
+        // Stale-while-revalidate: instant cached response, refresh in background.
+        if (cached) {
+          event.waitUntil(networkFetch);
+          return cached;
         }
+
+        const networkResponse = await networkFetch;
+        if (networkResponse) return networkResponse;
+
+        return new Response(
+          JSON.stringify({
+            error: 'Offline and no cached data available yet',
+            offline: true,
+          }),
+          {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
       })()
     );
   }

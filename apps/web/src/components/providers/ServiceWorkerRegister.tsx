@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import toast from 'react-hot-toast';
 
-const SW_VERSION = '1.4.8';
+const SW_VERSION = '1.5.0';
 
 export default function ServiceWorkerRegister() {
     useEffect(() => {
