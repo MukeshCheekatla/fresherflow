@@ -108,7 +108,7 @@ export function Navbar() {
                         <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-1 group shrink-0" suppressHydrationWarning>
                             <div className="w-8 h-8 relative flex items-center justify-center transition-all duration-300 transform group-hover:scale-110">
                                 <img
-                                    src="/logo.png"
+                                    src="/logo-optimized.png"
                                     alt="FresherFlow"
                                     width={32}
                                     height={32}
@@ -118,7 +118,7 @@ export function Navbar() {
                                     className="block dark:hidden w-8 h-8 object-contain"
                                 />
                                 <img
-                                    src="/logo-white.png"
+                                    src="/logo-white-optimized.png"
                                     alt="FresherFlow"
                                     width={32}
                                     height={32}
@@ -307,7 +307,7 @@ export function MobileNav() {
                 <div className="h-full px-4 flex items-center justify-between">
                     <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2">
                         <img
-                            src="/logo.png"
+                            src="/logo-optimized.png"
                             alt="FresherFlow"
                             width={24}
                             height={24}
@@ -317,7 +317,7 @@ export function MobileNav() {
                             className="block dark:hidden w-6 h-6 object-contain"
                         />
                         <img
-                            src="/logo-white.png"
+                            src="/logo-white-optimized.png"
                             alt="FresherFlow"
                             width={24}
                             height={24}
