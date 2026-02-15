@@ -5,16 +5,17 @@ import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon';
 import CheckBadgeIcon from '@heroicons/react/24/outline/CheckBadgeIcon';
 
 export const metadata: Metadata = {
-    title: 'FresherFlow | Verified Off-Campus Jobs, Internships, and Walk-ins',
-    description: 'Verified off-campus jobs, internships, and walk-ins. Every listing is checked. Every link is real. Browse the feed in seconds.',
+    title: 'FresherFlow - Verified Fresher Jobs & Internships in India',
+    description: 'Verified fresher jobs, internships, and walk-ins in India. Every listing is checked. Every link is real.',
     keywords: ['verified off campus jobs', 'fresher jobs', 'internships', 'walk-ins', 'off campus drives', 'entry level jobs'],
     openGraph: {
-        title: 'FresherFlow | Verified Off-Campus Jobs, Internships, and Walk-ins',
-        description: 'Verified off-campus jobs, internships, and walk-ins. Every listing is checked. Every link is real.',
+        siteName: 'FresherFlow',
+        title: 'FresherFlow - Verified Fresher Jobs & Internships in India',
+        description: 'Verified fresher jobs, internships, and walk-ins in India. Every listing is checked. Every link is real.',
         type: 'website',
         images: [
             {
-                url: '/main.png',
+                url: '/fresherflow-og-v2.png',
                 width: 1200,
                 height: 630,
                 alt: 'FresherFlow verified opportunities',
@@ -23,9 +24,9 @@ export const metadata: Metadata = {
     },
     twitter: {
         card: 'summary_large_image',
-        title: 'FresherFlow | Verified Off-Campus Jobs, Internships, and Walk-ins',
-        description: 'Verified off-campus jobs, internships, and walk-ins. Every listing is checked. Every link is real.',
-        images: ['/main.png'],
+        title: 'FresherFlow - Verified Fresher Jobs & Internships in India',
+        description: 'Verified fresher jobs, internships, and walk-ins in India. Every listing is checked. Every link is real.',
+        images: ['/fresherflow-og-v2.png'],
     },
 };
 
@@ -240,5 +241,4 @@ export default function LandingPage() {
         </>
     );
 }
-
 

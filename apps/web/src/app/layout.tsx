@@ -27,13 +27,34 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://fresherflow.in"),
+  applicationName: "FresherFlow",
   title: {
     default: "FresherFlow",
     template: "%s | FresherFlow",
   },
-  description: "A verified feed of jobs, internships, and walk-ins. Engineering the future of entry-level hiring with direct access to official company portals.",
+  description: "Verified fresher jobs, internships, and walk-ins in India. Direct apply links, profile-fit ranking, and closing-soon alerts on FresherFlow.",
   alternates: {
     canonical: "./",
+  },
+  openGraph: {
+    type: "website",
+    siteName: "FresherFlow",
+    title: "FresherFlow - Verified Fresher Jobs & Internships in India",
+    description: "Verified fresher jobs, internships, and walk-ins in India with direct apply links.",
+    images: [
+      {
+        url: "/fresherflow-og-v2.png",
+        width: 1200,
+        height: 630,
+        alt: "FresherFlow verified opportunities",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "FresherFlow - Verified Fresher Jobs & Internships in India",
+    description: "Verified fresher jobs, internships, and walk-ins in India with direct apply links.",
+    images: ["/fresherflow-og-v2.png"],
   },
   icons: {
     icon: "/favicon-32x32.png",
@@ -63,6 +84,18 @@ export default function RootLayout({
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)" />
         <script src="https://accounts.google.com/gsi/client" async defer></script>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "FresherFlow",
+              url: "https://fresherflow.in",
+              logo: "https://fresherflow.in/fresherflow-logo-v2.png",
+            }),
+          }}
+        />
         {/* Dynamic Manifest Loader for Admin PWA */}
         <script
           dangerouslySetInnerHTML={{

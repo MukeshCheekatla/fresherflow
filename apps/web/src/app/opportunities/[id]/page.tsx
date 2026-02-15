@@ -102,7 +102,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 const generateJsonLd = (opportunity: Opportunity) => {
-    let logoUrl = 'https://fresherflow.in/logo.png';
+    let logoUrl = 'https://fresherflow.in/fresherflow-logo-v2.png';
     try {
         const sourceUrl = opportunity.companyWebsite || opportunity.applyLink;
         if (sourceUrl) {
