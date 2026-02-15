@@ -83,7 +83,6 @@ export async function sendNewJobAlerts(opportunityId: string): Promise<NewJobNot
         if (ranked.length === 0) continue;
 
         const relevanceScore = ranked[0].score;
-        const relevanceReason = ranked[0].reason;
         if (relevanceScore < user.alertPreference.minRelevanceScore) continue;
 
         // Create dedupe key
@@ -113,7 +112,7 @@ export async function sendNewJobAlerts(opportunityId: string): Promise<NewJobNot
                 kind: 'NEW_JOB',
                 channel: 'APP',
                 dedupeKey: `${dedupeKeyBase}:APP`,
-                metadata: JSON.stringify({ relevanceScore, relevanceReason }),
+                metadata: JSON.stringify({ relevanceScore }),
             },
         ];
 
@@ -133,7 +132,7 @@ export async function sendNewJobAlerts(opportunityId: string): Promise<NewJobNot
                     kind: 'NEW_JOB',
                     channel: 'EMAIL',
                     dedupeKey: `${dedupeKeyBase}:EMAIL`,
-                    metadata: JSON.stringify({ relevanceScore, relevanceReason }),
+                    metadata: JSON.stringify({ relevanceScore }),
                 });
             } catch (err) {
                 logger.error('Failed to send new job email', { userId: user.id, opportunityId, error: err });

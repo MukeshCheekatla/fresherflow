@@ -185,7 +185,7 @@ async function sendClosingSoonForUser(
                     kind: 'CLOSING_SOON',
                     channel: 'EMAIL',
                     dedupeKey: `${dedupeKey}:EMAIL`,
-                    metadata: JSON.stringify({ hoursLeft: Math.round(hoursLeft), relevanceScore: item.score, relevanceReason: item.reason }),
+                    metadata: JSON.stringify({ hoursLeft: Math.round(hoursLeft), relevanceScore: item.score }),
                 },
                 {
                     userId: user.id,
@@ -193,7 +193,7 @@ async function sendClosingSoonForUser(
                     kind: 'CLOSING_SOON',
                     channel: 'APP',
                     dedupeKey: `${dedupeKey}:APP`,
-                    metadata: JSON.stringify({ hoursLeft: Math.round(hoursLeft), relevanceScore: item.score, relevanceReason: item.reason }),
+                    metadata: JSON.stringify({ hoursLeft: Math.round(hoursLeft), relevanceScore: item.score }),
                 }
             ],
             skipDuplicates: true
