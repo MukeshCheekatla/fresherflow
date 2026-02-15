@@ -256,21 +256,40 @@ class TelegramService {
 
         const typeLabel = type === 'JOB' ? 'Job' : type === 'INTERNSHIP' ? 'Internship' : 'Walk-in';
         const locationText = locations.length > 0 ? locations.join(', ') : 'Remote/Multiple';
-        const frontendOrigin = process.env.FRONTEND_URL || 'https://fresherflow.in';
+        const configuredOrigin =
+            process.env.SOCIAL_FRONTEND_URL
+            || process.env.PUBLIC_FRONTEND_URL
+            || process.env.FRONTEND_URL
+            || 'https://fresherflow.in';
+        const frontendOrigin = /localhost|127\.0\.0\.1/i.test(configuredOrigin)
+            ? 'https://fresherflow.in'
+            : configuredOrigin;
         const jobUrl = buildSocialOpportunityUrl({
             frontendOrigin,
             slug,
             platform: 'telegram',
         });
+        const opportunity = await prisma.opportunity.findUnique({
+            where: { id: opportunityId },
+            select: { allowedPassoutYears: true }
+        });
+        const sortedBatchYears = [...(opportunity?.allowedPassoutYears || [])]
+            .filter((value) => Number.isFinite(value))
+            .sort((a, b) => a - b);
+        const batchText = sortedBatchYears.length > 0 ? sortedBatchYears.join(', ') : 'Any';
+        const locationTag = locations.length === 1
+            ? `#${locations[0].replace(/[^a-zA-Z0-9]/g, '')}Jobs`
+            : '';
 
         const message = [
             `<b>${title}</b>`,
             `<b>Type:</b> ${typeLabel}`,
             `<b>Company:</b> ${company}`,
             `<b>Location:</b> ${locationText}`,
+            `<b>Batch:</b> ${batchText}`,
             `<b>View details:</b> <a href="${jobUrl}">fresherflow.in</a>`,
             '',
-            '<i>#FresherFlow #FresherJobs #OffCampus #Hiring</i>'
+            `<i>${['#FresherJobs', locationTag, '#FresherFlow'].filter(Boolean).join(' ')}</i>`
         ].join('\n');
 
         const messageId = await this.broadcastToChannel(publicChannel, message);

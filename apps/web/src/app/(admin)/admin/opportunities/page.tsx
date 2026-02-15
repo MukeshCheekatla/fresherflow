@@ -23,7 +23,8 @@ import {
     DocumentTextIcon,
     CheckCircleIcon,
     ArrowPathIcon,
-    EyeIcon
+    EyeIcon,
+    DocumentDuplicateIcon
 } from '@heroicons/react/24/outline';
 import {
     expireOpportunityAction,
@@ -327,6 +328,49 @@ function OpportunitiesListPage() {
     // Admin preview should match exactly what a user sees on the public detail route.
     const getPublicOpportunityHref = (opp: { id: string; slug?: string | null; type?: Opportunity['type'] }) =>
         getOpportunityPath(opp.type, opp.slug || opp.id);
+    const getPublicOpportunityUrl = (opp: { id: string; slug?: string | null; type?: Opportunity['type'] }) => {
+        const configuredOrigin =
+            process.env.NEXT_PUBLIC_SITE_URL
+            || process.env.NEXT_PUBLIC_APP_URL
+            || 'https://fresherflow.in';
+        const origin = /localhost|127\.0\.0\.1/i.test(configuredOrigin)
+            ? 'https://fresherflow.in'
+            : configuredOrigin;
+        return `${origin}${getPublicOpportunityHref(opp)}`;
+    };
+
+    const buildSocialCaption = (opp: any) => {
+        const normalizedLocations = (opp.locations || []).map((value: string) => String(value).trim()).filter(Boolean);
+        const locationLine = normalizedLocations.length > 1 ? normalizedLocations.join(' | ') : (normalizedLocations[0] || 'Remote');
+        const years = Array.isArray(opp.allowedPassoutYears)
+            ? [...opp.allowedPassoutYears].filter((year: number) => Number.isFinite(year)).sort((a: number, b: number) => a - b)
+            : [];
+        const batch = years.length > 0 ? years.join(', ') : 'Any';
+        const locationTag = normalizedLocations.length === 1
+            ? `#${normalizedLocations[0].replace(/[^a-zA-Z0-9]/g, '')}Jobs`
+            : '';
+        const hashtags = ['#FresherJobs', locationTag, '#FresherFlow'].filter(Boolean).join(' ');
+
+        return [
+            `${opp.title} - at ${opp.company}`,
+            `location: ${locationLine}`,
+            '',
+            `Batch: ${batch}`,
+            '',
+            `Apply: ${getPublicOpportunityUrl(opp)}`,
+            '',
+            hashtags,
+        ].join('\n');
+    };
+
+    const copySocialCaption = async (opp: any) => {
+        try {
+            await navigator.clipboard.writeText(buildSocialCaption(opp));
+            toast.success('Social caption copied.');
+        } catch {
+            toast.error('Could not copy caption.');
+        }
+    };
 
     const formatLinkHealth = (health?: string) => {
         if (!health) return 'Unknown';
@@ -573,7 +617,7 @@ function OpportunitiesListPage() {
                     {/* Mobile Cards */}
                     <div className="md:hidden space-y-3">
                         {displayOpportunities.map((opp) => (
-                            <div key={opp.id} className="bg-card rounded-lg border border-border p-4 shadow-sm">
+                            <div key={opp.id} className="bg-card rounded-lg border border-border p-3 shadow-sm">
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex items-start gap-3">
                                         <div
@@ -614,7 +658,7 @@ function OpportunitiesListPage() {
                                     </span>
                                 </div>
 
-                                <div className="mt-3 grid grid-cols-1 gap-2 text-xs text-muted-foreground">
+                                <div className="mt-2.5 grid grid-cols-1 gap-1.5 text-xs text-muted-foreground">
                                     <div className="flex items-center gap-1.5">
                                         <MapPinIcon className="w-3 h-3" />
                                         <span className="truncate">{opp.locations.join(', ')}</span>
@@ -634,12 +678,21 @@ function OpportunitiesListPage() {
                                     </div>
                                 </div>
 
-                                <div className="mt-4 flex items-center justify-end gap-2">
+                                <div className="mt-3 space-y-2">
+                                    <div className="grid grid-cols-3 gap-2">
+                                    <button
+                                        onClick={() => void copySocialCaption(opp)}
+                                        className="h-8 px-2 inline-flex items-center justify-center rounded-md border border-input bg-background text-xs font-medium text-foreground hover:bg-accent hover:text-accent-foreground"
+                                        title="Copy social caption"
+                                    >
+                                        <DocumentDuplicateIcon className="w-4 h-4 mr-1.5" />
+                                        Copy
+                                    </button>
                                     <Link
                                         href={getPublicOpportunityHref(opp)}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="h-9 px-3 inline-flex items-center justify-center rounded-md border border-input bg-background text-xs font-medium text-foreground hover:bg-accent hover:text-accent-foreground"
+                                        className="h-8 px-2 inline-flex items-center justify-center rounded-md border border-input bg-background text-xs font-medium text-foreground hover:bg-accent hover:text-accent-foreground"
                                         title="View as user"
                                     >
                                         <EyeIcon className="w-4 h-4 mr-1.5" />
@@ -647,16 +700,18 @@ function OpportunitiesListPage() {
                                     </Link>
                                     <Link
                                         href={`/admin/opportunities/edit/${opp.slug || opp.id}`}
-                                        className="h-9 px-3 inline-flex items-center justify-center rounded-md border border-input bg-background text-xs font-medium text-foreground hover:bg-accent hover:text-accent-foreground"
+                                        className="h-8 px-2 inline-flex items-center justify-center rounded-md border border-input bg-background text-xs font-medium text-foreground hover:bg-accent hover:text-accent-foreground"
                                         title="Edit"
                                     >
                                         <PencilSquareIcon className="w-4 h-4 mr-1.5" />
                                         Edit
                                     </Link>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
                                     {opp.status === 'DRAFT' && (
                                         <button
                                             onClick={() => handleStatusUpdate(opp.id, 'PUBLISHED')}
-                                            className="h-9 px-3 inline-flex items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
+                                            className="h-8 px-2 inline-flex items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
                                             title="Publish Now"
                                         >
                                             <CheckCircleIcon className="w-4 h-4 mr-1.5" />
@@ -666,7 +721,7 @@ function OpportunitiesListPage() {
                                     {opp.status === 'PUBLISHED' && (
                                         <button
                                             onClick={() => handleExpire(opp.id, opp.title)}
-                                            className="h-9 px-3 inline-flex items-center justify-center rounded-md border border-input bg-background text-xs font-medium text-foreground hover:bg-accent hover:text-accent-foreground"
+                                            className="h-8 px-2 inline-flex items-center justify-center rounded-md border border-input bg-background text-xs font-medium text-foreground hover:bg-accent hover:text-accent-foreground"
                                             title="Expire"
                                         >
                                             <ClockIcon className="w-4 h-4 mr-1.5" />
@@ -675,12 +730,13 @@ function OpportunitiesListPage() {
                                     )}
                                     <button
                                         onClick={() => handleDelete(opp.id, opp.title)}
-                                        className="h-9 px-3 inline-flex items-center justify-center rounded-md border border-rose-200 bg-rose-50 text-xs font-medium text-rose-700 hover:bg-rose-100"
+                                        className="h-8 px-2 inline-flex items-center justify-center rounded-md border border-rose-200 bg-rose-50 text-xs font-medium text-rose-700 hover:bg-rose-100"
                                         title="Remove"
                                     >
                                         <TrashIcon className="w-4 h-4 mr-1.5" />
                                         Remove
                                     </button>
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -781,6 +837,13 @@ function OpportunitiesListPage() {
                                         </td>
                                         <td className="px-5 py-4 text-right">
                                             <div className="flex items-center justify-end gap-1">
+                                                <button
+                                                    onClick={() => void copySocialCaption(opp)}
+                                                    className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-all"
+                                                    title="Copy social caption"
+                                                >
+                                                    <DocumentDuplicateIcon className="w-4 h-4" />
+                                                </button>
                                                 <Link
                                                     href={getPublicOpportunityHref(opp)}
                                                     target="_blank"

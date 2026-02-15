@@ -103,6 +103,8 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
         company: string;
         type: 'JOB' | 'INTERNSHIP' | 'WALKIN';
         slugOrId: string;
+        locations: string[];
+        allowedPassoutYears: number[];
     } | null>(null);
     const [duplicateCandidates, setDuplicateCandidates] = useState<Array<{
         id: string;
@@ -155,7 +157,13 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
     const [endTime, setEndTime] = useState('13:00');
 
     const getPublicOpportunityUrl = (slugOrId: string, opportunityType: 'JOB' | 'INTERNSHIP' | 'WALKIN') => {
-        const origin = typeof window !== 'undefined' ? window.location.origin : 'https://fresherflow.in';
+        const configuredOrigin =
+            process.env.NEXT_PUBLIC_SITE_URL
+            || process.env.NEXT_PUBLIC_APP_URL
+            || 'https://fresherflow.in';
+        const origin = /localhost|127\.0\.0\.1/i.test(configuredOrigin)
+            ? 'https://fresherflow.in'
+            : configuredOrigin;
         return `${origin}${getOpportunityPath(opportunityType, slugOrId)}`;
     };
 
@@ -164,27 +172,31 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
         company: string;
         type: 'JOB' | 'INTERNSHIP' | 'WALKIN';
         slugOrId: string;
+        locations: string[];
+        allowedPassoutYears: number[];
     }) => {
         const publicUrl = getPublicOpportunityUrl(payload.slugOrId, payload.type);
-        // const telegramUrl = buildShareUrl(publicUrl, { platform: 'telegram', ref: 'admin_share' });
-        // const linkedinUrl = buildShareUrl(publicUrl, { platform: 'linkedin', ref: 'admin_share' });
-        // const xUrl = buildShareUrl(publicUrl, { platform: 'x', ref: 'admin_share' });
-        // const instagramUrl = buildShareUrl(publicUrl, { platform: 'instagram', ref: 'admin_share' });
-
-        const label = payload.type === 'WALKIN' ? 'Walk-in' : payload.type === 'INTERNSHIP' ? 'Internship' : 'Job';
+        const normalizedLocations = (payload.locations || []).map((value) => value.trim()).filter(Boolean);
+        const locationLine = normalizedLocations.length > 1
+            ? normalizedLocations.join(' | ')
+            : (normalizedLocations[0] || 'Remote');
+        const locationTag = normalizedLocations.length === 1
+            ? `#${normalizedLocations[0].replace(/[^a-zA-Z0-9]/g, '')}Jobs`
+            : '';
+        const sortedYears = [...(payload.allowedPassoutYears || [])]
+            .filter((year) => Number.isFinite(year))
+            .sort((a, b) => a - b);
+        const batch = sortedYears.length > 0 ? sortedYears.join(', ') : 'Any';
 
         return [
-            `${payload.title} at ${payload.company}`,
-            `Type: ${label}`,
+            `${payload.title} - at ${payload.company}`,
+            `location: ${locationLine}`,
             '',
-            `View details: ${publicUrl}`,
+            `Batch: ${batch}`,
             '',
-            // `Telegram: ${telegramUrl}`,
-            // `LinkedIn: ${linkedinUrl}`,
-            // `X: ${xUrl}`,
-            // `Instagram: ${instagramUrl}`,
-            // '',
-            '#FresherFlow #FresherJobs #OffCampus #Hiring ',
+            `Apply: ${publicUrl}`,
+            '',
+            ['#FresherJobs', locationTag, '#FresherFlow'].filter(Boolean).join(' '),
         ].join('\n');
     };
 
@@ -832,7 +844,6 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
                 endTime,
             });
 
-            let sharePackCopied = false;
             if (isEditMode && opportunityId) {
                 await adminApi.updateOpportunity(opportunityId, payload);
             } else {
@@ -844,21 +855,16 @@ export function OpportunityFormPage({ mode = 'create', opportunityId }: Opportun
                         company: created.company || company,
                         type: created.type || type,
                         slugOrId: created.slug || created.id,
+                        locations: created.locations || locations.split(',').map((value) => value.trim()).filter(Boolean),
+                        allowedPassoutYears: created.allowedPassoutYears || passoutYears,
                     };
-                    const sharePack = buildAdminSharePack(listingData);
-                    try {
-                        await navigator.clipboard.writeText(sharePack);
-                        sharePackCopied = true;
-                    } catch {
-                        sharePackCopied = false;
-                    }
                     setPublishedListing(listingData);
                 }
             }
 
             const successMessage = isEditMode
                 ? 'Listing updated.'
-                : (sharePackCopied ? 'Listing published. Share pack copied.' : 'Listing published.');
+                : 'Listing published.';
             toast.success(successMessage, { id: loadingToast });
             router.push('/admin/opportunities');
         } catch (err: unknown) {

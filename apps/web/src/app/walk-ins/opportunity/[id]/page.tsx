@@ -1,7 +1,11 @@
-import OpportunityDetailPage, { generateMetadata as generateOpportunityMetadata } from '../../../opportunities/[id]/page';
+import { redirect } from 'next/navigation';
 
-export const revalidate = 60;
+type LegacyWalkInRouteProps = {
+    params: {
+        id: string;
+    };
+};
 
-export const generateMetadata = generateOpportunityMetadata;
-
-export default OpportunityDetailPage;
+export default function LegacyWalkInRoute({ params }: LegacyWalkInRouteProps) {
+    redirect(`/walk-ins/details/${params.id}`);
+}
