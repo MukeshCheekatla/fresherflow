@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { alertsApi } from '@/lib/api/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { AuthContext } from '@/contexts/AuthContext';
+import { useContext } from 'react';
 
 export function useUnreadNotifications() {
-    const { user } = useAuth();
+    const authContext = useContext(AuthContext);
+    const user = authContext?.user;
     const [unreadCount, setUnreadCount] = useState(0);
 
     const fetchCount = useCallback(async () => {

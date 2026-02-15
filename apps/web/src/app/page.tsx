@@ -1,6 +1,5 @@
-﻿import type { Metadata } from 'next';
+import type { Metadata } from 'next';
 import Link from 'next/link';
-import { HomeAuthGuard } from '@/components/auth/HomeAuthGuard';
 import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon';
 import CheckBadgeIcon from '@heroicons/react/24/outline/CheckBadgeIcon';
 
@@ -36,7 +35,6 @@ export const revalidate = 120;
 export default function LandingPage() {
     return (
         <>
-            <HomeAuthGuard />
             <div className="min-h-screen bg-background flex flex-col selection:bg-primary/20">
                 <div className="absolute top-0 left-0 right-0 h-20 z-10" />
 

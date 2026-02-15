@@ -29,12 +29,16 @@ import LoadingScreen from '@/components/ui/LoadingScreen';
 type LoginStep = 'email' | 'otp';
 
 import { Suspense } from 'react';
+import Script from 'next/script';
 
 export default function LoginPage() {
     return (
-        <Suspense fallback={<LoadingScreen />}>
-            <LoginContent />
-        </Suspense>
+        <>
+            <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
+            <Suspense fallback={<LoadingScreen />}>
+                <LoginContent />
+            </Suspense>
+        </>
     );
 }
 

@@ -19,7 +19,7 @@ export function NavigationWrapper({ children }: { children: React.ReactNode }) {
 
     return (
         <>
-            {!isAdminRoute && <OfflineActionSync />}
+            {!isAdminRoute && pathname !== '/' && <OfflineActionSync />}
             {!hideNav && (
                 <Suspense fallback={null}>
                     <Navbar />
