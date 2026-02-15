@@ -49,6 +49,7 @@ function OpportunitiesListPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [opportunities, setOpportunities] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
     const [typeFilter, setTypeFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [search, setSearch] = useState('');
@@ -154,6 +155,7 @@ function OpportunitiesListPage() {
             setOpportunities(data.opportunities || []);
             setTotalCount(data.total || 0);
             setTotalPages(data.totalPages || 1);
+            setHasLoadedOnce(true);
         } catch (err: unknown) {
             const errorMsg = (err as Error).message || 'Failed to load opportunities';
             toast.error(` ${errorMsg}`);
@@ -596,7 +598,7 @@ function OpportunitiesListPage() {
             </div>
 
             {/* Table/List */}
-            {isLoading ? (
+            {isLoading && !hasLoadedOnce ? (
                 <AdminOpportunitiesSkeleton />
             ) : opportunities.length === 0 ? (
                 <div className="bg-card border border-dashed border-border rounded-lg p-12 text-center space-y-3">

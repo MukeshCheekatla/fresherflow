@@ -31,7 +31,7 @@ export function OpportunityGrid({
 }: OpportunityGridProps) {
     const router = useRouter();
 
-    if (isLoading) {
+    if (isLoading && opportunities.length === 0) {
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6" role="status" aria-label="Loading opportunities">
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
