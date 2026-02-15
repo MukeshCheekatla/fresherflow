@@ -46,6 +46,10 @@ type AlertFeedResponse = {
     };
 };
 
+type DisplayAlertItem = AlertFeedItem & {
+    collapsedCount?: number;
+};
+
 function getAlertMetaText(item: AlertFeedItem): string | null {
     if (!item.metadata) return null;
 
@@ -157,6 +161,29 @@ export default function AlertsCenterPage() {
         [feed]
     );
 
+    const displayDeliveries = useMemo<DisplayAlertItem[]>(() => {
+        const deliveries = feed?.deliveries || [];
+        if (kind !== 'all') return deliveries;
+
+        const collapsed = new Map<string, DisplayAlertItem>();
+        for (const item of deliveries) {
+            const key = item.opportunity?.id ? `opp:${item.opportunity.id}` : `alert:${item.id}`;
+            const existing = collapsed.get(key);
+            if (!existing) {
+                collapsed.set(key, { ...item, collapsedCount: 1 });
+                continue;
+            }
+            existing.collapsedCount = (existing.collapsedCount || 1) + 1;
+            if (!existing.readAt && item.readAt) {
+                continue;
+            }
+            if (existing.readAt && !item.readAt) {
+                existing.readAt = null;
+            }
+        }
+        return Array.from(collapsed.values());
+    }, [feed?.deliveries, kind]);
+
     if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -229,7 +256,7 @@ export default function AlertsCenterPage() {
                             Retry
                         </Button>
                     </div>
-                ) : feed && feed.deliveries.length === 0 ? (
+                ) : feed && displayDeliveries.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center space-y-4">
                         <div className="w-14 h-14 mx-auto rounded-xl bg-muted/30 flex items-center justify-center text-muted-foreground/40">
                             <BellIcon className="w-8 h-8" />
@@ -243,7 +270,7 @@ export default function AlertsCenterPage() {
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        {feed?.deliveries.map((item) => {
+                        {displayDeliveries.map((item) => {
                             const title = item.opportunity?.title || 'Opportunity update';
                             const company = item.opportunity?.company || 'FresherFlow';
                             const href = item.opportunity ? getOpportunityPathFromItem(item.opportunity) : '/opportunities';
@@ -281,10 +308,17 @@ export default function AlertsCenterPage() {
                                         )}>
                                             {kindLabel}
                                         </span>
-                                        <span className="text-[9px] font-bold text-muted-foreground/60 inline-flex items-center gap-1.5 uppercase tracking-wider">
-                                            <ClockIcon className="w-3 h-3" />
-                                            {new Date(item.sentAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            {item.collapsedCount && item.collapsedCount > 1 && (
+                                                <span className="text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 rounded px-1.5 py-0.5">
+                                                    {item.collapsedCount} updates
+                                                </span>
+                                            )}
+                                            <span className="text-[9px] font-bold text-muted-foreground/60 inline-flex items-center gap-1.5 uppercase tracking-wider">
+                                                <ClockIcon className="w-3 h-3" />
+                                                {new Date(item.sentAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                            </span>
+                                        </div>
                                     </div>
                                     <div className="space-y-1">
                                         <p className={cn(
