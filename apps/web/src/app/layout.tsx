@@ -79,6 +79,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <meta charSet="utf-8" />
         <ThemeScript />
         {/* Dynamic theme-color for light/dark mode */}
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
