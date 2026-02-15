@@ -9,6 +9,7 @@ export async function serverApiClient<T = any>(endpoint: string, options: Reques
 
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
+        'X-Requested-From': 'fresherflow-web',
         'Cookie': cookieHeader,
         ...(options.headers as Record<string, string> || {}),
     };
