@@ -107,10 +107,25 @@ export function Navbar() {
                     <div className="flex items-center gap-4">
                         <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-1 group shrink-0" suppressHydrationWarning>
                             <div className="w-8 h-8 relative flex items-center justify-center transition-all duration-300 transform group-hover:scale-110">
-                                <div
-                                    suppressHydrationWarning
-                                    className="w-full h-full bg-contain bg-center bg-no-repeat"
-                                    style={{ backgroundImage: 'var(--logo-image)' }}
+                                <img
+                                    src="/logo.png"
+                                    alt="FresherFlow"
+                                    width={32}
+                                    height={32}
+                                    loading="eager"
+                                    fetchPriority="high"
+                                    decoding="async"
+                                    className="block dark:hidden w-8 h-8 object-contain"
+                                />
+                                <img
+                                    src="/logo-white.png"
+                                    alt="FresherFlow"
+                                    width={32}
+                                    height={32}
+                                    loading="eager"
+                                    fetchPriority="high"
+                                    decoding="async"
+                                    className="hidden dark:block w-8 h-8 object-contain"
                                 />
                             </div>
                             <span className="font-bold text-lg tracking-tight text-foreground" suppressHydrationWarning>FresherFlow</span>
@@ -291,10 +306,25 @@ export function MobileNav() {
             <div className="md:hidden fixed top-0 left-0 right-0 z-[70] h-16 bg-background/95 backdrop-blur-md border-b border-border">
                 <div className="h-full px-4 flex items-center justify-between">
                     <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2">
-                        <div
-                            suppressHydrationWarning
-                            className="w-6 h-6 bg-contain bg-center bg-no-repeat"
-                            style={{ backgroundImage: 'var(--logo-image)' }}
+                        <img
+                            src="/logo.png"
+                            alt="FresherFlow"
+                            width={24}
+                            height={24}
+                            loading="eager"
+                            fetchPriority="high"
+                            decoding="async"
+                            className="block dark:hidden w-6 h-6 object-contain"
+                        />
+                        <img
+                            src="/logo-white.png"
+                            alt="FresherFlow"
+                            width={24}
+                            height={24}
+                            loading="eager"
+                            fetchPriority="high"
+                            decoding="async"
+                            className="hidden dark:block w-6 h-6 object-contain"
                         />
                         <span className="text-base font-bold tracking-tight text-foreground">{mobileTitle}</span>
                     </Link>

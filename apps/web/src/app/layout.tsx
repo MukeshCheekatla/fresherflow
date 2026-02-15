@@ -83,6 +83,8 @@ export default function RootLayout({
         {/* Dynamic theme-color for light/dark mode */}
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)" />
+        <link rel="preload" as="image" href="/logo.png" fetchPriority="high" />
+        <link rel="preload" as="image" href="/logo-white.png" fetchPriority="high" />
         <script src="https://accounts.google.com/gsi/client" async defer></script>
         <script
           type="application/ld+json"
