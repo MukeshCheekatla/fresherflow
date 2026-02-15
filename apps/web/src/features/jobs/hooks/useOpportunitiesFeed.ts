@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { readFeedCache, saveFeedCache } from '@/lib/offline/opportunitiesFeedCache';
 import { calculateOpportunityMatch } from '@/lib/matchScore';
+import { enqueueOfflineSaveToggle } from '@/lib/offline/actionQueue';
 
 interface UseOpportunitiesFeedOptions {
     type?: string | null;
@@ -173,10 +174,6 @@ export function useOpportunitiesFeed({
             toast.error('Please log in to save opportunities');
             return;
         }
-        if (typeof navigator !== 'undefined' && !navigator.onLine) {
-            toast.error('You are offline. Reconnect to update saved listings.');
-            return;
-        }
 
         // OPTIMISTIC UPDATE: Update UI immediately
         const previousState = [...opportunities];
@@ -187,6 +184,12 @@ export function useOpportunitiesFeed({
                 ? { ...opp, isSaved: newSavedState }
                 : opp
         ));
+
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            enqueueOfflineSaveToggle(opportunityId, user.id);
+            toast.success(`Saved update queued for sync.`);
+            return;
+        }
 
         // Background sync
         try {
@@ -207,6 +210,11 @@ export function useOpportunitiesFeed({
                 });
             }
         } catch (err: unknown) {
+            if (typeof navigator !== 'undefined' && !navigator.onLine) {
+                enqueueOfflineSaveToggle(opportunityId, user.id);
+                toast.success('Saved update queued for sync.');
+                return;
+            }
             // ROLLBACK: Revert to previous state on error
             setOpportunities(previousState);
             const { getErrorMessage } = await import('@/lib/utils/error');

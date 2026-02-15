@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Navbar, MobileNav } from '@/components/ui/Navigation';
 import { Footer } from '@/components/ui/Footer';
 import { cn } from '@/lib/utils';
+import OfflineActionSync from '@/components/providers/OfflineActionSync';
 
 export function NavigationWrapper({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -18,6 +19,7 @@ export function NavigationWrapper({ children }: { children: React.ReactNode }) {
 
     return (
         <>
+            {!isAdminRoute && <OfflineActionSync />}
             {!hideNav && (
                 <Suspense fallback={null}>
                     <Navbar />

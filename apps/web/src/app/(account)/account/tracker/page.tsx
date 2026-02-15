@@ -19,6 +19,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 import { getOpportunityPathFromItem } from '@/lib/opportunityPath';
+import { enqueueOfflineActionRemove, enqueueOfflineActionTrack } from '@/lib/offline/actionQueue';
 
 type ActionRecord = {
     id: string;
@@ -76,6 +77,20 @@ export default function AccountTrackerPage() {
     }, [authLoading, user]);
 
     const handleUpdateStatus = async (opportunityId: string, newStatus: ActionType) => {
+        const previousActions = actions;
+        setActions((prev) => prev.map((item) =>
+            item.opportunity?.id === opportunityId
+                ? { ...item, actionType: newStatus }
+                : item
+        ));
+
+        if (typeof navigator !== 'undefined' && !navigator.onLine && user) {
+            enqueueOfflineActionTrack(opportunityId, newStatus, user.id);
+            toast.success('Status update queued for sync.');
+            setActiveMenu(null);
+            return;
+        }
+
         const loadingToast = toast.loading('Updating status...');
         try {
             await actionsApi.track(opportunityId, newStatus);
@@ -83,6 +98,13 @@ export default function AccountTrackerPage() {
             toast.success('Status updated', { id: loadingToast });
             setActiveMenu(null);
         } catch (err: unknown) {
+            if (typeof navigator !== 'undefined' && !navigator.onLine && user) {
+                enqueueOfflineActionTrack(opportunityId, newStatus, user.id);
+                toast.success('Status update queued for sync.', { id: loadingToast });
+                setActiveMenu(null);
+                return;
+            }
+            setActions(previousActions);
             const message = err instanceof Error ? err.message : 'Failed to update status';
             toast.error(message, { id: loadingToast });
         }
@@ -90,6 +112,16 @@ export default function AccountTrackerPage() {
 
     const handleRemove = async (opportunityId: string) => {
         if (!confirm('Stop tracking this application?')) return;
+        const previousActions = actions;
+        setActions((prev) => prev.filter((item) => item.opportunity?.id !== opportunityId));
+
+        if (typeof navigator !== 'undefined' && !navigator.onLine && user) {
+            enqueueOfflineActionRemove(opportunityId, user.id);
+            toast.success('Removal queued for sync.');
+            setActiveMenu(null);
+            return;
+        }
+
         const loadingToast = toast.loading('Removing...');
         try {
             await actionsApi.remove(opportunityId);
@@ -97,6 +129,13 @@ export default function AccountTrackerPage() {
             toast.success('Removed from tracker', { id: loadingToast });
             setActiveMenu(null);
         } catch (err: unknown) {
+            if (typeof navigator !== 'undefined' && !navigator.onLine && user) {
+                enqueueOfflineActionRemove(opportunityId, user.id);
+                toast.success('Removal queued for sync.', { id: loadingToast });
+                setActiveMenu(null);
+                return;
+            }
+            setActions(previousActions);
             const message = err instanceof Error ? err.message : 'Failed to remove';
             toast.error(message, { id: loadingToast });
         }

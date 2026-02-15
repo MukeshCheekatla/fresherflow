@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils';
 import CompanyLogo from '@/components/ui/CompanyLogo';
 import { getRecentViewedByIdOrSlug, saveRecentViewed } from '@/lib/offline/recentViewed';
 import { formatSyncTime, getDetailLastSyncAt } from '@/lib/offline/syncStatus';
+import { enqueueOfflineActionTrack, enqueueOfflineSaveToggle } from '@/lib/offline/actionQueue';
 import { OpportunityDetailSkeleton } from '@/components/ui/Skeleton';
 import { buildShareUrl } from '@/lib/share';
 import { sanitizeHtml } from '@/lib/sanitize';
@@ -227,6 +228,12 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
         const newSavedState = !previousSavedState;
         setOpp(prev => prev ? { ...prev, isSaved: newSavedState } : null);
 
+        if (typeof navigator !== 'undefined' && !navigator.onLine && user) {
+            enqueueOfflineSaveToggle(opp.id, user.id);
+            toast.success('Saved update queued for sync.');
+            return;
+        }
+
         try {
             const result = await savedApi.toggle(opp.id) as { saved: boolean };
 
@@ -239,6 +246,11 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
                 growthApi.trackEvent('SAVE_JOB', 'opportunity_detail').catch(() => undefined);
             }
         } catch (err) {
+            if (typeof navigator !== 'undefined' && !navigator.onLine && user) {
+                enqueueOfflineSaveToggle(opp.id, user.id);
+                toast.success('Saved update queued for sync.');
+                return;
+            }
             // ROLLBACK
             setOpp(prev => prev ? { ...prev, isSaved: previousSavedState } : null);
             toastError(err, 'Failed to update bookmark');
@@ -288,11 +300,20 @@ export default function OpportunityDetailClient({ id, initialData }: { id: strin
         });
         toast.success(`Progress updated: ${label}`);
 
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            enqueueOfflineActionTrack(opp.id, actionType, user.id);
+            return;
+        }
+
         // Background sync
         setIsUpdatingAction(true);
         try {
             await actionsApi.track(opp.id, actionType);
         } catch (err) {
+            if (typeof navigator !== 'undefined' && !navigator.onLine) {
+                enqueueOfflineActionTrack(opp.id, actionType, user.id);
+                return;
+            }
             // ROLLBACK: Revert to previous state
             setOpp((prev) => {
                 if (!prev) return prev;
