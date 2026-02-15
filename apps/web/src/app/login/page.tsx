@@ -29,16 +29,12 @@ import LoadingScreen from '@/components/ui/LoadingScreen';
 type LoginStep = 'email' | 'otp';
 
 import { Suspense } from 'react';
-import Script from 'next/script';
 
 export default function LoginPage() {
     return (
-        <>
-            <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
-            <Suspense fallback={<LoadingScreen />}>
-                <LoginContent />
-            </Suspense>
-        </>
+        <Suspense fallback={<LoadingScreen />}>
+            <LoginContent />
+        </Suspense>
     );
 }
 
@@ -54,6 +50,21 @@ function LoginContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const source = searchParams.get('source') || undefined;
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        if (window.google?.accounts?.id) return;
+
+        const existing = document.querySelector('script[data-ff-google-gsi="1"]');
+        if (existing) return;
+
+        const script = document.createElement('script');
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.async = true;
+        script.defer = true;
+        script.dataset.ffGoogleGsi = '1';
+        document.head.appendChild(script);
+    }, []);
 
     useEffect(() => {
         // Don't redirect if:
