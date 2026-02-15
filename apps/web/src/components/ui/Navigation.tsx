@@ -19,6 +19,7 @@ import ClipboardDocumentCheckIcon from '@heroicons/react/24/outline/ClipboardDoc
 import ArrowLeftIcon from '@heroicons/react/24/outline/ArrowLeftIcon';
 import { ThemeToggle } from './ThemeToggle';
 import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
+import { useOfflineActionQueue } from '@/lib/offline/useOfflineActionQueue';
 
 function TelegramBrandIcon({ className }: { className?: string }) {
     return (
@@ -84,6 +85,7 @@ export function Navbar() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const { unreadCount } = useUnreadNotifications();
+    const pendingSyncCount = useOfflineActionQueue(user?.id);
 
     const navLinks = [
         { href: '/dashboard', label: 'Dashboard' },
@@ -142,6 +144,11 @@ export function Navbar() {
                     {/* Right Actions */}
                     <div className="flex items-center gap-2 md:gap-4">
                         <ThemeToggle />
+                        {!isLoading && user && pendingSyncCount > 0 && (
+                            <span className="hidden md:inline-flex items-center rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+                                {pendingSyncCount} pending
+                            </span>
+                        )}
 
 
                         {!isLoading && (
@@ -194,6 +201,7 @@ export function MobileNav() {
     const context = useContext(AuthContext);
     const user = context?.user;
     const isLoading = context?.isLoading;
+    const pendingSyncCount = useOfflineActionQueue(user?.id);
     const [isVisible, setIsVisible] = useState(true);
     const [menuOpen, setMenuOpen] = useState(false);
     const lastScrollYRef = useRef(0);
@@ -311,6 +319,11 @@ export function MobileNav() {
                                 {unreadCount > 0 && (
                                     <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full ring-2 ring-background" />
                                 )}
+                                {pendingSyncCount > 0 && (
+                                    <span className="absolute -bottom-0.5 -right-0.5 min-w-[14px] h-[14px] px-1 rounded-full bg-amber-500 text-[9px] font-bold text-white leading-[14px] text-center">
+                                        {pendingSyncCount > 9 ? '9+' : pendingSyncCount}
+                                    </span>
+                                )}
                             </Link>
                             <button
                                 onClick={() => setMenuOpen(true)}
@@ -379,6 +392,11 @@ export function MobileNav() {
                                     {item.href === '/alerts' && unreadCount > 0 && (
                                         <span className="px-1.5 py-0.5 rounded-full bg-primary text-[8px] font-bold text-white min-w-[18px] text-center">
                                             {unreadCount > 99 ? '99+' : unreadCount}
+                                        </span>
+                                    )}
+                                    {item.href === '/alerts' && pendingSyncCount > 0 && (
+                                        <span className="px-1.5 py-0.5 rounded-full bg-amber-500 text-[8px] font-bold text-white min-w-[18px] text-center">
+                                            {pendingSyncCount > 99 ? '99+' : pendingSyncCount}
                                         </span>
                                     )}
                                 </Link>

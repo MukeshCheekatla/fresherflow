@@ -1,11 +1,15 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
+import { useContext, useSyncExternalStore } from 'react';
 import WifiIcon from '@heroicons/react/24/outline/WifiIcon';
 import Link from 'next/link';
 import { getRecentViewedCount } from '@/lib/offline/recentViewed';
+import { AuthContext } from '@/contexts/AuthContext';
+import { useOfflineActionQueue } from '@/lib/offline/useOfflineActionQueue';
 
 export default function OfflineNotification() {
+    const authContext = useContext(AuthContext);
+    const user = authContext?.user;
     const isOffline = useSyncExternalStore(
         (callback) => {
             window.addEventListener('online', callback);
@@ -21,6 +25,7 @@ export default function OfflineNotification() {
 
     if (!isOffline) return null;
     const cachedCount = getRecentViewedCount();
+    const pendingSyncCount = useOfflineActionQueue(user?.id);
 
     return (
         <div className="fixed bottom-20 left-4 right-4 z-50 animate-in slide-in-from-bottom-2 duration-300 md:bottom-8 md:right-8 md:left-auto md:max-w-xs">
@@ -35,6 +40,11 @@ export default function OfflineNotification() {
                             ? `${cachedCount} recently viewed listing${cachedCount > 1 ? 's are' : ' is'} available offline.`
                             : 'Viewing cached pages only. Connect to load fresh listings.'}
                     </p>
+                    {pendingSyncCount > 0 && (
+                        <p className="text-[10px] opacity-90 leading-tight mt-0.5">
+                            {pendingSyncCount} update{pendingSyncCount > 1 ? 's' : ''} queued for sync.
+                        </p>
+                    )}
                     {cachedCount > 0 && (
                         <Link href="/opportunities" className="inline-block mt-1 text-[10px] font-semibold underline">
                             Open opportunities

@@ -21,6 +21,9 @@ export default function OfflineActionSync() {
                 if (showToast && result.synced > 0) {
                     toast.success(`Synced ${result.synced} offline update${result.synced > 1 ? 's' : ''}.`);
                 }
+                if (showToast && result.remaining > 0 && result.failed > 0) {
+                    toast.error('Some pending updates need login or retry.');
+                }
             } finally {
                 syncingRef.current = false;
             }

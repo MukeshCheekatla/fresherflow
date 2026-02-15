@@ -3,6 +3,7 @@ import { actionsApi, savedApi } from '@/lib/api/client';
 
 const OFFLINE_ACTION_QUEUE_KEY = 'ff_offline_action_queue_v1';
 const MAX_RETRY_ATTEMPTS = 10;
+const OFFLINE_ACTION_QUEUE_EVENT = 'ff-offline-action-queue-change';
 
 type OfflineActionType = 'SAVE_TOGGLE' | 'ACTION_TRACK' | 'ACTION_REMOVE';
 
@@ -54,6 +55,7 @@ function readQueue(): OfflineAction[] {
 function writeQueue(queue: OfflineAction[]) {
     if (!canUseStorage()) return;
     window.localStorage.setItem(OFFLINE_ACTION_QUEUE_KEY, JSON.stringify(queue));
+    window.dispatchEvent(new Event(OFFLINE_ACTION_QUEUE_EVENT));
 }
 
 function nextId() {
@@ -129,6 +131,17 @@ export function getPendingOfflineActionsCount(ownerId?: string): number {
     return readQueue().filter((item) => matchesOwner(item, ownerId)).length;
 }
 
+export function subscribeOfflineActionQueue(listener: () => void) {
+    if (!canUseStorage()) return () => undefined;
+    const handler = () => listener();
+    window.addEventListener(OFFLINE_ACTION_QUEUE_EVENT, handler);
+    window.addEventListener('storage', handler);
+    return () => {
+        window.removeEventListener(OFFLINE_ACTION_QUEUE_EVENT, handler);
+        window.removeEventListener('storage', handler);
+    };
+}
+
 async function runOfflineAction(action: OfflineAction) {
     if (action.type === 'SAVE_TOGGLE') {
         await savedApi.toggle(action.opportunityId);
@@ -151,6 +164,7 @@ export async function flushOfflineActions(ownerId?: string): Promise<FlushResult
     let synced = 0;
     let failed = 0;
     const remaining: OfflineAction[] = [];
+    let authFailed = false;
 
     for (const action of queue) {
         if (!matchesOwner(action, ownerId)) {
@@ -160,7 +174,13 @@ export async function flushOfflineActions(ownerId?: string): Promise<FlushResult
         try {
             await runOfflineAction(action);
             synced += 1;
-        } catch {
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message.toLowerCase() : '';
+            if (message.includes('session expired') || message.includes('unauthorized') || message.includes('401')) {
+                authFailed = true;
+                remaining.push(action, ...queue.slice(queue.indexOf(action) + 1));
+                break;
+            }
             failed += 1;
             if (action.attempts + 1 < MAX_RETRY_ATTEMPTS) {
                 remaining.push({
@@ -174,7 +194,7 @@ export async function flushOfflineActions(ownerId?: string): Promise<FlushResult
     writeQueue(remaining);
     return {
         synced,
-        failed,
+        failed: authFailed ? failed + 1 : failed,
         remaining: remaining.length,
     };
 }
